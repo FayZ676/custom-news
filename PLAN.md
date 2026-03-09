@@ -271,10 +271,19 @@ rss-semantic/
 │   └── services/
 │       ├── ingestion.py   # Feed fetching, article storage, embedding
 │       └── scoring.py     # Pre-compute and store user article scores
+├── tests/
+│   ├── fixtures/
+│   │   ├── articles.json          # fixed corpus of real articles
+│   │   └── ranking_cases.json     # query → expected top results
+│   ├── test_ranking.py            # ranking validation
+│   └── test_feeds.py              # feed validation
 ├── supabase/
 │   └── migrations/        # SQL migration files
 ├── catalog/
 │   └── feeds.json         # Bundled feed catalog
+├── .github/
+│   └── workflows/
+│       └── ci.yml         # runs both test suites on push to main
 ├── .env.example
 ├── docker-compose.yml
 ├── Dockerfile
@@ -300,6 +309,55 @@ On user adds/removes an interest
 
 ---
 
+## Testing
+
+Both test suites run on every push to main via GitHub Actions. No external services required — all tests are self-contained.
+
+### 1. Feed Validation
+
+Validates every feed in `catalog/feeds.json` to ensure the catalog stays healthy. Fails the pipeline if any feed doesn't pass.
+
+Checks per feed:
+- URL responds with 200
+- Valid RSS/Atom that feedparser can parse
+- Has at least one article
+- Articles have title, url, and published date
+- Content field is present and substantial enough to embed
+
+### 2. Ranking Validation
+
+A golden dataset test that validates the relevance scoring behaves as expected. Uses a fixed corpus of real articles collected from feeds, paired with queries and expected top results.
+
+```json
+{
+  "query": "artificial intelligence and machine learning",
+  "expected_top": [
+    "openai-gpt4-article-id",
+    "deepmind-gemini-article-id"
+  ],
+  "top_n": 5
+}
+```
+
+The test passes if all `expected_top` articles appear within the top N ranked results. This acts as a regression suite — if the embedding model is swapped or scoring logic changes, any degradation in ranking quality is immediately visible.
+
+### Project structure for tests
+
+```
+tests/
+    ├── fixtures/
+    │   ├── articles.json          # collected real articles, fixed corpus
+    │   └── ranking_cases.json     # query → expected top results
+    ├── test_ranking.py            # ranking validation
+    └── test_feeds.py              # feed validation
+
+.github/
+    └── workflows/
+            └── ci.yml             # runs both test suites on push to main
+```
+
+## Suggested Feed Categories (v1)
+
 Categories are suggestions only — the backend treats all feeds the same. Users can organize their subscriptions into custom groups however they like.
 
 - Technology
@@ -324,6 +382,7 @@ Categories are suggestions only — the backend treats all feeds the same. Users
 - Pluggable embedder (local by default)
 - Docker deployment
 - Supabase migration scripts
+- CI pipeline: feed validation + ranking golden dataset tests
 
 ## V2 / Future
 
