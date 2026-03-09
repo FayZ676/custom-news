@@ -250,50 +250,58 @@ GET    /config
 ## Project Structure
 
 ```
-rss-semantic/
-├── app/
-│   ├── main.py            # FastAPI app, route registration
-│   ├── config.py          # Settings (poll interval, embedder, etc.)
-│   ├── database.py        # Supabase client setup
-│   ├── models/
-│   │   ├── feed_article.py  # FeedArticle — what we extract from RSS feeds
-│   │   ├── article.py       # Article — full database model
-│   │   ├── interest.py      # Interest — user interest query model
-│   │   ├── group.py         # Group — user feed group model
-│   │   └── user.py          # User — user model
-│   ├── embedder/
-│   │   ├── base.py        # BaseEmbedder interface
-│   │   ├── local.py       # sentence-transformers implementation
-│   │   ├── openai.py      # OpenAI implementation
-│   │   └── cohere.py      # Cohere implementation
-│   ├── scheduler.py       # APScheduler feed polling jobs
-│   ├── routers/
-│   │   ├── auth.py
-│   │   ├── catalog.py
-│   │   ├── subscriptions.py
-│   │   ├── groups.py
-│   │   ├── articles.py
-│   │   └── interests.py
-│   └── services/
-│       ├── ingestion.py   # Feed fetching, article storage, embedding
-│       └── scoring.py     # Pre-compute and store user article scores
-├── tests/
-│   ├── fixtures/
-│   │   ├── articles.json          # fixed corpus of real articles
-│   │   └── ranking_cases.json     # query → expected top results
-│   ├── test_ranking.py            # ranking validation
-│   └── test_feeds.py              # feed validation
-├── supabase/
-│   └── migrations/        # SQL migration files
-├── catalog/
-│   └── feeds.json         # Bundled feed catalog
+rss-reader/                          # root of the monorepo
+├── backend/                         # Python API backend
+│   ├── app/
+│   │   ├── feeds.json               # bundled feed catalog
+│   │   ├── main.py                  # FastAPI app, route registration
+│   │   ├── config.py                # Settings (poll interval, embedder, etc.)
+│   │   ├── database.py              # Supabase client setup
+│   │   ├── models/
+│   │   │   ├── __init__.py
+│   │   │   ├── feed_article.py      # FeedArticle — what we extract from RSS feeds
+│   │   │   ├── article.py           # Article — full database model
+│   │   │   ├── interest.py          # Interest — user interest query model
+│   │   │   ├── group.py             # Group — user feed group model
+│   │   │   └── user.py              # User — user model
+│   │   ├── embedder/
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py              # BaseEmbedder interface
+│   │   │   ├── local.py             # sentence-transformers implementation
+│   │   │   ├── openai.py            # OpenAI implementation
+│   │   │   └── cohere.py            # Cohere implementation
+│   │   ├── scheduler.py             # APScheduler feed polling jobs
+│   │   ├── routers/
+│   │   │   ├── __init__.py
+│   │   │   ├── auth.py
+│   │   │   ├── catalog.py
+│   │   │   ├── subscriptions.py
+│   │   │   ├── groups.py
+│   │   │   ├── articles.py
+│   │   │   └── interests.py
+│   │   └── services/
+│   │       ├── __init__.py
+│   │       ├── ingestion.py         # Feed fetching, article storage, embedding
+│   │       └── scoring.py           # Pre-compute and store user article scores
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── fixtures/
+│   │   │   ├── articles.json        # fixed corpus of real articles
+│   │   │   └── ranking_cases.json   # query → expected top results
+│   │   ├── test_feeds.py            # feed validation
+│   │   └── test_ranking.py          # ranking validation
+│   ├── supabase/
+│   │   └── migrations/              # SQL migration files
+│   ├── __init__.py
+│   ├── pyproject.toml               # project packaging, installable with pip install -e .
+│   ├── .env.example
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/                        # future UI
 ├── .github/
 │   └── workflows/
-│       └── ci.yml         # runs both test suites on push to main
-├── .env.example
-├── docker-compose.yml
-├── Dockerfile
-├── requirements.txt
+│       └── ci.yml                   # runs both test suites on push to main
 └── README.md
 ```
 
