@@ -255,6 +255,12 @@ rss-semantic/
 │   ├── main.py            # FastAPI app, route registration
 │   ├── config.py          # Settings (poll interval, embedder, etc.)
 │   ├── database.py        # Supabase client setup
+│   ├── models/
+│   │   ├── feed_article.py  # FeedArticle — what we extract from RSS feeds
+│   │   ├── article.py       # Article — full database model
+│   │   ├── interest.py      # Interest — user interest query model
+│   │   ├── group.py         # Group — user feed group model
+│   │   └── user.py          # User — user model
 │   ├── embedder/
 │   │   ├── base.py        # BaseEmbedder interface
 │   │   ├── local.py       # sentence-transformers implementation
