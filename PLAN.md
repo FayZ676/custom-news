@@ -1,8 +1,8 @@
-# RSS Semantic Search — Project Plan
+# RSS Semantic Reader — Project Plan
 
 ## Overview
 
-A self-hostable, open source RSS feed aggregator with semantic search. Users can subscribe to a curated catalog of feeds, organize them into groups, and search across articles using natural language queries powered by vector embeddings.
+A self-hostable, open source RSS feed aggregator with interest-based relevance ranking. Users subscribe to a curated catalog of feeds and define their interests in natural language. All articles from their subscribed feeds are automatically ranked by relevance to those interests — no manual searching required. The goal is to surface what matters to the user passively, not to make them work for it.
 
 The project follows a **hybrid model**: the codebase is open source and Docker-ready for self-hosters, while a paid hosted tier runs the same code on managed infrastructure.
 
@@ -13,7 +13,8 @@ The project follows a **hybrid model**: the codebase is open source and Docker-r
 - Users should be able to discover relevant news without worrying about managing sources
 - The app ships with a curated catalog of feeds, organized by suggested categories
 - Users subscribe to feeds from the catalog and optionally organize them into personal groups
-- Semantic search allows users to find articles by meaning, not just keywords
+- Users define **interest queries** in natural language that describe what they care about
+- All articles from subscribed feeds are ranked by relevance to the user's interests — no manual searching required
 - Custom feed support is planned for v2
 
 ---
@@ -127,6 +128,29 @@ User-defined feed groupings.
 | name       | text      |                      |
 | created_at | timestamp |                      |
 
+### `user_interests`
+User-defined interest queries. Embeddings are pre-computed and stored.
+
+| Column          | Type        | Notes                                        |
+| --------------- | ----------- | -------------------------------------------- |
+| id              | uuid        | primary key                                  |
+| user_id         | uuid        | references users(id)                         |
+| query           | text        | e.g. "AI research and large language models" |
+| embedding       | vector(384) | pre-computed embedding of the query          |
+| embedding_model | text        | e.g. "all-MiniLM-L6-v2"                      |
+| created_at      | timestamp   |                                              |
+
+### `user_article_scores`
+Pre-computed relevance scores per user per article. Score is the highest similarity across all of the user's interest queries.
+
+| Column     | Type      | Notes                                    |
+| ---------- | --------- | ---------------------------------------- |
+| user_id    | uuid      | references users(id)                     |
+| article_id | uuid      | references articles(id)                  |
+| score      | float     | max similarity across all user interests |
+| updated_at | timestamp |                                          |
+|            |           | primary key (user_id, article_id)        |
+
 ### `user_group_feeds`
 Feeds within a user group.
 
@@ -172,9 +196,16 @@ DELETE /groups/{id}/feeds/{feed_id}
 GET    /groups/{id}/feeds
 ```
 
+### Interests
+```
+POST   /interests               # Add an interest query
+GET    /interests               # List my interests
+DELETE /interests/{id}          # Remove an interest
+```
+
 ### Articles
 ```
-GET    /articles
+GET    /articles                # All articles from subscribed feeds, ranked by relevance
 GET    /articles?unread=true
 GET    /articles?saved=true
 GET    /articles?feed_id=...
@@ -186,12 +217,8 @@ POST   /articles/{id}/save
 POST   /articles/{id}/unsave
 ```
 
-### Search
-```
-GET    /search?q=...&feed_id=...&limit=10&unread=true
-```
+Articles are always returned ranked by pre-computed relevance score (highest first). Each article includes its score:
 
-Search returns full article data including relevance score:
 ```json
 {
   "results": [
@@ -203,11 +230,12 @@ Search returns full article data including relevance score:
       "url": "...",
       "content": "...",
       "published_at": "...",
-      "relevance_score": 0.92
+      "relevance_score": 0.92,
+      "is_read": false,
+      "is_saved": false
     }
   ],
-  "total": 42,
-  "query": "machine learning trends"
+  "total": 142
 }
 ```
 
@@ -239,15 +267,14 @@ rss-semantic/
 │   │   ├── subscriptions.py
 │   │   ├── groups.py
 │   │   ├── articles.py
-│   │   └── search.py
+│   │   └── interests.py
 │   └── services/
-│       ├── ingestion.py   # Feed fetching and article storage
-│       └── search.py      # Semantic search logic
+│       ├── ingestion.py   # Feed fetching, article storage, embedding
+│       └── scoring.py     # Pre-compute and store user article scores
 ├── supabase/
 │   └── migrations/        # SQL migration files
 ├── catalog/
 │   └── feeds.json         # Bundled feed catalog
-├── data/                  # Local data (if needed)
 ├── .env.example
 ├── docker-compose.yml
 ├── Dockerfile
@@ -257,7 +284,21 @@ rss-semantic/
 
 ---
 
-## Suggested Feed Categories (v1)
+## Background Job Flow
+
+```
+Daily poll
+    ├── Fetch new articles from all catalog feeds
+    ├── Store articles + compute and store embeddings
+    └── For each subscribed user
+            └── Compute score (max similarity across user's interests)
+                    └── Store in user_article_scores
+
+On user adds/removes an interest
+    └── Recompute user_article_scores for that user across all subscribed articles
+```
+
+---
 
 Categories are suggestions only — the backend treats all feeds the same. Users can organize their subscriptions into custom groups however they like.
 
@@ -277,7 +318,8 @@ Categories are suggestions only — the backend treats all feeds the same. Users
 - User subscriptions
 - Personal feed groups
 - Article ingestion with background polling
-- Semantic search via pgvector
+- User interest queries with pre-computed relevance scoring
+- Articles ranked by relevance to user interests
 - Read/unread and saved/unsaved article state
 - Pluggable embedder (local by default)
 - Docker deployment
@@ -286,8 +328,10 @@ Categories are suggestions only — the backend treats all feeds the same. Users
 ## V2 / Future
 
 - Custom user-added feeds
-- Keyword filtering alongside semantic search
+- Keyword filtering alongside interest-based ranking
+- Manual search across articles
 - AI summarization
 - UI layer
 - Billing / subscription management for hosted tier
 - GPU-accelerated embeddings for hosted tier
+- Frontier embedding model evaluation (OpenAI, Cohere) vs local baseline
