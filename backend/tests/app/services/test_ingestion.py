@@ -1,10 +1,11 @@
 import pytest
 
-from app.services.ingestion import get_articles
+from app.services.ingestion import get_articles, load_feeds
+from app.models.feed_article import Feed
 
 
 @pytest.mark.integration
-def test_get_articles():
-    # TODO: Get the list of feeds
-    # TODO: For each feed, check that we can get articles
-    ...
+@pytest.mark.parametrize("feed", load_feeds(), ids=lambda feed: feed.id)
+def test_get_articles(feed: Feed):
+    articles = get_articles(feed.url)
+    assert len(articles) > 0
