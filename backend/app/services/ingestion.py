@@ -7,9 +7,9 @@ from app.models.feed_article import FeedArticle, Feed
 
 
 def get_articles(url: str) -> list[FeedArticle]:
-    d = feedparser.parse(url)
-    print(d)
-    return []
+    d = feedparser.parse(url).get("entries", [])
+    articles = [FeedArticle.model_validate(article) for article in d]
+    return articles
 
 
 def load_feeds() -> list[Feed]:
