@@ -102,7 +102,7 @@
     {
       "id": "openai-blog",
       "title": "OpenAI Blog",
-      "url": "https://openai.com/blog/rss/",
+      "url": "https://openai.com/news/rss.xml",
       "suggested_category": "Technology",
       "description": "Research updates, product announcements, and insights from OpenAI."
     },
