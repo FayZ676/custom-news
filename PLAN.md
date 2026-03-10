@@ -259,7 +259,7 @@ rss-reader/                          # root of the monorepo
 │   │   ├── database.py              # Supabase client setup
 │   │   ├── models/
 │   │   │   ├── __init__.py
-│   │   │   ├── feed_article.py      # FeedArticle — what we extract from RSS feeds
+│   │   │   ├── feed_article.py      # FeedArticle — Pydantic model & parsing layer for raw RSS entries
 │   │   │   ├── article.py           # Article — full database model
 │   │   │   ├── interest.py          # Interest — user interest query model
 │   │   │   ├── group.py             # Group — user feed group model
@@ -285,11 +285,16 @@ rss-reader/                          # root of the monorepo
 │   │       └── scoring.py           # Pre-compute and store user article scores
 │   ├── tests/
 │   │   ├── __init__.py
+│   │   ├── app/
+│   │   │   ├── models/
+│   │   │   │   └── test_feed_article.py    # tests for FeedArticle model & parsing
+│   │   │   └── services/
+│   │   │       └── test_ingestion.py       # tests for ingestion service
 │   │   ├── fixtures/
-│   │   │   ├── articles.json        # fixed corpus of real articles
-│   │   │   └── ranking_cases.json   # query → expected top results
-│   │   ├── test_feeds.py            # feed validation
-│   │   └── test_ranking.py          # ranking validation
+│   │   │   ├── articles.json               # fixed corpus of real articles
+│   │   │   └── ranking_cases.json          # query → expected top results
+│   │   ├── test_feeds.py                   # feed catalog validation
+│   │   └── test_ranking.py                 # ranking validation
 │   ├── supabase/
 │   │   └── migrations/              # SQL migration files
 │   ├── __init__.py
