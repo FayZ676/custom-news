@@ -15,8 +15,8 @@ class Feed(BaseModel):
 class FeedArticle(BaseModel):
     title: str
     link: str
-    summary: str
     published: datetime
+    summary: str | None = None
 
     @field_validator("published", mode="before")
     @classmethod
