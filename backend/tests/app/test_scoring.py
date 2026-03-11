@@ -28,7 +28,7 @@ def test_rank_articles_returns_all(articles, embedder):
         (
             "AI agents and autonomous systems",
             ["Governing Agentic AI", "Computer-Using Agent", "proactive AI agents"],
-            10,
+            5,
         ),
         (
             "startup fundraising and venture capital",
