@@ -65,3 +65,13 @@ class FeedArticle(BaseModel):
     @classmethod
     def clean_html_fields(cls, v: str) -> str | None:
         return _strip_html(v) or None
+
+    def __str__(self) -> str:
+        parts = [self.title]
+        if self.description:
+            parts.append(self.description)
+        if self.summary:
+            parts.append(self.summary)
+        if self.content is not None:
+            parts.extend(item.value for item in self.content)
+        return "\n\n".join(parts)
