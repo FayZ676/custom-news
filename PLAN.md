@@ -270,6 +270,10 @@ rss-reader/                          # root of the monorepo
 │   │   │   ├── local.py             # sentence-transformers implementation
 │   │   │   ├── openai.py            # OpenAI implementation
 │   │   │   └── cohere.py            # Cohere implementation
+│   │   ├── fixtures/
+│   │   │   ├── collect_fixtures.py         # one-time script to populate articles.json
+│   │   │   ├── articles.json               # fixed corpus of real articles
+│   │   │   └── ranking_cases.json          # query → expected top results
 │   │   ├── scheduler.py             # APScheduler feed polling jobs
 │   │   ├── routers/
 │   │   │   ├── __init__.py
@@ -279,23 +283,13 @@ rss-reader/                          # root of the monorepo
 │   │   │   ├── groups.py
 │   │   │   ├── articles.py
 │   │   │   └── interests.py
-│   │   └── services/
-│   │       ├── __init__.py
-│   │       ├── ingestion.py         # Feed fetching, article storage, embedding
-│   │       └── scoring.py           # Pre-compute and store user article scores
+│   |   ├── ingestion.py         # Feed fetching, article storage, embedding
+│   |   └── scoring.py           # Pre-compute and store user article scores
 │   ├── tests/
-│   │   ├── __init__.py
 │   │   ├── app/
-│   │   │   ├── models/
-│   │   │   │   └── test_feed_article.py    # tests for FeedArticle model & parsing
-│   │   │   └── services/
-│   │   │       └── test_ingestion.py       # tests for ingestion service
-│   │   ├── fixtures/
-│   │   │   ├── collect_fixtures.py         # one-time script to populate articles.json
-│   │   │   ├── articles.json               # fixed corpus of real articles
-│   │   │   └── ranking_cases.json          # query → expected top results
-│   │   ├── test_feeds.py                   # feed catalog validation
-│   │   └── test_ranking.py                 # ranking validation
+│   │   |   ├── test_ingestion.py       # tests for ingestion
+│   │   |   └── test_scoring.py       # tests for scoring
+│   │   └── test_feeds.py                   # feed catalog validation
 │   ├── supabase/
 │   │   └── migrations/              # SQL migration files
 │   ├── __init__.py
