@@ -291,6 +291,7 @@ rss-reader/                          # root of the monorepo
 │   │   │   └── services/
 │   │   │       └── test_ingestion.py       # tests for ingestion service
 │   │   ├── fixtures/
+│   │   │   ├── collect_fixtures.py         # one-time script to populate articles.json
 │   │   │   ├── articles.json               # fixed corpus of real articles
 │   │   │   └── ranking_cases.json          # query → expected top results
 │   │   ├── test_feeds.py                   # feed catalog validation
