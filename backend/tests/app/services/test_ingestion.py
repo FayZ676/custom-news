@@ -1,7 +1,8 @@
 import pytest
 
-from app.services.ingestion import get_articles, load_feeds
 from app.models.feed_article import Feed
+from app.services.ingestion import get_articles
+from app.fixtures.collect_fixtures import load_feeds
 
 
 @pytest.mark.integration

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from app.models.feed_article import Feed, FeedArticle
-from app.services.ingestion import get_articles, load_feeds
+from app.services.ingestion import get_articles
 
 
 def collect(feeds: list[Feed]) -> list[FeedArticle]:
@@ -14,9 +14,18 @@ def persist(results: list[FeedArticle], path: Path) -> None:
     path.write_text(json.dumps(data, indent=2))
 
 
-def load(path: Path) -> list[FeedArticle]:
-    data = json.loads(path.read_text())
-    return [FeedArticle.model_validate(item) for item in data]
+def load_feeds() -> list[Feed]:
+    feeds_path = Path(__file__).parent / "feeds.json"
+    with open(feeds_path) as f:
+        data = json.load(f)
+    return [Feed(**feed) for feed in data["feeds"]]
+
+
+def load_articles() -> list[FeedArticle]:
+    articles_path = Path(__file__).parent / "articles.json"
+    with open(articles_path) as f:
+        data = json.load(f)
+    return [FeedArticle(**article) for article in data]
 
 
 if __name__ == "__main__":
