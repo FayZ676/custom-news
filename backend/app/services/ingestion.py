@@ -8,7 +8,13 @@ from app.models.feed_article import FeedArticle, Feed
 
 def get_articles(url: str) -> list[FeedArticle]:
     d = feedparser.parse(url).entries or []
-    articles = [FeedArticle.model_validate(article) for article in d]
+    articles = []
+    for article in d:
+        try:
+            articles.append(FeedArticle.model_validate(article))
+        except Exception as e:
+            print(e)
+            print(f"FAILED TO PARSE ARTICLE:\n{article}")
     return articles
 
 
