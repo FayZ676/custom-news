@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+echo "Running integration tests before push..."
+
+cd "$(git rev-parse --show-toplevel)/backend"
+
+# Run ingestion tests
+echo "→ Running ingestion tests..."
+pytest tests/app/test_ingestion.py -v
+
+# Run scoring tests  
+echo "→ Running scoring tests..."
+pytest tests/app/test_scoring.py -v
+
+echo "✓ All tests passed!"
