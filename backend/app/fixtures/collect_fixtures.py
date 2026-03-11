@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
+from app.ingestion import get_articles
 from app.models.feed_article import Feed, FeedArticle
-from app.services.ingestion import get_articles
 
 
 def collect(feeds: list[Feed]) -> list[FeedArticle]:

@@ -1,8 +1,8 @@
 import pytest
 
+from app.scoring import rank_articles
 from app.embedder.local import LocalEmbedder
 from app.fixtures.collect_fixtures import load_articles
-from app.services.scoring import rank_articles
 
 
 @pytest.fixture(scope="module")
