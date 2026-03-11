@@ -1,0 +1,1 @@
+- [ ] Strip HTML from feed article summary
