@@ -14,6 +14,11 @@ def persist(results: list[FeedArticle], path: Path) -> None:
     path.write_text(json.dumps(data, indent=2))
 
 
+def load(path: Path) -> list[FeedArticle]:
+    data = json.loads(path.read_text())
+    return [FeedArticle.model_validate(item) for item in data]
+
+
 if __name__ == "__main__":
     feeds_path = Path(__file__).parent / "articles.json"
     feeds = load_feeds()
