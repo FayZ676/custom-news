@@ -34,13 +34,15 @@ class Feed(BaseModel):
 class FeedArticleContent(BaseModel):
     type: str
     base: str
-    value: str
+    value: str | None
     language: str | None
 
     @field_validator("value", mode="before")
     @classmethod
-    def clean_html_fields(cls, v: str) -> str:
-        return _strip_html(v)
+    def clean_html_fields(cls, v: str) -> str | None:
+        if v is None:
+            return None
+        return _strip_html(v) or None
 
 
 class FeedArticle(BaseModel):
@@ -64,6 +66,8 @@ class FeedArticle(BaseModel):
     @field_validator("summary", "description", mode="before")
     @classmethod
     def clean_html_fields(cls, v: str) -> str | None:
+        if v is None:
+            return None
         return _strip_html(v) or None
 
     def __str__(self) -> str:
@@ -73,5 +77,5 @@ class FeedArticle(BaseModel):
         if self.summary:
             parts.append(self.summary)
         if self.content is not None:
-            parts.extend(item.value for item in self.content)
+            parts.extend(item.value for item in self.content if item.value is not None)
         return "\n\n".join(parts)
