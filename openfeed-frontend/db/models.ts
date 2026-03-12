@@ -1,4 +1,3 @@
-// Models for feed articles
 export interface FeedArticleContent {
   type: string;
   base: string;
@@ -21,4 +20,9 @@ export interface Feed {
   title: string;
   description: string;
   suggested_category: string;
+}
+
+export interface FeedArticleRanked {
+  article: FeedArticle;
+  score: number;
 }
