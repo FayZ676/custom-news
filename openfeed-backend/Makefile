@@ -22,3 +22,6 @@ help:
 	@echo "Available commands:"
 	@echo "  make install-hooks  - Install git pre-push hook"
 	@echo "  make test          - Run all tests"
+
+run:
+	uvicorn openfeed.main:app --reload --host 0.0.0.0 --port 8000
