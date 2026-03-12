@@ -2,16 +2,28 @@
 
 set -e
 
-echo "Running integration tests before push..."
+echo "Checking for backend changes..."
 
-cd "$(git rev-parse --show-toplevel)/openfeed-backend"
+# Get the remote tracking branch
+remote="$1"
+url="$2"
 
-# Run ingestion tests
-echo "→ Running ingestion tests..."
-pytest tests/test_ingestion.py -v
+# Check if there are any changes in openfeed-backend directory
+# Compare against the remote branch we're pushing to
+if git diff --staged --name-only origin/main...HEAD | grep -q "^openfeed-backend/"; then
+    echo "Backend changes detected, running tests..."
+    
+    cd "$(git rev-parse --show-toplevel)/openfeed-backend"
 
-# Run scoring tests  
-echo "→ Running scoring tests..."
-pytest tests/test_scoring.py -v
+    # Run ingestion tests
+    echo "→ Running ingestion tests..."
+    pytest tests/test_ingestion.py -v
 
-echo "✓ All tests passed!"
+    # Run scoring tests  
+    echo "→ Running scoring tests..."
+    pytest tests/test_scoring.py -v
+
+    echo "✓ All tests passed!"
+else
+    echo "No backend changes detected, skipping tests."
+fi
