@@ -57,7 +57,7 @@ def test_rank_articles_relevant_results(
 ):
     """For a given query, at least one expected article should appear in the top-N results."""
     ranked = rank_articles(articles, query, embedder)
-    top_titles = [article.title for article, _ in ranked[:top_n]]
+    top_titles = [article.article.title for article in ranked[:top_n]]
 
     matched = [
         fragment
