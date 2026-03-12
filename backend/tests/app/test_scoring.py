@@ -17,7 +17,7 @@ def embedder():
 
 @pytest.mark.integration
 def test_rank_articles_returns_all(articles, embedder):
-    articles_ranked = rank_articles(articles, ["AI agents"], embedder)
+    articles_ranked = rank_articles(articles, "AI agents", embedder)
     assert len(articles_ranked) == len(articles)
 
 
@@ -56,7 +56,7 @@ def test_rank_articles_relevant_results(
     articles, embedder, query, expected_title_fragments, top_n
 ):
     """For a given query, at least one expected article should appear in the top-N results."""
-    ranked = rank_articles(articles, [query], embedder)
+    ranked = rank_articles(articles, query, embedder)
     top_titles = [article.title for article, _ in ranked[:top_n]]
 
     matched = [

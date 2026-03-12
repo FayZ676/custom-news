@@ -2,7 +2,7 @@
 
 ## Overview
 
-A self-hostable, open source RSS feed aggregator with interest-based relevance ranking. Users subscribe to a curated catalog of feeds and define their interests in natural language. All articles from their subscribed feeds are automatically ranked by relevance to those interests — no manual searching required. The goal is to surface what matters to the user passively, not to make them work for it.
+A self-hostable, open source RSS feed reader with interest-based relevance ranking. Users subscribe to a curated catalog of feeds, define their interests in natural language, and receive a personalized feed of articles ranked by relevance — without having to search manually.
 
 The project follows a **hybrid model**: the codebase is open source and Docker-ready for self-hosters, while a paid hosted tier runs the same code on managed infrastructure.
 
@@ -27,19 +27,44 @@ The project follows a **hybrid model**: the codebase is open source and Docker-r
 
 ---
 
+## Architecture
+
+The project is a monorepo with two packages: a stateless Python backend and a NextJS frontend.
+
+```
+Backend (stateless Python API)
+    └── Responsible for fetching, parsing, embedding, and ranking articles
+    └── No knowledge of users, persistence, or auth
+    └── Accepts feeds and queries, returns ranked articles
+
+Frontend (NextJS — full stack)
+    └── Supabase — persistence, auth, pgvector
+    └── Feed catalog and user subscriptions
+    └── User interests and groups
+    └── Scheduling — periodic feed fetching via backend
+    └── Client UI — article reading, interest management, groups
+```
+
+---
+
 ## Stack
 
+### Backend
 | Component          | Technology                                            |
 | ------------------ | ----------------------------------------------------- |
 | API Framework      | FastAPI                                               |
-| Database           | Supabase (PostgreSQL)                                 |
-| Vector Search      | Supabase pgvector                                     |
-| Authentication     | Supabase Auth                                         |
 | Embeddings         | sentence-transformers (`all-MiniLM-L6-v2`) by default |
 | Embedder Interface | Pluggable — swappable via config                      |
 | Feed Parsing       | feedparser                                            |
-| Background Polling | APScheduler                                           |
 | Containerization   | Docker                                                |
+
+### Frontend
+| Component      | Technology            |
+| -------------- | --------------------- |
+| Framework      | NextJS (full stack)   |
+| Database       | Supabase (PostgreSQL) |
+| Vector Search  | Supabase pgvector     |
+| Authentication | Supabase Auth         |
 
 ### Embedder Interface
 
@@ -59,7 +84,7 @@ EMBEDDER=cohere       # Cohere embed-english-v3.0
 
 Self-hosters:
 1. Create a free Supabase project
-2. Run the provided migration script to set up schema and pgvector
+2. Run the provided migration script to set up schema
 3. Copy `.env.example` to `.env` and paste in Supabase URL and API keys
 4. Run the app via Docker
 
@@ -67,175 +92,65 @@ Infrastructure as Code (Supabase CLI migrations) will be provided to make setup 
 
 ---
 
-## Database Schema
+## Backend API
 
-### `catalog_feeds`
-Global feed catalog, maintained by the app.
+The backend is a stateless ranking and embedding service. It has no knowledge of users, feeds, or persistence. The frontend supplies feeds and queries, the backend returns ranked articles.
 
-| Column             | Type      | Notes                       |
-| ------------------ | --------- | --------------------------- |
-| id                 | uuid      | primary key                 |
-| title              | text      |                             |
-| url                | text      | unique                      |
-| suggested_category | text      | nullable, e.g. "Technology" |
-| last_fetched_at    | timestamp | nullable                    |
-| created_at         | timestamp |                             |
-
-### `articles`
-Shared across all users — fetched and embedded once per feed.
-
-| Column          | Type        | Notes                                   |
-| --------------- | ----------- | --------------------------------------- |
-| id              | uuid        | primary key                             |
-| feed_id         | uuid        | references catalog_feeds(id)            |
-| title           | text        |                                         |
-| url             | text        | unique                                  |
-| content         | text        | full article content                    |
-| published_at    | timestamp   |                                         |
-| embedding       | vector(384) | pgvector, 384 dims for all-MiniLM-L6-v2 |
-| embedding_model | text        | e.g. "all-MiniLM-L6-v2"                 |
-| created_at      | timestamp   |                                         |
-
-### `user_subscriptions`
-Which catalog feeds a user follows.
-
-| Column     | Type      | Notes                          |
-| ---------- | --------- | ------------------------------ |
-| user_id    | uuid      | references users(id)           |
-| feed_id    | uuid      | references catalog_feeds(id)   |
-| created_at | timestamp |                                |
-|            |           | primary key (user_id, feed_id) |
-
-### `user_article_state`
-Per-user read/saved state. Rows only created on interaction.
-
-| Column     | Type      | Notes                             |
-| ---------- | --------- | --------------------------------- |
-| user_id    | uuid      | references users(id)              |
-| article_id | uuid      | references articles(id)           |
-| is_read    | boolean   | default false                     |
-| is_saved   | boolean   | default false                     |
-| created_at | timestamp |                                   |
-|            |           | primary key (user_id, article_id) |
-
-### `user_groups`
-User-defined feed groupings.
-
-| Column     | Type      | Notes                |
-| ---------- | --------- | -------------------- |
-| id         | uuid      | primary key          |
-| user_id    | uuid      | references users(id) |
-| name       | text      |                      |
-| created_at | timestamp |                      |
-
-### `user_interests`
-User-defined interest queries. Embeddings are pre-computed and stored.
-
-| Column          | Type        | Notes                                        |
-| --------------- | ----------- | -------------------------------------------- |
-| id              | uuid        | primary key                                  |
-| user_id         | uuid        | references users(id)                         |
-| query           | text        | e.g. "AI research and large language models" |
-| embedding       | vector(384) | pre-computed embedding of the query          |
-| embedding_model | text        | e.g. "all-MiniLM-L6-v2"                      |
-| created_at      | timestamp   |                                              |
-
-### `user_article_scores`
-Pre-computed relevance scores per user per article. Score is the highest similarity across all of the user's interest queries.
-
-| Column     | Type      | Notes                                    |
-| ---------- | --------- | ---------------------------------------- |
-| user_id    | uuid      | references users(id)                     |
-| article_id | uuid      | references articles(id)                  |
-| score      | float     | max similarity across all user interests |
-| updated_at | timestamp |                                          |
-|            |           | primary key (user_id, article_id)        |
-
-### `user_group_feeds`
-Feeds within a user group.
-
-| Column   | Type | Notes                           |
-| -------- | ---- | ------------------------------- |
-| group_id | uuid | references user_groups(id)      |
-| feed_id  | uuid | references catalog_feeds(id)    |
-|          |      | primary key (group_id, feed_id) |
-
----
-
-## API
-
-### Auth
+### Rank
 ```
-POST   /auth/register
-POST   /auth/login
-POST   /auth/logout
-POST   /auth/refresh
+POST   /rank
 ```
 
-### Catalog
-```
-GET    /catalog
-GET    /catalog?category=Technology
-```
-
-### Subscriptions
-```
-POST   /subscriptions
-DELETE /subscriptions/{feed_id}
-GET    /subscriptions
-```
-
-### Groups
-```
-POST   /groups
-GET    /groups
-DELETE /groups/{id}
-PATCH  /groups/{id}
-POST   /groups/{id}/feeds
-DELETE /groups/{id}/feeds/{feed_id}
-GET    /groups/{id}/feeds
-```
-
-### Interests
-```
-POST   /interests               # Add an interest query
-GET    /interests               # List my interests
-DELETE /interests/{id}          # Remove an interest
-```
-
-### Articles
-```
-GET    /articles                # All articles from subscribed feeds, ranked by relevance
-GET    /articles?unread=true
-GET    /articles?saved=true
-GET    /articles?feed_id=...
-GET    /articles?group_id=...
-GET    /articles/{id}
-POST   /articles/{id}/read
-POST   /articles/{id}/unread
-POST   /articles/{id}/save
-POST   /articles/{id}/unsave
-```
-
-Articles are always returned ranked by pre-computed relevance score (highest first). Each article includes its score:
-
+Request:
 ```json
 {
-  "results": [
+  "feeds": ["https://techcrunch.com/feed", "..."],
+  "queries": ["AI research", "startup funding"]
+}
+```
+
+Response:
+```json
+{
+  "rankings": [
     {
-      "id": "...",
-      "feed_id": "...",
-      "feed_title": "...",
-      "title": "...",
-      "url": "...",
-      "content": "...",
-      "published_at": "...",
-      "relevance_score": 0.92,
-      "is_read": false,
-      "is_saved": false
+      "query": "AI research",
+      "results": [
+        {
+          "feed_url": "...",
+          "title": "...",
+          "url": "...",
+          "content": "...",
+          "published_at": "...",
+          "relevance_score": 0.92
+        }
+      ]
+    },
+    {
+      "query": "startup funding",
+      "results": [...]
     }
-  ],
-  "total": 142
+  ]
+}
+```
+
+### Embed
+```
+POST   /embed
+```
+
+Request:
+```json
+{
+  "texts": ["AI research and large language models", "..."]
+}
+```
+
+Response:
+```json
+{
+  "embeddings": [[0.1, 0.2, ...], ...],
+  "model": "all-MiniLM-L6-v2"
 }
 ```
 
@@ -247,18 +162,133 @@ GET    /config
 
 ---
 
-## Background Job Flow
+## Frontend Responsibilities
+
+All user-facing concerns live in the NextJS frontend:
+
+### Supabase Schema
+
+#### `catalog_feeds`
+Global feed catalog, maintained by the app.
+
+| Column             | Type      | Notes       |
+| ------------------ | --------- | ----------- |
+| id                 | uuid      | primary key |
+| title              | text      |             |
+| url                | text      | unique      |
+| suggested_category | text      | nullable    |
+| created_at         | timestamp |             |
+
+#### `articles`
+Fetched and stored by the frontend on a schedule.
+
+| Column          | Type        | Notes                        |
+| --------------- | ----------- | ---------------------------- |
+| id              | uuid        | primary key                  |
+| feed_id         | uuid        | references catalog_feeds(id) |
+| title           | text        |                              |
+| url             | text        | unique                       |
+| content         | text        | full article content         |
+| published_at    | timestamp   |                              |
+| embedding       | vector(384) | pgvector                     |
+| embedding_model | text        |                              |
+| created_at      | timestamp   |                              |
+
+#### `user_subscriptions`
+| Column     | Type      | Notes                          |
+| ---------- | --------- | ------------------------------ |
+| user_id    | uuid      | references users(id)           |
+| feed_id    | uuid      | references catalog_feeds(id)   |
+| created_at | timestamp |                                |
+|            |           | primary key (user_id, feed_id) |
+
+#### `user_article_state`
+| Column     | Type      | Notes                             |
+| ---------- | --------- | --------------------------------- |
+| user_id    | uuid      | references users(id)              |
+| article_id | uuid      | references articles(id)           |
+| is_read    | boolean   | default false                     |
+| is_saved   | boolean   | default false                     |
+| created_at | timestamp |                                   |
+|            |           | primary key (user_id, article_id) |
+
+#### `user_groups`
+| Column     | Type      | Notes                |
+| ---------- | --------- | -------------------- |
+| id         | uuid      | primary key          |
+| user_id    | uuid      | references users(id) |
+| name       | text      |                      |
+| created_at | timestamp |                      |
+
+#### `user_group_feeds`
+| Column   | Type | Notes                           |
+| -------- | ---- | ------------------------------- |
+| group_id | uuid | references user_groups(id)      |
+| feed_id  | uuid | references catalog_feeds(id)    |
+|          |      | primary key (group_id, feed_id) |
+
+#### `user_interests`
+| Column          | Type        | Notes                           |
+| --------------- | ----------- | ------------------------------- |
+| id              | uuid        | primary key                     |
+| user_id         | uuid        | references users(id)            |
+| query           | text        |                                 |
+| embedding       | vector(384) | pre-computed via backend /embed |
+| embedding_model | text        |                                 |
+| created_at      | timestamp   |                                 |
+
+#### `user_article_scores`
+| Column     | Type      | Notes                                    |
+| ---------- | --------- | ---------------------------------------- |
+| user_id    | uuid      | references users(id)                     |
+| article_id | uuid      | references articles(id)                  |
+| score      | float     | max similarity across all user interests |
+| updated_at | timestamp |                                          |
+|            |           | primary key (user_id, article_id)        |
+
+### Frontend API Routes
 
 ```
-Daily poll
-    ├── Fetch new articles from all catalog feeds
-    ├── Store articles + compute and store embeddings
-    └── For each subscribed user
-            └── Compute score (max similarity across user's interests)
-                    └── Store in user_article_scores
+# Auth (Supabase)
+POST   /auth/register
+POST   /auth/login
+POST   /auth/logout
+POST   /auth/refresh
 
-On user adds/removes an interest
-    └── Recompute user_article_scores for that user across all subscribed articles
+# Catalog
+GET    /catalog
+GET    /catalog?category=Technology
+
+# Subscriptions
+POST   /subscriptions
+DELETE /subscriptions/{feed_id}
+GET    /subscriptions
+
+# Groups
+POST   /groups
+GET    /groups
+DELETE /groups/{id}
+PATCH  /groups/{id}
+POST   /groups/{id}/feeds
+DELETE /groups/{id}/feeds/{feed_id}
+GET    /groups/{id}/feeds
+
+# Interests
+POST   /interests
+GET    /interests
+DELETE /interests/{id}
+
+# Articles
+GET    /articles
+GET    /articles?unread=true
+GET    /articles?saved=true
+GET    /articles?feed_id=...
+GET    /articles?group_id=...
+GET    /articles/{id}
+POST   /articles/{id}/read
+POST   /articles/{id}/unread
+POST   /articles/{id}/save
+POST   /articles/{id}/unsave
 ```
 
 ---
@@ -280,24 +310,21 @@ Categories are suggestions only — the backend treats all feeds the same. Users
 ## V1 Scope
 
 - Curated feed catalog (no custom feeds yet)
-- User subscriptions
-- Personal feed groups
-- Article ingestion with background polling
+- User subscriptions and personal feed groups
 - User interest queries with pre-computed relevance scoring
 - Articles ranked by relevance to user interests
 - Read/unread and saved/unsaved article state
+- Stateless Python backend — fetch, embed, rank
 - Pluggable embedder (local by default)
+- NextJS frontend with Supabase
 - Docker deployment
-- Supabase migration scripts
 - CI pipeline: feed validation + ranking golden dataset tests
 
 ## V2 / Future
 
 - Custom user-added feeds
 - Keyword filtering alongside interest-based ranking
-- Manual search across articles
 - AI summarization
-- UI layer
 - Billing / subscription management for hosted tier
-- GPU-accelerated embeddings for hosted tier
 - Frontier embedding model evaluation (OpenAI, Cohere) vs local baseline
+
