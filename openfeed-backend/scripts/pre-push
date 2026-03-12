@@ -11,19 +11,30 @@ url="$2"
 # Check if there are any changes in openfeed-backend directory
 # Compare against the remote branch we're pushing to
 if git diff --staged --name-only origin/main...HEAD | grep -q "^openfeed-backend/"; then
-    echo "Backend changes detected, running tests..."
+    echo "Backend changes detected, checking which tests to run..."
     
     cd "$(git rev-parse --show-toplevel)/openfeed-backend"
 
-    # Run ingestion tests
-    echo "→ Running ingestion tests..."
-    pytest tests/test_ingestion.py -v
+    # Get list of changed files
+    changed_files=$(git diff --staged --name-only origin/main...HEAD)
 
-    # Run scoring tests  
-    echo "→ Running scoring tests..."
-    pytest tests/test_scoring.py -v
+    # Check if ingestion-related files changed
+    if echo "$changed_files" | grep -qE "openfeed-backend/(openfeed/ingestion.py|openfeed/fixtures/feeds.json)"; then
+        echo "→ Ingestion-related files changed, running ingestion tests..."
+        pytest tests/test_ingestion.py -v
+    else
+        echo "→ No ingestion-related changes, skipping ingestion tests."
+    fi
 
-    echo "✓ All tests passed!"
+    # Check if scoring-related files changed
+    if echo "$changed_files" | grep -qE "openfeed-backend/(openfeed/scoring.py|openfeed/fixtures/articles.json)"; then
+        echo "→ Scoring-related files changed, running scoring tests..."
+        pytest tests/test_scoring.py -v
+    else
+        echo "→ No scoring-related changes, skipping scoring tests."
+    fi
+
+    echo "✓ All required tests passed!"
 else
     echo "No backend changes detected, skipping tests."
 fi
