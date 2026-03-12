@@ -1,8 +1,8 @@
 import pytest
 
-from app.scoring import rank_articles
-from app.embedder.local import LocalEmbedder
-from app.fixtures.collect_fixtures import load_articles
+from openfeed.scoring import rank_articles
+from openfeed.embedder.local import LocalEmbedder
+from openfeed.fixtures.collect_fixtures import load_articles
 
 
 @pytest.fixture(scope="module")

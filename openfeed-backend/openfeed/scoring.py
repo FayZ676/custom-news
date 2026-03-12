@@ -1,8 +1,8 @@
 import numpy as np
 from pydantic import BaseModel
 
-from app.embedder.base import BaseEmbedder
-from app.models.feed_article import FeedArticle
+from openfeed.embedder.base import BaseEmbedder
+from openfeed.models.feed_article import FeedArticle
 
 
 class FeedArticleRanked(BaseModel):

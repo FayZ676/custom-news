@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from app.embedder.local import LocalEmbedder
-from app.models.feed_article import FeedArticle
-from app.scoring import rank_articles, FeedArticleRanked
+from openfeed.embedder.local import LocalEmbedder
+from openfeed.models.feed_article import FeedArticle
+from openfeed.scoring import rank_articles, FeedArticleRanked
 
 
 app = FastAPI()

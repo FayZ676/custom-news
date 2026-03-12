@@ -1,6 +1,6 @@
 import feedparser
 
-from app.models.feed_article import FeedArticle
+from openfeed.models.feed_article import FeedArticle
 
 
 def get_articles(url: str) -> list[FeedArticle]:

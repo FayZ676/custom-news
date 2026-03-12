@@ -5,14 +5,11 @@ description = "Self-hostable RSS feed aggregator with interest-based relevance r
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.34.0",
+    "feedparser>=6.0.11",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
-    "feedparser>=6.0.11",
-    "apscheduler>=3.11.0",
     "sentence-transformers>=3.4.0",
-    "supabase>=2.13.0",
-    "httpx>=0.28.0",
+    "uvicorn[standard]>=0.34.0",
 ]
 
 [project.optional-dependencies]

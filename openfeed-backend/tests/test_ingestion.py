@@ -1,8 +1,8 @@
 import pytest
 
-from app.ingestion import get_articles
-from app.models.feed_article import Feed
-from app.fixtures.collect_fixtures import load_feeds
+from openfeed.ingestion import get_articles
+from openfeed.models.feed_article import Feed
+from openfeed.fixtures.collect_fixtures import load_feeds
 
 
 @pytest.mark.integration

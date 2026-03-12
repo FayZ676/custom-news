@@ -1,6 +1,6 @@
 from sentence_transformers import SentenceTransformer
 
-from app.embedder.base import BaseEmbedder
+from openfeed.embedder.base import BaseEmbedder
 
 
 class LocalEmbedder(BaseEmbedder):
