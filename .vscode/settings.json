@@ -1,0 +1,3 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/openfeed-backend/.venv/bin/python"
+}
