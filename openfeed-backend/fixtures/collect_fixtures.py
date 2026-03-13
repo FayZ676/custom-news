@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
+from openfeed.models import Feed, Article
 from openfeed.embedder.local import LocalEmbedder
-from openfeed.models.feed_article import Feed, FeedArticle
 
 
-def persist(results: list[FeedArticle], path: Path) -> None:
+def persist(results: list[Article], path: Path) -> None:
     data = [article.model_dump(mode="json") for article in results]
     path.write_text(json.dumps(data, indent=2))
 
@@ -21,11 +21,11 @@ def load_feeds() -> list[Feed]:
     return [Feed(**feed) for feed in data["feeds"]]
 
 
-def load_articles() -> list[FeedArticle]:
+def load_articles() -> list[Article]:
     articles_path = Path(__file__).parent / "articles.json"
     with open(articles_path) as f:
         data = json.load(f)
-    return [FeedArticle(**article) for article in data]
+    return [Article(**article) for article in data]
 
 
 def load_embeddings() -> list[list[float]]:

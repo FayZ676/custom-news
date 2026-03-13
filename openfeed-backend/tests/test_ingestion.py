@@ -1,7 +1,7 @@
 import pytest
 
+from openfeed.models import Feed
 from openfeed.ingestion import get_articles
-from openfeed.models.feed_article import Feed
 
 from fixtures.collect_fixtures import load_feeds
 

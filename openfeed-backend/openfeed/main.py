@@ -4,8 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from openfeed.ingestion import get_articles
 from openfeed.embedder.local import LocalEmbedder
-from openfeed.models.feed_article import FeedArticle
-from openfeed.scoring import rank_embeddings, EmbeddingsRanked
+from openfeed.models import Article, ArticleEmbeddings
+from openfeed.ranking import rank_articles, ArticleRanked
 
 
 app = FastAPI()
@@ -25,12 +25,12 @@ app.add_middleware(
 
 
 class RankRequest(BaseModel):
-    query_embeddings: list[float]
-    text_embeddings: list[list[float]]
+    query: str
+    article_embeddings: list[ArticleEmbeddings]
 
 
 @app.post("/articles")
-def articles(feeds: list[str]) -> list[FeedArticle]:
+def articles(feeds: list[str]) -> list[Article]:
     articles = []
     for feed in feeds:
         articles.extend(get_articles(feed))
@@ -38,8 +38,9 @@ def articles(feeds: list[str]) -> list[FeedArticle]:
 
 
 @app.post("/rank")
-def rank(request: RankRequest) -> list[EmbeddingsRanked]:
-    return rank_embeddings(request.text_embeddings, request.query_embeddings)
+def rank(request: RankRequest) -> list[ArticleRanked]:
+    query_embeddings = embedder.embed([request.query])[0]
+    return rank_articles(request.article_embeddings, query_embeddings)
 
 
 @app.post("/embed")
