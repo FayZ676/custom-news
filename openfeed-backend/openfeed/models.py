@@ -1,3 +1,4 @@
+from typing import Literal
 from datetime import datetime
 from html.parser import HTMLParser
 from email.utils import parsedate_to_datetime
@@ -21,6 +22,9 @@ def _strip_html(text: str) -> str:
     stripper = _HTMLStripper()
     stripper.feed(text)
     return stripper.get_text()
+
+
+EmbeddingsModel = Literal["all-MiniLM-L6-v2"]
 
 
 class Feed(BaseModel):
@@ -84,3 +88,4 @@ class Article(BaseModel):
 class ArticleEmbeddings(BaseModel):
     article: Article
     embeddings: list[float]
+    embeddings_model: EmbeddingsModel

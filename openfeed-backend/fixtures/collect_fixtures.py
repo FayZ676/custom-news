@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from openfeed.models import Feed, Article
-from openfeed.embedder.local import LocalEmbedder
+from openfeed.embedder.local import LocalEmbedder, EmbeddingsResult
 
 
 def persist(results: list[Article], path: Path) -> None:
@@ -10,7 +10,7 @@ def persist(results: list[Article], path: Path) -> None:
     path.write_text(json.dumps(data, indent=2))
 
 
-def persist_embeddings(embeddings: list[list[float]], path: Path) -> None:
+def persist_embeddings(embeddings: EmbeddingsResult, path: Path) -> None:
     path.write_text(json.dumps(embeddings, indent=2))
 
 
