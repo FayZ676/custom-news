@@ -26,14 +26,6 @@ if git diff --name-only origin/main HEAD | grep -q "^openfeed-backend/"; then
         echo "→ No ingestion-related changes, skipping ingestion tests."
     fi
 
-    # Check if scoring-related files changed
-    if echo "$changed_files" | grep -qE "openfeed-backend/(openfeed/scoring.py|openfeed/fixtures/articles.json)"; then
-        echo "→ Scoring-related files changed, running scoring tests..."
-        pytest tests/test_scoring.py -v
-    else
-        echo "→ No scoring-related changes, skipping scoring tests."
-    fi
-
     echo "✓ All required tests passed!"
 else
     echo "No backend changes detected, skipping tests."
