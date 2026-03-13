@@ -2,7 +2,8 @@ import pytest
 
 from openfeed.ingestion import get_articles
 from openfeed.models.feed_article import Feed
-from openfeed.fixtures.collect_fixtures import load_feeds
+
+from fixtures.collect_fixtures import load_feeds
 
 
 @pytest.mark.integration
