@@ -1,2 +1,0 @@
--- Create articles table
--- Create feeds table

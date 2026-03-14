@@ -1,1 +1,0 @@
-# Helper command to run migrations to initialize supabase
