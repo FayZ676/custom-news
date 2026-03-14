@@ -29,42 +29,85 @@ The project follows a **hybrid model**: the codebase is open source and Docker-r
 
 ## Architecture
 
-The project is a monorepo with two packages: a stateless Python backend and a NextJS frontend.
+The project is a monorepo with three top-level folders: a stateless Python backend, a NextJS frontend, and a database folder containing all Supabase migrations and seed data.
 
 ```
 Backend (stateless Python API)
-    └── Responsible for fetching, parsing, embedding, and ranking articles
-    └── No knowledge of users, persistence, or auth
-    └── Accepts feeds and queries, returns ranked articles
+    └── Fetches and parses articles from RSS feeds
+    └── Produces embeddings for articles and queries
+    └── No knowledge of users, persistence, auth, or ranking
 
 Frontend (NextJS — full stack)
     └── Supabase — persistence, auth, pgvector
     └── Feed catalog and user subscriptions
     └── User interests and groups
     └── Scheduling — periodic feed fetching via backend
+    └── Ranking — pgvector similarity queries in Supabase
     └── Client UI — article reading, interest management, groups
+
+Database (Supabase CLI)
+    └── All migrations as versioned SQL files
+    └── Seed data for initial catalog feeds
+    └── Independent of backend and frontend — shared concern
 ```
+
+---
+
+## Database
+
+Managed via the Supabase CLI. The `db/` folder is self-contained and independent of the backend and frontend.
+
+### Structure
+
+```
+db/
+├── supabase/
+│   ├── config.toml                              # Supabase project config
+│   ├── seed.sql                                 # initial catalog_feeds rows
+│   └── migrations/
+│       ├── 00001_create_catalog_feeds.sql
+│       ├── 00002_create_articles.sql
+│       ├── 00003_create_user_subscriptions.sql
+│       ├── 00004_create_user_article_state.sql
+│       ├── 00005_create_user_groups.sql
+│       ├── 00006_create_user_group_feeds.sql
+│       ├── 00007_create_user_interests.sql
+│       └── 00008_create_user_article_scores.sql
+└── README.md                                    # setup instructions for self-hosters
+```
+
+### Workflow
+
+```bash
+supabase init      # initialise the supabase folder
+supabase start     # spin up local Supabase instance for development
+supabase db push   # apply migrations to remote Supabase project
+```
+
+### Self-hosting
+
+Self-hosters run `supabase db push` against their own Supabase project. The `seed.sql` file populates the initial `catalog_feeds` rows so the catalog is immediately ready to use.
 
 ---
 
 ## Stack
 
 ### Backend
-| Component          | Technology                                            |
-| ------------------ | ----------------------------------------------------- |
-| API Framework      | FastAPI                                               |
-| Embeddings         | sentence-transformers (`all-MiniLM-L6-v2`) by default |
-| Embedder Interface | Pluggable — swappable via config                      |
-| Feed Parsing       | feedparser                                            |
-| Containerization   | Docker                                                |
+| Component | Technology |
+|---|---|
+| API Framework | FastAPI |
+| Embeddings | sentence-transformers (`all-MiniLM-L6-v2`) by default |
+| Embedder Interface | Pluggable — swappable via config |
+| Feed Parsing | feedparser |
+| Containerization | Docker |
 
 ### Frontend
-| Component      | Technology            |
-| -------------- | --------------------- |
-| Framework      | NextJS (full stack)   |
-| Database       | Supabase (PostgreSQL) |
-| Vector Search  | Supabase pgvector     |
-| Authentication | Supabase Auth         |
+| Component | Technology |
+|---|---|
+| Framework | NextJS (full stack) |
+| Database | Supabase (PostgreSQL) |
+| Vector Search | Supabase pgvector |
+| Authentication | Supabase Auth |
 
 ### Embedder Interface
 
@@ -84,57 +127,50 @@ EMBEDDER=cohere       # Cohere embed-english-v3.0
 
 Self-hosters:
 1. Create a free Supabase project
-2. Run the provided migration script to set up schema
-3. Copy `.env.example` to `.env` and paste in Supabase URL and API keys
+2. Run `supabase db push` from the `db/` folder to apply migrations and seed data
+3. Copy `.env.example` to `.env` in both `backend/` and `frontend/` and paste in Supabase URL and API keys
 4. Run the app via Docker
 
-Infrastructure as Code (Supabase CLI migrations) will be provided to make setup as simple as possible.
+Infrastructure as Code (Supabase CLI migrations) is provided in `db/` to make setup as simple as possible.
 
 ---
 
 ## Backend API
 
-The backend is a stateless ranking and embedding service. It has no knowledge of users, feeds, or persistence. The frontend supplies feeds and queries, the backend returns ranked articles.
+The backend is a stateless service responsible for fetching articles from RSS feeds and producing embeddings. Ranking is handled by the frontend via Supabase pgvector similarity queries.
 
-### Rank
+### Fetch Articles and Embeddings
 ```
-POST   /rank
+POST   /articles
 ```
 
 Request:
 ```json
 {
-  "feeds": ["https://techcrunch.com/feed", "..."],
-  "queries": ["AI research", "startup funding"]
+  "feeds": ["https://techcrunch.com/feed", "..."]
 }
 ```
 
 Response:
 ```json
 {
-  "rankings": [
+  "articles": [
     {
-      "query": "AI research",
-      "results": [
-        {
-          "feed_url": "...",
-          "title": "...",
-          "url": "...",
-          "content": "...",
-          "published_at": "...",
-          "relevance_score": 0.92
-        }
-      ]
-    },
-    {
-      "query": "startup funding",
-      "results": [...]
+      "feed_url": "...",
+      "title": "...",
+      "url": "...",
+      "content": "...",
+      "published_at": "...",
+      "embedding": [0.1, 0.2, ...],
+      "embedding_model": "all-MiniLM-L6-v2"
     }
   ]
 }
 ```
 
-### Embed
+Fetching articles and their embeddings are always done in tandem — the caller always needs both together, never one without the other.
+
+### Embed a Query
 ```
 POST   /embed
 ```
@@ -142,23 +178,39 @@ POST   /embed
 Request:
 ```json
 {
-  "texts": ["AI research and large language models", "..."]
+  "text": "AI research and large language models"
 }
 ```
 
 Response:
 ```json
 {
-  "embeddings": [[0.1, 0.2, ...], ...],
+  "embedding": [0.1, 0.2, ...],
   "model": "all-MiniLM-L6-v2"
 }
 ```
+
+Used by the frontend to embed user interest queries before storing them in Supabase and performing pgvector similarity searches.
 
 ### System
 ```
 GET    /health
 GET    /config
 ```
+
+---
+
+## Ranking
+
+Ranking is handled entirely by the frontend via Supabase pgvector. Once article embeddings and query embeddings are stored, the frontend queries Supabase directly:
+
+```sql
+SELECT * FROM articles
+ORDER BY embedding <=> query_embedding
+LIMIT 20;
+```
+
+This keeps the backend stateless and leverages pgvector for what it is built for.
 
 ---
 
@@ -171,80 +223,80 @@ All user-facing concerns live in the NextJS frontend:
 #### `catalog_feeds`
 Global feed catalog, maintained by the app.
 
-| Column             | Type      | Notes       |
-| ------------------ | --------- | ----------- |
-| id                 | uuid      | primary key |
-| title              | text      |             |
-| url                | text      | unique      |
-| suggested_category | text      | nullable    |
-| created_at         | timestamp |             |
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | primary key |
+| title | text | |
+| url | text | unique |
+| suggested_category | text | nullable |
+| created_at | timestamp | |
 
 #### `articles`
 Fetched and stored by the frontend on a schedule.
 
-| Column          | Type        | Notes                        |
-| --------------- | ----------- | ---------------------------- |
-| id              | uuid        | primary key                  |
-| feed_id         | uuid        | references catalog_feeds(id) |
-| title           | text        |                              |
-| url             | text        | unique                       |
-| content         | text        | full article content         |
-| published_at    | timestamp   |                              |
-| embedding       | vector(384) | pgvector                     |
-| embedding_model | text        |                              |
-| created_at      | timestamp   |                              |
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | primary key |
+| feed_id | uuid | references catalog_feeds(id) |
+| title | text | |
+| url | text | unique |
+| content | text | full article content |
+| published_at | timestamp | |
+| embedding | vector(384) | pgvector |
+| embedding_model | text | |
+| created_at | timestamp | |
 
 #### `user_subscriptions`
-| Column     | Type      | Notes                          |
-| ---------- | --------- | ------------------------------ |
-| user_id    | uuid      | references users(id)           |
-| feed_id    | uuid      | references catalog_feeds(id)   |
-| created_at | timestamp |                                |
-|            |           | primary key (user_id, feed_id) |
+| Column | Type | Notes |
+|---|---|---|
+| user_id | uuid | references users(id) |
+| feed_id | uuid | references catalog_feeds(id) |
+| created_at | timestamp | |
+| | | primary key (user_id, feed_id) |
 
 #### `user_article_state`
-| Column     | Type      | Notes                             |
-| ---------- | --------- | --------------------------------- |
-| user_id    | uuid      | references users(id)              |
-| article_id | uuid      | references articles(id)           |
-| is_read    | boolean   | default false                     |
-| is_saved   | boolean   | default false                     |
-| created_at | timestamp |                                   |
-|            |           | primary key (user_id, article_id) |
+| Column | Type | Notes |
+|---|---|---|
+| user_id | uuid | references users(id) |
+| article_id | uuid | references articles(id) |
+| is_read | boolean | default false |
+| is_saved | boolean | default false |
+| created_at | timestamp | |
+| | | primary key (user_id, article_id) |
 
 #### `user_groups`
-| Column     | Type      | Notes                |
-| ---------- | --------- | -------------------- |
-| id         | uuid      | primary key          |
-| user_id    | uuid      | references users(id) |
-| name       | text      |                      |
-| created_at | timestamp |                      |
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | primary key |
+| user_id | uuid | references users(id) |
+| name | text | |
+| created_at | timestamp | |
 
 #### `user_group_feeds`
-| Column   | Type | Notes                           |
-| -------- | ---- | ------------------------------- |
-| group_id | uuid | references user_groups(id)      |
-| feed_id  | uuid | references catalog_feeds(id)    |
-|          |      | primary key (group_id, feed_id) |
+| Column | Type | Notes |
+|---|---|---|
+| group_id | uuid | references user_groups(id) |
+| feed_id | uuid | references catalog_feeds(id) |
+| | | primary key (group_id, feed_id) |
 
 #### `user_interests`
-| Column          | Type        | Notes                           |
-| --------------- | ----------- | ------------------------------- |
-| id              | uuid        | primary key                     |
-| user_id         | uuid        | references users(id)            |
-| query           | text        |                                 |
-| embedding       | vector(384) | pre-computed via backend /embed |
-| embedding_model | text        |                                 |
-| created_at      | timestamp   |                                 |
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | primary key |
+| user_id | uuid | references users(id) |
+| query | text | |
+| embedding | vector(384) | pre-computed via backend /embed |
+| embedding_model | text | |
+| created_at | timestamp | |
 
 #### `user_article_scores`
-| Column     | Type      | Notes                                    |
-| ---------- | --------- | ---------------------------------------- |
-| user_id    | uuid      | references users(id)                     |
-| article_id | uuid      | references articles(id)                  |
-| score      | float     | max similarity across all user interests |
-| updated_at | timestamp |                                          |
-|            |           | primary key (user_id, article_id)        |
+| Column | Type | Notes |
+|---|---|---|
+| user_id | uuid | references users(id) |
+| article_id | uuid | references articles(id) |
+| score | float | max similarity across all user interests |
+| updated_at | timestamp | |
+| | | primary key (user_id, article_id) |
 
 ### Frontend API Routes
 
@@ -311,10 +363,11 @@ Categories are suggestions only — the backend treats all feeds the same. Users
 
 - Curated feed catalog (no custom feeds yet)
 - User subscriptions and personal feed groups
-- User interest queries with pre-computed relevance scoring
-- Articles ranked by relevance to user interests
+- User interest queries
+- Stateless Python backend — fetch articles and produce embeddings
+- Ranking via Supabase pgvector similarity queries
+- Articles ranked per interest query, no merged view
 - Read/unread and saved/unsaved article state
-- Stateless Python backend — fetch, embed, rank
 - Pluggable embedder (local by default)
 - NextJS frontend with Supabase
 - Docker deployment
