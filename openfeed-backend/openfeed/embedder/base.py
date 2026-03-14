@@ -2,15 +2,29 @@ from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
 
+from openfeed.models import EmbeddingsModel
+
 
 class EmbeddingsResult(BaseModel):
+    model: EmbeddingsModel
+
+
+class EmbedManyResult(EmbeddingsResult):
     embeddings: list[list[float]]
-    model: str
+
+
+class EmbedOneResult(EmbeddingsResult):
+    embeddings: list[float]
 
 
 class BaseEmbedder(ABC):
 
     @abstractmethod
-    def embed(self, texts: list[str]) -> EmbeddingsResult:
-        """Embed a list of texts, returning a list of vectors."""
+    def embed_one(self, text: str) -> EmbedOneResult:
+        """Embed a piece of text, returning a list of vectors and the model used."""
         ...
+
+    @abstractmethod
+    def embed_many(self, texts: list[str]) -> EmbedManyResult:
+        ...
+

@@ -1,11 +1,9 @@
-from pydantic import BaseModel
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from openfeed.ingestion import get_articles
-from openfeed.embedder.local import LocalEmbedder
-from openfeed.models import Article, ArticleEmbeddings
-from openfeed.ranking import rank_articles, ArticleRanked
+from openfeed.models import ArticleEmbeddings
+from openfeed.embedder.local import LocalEmbedder, EmbedOneResult
 
 
 app = FastAPI()
@@ -24,25 +22,19 @@ app.add_middleware(
 )
 
 
-class RankRequest(BaseModel):
-    query: str
-    article_embeddings: list[ArticleEmbeddings]
-
-
-@app.post("/articles")
-def articles(feeds: list[str]) -> list[Article]:
-    articles = []
-    for feed in feeds:
-        articles.extend(get_articles(feed))
-    return articles
-
-
-@app.post("/rank")
-def rank(request: RankRequest) -> list[ArticleRanked]:
-    query_embeddings = embedder.embed([request.query])[0]
-    return rank_articles(request.article_embeddings, query_embeddings)
+@app.post("/fetch_articles")
+def fetch_articles(feeds: list[str]) -> list[ArticleEmbeddings]:
+    articles = [article for feed in feeds for article in get_articles(feed)]
+    embeddings = embedder.embed_many([str(a) for a in articles])
+    return [
+        ArticleEmbeddings(
+            article=a,
+            embeddings=e,
+            embeddings_model=embeddings.model
+        ) for a, e in zip(articles, embeddings.embeddings)
+    ]
 
 
 @app.post("/embed")
-def embed(texts: list[str]) -> list[list[float]]:
-    return embedder.embed(texts)
+def embed(text: str) -> EmbedOneResult:
+    return embedder.embed_one(text)
