@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from openfeed.models import Feed, Article
-from openfeed.embedder.local import LocalEmbedder, EmbeddingsResult
+from openfeed.embedder.local import LocalEmbedder, EmbedManyResult
 
 
 def persist(results: list[Article], path: Path) -> None:
@@ -10,7 +10,7 @@ def persist(results: list[Article], path: Path) -> None:
     path.write_text(json.dumps(data, indent=2))
 
 
-def persist_embeddings(embeddings: EmbeddingsResult, path: Path) -> None:
+def persist_embeddings(embeddings: EmbedManyResult, path: Path) -> None:
     path.write_text(json.dumps(embeddings, indent=2))
 
 
@@ -36,7 +36,7 @@ def load_embeddings() -> list[list[float]]:
 
 
 if __name__ == "__main__":
-    article_embeddings = LocalEmbedder().embed(
+    article_embeddings = LocalEmbedder().embed_many(
         [str(article) for article in load_articles()]
     )
     embeddings_path = Path(__file__).parent / "embeddings.json"
