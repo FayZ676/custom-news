@@ -1,8 +1,8 @@
--- Seed data for catalog_feeds table
--- Note: This assumes catalog_categories has already been seeded
+-- Seed data for global_feeds table
+-- Note: This assumes global_categories has already been seeded
 
-INSERT INTO catalog_feeds (title, url, description, category_id)
-SELECT title, url, description, (SELECT id FROM catalog_categories WHERE name = 'Technology')
+INSERT INTO global_feeds (title, url, description, category_id)
+SELECT title, url, description, (SELECT id FROM global_categories WHERE name = 'Technology')
 FROM (VALUES
     ('TechCrunch', 'https://techcrunch.com/feed', 'Startup news, technology trends, product launches, and venture capital coverage.'),
     ('Ars Technica', 'https://feeds.arstechnica.com/arstechnica/index', 'In-depth reporting on technology, science, policy, and gaming.'),

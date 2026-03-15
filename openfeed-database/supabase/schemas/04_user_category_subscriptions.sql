@@ -1,6 +1,6 @@
 create table "user_category_subscriptions" (
     "user_id" uuid not null references auth.users(id) on delete cascade,
-    "category_id" uuid not null references catalog_categories(id) on delete cascade,
+    "category_id" uuid not null references global_categories(id) on delete cascade,
     "created_at" timestamptz not null default now(),
     primary key (user_id, category_id)
 );
