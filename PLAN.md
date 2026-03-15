@@ -65,11 +65,11 @@ Managed via the Supabase CLI. The `db/` folder is self-contained and independent
 db/
 ├── supabase/
 │   ├── config.toml
-│   ├── seed.sql                          # initial catalog_feeds rows
+│   ├── seed.sql                          # initial global_categories and global_feeds rows
 │   ├── schemas/
-│   │   ├── 01_catalog_categories.sql
-│   │   ├── 02_catalog_feeds.sql
-│   │   ├── 03_articles.sql
+│   │   ├── 01_global_categories.sql
+│   │   ├── 02_global_feeds.sql
+│   │   ├── 03_global_articles.sql
 │   │   ├── 04_user_category_subscriptions.sql
 │   │   ├── 05_user_interests.sql
 │   │   └── 06_user_article_scores.sql
@@ -89,7 +89,7 @@ supabase db push                     # apply migrations to remote Supabase proje
 
 ### Self-hosting
 
-Self-hosters run `supabase db push` against their own Supabase project. The `seed.sql` file populates the initial `catalog_feeds` rows so the catalog is immediately ready to use.
+Self-hosters run `supabase db push` against their own Supabase project. The `seed.sql` file populates the initial `global_categories` and `global_feeds` rows so the catalog is immediately ready to use.
 
 ---
 
@@ -214,7 +214,7 @@ GET    /config
 Ranking is handled entirely by the frontend via Supabase pgvector. Once article embeddings and query embeddings are stored, the frontend queries Supabase directly:
 
 ```sql
-SELECT * FROM articles
+SELECT * FROM global_articles
 ORDER BY embedding <=> query_embedding
 LIMIT 20;
 ```
@@ -229,7 +229,7 @@ All user-facing concerns live in the NextJS frontend:
 
 ### Supabase Schema
 
-#### `catalog_categories`
+#### `global_categories`
 Global feed categories, maintained by the app.
 
 | Column     | Type        | Notes            |
@@ -240,27 +240,27 @@ Global feed categories, maintained by the app.
 
 RLS: select only, open to anon and authenticated users.
 
-#### `catalog_feeds`
+#### `global_feeds`
 Global feed catalog, maintained by the app.
 
-| Column      | Type        | Notes                                       |
-| ----------- | ----------- | ------------------------------------------- |
-| id          | uuid        | primary key                                 |
-| title       | text        | not null                                    |
-| url         | text        | unique, not null                            |
-| description | text        | not null                                    |
-| category_id | uuid        | nullable, references catalog_categories(id) |
-| created_at  | timestamptz |                                             |
+| Column      | Type        | Notes                                      |
+| ----------- | ----------- | ------------------------------------------ |
+| id          | uuid        | primary key                                |
+| title       | text        | not null                                   |
+| url         | text        | unique, not null                           |
+| description | text        | not null                                   |
+| category_id | uuid        | nullable, references global_categories(id) |
+| created_at  | timestamptz |                                            |
 
 RLS: select only, open to anon and authenticated users.
 
-#### `articles`
+#### `global_articles`
 Fetched and stored by the frontend on a schedule.
 
 | Column          | Type        | Notes                             |
 | --------------- | ----------- | --------------------------------- |
 | id              | uuid        | primary key                       |
-| feed_id         | uuid        | references catalog_feeds(id)      |
+| feed_id         | uuid        | references global_feeds(id)       |
 | title           | text        | not null                          |
 | url             | text        | unique, not null                  |
 | content         | text        | not null                          |
@@ -277,21 +277,21 @@ Which categories a user follows. All feeds within a subscribed category are incl
 | Column      | Type        | Notes                              |
 | ----------- | ----------- | ---------------------------------- |
 | user_id     | uuid        | references auth.users(id)          |
-| category_id | uuid        | references catalog_categories(id)  |
+| category_id | uuid        | references global_categories(id)   |
 | created_at  | timestamptz |                                    |
 |             |             | primary key (user_id, category_id) |
 
 #### `user_interests`
 User-defined interest queries with pre-computed embeddings.
 
-| Column          | Type        | Notes                           |
-| --------------- | ----------- | ------------------------------- |
-| id              | uuid        | primary key                     |
-| user_id         | uuid        | references auth.users(id)       |
-| query           | text        | not null                        |
-| embedding       | vector(384) | pre-computed via backend /embed |
-| embedding_model | text        |                                 |
-| created_at      | timestamptz |                                 |
+| Column          | Type        | Notes                                     |
+| --------------- | ----------- | ----------------------------------------- |
+| id              | uuid        | primary key                               |
+| user_id         | uuid        | references auth.users(id)                 |
+| query           | text        | not null                                  |
+| embedding       | vector(384) | not null, pre-computed via backend /embed |
+| embedding_model | text        | not null                                  |
+| created_at      | timestamptz |                                           |
 
 #### `user_article_scores`
 Top N pre-computed relevance scores per user per interest. Only the top N articles per interest are stored to keep the table manageable.
@@ -300,7 +300,7 @@ Top N pre-computed relevance scores per user per interest. Only the top N articl
 | ----------- | ----------- | ---------------------------------------------- |
 | user_id     | uuid        | references auth.users(id)                      |
 | interest_id | uuid        | references user_interests(id)                  |
-| article_id  | uuid        | references articles(id)                        |
+| article_id  | uuid        | references global_articles(id)                 |
 | score       | float       | cosine similarity score                        |
 | updated_at  | timestamptz |                                                |
 |             |             | primary key (user_id, interest_id, article_id) |
@@ -317,9 +317,9 @@ POST   /auth/login
 POST   /auth/logout
 POST   /auth/refresh
 
-# Catalog
-GET    /catalog/categories
-GET    /catalog/categories/{id}/feeds
+# Categories
+GET    /categories
+GET    /categories/{id}/feeds
 
 # Subscriptions (category-level)
 POST   /subscriptions
