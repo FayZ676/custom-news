@@ -232,11 +232,12 @@ All user-facing concerns live in the NextJS frontend:
 #### `global_categories`
 Global feed categories, maintained by the app.
 
-| Column     | Type        | Notes            |
-| ---------- | ----------- | ---------------- |
-| id         | uuid        | primary key      |
-| name       | text        | unique, not null |
-| created_at | timestamptz |                  |
+| Column               | Type        | Notes                                                       |
+| -------------------- | ----------- | ----------------------------------------------------------- |
+| id                   | uuid        | primary key                                                 |
+| name                 | text        | unique, not null                                            |
+| interest_suggestions | jsonb       | not null, default '[]', array of suggested interest queries |
+| created_at           | timestamptz |                                                             |
 
 RLS: select only, open to anon and authenticated users.
 
@@ -335,6 +336,20 @@ DELETE /interests/{id}
 GET    /articles
 GET    /articles?category_id=...
 GET    /articles/{id}
+```
+
+### Frontend Pages
+
+```
+/                               # landing page, redirect to /feed or /auth/signin
+/auth/signin                    # sign in
+/auth/signup                    # sign up
+/onboarding/categories          # required — select at least one category
+/onboarding/interests           # skippable — add interests with per-category suggestions
+/feed                           # ranked article feed (chronological if no interests)
+/feed?interest_id=...           # feed filtered to a specific interest
+/settings/interests             # manage interests post-onboarding
+/settings/categories            # manage category subscriptions post-onboarding
 ```
 
 ---
