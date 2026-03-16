@@ -1,3 +1,5 @@
+drop extension if exists "pg_cron";
+
 create extension if not exists "vector" with schema "public";
 
 
@@ -77,8 +79,6 @@ alter table "public"."user_interests" enable row level security;
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
-CREATE UNIQUE INDEX global_articles_url_key ON public.global_articles USING btree (url);
-
 CREATE UNIQUE INDEX global_categories_name_key ON public.global_categories USING btree (name);
 
 CREATE UNIQUE INDEX global_categories_pkey ON public.global_categories USING btree (id);
@@ -111,8 +111,6 @@ alter table "public"."global_articles" add constraint "global_articles_feed_id_f
 
 alter table "public"."global_articles" validate constraint "global_articles_feed_id_fkey";
 
-alter table "public"."global_articles" add constraint "global_articles_url_key" UNIQUE using index "global_articles_url_key";
-
 alter table "public"."global_categories" add constraint "global_categories_name_key" UNIQUE using index "global_categories_name_key";
 
 alter table "public"."global_feeds" add constraint "global_feeds_category_id_fkey" FOREIGN KEY (category_id) REFERENCES public.global_categories(id) not valid;
@@ -144,6 +142,19 @@ alter table "public"."user_category_subscriptions" validate constraint "user_cat
 alter table "public"."user_interests" add constraint "user_interests_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_interests" validate constraint "user_interests_user_id_fkey";
+
+set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, match_count integer)
+ RETURNS TABLE(id uuid, similarity double precision)
+ LANGUAGE sql
+AS $function$
+  select id, 1 - (embeddings <=> query_embedding) as similarity
+  from global_articles
+  order by embeddings <=> query_embedding
+  limit match_count;
+$function$
+;
 
 grant delete on table "public"."global_articles" to "anon";
 
