@@ -85,7 +85,12 @@ class Article(BaseModel):
         return "\n\n".join(parts)
 
 
+class FeedInfo(BaseModel):
+    id: str
+    url: str
+
 class ArticleEmbeddings(BaseModel):
+    feed_id: str
     article: Article
     embeddings: list[float]
     embeddings_model: EmbeddingsModel
@@ -93,3 +98,7 @@ class ArticleEmbeddings(BaseModel):
 
 class EmbedRequest(BaseModel):
     text: str
+
+
+class FetchArticlesRequest(BaseModel):
+    feeds: list[FeedInfo]
