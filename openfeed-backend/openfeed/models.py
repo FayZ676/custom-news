@@ -89,3 +89,7 @@ class ArticleEmbeddings(BaseModel):
     article: Article
     embeddings: list[float]
     embeddings_model: EmbeddingsModel
+
+
+class EmbedRequest(BaseModel):
+    text: str

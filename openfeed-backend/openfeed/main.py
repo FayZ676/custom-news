@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from openfeed.ingestion import get_articles
-from openfeed.models import ArticleEmbeddings
+from openfeed.models import ArticleEmbeddings, EmbedRequest
 from openfeed.embedder.local import LocalEmbedder, EmbedOneResult
 
 
@@ -36,5 +36,5 @@ def fetch_articles(feeds: list[str]) -> list[ArticleEmbeddings]:
 
 
 @app.post("/embed")
-def embed(text: str) -> EmbedOneResult:
-    return embedder.embed_one(text)
+def embed(request: EmbedRequest) -> EmbedOneResult:
+    return embedder.embed_one(request.text)
