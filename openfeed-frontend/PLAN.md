@@ -42,12 +42,15 @@ frontend/
 │   ├── interests.ts                # addInterest, deleteInterest
 │   └── articles.ts                 # fetchAndStoreArticles, computeAndStoreScores
 ├── lib/
-│   ├── supabase.ts                 # browser + server Supabase clients
+│   ├── supabase/
+│   │   ├── client.ts               # browser client (createBrowserClient)
+│   │   └── server.ts               # server client (createServerClient with cookies)
 │   └── backend.ts                  # calls to Python backend /articles and /embed
-└── components/
-    ├── CategoryCard.tsx             # selectable category card
-    ├── InterestChip.tsx             # interest query chip, removable
-    └── ArticleCard.tsx              # article display card with relevance score
+├── components/
+│   ├── CategoryCard.tsx             # selectable category card
+│   ├── InterestChip.tsx             # interest query chip, removable
+│   └── ArticleCard.tsx              # article display card with relevance score
+└── proxy.ts                        # token refresh + route protection
 ```
 
 ---
@@ -128,32 +131,27 @@ N is configurable via `MAX_ARTICLES_PER_INTEREST` environment variable, defaulti
 
 
 
-Two Supabase client instances live in `lib/supabase.ts`:
+## Supabase Clients
 
-**Browser client** — used in client components:
-```typescript
-import { createClient } from '@supabase/supabase-js'
+Uses `@supabase/ssr` for cookie-based session management, making the session accessible on both client and server. Two client files live in `lib/supabase/`.
 
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-```
+**`lib/supabase/client.ts`** — used in client components
 
-**Server client** — used in server components and server actions:
-```typescript
-export const supabaseServer = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-      detectSessionInUrl: false
-    }
-  }
-)
-```
+**`lib/supabase/server.ts`** — used in server components and server actions
+
+---
+
+## Proxy
+
+`proxy.ts` at the root of the project handles two concerns:
+
+1. **Token refresh** — keeps the Supabase session alive by calling `supabase.auth.getClaims()`
+2. **Route protection** — redirects unauthenticated users away from protected routes, and authenticated users away from auth routes
+
+Always use `getClaims()` on the server — never `getSession()`, as it doesn't revalidate the JWT.
+
+Protected routes: `/feed`, `/onboarding`, `/settings`
+Auth routes: `/auth/signin`, `/auth/signup`
 
 ---
 
@@ -185,28 +183,33 @@ export async function embedText(text: string) {
 
 ## Authentication
 
-Email/password auth via Supabase JS client.
+Email/password auth via Supabase Auth. All auth actions use the server client from `lib/supabase/server.ts`.
 
 ### Sign Up
 ```typescript
-const { data, error } = await supabase.auth.signUp({ email, password })
+const supabase = await createClient()
+const { error } = await supabase.auth.signUp({ email, password })
 ```
 
 ### Sign In
 ```typescript
-const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+const supabase = await createClient()
+const { error } = await supabase.auth.signInWithPassword({ email, password })
 ```
 
 ### Sign Out
 ```typescript
+const supabase = await createClient()
 await supabase.auth.signOut()
 ```
 
-### Session Check
-Pages check for an active session on load and redirect accordingly:
+### Getting the current user in server actions
+Always use `getClaims()` on the server — never `getSession()`:
 ```typescript
-const { data: { session } } = await supabase.auth.getSession()
-if (!session) redirect('/auth/signin')
+const supabase = await createClient()
+const { data: { claims } } = await supabase.auth.getClaims()
+if (!claims) throw new Error('Not authenticated')
+const userId = claims.sub
 ```
 
 ---
@@ -320,7 +323,7 @@ Email/password sign in form. On success redirects to `/feed`.
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 BACKEND_URL=
 MAX_ARTICLES_PER_INTEREST=50
 ```
