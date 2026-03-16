@@ -27,7 +27,7 @@ export async function updateSession(request: NextRequest) {
 
   // Refresh the session — always use getClaims() not getSession() on the server
   const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims;
+  const user = data?.claims;
 
   const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
   const isProtectedRoute =
@@ -35,13 +35,13 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/onboarding") ||
     request.nextUrl.pathname.startsWith("/settings");
 
-  if (!claims && isProtectedRoute) {
+  if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/signin";
     return NextResponse.redirect(url);
   }
 
-  if (claims && isAuthRoute) {
+  if (user && isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/feed";
     return NextResponse.redirect(url);
