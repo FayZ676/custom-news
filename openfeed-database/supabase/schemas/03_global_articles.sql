@@ -4,7 +4,7 @@ create table "global_articles" (
     "id" uuid primary key default gen_random_uuid(),
     "feed_id" uuid not null references global_feeds(id),
     "title" text not null,
-    "url" text not null unique,
+    "url" text not null,
     "content" text not null,
     "published_at" timestamptz not null,
     "embeddings" vector(384),
