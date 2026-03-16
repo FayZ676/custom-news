@@ -7,7 +7,7 @@ create table "global_articles" (
     "url" text not null unique,
     "content" text not null,
     "published_at" timestamptz not null,
-    "embedding" vector(384),
+    "embeddings" vector(384),
     "embedding_model" text,
     "created_at" timestamptz not null default now()
 );
