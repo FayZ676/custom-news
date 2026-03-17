@@ -436,12 +436,13 @@ using (true);
 
 
 
-  create policy "Users can read their own article scores"
+  create policy "Users can manage their own article scores"
   on "public"."user_article_scores"
   as permissive
-  for select
+  for all
   to public
-using ((auth.uid() = user_id));
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
 
 
 

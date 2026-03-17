@@ -11,6 +11,7 @@ create index on "user_article_scores" (user_id, interest_id, score desc);
 
 alter table "user_article_scores" enable row level security;
 
-create policy "Users can read their own article scores"
-  on "user_article_scores" for select
-  using (auth.uid() = user_id);
+create policy "Users can manage their own article scores"
+  on "user_article_scores" for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
