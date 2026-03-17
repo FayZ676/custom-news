@@ -24,4 +24,10 @@ help:
 	@echo "  make test          - Run all tests"
 
 run:
+	set -a && \
+	. ./.env && \
+	set +a && \
 	uvicorn openfeed.main:app --reload --host 0.0.0.0 --port 8000
+
+generate_api_key:
+	openssl rand -hex 32

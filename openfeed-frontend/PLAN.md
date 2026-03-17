@@ -22,7 +22,7 @@ The NextJS full-stack application responsible for all user-facing concerns: auth
 
 **Supabase SSR client** — session management uses `@supabase/ssr` with cookie-based sessions, making the session accessible on both client and server. Always use `getClaims()` on the server, never `getSession()`.
 
-**Backend client** — all calls to the Python backend are centralized in `lib/backend.ts`. The frontend never calls RSS feeds directly.
+**Backend client** — all calls to the Python backend are centralized in `lib/backend.ts`. The frontend never calls RSS feeds directly. All requests include an `X-API-Key` header authenticated against a shared secret.
 
 **Pre-computed scores** — article relevance scores are computed and stored in `user_article_scores` after each fetch, so the feed page is a simple ranked read with no runtime vector computation.
 
@@ -86,5 +86,6 @@ Auth routes: `/auth/signin`, `/auth/signup`
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 BACKEND_URL=
+BACKEND_API_KEY=
 MAX_ARTICLES_PER_INTEREST=50
 ```

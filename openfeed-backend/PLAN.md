@@ -76,6 +76,21 @@ All embedders implement `BaseEmbedder` with `embed_one` and `embed_many` methods
 
 ---
 
+## Environment Variables
+
+```
+EMBEDDER=local
+API_KEY=
+```
+
+---
+
+## Authentication
+
+All endpoints are protected by a shared secret passed as an `X-API-Key` header. Requests without a valid key are rejected with a 401. The secret is static and must be set in the environment of every caller (frontend and edge function). Rotation is manual — generate a new secret, update it in all callers, redeploy.
+
+---
+
 ## Testing
 
 Integration tests in `tests/test_ingestion.py` verify that each feed in `fixtures/feeds.json` returns at least one article. These run as part of the pre-push hook when ingestion-related files change.

@@ -58,5 +58,6 @@ PUBLISHABLE_KEY=
 The edge function additionally requires:
 ```
 BACKEND_URL=
+BACKEND_API_KEY=
 MAX_ARTICLES_PER_INTEREST=50
 ```

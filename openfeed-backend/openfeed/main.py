@@ -1,12 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
+from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
 from openfeed.embedder.local import LocalEmbedder, EmbedOneResult
 from openfeed.models import ArticleEmbeddings, EmbedRequest, FetchArticlesRequest
 
 
-app = FastAPI()
+app = FastAPI(dependencies=[Depends(verify_api_key)])
 embedder = LocalEmbedder()
 
 

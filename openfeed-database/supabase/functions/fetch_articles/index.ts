@@ -32,8 +32,11 @@ Deno.serve(async () => {
     // 3. Call backend /fetch_articles with feed objects
     const res = await fetch(`${BACKEND_URL}/fetch_articles`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ feeds: feeds }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": Deno.env.get("BACKEND_API_KEY")!,
+      },
+      body: JSON.stringify({ feeds }),
     });
 
     if (!res.ok) throw new Error(`Backend error: ${res.statusText}`);
