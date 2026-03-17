@@ -12,3 +12,8 @@ init:
 		&& supabase start \
 		&& supabase migration up \
 		&& $(MAKE) fetch_articles
+
+deploy:
+	supabase link --project-ref $(PROJECT_ID) \
+		&& supabase db push --include-seed \
+		&& supabase functions deploy fetch_articles
