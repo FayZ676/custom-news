@@ -5,8 +5,6 @@ fetch_articles:
 		--header 'Authorization: Bearer $(ANON_KEY)' \
 		--header 'Content-Type: application/json'; \
 
-# supabase functions serve fetch_articles
-
 init:
 	supabase stop --no-backup \
 		&& rm -rf migrations/*_create_all.sql .branches .temp \
