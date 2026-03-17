@@ -38,8 +38,8 @@ export type Database = {
         Row: {
           content: string
           created_at: string
-          embedding: string | null
           embedding_model: string | null
+          embeddings: string | null
           feed_id: string
           id: string
           published_at: string
@@ -49,8 +49,8 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
-          embedding?: string | null
           embedding_model?: string | null
+          embeddings?: string | null
           feed_id: string
           id?: string
           published_at: string
@@ -60,8 +60,8 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
-          embedding?: string | null
           embedding_model?: string | null
+          embeddings?: string | null
           feed_id?: string
           id?: string
           published_at?: string
@@ -202,24 +202,24 @@ export type Database = {
       user_interests: {
         Row: {
           created_at: string
-          embedding: string
           embedding_model: string
+          embeddings: string
           id: string
           query: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          embedding: string
           embedding_model: string
+          embeddings: string
           id?: string
           query: string
           user_id: string
         }
         Update: {
           created_at?: string
-          embedding?: string
           embedding_model?: string
+          embeddings?: string
           id?: string
           query?: string
           user_id?: string
@@ -231,7 +231,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_articles: {
+        Args: { match_count: number; query_embedding: string }
+        Returns: {
+          id: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
