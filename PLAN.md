@@ -10,15 +10,14 @@ The project follows a **hybrid model**: the codebase is open source and Docker-r
 
 ## Architecture
 
-Three top-level packages, each with its own `PLAN.md`:
+Two top-level packages, each with its own `PLAN.md`:
 
 ```
-openfeed-backend/     # Stateless Python API — feed fetching and embeddings
-openfeed-frontend/    # NextJS full-stack app — UI, auth, ranking, scheduling
-openfeed-database/    # Supabase migrations and seed data — shared concern
+openfeed-frontend/    # NextJS full-stack app — UI, auth, ranking
+openfeed-database/    # Supabase migrations, seed data, and edge functions — shared concern
 ```
 
-The backend is stateless and has no knowledge of users, auth, or ranking. All persistence, scheduling, and user-specific logic lives in the frontend and database.
+All persistence, scheduling, embedding, and user-specific logic lives in the frontend and database. There is no separate backend service.
 
 ---
 
@@ -26,7 +25,7 @@ The backend is stateless and has no knowledge of users, auth, or ranking. All pe
 
 ### Embeddings
 
-Articles and interest queries are embedded using the same model so their vectors are comparable. The embedding model is configurable via `EMBEDDER` env var; changing it requires re-embedding all existing articles. The `embedding_model` field on both `global_articles` and `user_interests` tracks which model was used.
+Articles and interest queries are embedded using the same model so their vectors are comparable. Embeddings are generated using the `gte-small` model via Supabase's built-in AI inference API, available in Edge Functions at no extra cost. The `embedding_model` field on both `global_articles` and `user_interests` tracks which model was used.
 
 ### Scoring
 
@@ -54,7 +53,7 @@ Relevance scores are pre-computed and stored in `user_article_scores`. The top `
 - Curated feed catalog organized into categories
 - Category subscriptions (all feeds in a category included automatically)
 - Interest queries with pre-computed relevance scoring via pgvector
-- Stateless Python backend for feed fetching and embedding
+- Embeddings via Supabase built-in AI inference (no external API required)
 - NextJS frontend with Supabase
 - Docker deployment
 
