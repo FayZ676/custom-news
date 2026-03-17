@@ -17,12 +17,6 @@ install-hooks:
 test:
 	@pytest tests/ -v
 
-.PHONY: help
-help:
-	@echo "Available commands:"
-	@echo "  make install-hooks  - Install git pre-push hook"
-	@echo "  make test          - Run all tests"
-
 run:
 	set -a && \
 	. ./.env && \
@@ -31,3 +25,15 @@ run:
 
 generate_api_key:
 	openssl rand -hex 32
+
+# Docker
+
+docker_build:
+	docker build -t openfeed-backend .
+
+docker_run:
+	docker run --rm \
+		--name openfeed-backend \
+		-p 8000:8000 \
+		--env-file .env \
+		openfeed-backend
