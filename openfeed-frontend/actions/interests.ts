@@ -9,13 +9,14 @@ export async function addInterest(query: string) {
   if (!data) throw new Error("Not authenticated");
 
   const { embeddings, model } = await embedText(query);
+  const embeddingString = JSON.stringify(embeddings);
 
   const { data: interest, error } = await supabase
     .from("user_interests")
     .insert({
       user_id: data.claims.sub,
       query,
-      embeddings,
+      embeddings: embeddingString,
       embedding_model: model,
     })
     .select("id")
@@ -36,7 +37,7 @@ export async function computeAndStoreScores(
   const { data: matches, error: rpcError } = await supabase.rpc(
     "match_articles",
     {
-      query_embedding: embeddings,
+      query_embedding: JSON.stringify(embeddings),
       match_count: parseInt(process.env.MAX_ARTICLES_PER_INTEREST ?? "50"),
     },
   );
