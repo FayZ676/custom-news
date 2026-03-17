@@ -1,4 +1,4 @@
-import { getUserInterests, getArticlesForInterest } from "@/actions/feed";
+import { getUserInterests, getArticlesForInterest } from "@/actions/articles";
 import { ArticleCard } from "@/components/ArticleCard";
 import Link from "next/link";
 
