@@ -17,3 +17,9 @@ deploy:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-seed \
 		&& supabase functions deploy fetch_articles
+
+functions_test:
+	@for test in functions/tests/test_*.ts; do \
+		echo "Running $$test..."; \
+		deno run --allow-net --allow-read "$$test" || exit 1; \
+	done
