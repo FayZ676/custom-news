@@ -4,7 +4,7 @@ create extension if not exists pg_cron;
 
 -- schedule fetch-articles to run every hour
 select cron.schedule(
-  'fetch-articles',
+  'fetch_articles',
   '0 * * * *',
   $$
     select net.http_post(
