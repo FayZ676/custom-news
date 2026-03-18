@@ -5,9 +5,10 @@ create table "global_articles" (
     "feed_id" uuid not null references global_feeds(id),
     "title" text not null,
     "url" text not null,
-    "content" text not null,
+    "summary" text,
+    "content" text,
     "published_at" timestamptz not null,
-    "embeddings" vector(384),
+    "embeddings" vector(512),
     "embedding_model" text,
     "created_at" timestamptz not null default now()
 );

@@ -2,35 +2,103 @@
 
 ## Purpose
 
-All Supabase migrations and seed data for the project. Independent of the backend and frontend — a shared concern that both depend on. Self-hosters run `supabase db push` from this directory to set up their own instance.
+All Supabase migrations, seed data, and edge functions for the project. Independent of the frontend — a shared concern that the frontend depends on. Self-hosters run `supabase db push` from this directory to set up their own instance.
 
 ---
 
 ## Schema Overview
 
-| Table                       | Purpose                                                        |
-| --------------------------- | -------------------------------------------------------------- |
-| `global_categories`         | Curated feed categories, with interest suggestions             |
-| `global_feeds`              | RSS feed catalog, organized by category                        |
-| `global_articles`           | Fetched articles with embeddings, shared across all users      |
-| `user_category_subscriptions` | Which categories each user subscribes to                     |
-| `user_interests`            | User interest queries with pre-computed embeddings             |
-| `user_article_scores`       | Pre-computed relevance scores per user per interest            |
+| Table                         | Purpose                                                   |
+| ----------------------------- | --------------------------------------------------------- |
+| `global_categories`           | Curated feed categories, with interest suggestions        |
+| `global_feeds`                | RSS feed catalog, organized by category                   |
+| `global_articles`             | Fetched articles with embeddings, shared across all users |
+| `user_category_subscriptions` | Which categories each user subscribes to                  |
+| `user_interests`              | User interest queries with pre-computed embeddings        |
+| `user_article_scores`         | Pre-computed relevance scores per user per interest       |
 
 All user tables have RLS enabled. Global tables (`global_categories`, `global_feeds`, `global_articles`) are readable by all authenticated and anonymous users.
 
+Vector dimensions are 512 throughout, using OpenAI `text-embedding-3-small`.
+
 ---
 
-## Edge Function: `fetch_articles`
+## Edge Functions
 
-Runs on a schedule (every hour via pg_cron) and is also callable manually. Orchestrates the full article refresh cycle:
+### `fetch_articles`
+Orchestrator. Runs hourly on a schedule. Coordinates the full article refresh cycle:
 
-1. Delete all existing articles (cascades to `user_article_scores`)
-2. Load all feeds from `global_feeds`
-3. Call the Python backend `/fetch_articles` with all feed URLs
-4. Insert returned articles and embeddings into `global_articles`
-5. For each user interest, call `match_articles` RPC to rank articles by similarity
-6. Store the top `MAX_ARTICLES_PER_INTEREST` results in `user_article_scores`
+```
+fetch_articles (hourly)
+    ├── For each feed → call parse_feed
+    ├── Diff against existing articles in db:
+    │   ├── new articles = in feeds but not in db
+    │   └── stale articles = in db but not in feeds
+    ├── Delete stale articles (cascades to user_article_scores)
+    ├── If new articles exist:
+    │   ├── Call embed with new article texts
+    │   ├── Insert into global_articles
+    │   └── For each user interest
+    │           ├── match_articles RPC
+    │           └── Upsert top MAX_ARTICLES_PER_INTEREST into user_article_scores
+    └── If no new articles, exit early — nothing to do
+```
+
+### `parse_feed`
+RSS parsing concern. Accepts a feed URL, returns parsed articles. No knowledge of the database.
+
+### `embed`
+Embedding concern. Accepts a list of texts, returns embeddings via OpenAI `text-embedding-3-small` (512 dimensions). Used by both `fetch_articles` (article content) and the frontend (interest queries).
+
+---
+
+## Feed Validation
+
+A test script that runs `parse_feed` against all feeds in the seed file. For each feed it prints whether it was reachable, whether articles were parsed, and how many. Prints a final success/fail summary at the end.
+
+---
+
+## Testing
+
+All key edge functions can be tested via the `functions_test` helper command in the Makefile.
+
+```
+supabase/functions/tests/
+    └── test_parse_feed.ts    # Iterates through all test files in the functions/tests directory and runs each one in sequence
+```
+
+---
+
+## Structure
+
+```
+openfeed-database/
+├── supabase/
+│   ├── config.toml
+│   ├── seeds/
+│   │   ├── 01_global_categories.sql
+│   │   └── 02_global_feeds.sql
+│   ├── schemas/
+│   │   ├── 01_global_categories.sql
+│   │   ├── 02_global_feeds.sql
+│   │   ├── 03_global_articles.sql
+│   │   ├── 04_user_category_subscriptions.sql
+│   │   ├── 05_user_interests.sql
+│   │   ├── 06_user_article_scores.sql
+│   │   └── 07_match_articles.sql
+│   ├── functions/
+│   │   ├── fetch_articles/
+│   │   │   └── index.ts
+│   │   ├── parse_feed/
+│   │   │   └── index.ts
+│   │   ├── embed/
+│   │   │   └── index.ts
+│   │   └── tests/
+│   │       └── test_parse_feed.ts
+│   └── migrations/              # auto-generated by supabase db diff
+├── Makefile
+└── README.md
+```
 
 ---
 
@@ -41,6 +109,8 @@ supabase start                       # spin up local instance
 supabase db diff -f <description>    # generate migration from schema changes
 supabase migration up                # apply migrations locally
 supabase db push                     # apply migrations to remote project
+supabase functions deploy            # deploy edge functions
+make validate_feeds                  # run feed validation test
 ```
 
 Seed data in `seeds/` populates `global_categories` and `global_feeds` so the catalog is immediately usable after a fresh push.
@@ -53,11 +123,6 @@ Seed data in `seeds/` populates `global_categories` and `global_feeds` so the ca
 PROJECT_URL=
 ANON_KEY=
 PUBLISHABLE_KEY=
-```
-
-The edge function additionally requires:
-```
-BACKEND_URL=
-BACKEND_API_KEY=
+OPENAI_API_KEY=
 MAX_ARTICLES_PER_INTEREST=50
 ```

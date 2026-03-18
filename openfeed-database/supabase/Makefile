@@ -13,7 +13,21 @@ init:
 		&& supabase migration up \
 		&& $(MAKE) fetch_articles
 
-deploy:
+
+reset_remote:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-seed \
+		&& supabase db reset --linked
+
+deploy_remote:
+	supabase link --project-ref $(PROJECT_ID) \
+		&& supabase db push --include-seed --include-all \
 		&& supabase functions deploy fetch_articles
+
+functions_test:
+	@for test in functions/tests/test_*.ts; do \
+		echo "Running $$test..."; \
+		deno run --allow-net --allow-read --allow-env --env=../.env "$$test" || exit 1; \
+	done
+
+inspect_feeds:
+	deno run --reload --allow-net --allow-read functions/tests/inspect_feeds.ts > content.txt
