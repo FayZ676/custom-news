@@ -23,3 +23,6 @@ functions_test:
 		echo "Running $$test..."; \
 		deno run --allow-net --allow-read --allow-env --env=../.env "$$test" || exit 1; \
 	done
+
+inspect_feeds:
+	deno run --reload --allow-net --allow-read functions/tests/inspect_feeds.ts > content.txt

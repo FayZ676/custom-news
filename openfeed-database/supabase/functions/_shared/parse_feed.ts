@@ -1,6 +1,7 @@
 // @ts-nocheck
 
 import Parser from "npm:rss-parser";
+import { DOMParser } from "jsr:@b-fuze/deno-dom";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -19,22 +20,42 @@ export interface ParsedArticle {
   content: ArticleContent[] | null;
 }
 
+// ─── HTML cleanup ───────────────────────────────────────────
+
+const domParser = new DOMParser();
+
+function stripHtml(html: string): string {
+  const doc = domParser.parseFromString(html, "text/html");
+  return (doc?.body?.textContent ?? "").trim();
+}
+
 // ─── Parsing ────────────────────────────────────────────────
 
 const parser = new Parser({
   customFields: {
-    item: [["content:encoded", "contentEncoded", { includeSnippet: true }]],
+    item: [["content:encoded", "contentEncoded"]],
   },
 });
 
 // deno-lint-ignore no-explicit-any
+function toSummary(item: any): string | null {
+  if (item.summary) return stripHtml(item.summary);
+  return item.contentSnippet ?? null;
+}
+
+// deno-lint-ignore no-explicit-any
 function toContent(item: any, feedUrl: string): ArticleContent[] | null {
-  if (!item.contentEncodedSnippet) return null;
+  // Only use content:encoded (full body) or Atom <content> when distinct from <description>
+  const html = item.contentEncoded ?? null;
+  // For Atom feeds, item.content comes from <content> (full body), use it
+  // For RSS feeds, item.content comes from <description> (same as summary), skip it
+  const body = html ?? (item.summary ? item.content : null);
+  if (!body) return null;
   return [
     {
       type: "text/plain",
       base: feedUrl,
-      value: item.contentEncodedSnippet,
+      value: stripHtml(body),
       language: null,
     },
   ];
@@ -49,7 +70,7 @@ function toArticle(item: any, feedUrl: string): ParsedArticle {
     title: item.title,
     link: item.link,
     published: item.isoDate,
-    summary: item.contentSnippet ?? null,
+    summary: toSummary(item),
     content: toContent(item, feedUrl),
   };
 }
