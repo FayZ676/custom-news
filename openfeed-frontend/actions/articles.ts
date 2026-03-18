@@ -25,7 +25,7 @@ export async function getArticlesForInterest(interestId: string) {
   const { data, error } = await supabase
     .from("user_article_scores")
     .select(
-      "score, global_articles(id, title, url, published_at, global_feeds(title))",
+      "score, global_articles(id, title, url, summary, published_at, global_feeds(title))",
     )
     .eq("user_id", claimsData.claims.sub)
     .eq("interest_id", interestId)

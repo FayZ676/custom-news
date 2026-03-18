@@ -23,7 +23,8 @@ interface FeedArticle {
   feed_id: string;
   title: string;
   url: string;
-  content: string;
+  summary: string | null;
+  content: string | null;
   published_at: string;
   parsed: ParsedArticle;
 }
@@ -53,19 +54,16 @@ async function parseAllFeeds(
       const parsed = await parseFeed(feed.url);
 
       for (const article of parsed) {
-        const content =
-          article.content
-            ?.map((c) => c.value)
-            .filter(Boolean)
-            .join("\n\n") ??
-          article.summary ??
-          "";
-
         articles.push({
           feed_id: feed.id,
           title: article.title,
           url: article.link,
-          content,
+          summary: article.summary,
+          content:
+            article.content
+              ?.map((c) => c.value)
+              .filter(Boolean)
+              .join("\n\n") ?? null,
           published_at: article.published,
           parsed: article,
         });
@@ -118,6 +116,7 @@ async function insertNewArticles(
     feed_id: a.feed_id,
     title: a.title,
     url: a.url,
+    summary: a.summary,
     content: a.content,
     published_at: a.published_at,
     embeddings: embeddings[i],
