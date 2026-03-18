@@ -47,13 +47,12 @@ export function OnboardingForm({ categories }: { categories: Category[] }) {
   }
 
   async function handleSubmit() {
-    // save category subscriptions
     await Promise.all(selectedCategories.map((id) => subscribeToCategory(id)));
-
-    // save interests
-    await Promise.all(selectedInterests.map((query) => addInterest(query)));
-
-    redirect("/feed");
+    const interestIds = await Promise.all(
+      selectedInterests.map((query) => addInterest(query)),
+    );
+    const lastId = interestIds[interestIds.length - 1];
+    redirect(lastId ? `/feed?interest=${lastId}` : "/feed");
   }
 
   return (

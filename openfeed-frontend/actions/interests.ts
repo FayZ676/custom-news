@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function addInterest(query: string) {
+export async function addInterest(query: string): Promise<string> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data) throw new Error("Not authenticated");
@@ -30,8 +30,8 @@ export async function addInterest(query: string) {
     .single();
 
   if (error) throw new Error(error.message);
-
   await computeAndStoreScores(interest.id, data.claims.sub, embeddings);
+  return interest.id;
 }
 
 export async function computeAndStoreScores(
