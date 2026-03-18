@@ -10,7 +10,7 @@ create extension if not exists "vector" with schema "public";
     "url" text not null,
     "content" text not null,
     "published_at" timestamp with time zone not null,
-    "embeddings" public.vector(384),
+    "embeddings" public.vector(512),
     "embedding_model" text,
     "created_at" timestamp with time zone not null default now()
       );
@@ -69,7 +69,7 @@ alter table "public"."user_category_subscriptions" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
     "query" text not null,
-    "embeddings" public.vector(384) not null,
+    "embeddings" public.vector(512) not null,
     "embedding_model" text not null,
     "created_at" timestamp with time zone not null default now()
       );

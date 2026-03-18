@@ -1,5 +1,5 @@
 create or replace function match_articles(
-  query_embedding vector(384),
+  query_embedding vector(512),
   match_count int
 )
 returns table (id uuid, similarity float)
