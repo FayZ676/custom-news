@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { parseFeed } from "../parse_feed/index.ts";
+import { parseFeed } from "../_shared/parse_feed.ts";
 
 // ─── Load feed URLs from seed file ─────────────────────────
 

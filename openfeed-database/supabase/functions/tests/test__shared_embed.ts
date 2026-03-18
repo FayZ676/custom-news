@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { embed } from "../embed/index.ts";
+import { embed } from "../_shared/embed.ts";
 
 let passed = 0;
 let failed = 0;
