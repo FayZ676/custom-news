@@ -4,7 +4,7 @@
 
 A self-hostable, open source RSS feed reader with interest-based relevance ranking. Users subscribe to a curated catalog of feeds, define their interests in natural language, and receive a personalized feed of articles ranked by relevance.
 
-The project follows a **hybrid model**: the codebase is open source and Docker-ready for self-hosters, while a paid hosted tier runs the same code on managed infrastructure.
+The project follows a **hybrid model**: the codebase is open source and self-hostable, while a paid hosted tier runs the same code on managed infrastructure.
 
 ---
 
@@ -21,29 +21,39 @@ All persistence, scheduling, embedding, and user-specific logic lives in the fro
 
 ---
 
-## Cross-Cutting Concerns
+## Deployment
 
-### Embeddings
-
-Articles and interest queries are embedded using the same model so their vectors are comparable. Embeddings are generated using the `gte-small` model via Supabase's built-in AI inference API, available in Edge Functions at no extra cost. The `embedding_model` field on both `global_articles` and `user_interests` tracks which model was used.
-
-### Scoring
-
-Relevance scores are pre-computed and stored in `user_article_scores`. The top `MAX_ARTICLES_PER_INTEREST` articles per user per interest are kept. This is refreshed each time articles are fetched.
+- **Frontend** — deployed to Vercel
+- **Database** — deployed to Supabase via the Supabase CLI (`supabase db push`)
 
 ### Self-Hosting
 
 1. Create a Supabase project
 2. Run `supabase db push` from `openfeed-database/` to apply migrations and seed data
-3. Copy `.env.example` to `.env` in each package and fill in credentials
-4. Run via Docker
+3. Deploy the frontend to Vercel, connecting to the same Supabase project
+
+---
+
+## Cross-Cutting Concerns
+
+### Embeddings
+
+Articles and interest queries are embedded using OpenAI `text-embedding-3-small` at 512 dimensions. The same model is used for both so their vectors are comparable.
+
+### Article Refresh
+
+Articles are refreshed hourly. Only new articles (not yet in the database) are embedded and inserted. Stale articles (no longer present in any feed) are deleted. If no new articles are found, the refresh exits early with no embedding cost.
+
+### Scoring
+
+Relevance scores are pre-computed and stored in `user_article_scores`. The top `MAX_ARTICLES_PER_INTEREST` articles per user per interest are kept. Scores are recomputed whenever new articles are added.
 
 ---
 
 ## Business Model
 
 - **Open source** — codebase is publicly available
-- **Self-hosted** — users deploy via Docker with their own Supabase project
+- **Self-hosted** — users bring their own Supabase project and Vercel deployment
 - **Hosted tier** — managed version, subscription-based
 
 ---
@@ -53,14 +63,14 @@ Relevance scores are pre-computed and stored in `user_article_scores`. The top `
 - Curated feed catalog organized into categories
 - Category subscriptions (all feeds in a category included automatically)
 - Interest queries with pre-computed relevance scoring via pgvector
-- Embeddings via Supabase built-in AI inference (no external API required)
-- NextJS frontend with Supabase
-- Docker deployment
+- Embeddings via OpenAI `text-embedding-3-small` (512 dimensions)
+- Hourly article refresh — diff-based, only new articles are embedded
+- NextJS frontend deployed to Vercel
+- Database deployed to Supabase
 
 ## V2 / Future
 
 - Individual feed subscriptions and custom user-added feeds
 - Server-side read/unread and saved state
 - AI summarization
-- Frontier embedding model support (OpenAI, Cohere)
 - Billing for hosted tier
