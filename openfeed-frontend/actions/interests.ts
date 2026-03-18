@@ -1,14 +1,21 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { embedText } from "@/lib/backend";
 
 export async function addInterest(query: string) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data) throw new Error("Not authenticated");
 
-  const { embeddings, model } = await embedText(query);
+  const { data: embedData, error: embedError } =
+    await supabase.functions.invoke("embed", {
+      body: { input: query },
+    });
+
+  if (embedError) throw new Error(embedError.message);
+
+  const embeddings: number[] = embedData.embeddings[0];
+  const model: string = embedData.model;
   const embeddingString = JSON.stringify(embeddings);
 
   const { data: interest, error } = await supabase

@@ -52,7 +52,7 @@ function articleToEmbedText(a: ParsedArticle): string {
 
 // ─── OpenAI call ────────────────────────────────────────────
 
-async function embed(texts: string[]): Promise<{
+export async function embed(texts: string[]): Promise<{
   embeddings: number[][];
   model: string;
 }> {
