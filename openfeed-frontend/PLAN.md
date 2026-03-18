@@ -15,7 +15,6 @@ The NextJS full-stack application responsible for all user-facing concerns: auth
 | Database       | Supabase (PostgreSQL + pgvector) |
 | Authentication | Supabase Auth (email/password)   |
 | Mutations      | NextJS Server Actions            |
-| Embeddings     | OpenAI `text-embedding-3-small`  |
 
 ---
 
@@ -26,6 +25,8 @@ The NextJS full-stack application responsible for all user-facing concerns: auth
 **Pre-computed scores** — article relevance scores are computed and stored in `user_article_scores` after each fetch, so the feed page is a simple ranked read with no runtime vector computation.
 
 **Client-side read state** — read/unread and saved state are managed client-side for simplicity. No server persistence for these in v1.
+
+**Embeddings via edge function** — interest query embedding is handled by the Supabase `embed` edge function. The `OPENAI_API_KEY` lives exclusively in Supabase secrets and is never exposed to the frontend environment.
 
 ---
 
@@ -56,15 +57,15 @@ Sign in → /feed
 
 ## Server Actions
 
-| Action                      | What it does                                                       |
-| --------------------------- | ------------------------------------------------------------------ |
-| `auth.signUp`               | Creates user, redirects to `/onboarding`                           |
-| `auth.signIn`               | Signs in, redirects to `/feed`                                     |
-| `auth.signOut`              | Signs out, redirects to `/auth/signin`                             |
-| `subscriptions.subscribe`   | Inserts into `user_category_subscriptions`                         |
-| `subscriptions.unsubscribe` | Deletes from `user_category_subscriptions`                         |
-| `interests.add`             | Calls OpenAI to embed the query, stores result in `user_interests` |
-| `interests.delete`          | Deletes from `user_interests` (cascades to `user_article_scores`)  |
+| Action                      | What it does                                                            |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `auth.signUp`               | Creates user, redirects to `/onboarding`                                |
+| `auth.signIn`               | Signs in, redirects to `/feed`                                          |
+| `auth.signOut`              | Signs out, redirects to `/auth/signin`                                  |
+| `subscriptions.subscribe`   | Inserts into `user_category_subscriptions`                              |
+| `subscriptions.unsubscribe` | Deletes from `user_category_subscriptions`                              |
+| `interests.add`             | Calls Supabase `embed` edge function, stores result in `user_interests` |
+| `interests.delete`          | Deletes from `user_interests` (cascades to `user_article_scores`)       |
 
 ---
 
@@ -84,6 +85,5 @@ Auth routes: `/auth/signin`, `/auth/signup`
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-OPENAI_API_KEY=
 MAX_ARTICLES_PER_INTEREST=50
 ```
