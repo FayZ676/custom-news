@@ -21,5 +21,5 @@ deploy:
 functions_test:
 	@for test in functions/tests/test_*.ts; do \
 		echo "Running $$test..."; \
-		deno run --allow-net --allow-read "$$test" || exit 1; \
+		deno run --allow-net --allow-read --allow-env --env=../.env "$$test" || exit 1; \
 	done
