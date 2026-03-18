@@ -13,9 +13,14 @@ init:
 		&& supabase migration up \
 		&& $(MAKE) fetch_articles
 
-deploy:
+
+reset_remote:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-seed \
+		&& supabase db reset --linked
+
+deploy_remote:
+	supabase link --project-ref $(PROJECT_ID) \
+		&& supabase db push --include-seed --include-all \
 		&& supabase functions deploy fetch_articles
 
 functions_test:
