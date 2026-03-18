@@ -52,3 +52,9 @@ Notify users via email when newly fetched articles strongly match their interest
 - Score threshold should have a sensible default (e.g. 0.85) so users get alerts out of the box without tuning
 - Daily digest is probably the best default — immediate could be noisy, weekly too slow
 - Consider rate-limiting immediate alerts to avoid spamming users during large fetch cycles
+
+---
+
+Remove embeddings model name from db
+
+---
