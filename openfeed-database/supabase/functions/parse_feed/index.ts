@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import Parser from "npm:rss-parser";
 
 // ─── Types ──────────────────────────────────────────────────

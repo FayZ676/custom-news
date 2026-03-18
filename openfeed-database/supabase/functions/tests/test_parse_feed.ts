@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { parseFeed } from "../parse_feed/index.ts";
 
 // ─── Load feed URLs from seed file ─────────────────────────
