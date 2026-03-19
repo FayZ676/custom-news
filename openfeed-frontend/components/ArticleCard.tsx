@@ -43,19 +43,19 @@ export function ArticleCard({
   const { label, className } = matchLabel(score);
 
   return (
-    <div className="w-full min-w-0 p-4 border border-gray-800">
+    <div className="relative w-full min-w-0 p-4 border border-gray-800">
+      <a
+        href={article.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute inset-0"
+        aria-label={article.title}
+      />
       <div className="flex items-start justify-between gap-4">
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="min-w-0 wrap-break-word"
-        >
-          {article.title}
-        </a>
+        <span className="min-w-0 wrap-break-word">{article.title}</span>
         <button
           onClick={() => setShowScore((prev) => !prev)}
-          className={`shrink-0 text-sm font-medium cursor-pointer ${className}`}
+          className={`relative shrink-0 text-sm font-medium cursor-pointer ${className}`}
         >
           {showScore ? `${(score * 100).toFixed(0)}%` : label}
         </button>
