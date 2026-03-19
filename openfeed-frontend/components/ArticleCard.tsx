@@ -61,7 +61,10 @@ export function ArticleCard({
         </button>
       </div>
       {article.summary && <p className="truncate">{article.summary}</p>}
-      <span>{timeAgo(article.published_at)}</span>
+      <span>
+        {article.global_feeds?.title && `${article.global_feeds.title}, `}
+        {timeAgo(article.published_at)}
+      </span>
     </div>
   );
 }
