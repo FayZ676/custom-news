@@ -1,0 +1,8 @@
+- [ ] Add interests
+- [ ] Delete interests
+- [ ] Add category subscriptions
+- [ ] Delete category subscriptions
+  - [ ] Delete all interests for the category
+- [ ] Basic styling
+- [ ] Error handling
+  - [ ] Invalid login credentials should redirect back to signin with a message
