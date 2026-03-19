@@ -2,7 +2,7 @@
 
 This folder contains everything needed to set up OpenFeed's database. It handles storing articles, user preferences, and the logic that keeps your feed fresh and personalized.
 
-You don't need to understand everything here to get started — just follow the steps below.
+🚀 **You can get the entire database backend up and running with a single command.** Just fill in your credentials and run `make -f Makefile.prod deploy` — it handles everything else automatically.
 
 ---
 
@@ -10,27 +10,26 @@ You don't need to understand everything here to get started — just follow the 
 
 ### Option A: Deploy to production
 
-Follow these steps to get OpenFeed up and running on your own account.
-
-**Before you begin**, make sure you have the following installed and set up — see [Requirements](#requirements) for help with each one:
-
+**What you'll need:**
 - Supabase CLI
 - libpq
 - An OpenAI account with an API key
 - A Supabase account with a project created
 
+See [Requirements](#requirements) for help installing each one.
+
 **Steps:**
 
-1. Copy `.env.prod.example` to `.env.prod` in the parent directory. Open it and fill in your details — see [Environment Variables](#environment-variables) if you're not sure what goes where.
+1. Copy `.env.prod.example` to `.env.prod` in the parent directory and fill in your details — see [Environment Variables](#environment-variables) if you're not sure what goes where.
 2. From the `supabase/` directory, run:
 
 ```bash
 make -f Makefile.prod deploy
 ```
 
-That's it! Once this completes, OpenFeed will automatically fetch and refresh articles every hour.
+✅ That's it! Once this completes, OpenFeed will automatically fetch and refresh articles every hour.
 
-> **Need to start over?** Run `make -f Makefile.prod reset` to wipe the database and start fresh. Note that this will delete all data permanently.
+> ⚠️ **Need to start over?** Run `make -f Makefile.prod reset` to wipe the database and start fresh. Note that this will delete all data permanently.
 
 ### Option B: Run locally first
 
