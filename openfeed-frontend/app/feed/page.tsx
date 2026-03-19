@@ -1,6 +1,8 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
 import { getUserInterests, getArticlesForInterest } from "@/actions/articles";
 import { ArticleCard } from "@/components/ArticleCard";
-import Link from "next/link";
 
 export default async function FeedPage({
   searchParams,
@@ -8,10 +10,10 @@ export default async function FeedPage({
   searchParams: Promise<{ interest?: string }>;
 }) {
   const interests = await getUserInterests();
+  if (!interests || interests.length === 0) redirect("/onboarding");
+
   const { interest: interestId } = await searchParams;
-
   const activeInterestId = interestId ?? interests?.[0]?.id;
-
   const articles = activeInterestId
     ? await getArticlesForInterest(activeInterestId)
     : null;
@@ -28,7 +30,7 @@ export default async function FeedPage({
 
       <div>
         {articles?.map(({ score, global_articles: article }) => {
-          if (!article) return null;
+          if (!article) return <p>No articles available.</p>;
           return (
             <ArticleCard
               key={article.id}
