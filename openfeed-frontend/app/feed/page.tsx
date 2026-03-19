@@ -28,18 +28,11 @@ export default async function FeedPage({
         ))}
       </nav>
 
-      <div>
+      <div className="flex flex-col gap-2">
         {articles?.map(({ score, global_articles: article }) => {
           if (!article) return <p>No articles available.</p>;
           return (
-            <ArticleCard
-              key={article.id}
-              title={article.title}
-              url={article.url}
-              feedTitle={article.global_feeds?.title ?? ""}
-              publishedAt={article.published_at}
-              score={score}
-            />
+            <ArticleCard key={article.id} article={article} score={score} />
           );
         })}
       </div>
