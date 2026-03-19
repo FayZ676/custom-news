@@ -1,6 +1,6 @@
 include ../.env.prod
 
-remote_reset:
+reset:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& (supabase functions delete fetch_articles || true) \
 		&& (supabase functions delete embed || true) \
@@ -11,7 +11,7 @@ remote_reset:
 		; mv /tmp/_migrations_backup migrations \
 		; mv /tmp/_seeds_backup seeds
 
-remote_deploy:
+deploy:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-seed --include-all \
 		&& supabase secrets set OPENAI_API_KEY=$(OPENAI_API_KEY) \

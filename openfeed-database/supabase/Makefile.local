@@ -1,23 +1,23 @@
 include ../.env
 
-local_fetch_articles:
+fetch_articles:
 	curl -i --location --request POST '$(PROJECT_URL)/functions/v1/fetch_articles' \
 		--header 'Authorization: Bearer $(ANON_KEY)' \
 		--header 'Content-Type: application/json'; \
 
-local_init:
+init:
 	supabase stop --no-backup \
 		&& rm -rf migrations/*_create_all.sql .branches .temp \
 		&& supabase db diff -f create_all \
 		&& supabase start \
 		&& supabase migration up \
-		&& $(MAKE) -f Makefile.local local_fetch_articles
+		&& $(MAKE) -f Makefile.local fetch_articles
 
-local_functions_test:
+functions_test:
 	@for test in functions/_tests/test_*.ts; do \
 		echo "Running $$test..."; \
 		deno run --allow-net --allow-read --allow-env --env=../.env "$$test" || exit 1; \
 	done
 
-local_inspect_feeds:
+inspect_feeds:
 	deno run --reload --allow-net --allow-read functions/_tests/inspect_feeds.ts > content.txt
