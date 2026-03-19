@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 export function ArticleCard({
   article,
   score,
@@ -12,6 +16,8 @@ export function ArticleCard({
   };
   score: number;
 }) {
+  const [showScore, setShowScore] = useState(false);
+
   function timeAgo(dateStr: string): string {
     const seconds = Math.floor(
       (Date.now() - new Date(dateStr).getTime()) / 1000,
@@ -43,13 +49,16 @@ export function ArticleCard({
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="min-w-0 break-words"
+          className="min-w-0 wrap-break-word"
         >
           {article.title}
         </a>
-        <span className={`shrink-0 text-sm font-medium ${className}`}>
-          {label}
-        </span>
+        <button
+          onClick={() => setShowScore((prev) => !prev)}
+          className={`shrink-0 text-sm font-medium cursor-pointer ${className}`}
+        >
+          {showScore ? `${(score * 100).toFixed(0)}%` : label}
+        </button>
       </div>
       {article.summary && <p className="truncate">{article.summary}</p>}
       <span>{timeAgo(article.published_at)}</span>
