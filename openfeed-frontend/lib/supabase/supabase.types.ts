@@ -36,35 +36,38 @@ export type Database = {
     Tables: {
       global_articles: {
         Row: {
-          content: string
+          content: string | null
           created_at: string
           embedding_model: string | null
           embeddings: string | null
           feed_id: string
           id: string
           published_at: string
+          summary: string | null
           title: string
           url: string
         }
         Insert: {
-          content: string
+          content?: string | null
           created_at?: string
           embedding_model?: string | null
           embeddings?: string | null
           feed_id: string
           id?: string
           published_at: string
+          summary?: string | null
           title: string
           url: string
         }
         Update: {
-          content?: string
+          content?: string | null
           created_at?: string
           embedding_model?: string | null
           embeddings?: string | null
           feed_id?: string
           id?: string
           published_at?: string
+          summary?: string | null
           title?: string
           url?: string
         }
