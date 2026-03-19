@@ -21,9 +21,9 @@ export default function SignInPage() {
         />
         <button type="submit">Sign In</button>
       </form>
-      <p>
+      {/* <p>
         Don't have an account? <a href="/auth/signup">Sign up</a>
-      </p>
+      </p> */}
     </div>
   );
 }

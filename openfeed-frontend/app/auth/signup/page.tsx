@@ -3,7 +3,7 @@ import { signUp } from "@/actions/auth";
 export default function SignUpPage() {
   return (
     <div>
-      <h1>Create an account</h1>
+      {/* <h1>Create an account</h1>
       <form
         action={async (formData: FormData) => {
           "use server";
@@ -23,7 +23,8 @@ export default function SignUpPage() {
       </form>
       <p>
         Already have an account? <a href="/auth/signin">Sign in</a>
-      </p>
+      </p> */}
+      <p>Foo</p>
     </div>
   );
 }
