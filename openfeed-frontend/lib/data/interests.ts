@@ -4,8 +4,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 
 export async function getUserInterests(userId: string) {
   "use cache";
-  cacheLife({ stale: 3600, revalidate: 3600, expire: 7200 });
-  cacheTag(`interests:${userId}`);
+  cacheLife("hours");
+  //   cacheTag(`interests:${userId}`);
 
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
