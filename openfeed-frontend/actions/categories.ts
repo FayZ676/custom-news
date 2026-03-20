@@ -1,6 +1,10 @@
+import { cacheLife } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export async function getGlobalCategories() {
+  "use cache";
+  cacheLife("max");
+
   const supabase = await createClient();
   const { data: categories, error } = await supabase
     .from("global_categories")
