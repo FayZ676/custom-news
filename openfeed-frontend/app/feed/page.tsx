@@ -10,7 +10,7 @@ import { getArticlesForInterest } from "@/actions/articles";
 function FeedSkeleton() {
   return (
     <div>
-      <p>Loading feed...</p>
+      <p>Loading feed ...</p>
     </div>
   );
 }
@@ -18,7 +18,7 @@ function FeedSkeleton() {
 function ArticleListSkeleton() {
   return (
     <div>
-      <p>Article List Skeleton Here</p>
+      <p>Loading articles ...</p>
     </div>
   );
 }
