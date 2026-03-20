@@ -1,11 +1,17 @@
 "use server";
 
+import { cacheTag } from "next/cache";
+
 import { createClient } from "@/lib/supabase/server";
 
 export async function getArticlesForInterest(interestId: string) {
+  "use cache";
+
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
+
+  cacheTag(`articles:${claimsData.claims.sub}`);
 
   const { data, error } = await supabase
     .from("user_article_scores")
