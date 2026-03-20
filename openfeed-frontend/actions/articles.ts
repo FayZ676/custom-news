@@ -1,4 +1,4 @@
-("use server");
+"use server";
 
 import { cacheTag } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
