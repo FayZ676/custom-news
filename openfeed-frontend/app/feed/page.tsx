@@ -43,14 +43,20 @@ async function ArticleList({
   );
 }
 
-async function FeedContent({ interestId }: { interestId?: string }) {
+async function FeedContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ interest?: string }>;
+}) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
 
+  // const interests = await getUserInterests(claimsData.claims.sub);
   const interests = await getUserInterests();
   if (!interests || interests.length === 0) redirect("/onboarding");
 
+  const { interest: interestId } = await searchParams;
   const activeInterestId = interestId ?? interests?.[0]?.id;
 
   return (
@@ -75,16 +81,14 @@ async function FeedContent({ interestId }: { interestId?: string }) {
   );
 }
 
-export default async function FeedPage({
+export default function FeedPage({
   searchParams,
 }: {
   searchParams: Promise<{ interest?: string }>;
 }) {
-  const { interest: interestId } = await searchParams;
-
   return (
     <Suspense fallback={<FeedSkeleton />}>
-      <FeedContent interestId={interestId} />
+      <FeedContent searchParams={searchParams} />
     </Suspense>
   );
 }
