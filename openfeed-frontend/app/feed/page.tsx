@@ -52,7 +52,8 @@ async function FeedContent({
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
 
-  const interests = await getUserInterests(claimsData.claims.sub);
+  // const interests = await getUserInterests(claimsData.claims.sub);
+  const interests = await getUserInterests();
   if (!interests || interests.length === 0) redirect("/onboarding");
 
   const { interest: interestId } = await searchParams;
