@@ -10,7 +10,7 @@ export async function getUserInterests() {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
 
-  cacheTag(`articles:${claimsData.claims.sub}`);
+  cacheTag(`interests:${claimsData.claims.sub}`);
 
   const { data, error } = await supabase
     .from("user_interests")
@@ -27,7 +27,7 @@ export async function addInterest(query: string): Promise<string> {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
 
-  updateTag(`articles:${claimsData.claims.sub}`);
+  updateTag(`interests:${claimsData.claims.sub}`);
 
   const { data: embedData, error: embedError } =
     await supabase.functions.invoke("embed", {
@@ -61,7 +61,7 @@ export async function deleteInterest(interestId: string) {
   const { data } = await supabase.auth.getClaims();
   if (!data) throw new Error("Not authenticated");
 
-  updateTag(`articles:${data.claims.sub}`);
+  updateTag(`interests:${data.claims.sub}`);
 
   const { error } = await supabase
     .from("user_interests")
