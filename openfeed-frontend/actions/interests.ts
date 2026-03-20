@@ -27,8 +27,6 @@ export async function addInterest(query: string): Promise<string> {
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
 
-  updateTag(`interests:${claimsData.claims.sub}`);
-
   const { data: embedData, error: embedError } =
     await supabase.functions.invoke("embed", {
       body: { input: query },
@@ -53,6 +51,9 @@ export async function addInterest(query: string): Promise<string> {
 
   if (error) throw new Error(error.message);
   await computeAndStoreScores(interest.id, claimsData.claims.sub, embeddings);
+
+  updateTag(`interests:${claimsData.claims.sub}`);
+
   return interest.id;
 }
 
@@ -61,13 +62,13 @@ export async function deleteInterest(interestId: string) {
   const { data } = await supabase.auth.getClaims();
   if (!data) throw new Error("Not authenticated");
 
-  updateTag(`interests:${data.claims.sub}`);
-
   const { error } = await supabase
     .from("user_interests")
     .delete()
     .eq("id", interestId)
     .eq("user_id", data.claims.sub);
+
+  updateTag(`interests:${data.claims.sub}`);
 
   if (error) throw new Error(error.message);
 }
