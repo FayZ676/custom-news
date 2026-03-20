@@ -2,21 +2,18 @@
 
 import { cacheTag, updateTag } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 
-export async function getUserInterests() {
+export async function getUserInterests(userId: string) {
   "use cache";
 
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData) throw new Error("Not authenticated");
+  cacheTag(`interests:${userId}`);
 
-  cacheTag(`interests:${claimsData.claims.sub}`);
-
+  const supabase = await createServiceRoleClient();
   const { data, error } = await supabase
     .from("user_interests")
     .select("id, query")
-    .eq("user_id", claimsData.claims.sub)
+    .eq("user_id", userId)
     .order("created_at");
 
   if (error) throw new Error(error.message);

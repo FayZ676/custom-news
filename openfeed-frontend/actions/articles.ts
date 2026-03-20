@@ -1,24 +1,22 @@
-"use server";
+("use server");
 
 import { cacheTag } from "next/cache";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
-import { createClient } from "@/lib/supabase/server";
-
-export async function getArticlesForInterest(interestId: string) {
+export async function getArticlesForInterest(
+  userId: string,
+  interestId: string,
+) {
   "use cache";
+  cacheTag(`articles:${userId}`);
 
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData) throw new Error("Not authenticated");
-
-  cacheTag(`articles:${claimsData.claims.sub}`);
-
+  const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from("user_article_scores")
     .select(
       "score, global_articles(id, title, url, summary, published_at, global_feeds(title))",
     )
-    .eq("user_id", claimsData.claims.sub)
+    .eq("user_id", userId)
     .eq("interest_id", interestId)
     .order("score", { ascending: false });
 

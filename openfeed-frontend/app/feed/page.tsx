@@ -1,42 +1,73 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
+import { createClient } from "@/lib/supabase/server";
 import { ArticleCard } from "@/components/ArticleCard";
 import { getUserInterests } from "@/actions/interests";
 import { getArticlesForInterest } from "@/actions/articles";
+
+function ArticleListSkeleton() {
+  return (
+    <div>
+      <p>Article List Skeleton Here</p>
+    </div>
+  );
+}
+
+async function ArticleList({
+  userId,
+  interestId,
+}: {
+  userId: string;
+  interestId: string;
+}) {
+  const articles = await getArticlesForInterest(userId, interestId);
+  if (!articles?.length) return <p>No articles available.</p>;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {articles.map(({ score, global_articles: article }) => {
+        if (!article) return null;
+        return <ArticleCard key={article.id} article={article} score={score} />;
+      })}
+    </div>
+  );
+}
 
 export default async function FeedPage({
   searchParams,
 }: {
   searchParams: Promise<{ interest?: string }>;
 }) {
-  const interests = await getUserInterests();
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) throw new Error("Not authenticated");
+
+  const interests = await getUserInterests(claimsData.claims.sub);
   if (!interests || interests.length === 0) redirect("/onboarding");
 
   const { interest: interestId } = await searchParams;
   const activeInterestId = interestId ?? interests?.[0]?.id;
-  const articles = activeInterestId
-    ? await getArticlesForInterest(activeInterestId)
-    : null;
 
   return (
     <div>
       <nav>
-        {interests?.map((interest) => (
+        {interests.map((interest) => (
           <Link key={interest.id} href={`/feed?interest=${interest.id}`}>
             {interest.query}
           </Link>
         ))}
       </nav>
 
-      <div className="flex flex-col gap-2">
-        {articles?.map(({ score, global_articles: article }) => {
-          if (!article) return <p>No articles available.</p>;
-          return (
-            <ArticleCard key={article.id} article={article} score={score} />
-          );
-        })}
-      </div>
+      {activeInterestId && (
+        <Suspense key={activeInterestId} fallback={<ArticleListSkeleton />}>
+          <ArticleList
+            userId={claimsData.claims.sub}
+            interestId={activeInterestId}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -2,18 +2,14 @@
 
 import { cacheTag, updateTag } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 
-export async function getUserCategories() {
+export async function getUserCategories(userId: string) {
   "use cache";
 
-  const supabase = await createClient();
-  const { data: claimsData, error: authError } =
-    await supabase.auth.getClaims();
-  if (authError || !claimsData) throw new Error("Not authenticated");
+  cacheTag(`categories:${userId}`);
 
-  cacheTag(`categories:${claimsData.claims.sub}`);
-
+  const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from("user_category_subscriptions")
     .select("global_categories(id, name)");
