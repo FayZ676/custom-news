@@ -7,6 +7,8 @@ export async function getUserInterests(userId: string) {
   cacheLife("max");
   //   cacheTag(`interests:${userId}`);
 
+  console.log(`User ID: ${userId}`);
+
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from("user_interests")

@@ -43,6 +43,24 @@ When interests or subscriptions change, the Server Action also invalidates the u
 
 ---
 
+## Caching Per-User Data
+
+Docs: [`'use cache'` — working with runtime APIs](https://nextjs.org/docs/app/getting-started/caching#working-with-runtime-apis) · [`'use cache: private'`](https://nextjs.org/docs/app/api-reference/directives/use-cache-private) · [Supabase service role](https://supabase.com/docs/guides/api/api-keys#the-servicerole-key)
+
+`'use cache'` functions execute in an isolated environment with no access to runtime request APIs — `cookies()`, `headers()`, or `searchParams`. This is a problem because `createClient()` relies on `cookies()` to read the user's session and authenticate requests via RLS.
+
+The solution is to split identity resolution from data fetching across two layers:
+
+**Outside the cache boundary** — call `createClient()` normally to resolve the user's identity from the session. This is the only place cookies are touched.
+
+**Inside the cache boundary** — accept `userId` as a plain argument and use a service role client that authenticates directly via `SUPABASE_SERVICE_ROLE_KEY`, with no cookie dependency. The `userId` is passed as an explicit filter on the query. Next.js keys the cache entry on the function's arguments, so each user gets their own isolated cache entry automatically.
+
+The security guarantee is equivalent to RLS — the service role client is only used in server-side cached functions and is never accessible to the client.
+
+This is explicitly the pattern Next.js recommends: read runtime APIs outside the cache scope, pass values in as arguments. The docs also introduce `'use cache: private'` as an alternative, but it caches only in the browser's memory and does not persist across page reloads — which would mean re-querying Supabase on every visit, defeating the goal of only fetching when necessary.
+
+---
+
 ## Revalidation Webhook
 
 Docs: [`revalidateTag`](https://nextjs.org/docs/app/api-reference/functions/revalidateTag) · [Route Handlers](https://nextjs.org/docs/app/getting-started/route-handlers)
@@ -95,6 +113,7 @@ The active interest is stored in a URL search parameter (`?interest=<id>`). This
 ```
 # openfeed-frontend/.env.local
 REVALIDATE_SECRET=          # shared with edge function, protects /api/revalidate
+SUPABASE_SERVICE_ROLE_KEY=  # used by cached functions to query Supabase without a session
 
 # openfeed-database/supabase/functions/.env
 REVALIDATE_SECRET=          # same value as above
