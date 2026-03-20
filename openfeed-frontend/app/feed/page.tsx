@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { ArticleCard } from "@/components/ArticleCard";
-import { getUserInterests } from "@/actions/interests";
-import { getArticlesForInterest } from "@/actions/articles";
+import { getUserInterests } from "@/lib/data/interests";
+import { getArticlesForInterest } from "@/lib/data/articles";
 
 function FeedSkeleton() {
   return (

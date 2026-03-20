@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getGlobalCategories } from "@/actions/categories";
+import { getGlobalCategories } from "@/lib/data/categories";
 import { OnboardingForm } from "@/components/OnboardingForm";
 
 async function OnboardingContent() {
