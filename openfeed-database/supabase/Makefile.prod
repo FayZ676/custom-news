@@ -14,7 +14,10 @@ reset:
 deploy:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-seed --include-all \
-		&& supabase secrets set OPENAI_API_KEY=$(OPENAI_API_KEY) \
+		&& supabase secrets set \
+			OPENAI_API_KEY=$(OPENAI_API_KEY) \
+			NEXT_PUBLIC_URL=$(NEXT_PUBLIC_URL) \
+			REVALIDATE_SECRET=$(REVALIDATE_SECRET) \
 		&& echo " \
 			DELETE FROM vault.secrets WHERE name IN ('project_url', 'publishable_key'); \
 			SELECT vault.create_secret('$(PROJECT_URL)', 'project_url'); \
