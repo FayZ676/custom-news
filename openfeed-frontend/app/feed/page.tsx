@@ -7,6 +7,14 @@ import { ArticleCard } from "@/components/ArticleCard";
 import { getUserInterests } from "@/actions/interests";
 import { getArticlesForInterest } from "@/actions/articles";
 
+function FeedSkeleton() {
+  return (
+    <div>
+      <p>Loading feed...</p>
+    </div>
+  );
+}
+
 function ArticleListSkeleton() {
   return (
     <div>
@@ -35,7 +43,7 @@ async function ArticleList({
   );
 }
 
-export default async function FeedPage({
+async function FeedContent({
   searchParams,
 }: {
   searchParams: Promise<{ interest?: string }>;
@@ -69,5 +77,17 @@ export default async function FeedPage({
         </Suspense>
       )}
     </div>
+  );
+}
+
+export default function FeedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ interest?: string }>;
+}) {
+  return (
+    <Suspense fallback={<FeedSkeleton />}>
+      <FeedContent searchParams={searchParams} />
+    </Suspense>
   );
 }
