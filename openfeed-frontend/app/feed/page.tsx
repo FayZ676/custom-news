@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { getUserInterests, getArticlesForInterest } from "@/actions/articles";
 import { ArticleCard } from "@/components/ArticleCard";
+import { getUserInterests } from "@/actions/interests";
+import { getArticlesForInterest } from "@/actions/articles";
 
 export default async function FeedPage({
   searchParams,

@@ -1,11 +1,33 @@
 "use server";
+"use cache";
+
+import { cacheTag, updateTag } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 
+export async function getUserInterests() {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) throw new Error("Not authenticated");
+
+  cacheTag(`articles:${claimsData.claims.sub}`);
+
+  const { data, error } = await supabase
+    .from("user_interests")
+    .select("id, query")
+    .eq("user_id", claimsData.claims.sub)
+    .order("created_at");
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function addInterest(query: string): Promise<string> {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  if (!data) throw new Error("Not authenticated");
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) throw new Error("Not authenticated");
+
+  updateTag(`articles:${claimsData.claims.sub}`);
 
   const { data: embedData, error: embedError } =
     await supabase.functions.invoke("embed", {
@@ -21,7 +43,7 @@ export async function addInterest(query: string): Promise<string> {
   const { data: interest, error } = await supabase
     .from("user_interests")
     .insert({
-      user_id: data.claims.sub,
+      user_id: claimsData.claims.sub,
       query,
       embeddings: embeddingString,
       embedding_model: model,
@@ -30,11 +52,27 @@ export async function addInterest(query: string): Promise<string> {
     .single();
 
   if (error) throw new Error(error.message);
-  await computeAndStoreScores(interest.id, data.claims.sub, embeddings);
+  await computeAndStoreScores(interest.id, claimsData.claims.sub, embeddings);
   return interest.id;
 }
 
-export async function computeAndStoreScores(
+export async function deleteInterest(interestId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data) throw new Error("Not authenticated");
+
+  updateTag(`articles:${data.claims.sub}`);
+
+  const { error } = await supabase
+    .from("user_interests")
+    .delete()
+    .eq("id", interestId)
+    .eq("user_id", data.claims.sub);
+
+  if (error) throw new Error(error.message);
+}
+
+async function computeAndStoreScores(
   interestId: string,
   userId: string,
   embeddings: number[],
@@ -63,18 +101,4 @@ export async function computeAndStoreScores(
     .insert(scores);
 
   if (insertError) throw new Error(insertError.message);
-}
-
-export async function deleteInterest(interestId: string) {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  if (!data) throw new Error("Not authenticated");
-
-  const { error } = await supabase
-    .from("user_interests")
-    .delete()
-    .eq("id", interestId)
-    .eq("user_id", data.claims.sub);
-
-  if (error) throw new Error(error.message);
 }

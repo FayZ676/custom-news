@@ -2,21 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function getUserInterests() {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData) throw new Error("Not authenticated");
-
-  const { data, error } = await supabase
-    .from("user_interests")
-    .select("id, query")
-    .eq("user_id", claimsData.claims.sub)
-    .order("created_at");
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
 export async function getArticlesForInterest(interestId: string) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
