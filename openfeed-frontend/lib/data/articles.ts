@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function getArticlesForInterest(
   userId: string,
