@@ -5,7 +5,7 @@ export async function getGlobalCategories() {
   "use cache";
   cacheLife("max");
 
-  const supabase = await createServiceRoleClient();
+  const supabase = createServiceRoleClient();
   const { data: categories, error } = await supabase
     .from("global_categories")
     .select("id, name, interest_suggestions");
