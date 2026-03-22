@@ -77,19 +77,27 @@ async function parseAllFeeds(
 
 async function diffArticles(feedArticles: FeedArticle[]): Promise<ArticleDiff> {
   const feedUrls = feedArticles.map((a) => a.url);
-  const { data: existing, error } = await supabase
-    .from("global_articles")
-    .select("id, url")
-    .in("url", feedUrls);
 
-  if (error) throw error;
+  const BATCH_SIZE = 50;
+  const existingUrls = new Set<string>();
+  for (let i = 0; i < feedUrls.length; i += BATCH_SIZE) {
+    const batch = feedUrls.slice(i, i + BATCH_SIZE);
+    const { data: existing, error } = await supabase
+      .from("global_articles")
+      .select("id, url")
+      .in("url", batch);
 
-  const existingUrls = new Set(existing.map((a: any) => a.url));
+    if (error) throw error;
+
+    for (const a of existing) {
+      existingUrls.add((a as any).url);
+    }
+  }
   const newArticles = feedArticles.filter((a) => !existingUrls.has(a.url));
 
   return {
     newArticles: newArticles,
-    unchangedCount: existing.length,
+    unchangedCount: existingUrls.size,
   };
 }
 
