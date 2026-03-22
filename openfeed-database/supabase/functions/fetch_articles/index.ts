@@ -14,6 +14,9 @@ const supabase = createClient(
 const MAX_ARTICLES_PER_INTEREST = parseInt(
   Deno.env.get("MAX_ARTICLES_PER_INTEREST") ?? "50",
 );
+const MAX_ARTICLES_PER_FEED = parseInt(
+  Deno.env.get("MAX_ARTICLES_PER_FEED") ?? "50",
+);
 
 const INSERT_BATCH_SIZE = 500;
 
@@ -51,8 +54,13 @@ async function parseAllFeeds(
   for (const feed of feeds) {
     try {
       const parsed = await parseFeed(feed.url);
+      const sorted = parsed.sort(
+        (a, b) =>
+          new Date(b.published).getTime() - new Date(a.published).getTime(),
+      );
+      const capped = sorted.slice(0, MAX_ARTICLES_PER_FEED);
 
-      for (const article of parsed) {
+      for (const article of capped) {
         articles.push({
           feed_id: feed.id,
           title: article.title,
