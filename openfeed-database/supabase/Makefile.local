@@ -3,15 +3,18 @@ include ../.env
 fetch_articles:
 	curl -i --location --request POST '$(PROJECT_URL)/functions/v1/fetch_articles' \
 		--header 'Authorization: Bearer $(ANON_KEY)' \
-		--header 'Content-Type: application/json'; \
+		--header 'Content-Type: application/json';
 
-init:
+reset:
 	supabase stop --no-backup \
-		&& rm -rf migrations/*_create_all.sql .branches .temp \
-		&& supabase db diff -f create_all \
+		&& rm -rf migrations/*_create_all.sql .branches .temp
+
+deploy:
+	supabase db diff -f create_all \
 		&& supabase start \
-		&& supabase migration up \
-		&& $(MAKE) -f Makefile.local fetch_articles
+		&& supabase migration up
+
+init: reset deploy fetch_articles
 
 functions_test:
 	@for test in functions/_tests/test_*.ts; do \

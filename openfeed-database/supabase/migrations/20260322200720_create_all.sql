@@ -80,6 +80,8 @@ alter table "public"."user_interests" enable row level security;
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
+CREATE UNIQUE INDEX global_articles_url_key ON public.global_articles USING btree (url);
+
 CREATE UNIQUE INDEX global_categories_name_key ON public.global_categories USING btree (name);
 
 CREATE UNIQUE INDEX global_categories_pkey ON public.global_categories USING btree (id);
@@ -111,6 +113,8 @@ alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMA
 alter table "public"."global_articles" add constraint "global_articles_feed_id_fkey" FOREIGN KEY (feed_id) REFERENCES public.global_feeds(id) not valid;
 
 alter table "public"."global_articles" validate constraint "global_articles_feed_id_fkey";
+
+alter table "public"."global_articles" add constraint "global_articles_url_key" UNIQUE using index "global_articles_url_key";
 
 alter table "public"."global_categories" add constraint "global_categories_name_key" UNIQUE using index "global_categories_name_key";
 

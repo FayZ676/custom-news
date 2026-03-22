@@ -1,5 +1,11 @@
 include ../.env.prod
 
+fetch_articles:
+	curl -i --location --request POST '$(PROJECT_URL)/functions/v1/fetch_articles' \
+		--header 'Authorization: Bearer $(SERVICE_ROLE_KEY)' \
+		--header 'Content-Type: application/json' \
+		--data '{}';
+
 reset:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& (supabase functions delete fetch_articles || true) \
@@ -27,3 +33,5 @@ deploy:
 		&& supabase functions deploy fetch_articles \
 		&& supabase functions deploy embed \
 		&& supabase functions deploy parse_feed
+
+init: reset deploy fetch_articles
