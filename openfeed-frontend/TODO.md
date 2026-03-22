@@ -6,3 +6,4 @@
 - [ ] Basic styling
 - [ ] Error handling
   - [ ] Invalid login credentials should redirect back to signin with a message
+- [ ] Add indicators for new articles.
