@@ -11,7 +11,7 @@ select cron.schedule(
       url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/fetch_articles',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'publishable_key')
+        'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'service_role_key')
       ),
       body := '{}'::jsonb
     );

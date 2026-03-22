@@ -22,6 +22,7 @@ deploy:
 			DELETE FROM vault.secrets WHERE name IN ('project_url', 'publishable_key'); \
 			SELECT vault.create_secret('$(PROJECT_URL)', 'project_url'); \
 			SELECT vault.create_secret('$(PUBLISHABLE_KEY)', 'publishable_key'); \
+			SELECT vault.create_secret('$(SERVICE_ROLE_KEY)', 'service_role_key'); \
 		" | psql "$(DATABASE_URL)" \
 		&& supabase functions deploy fetch_articles \
 		&& supabase functions deploy embed \

@@ -1,0 +1,2 @@
+- [ ] Specify that the user needs to run the fetch_articles function in supabase when they db to populate the articles table with the initial set of articles.
+- [ ] Update README to include updates to necessary environment variables.
