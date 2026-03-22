@@ -31,7 +31,6 @@ interface FeedArticle {
 
 interface ArticleDiff {
   newArticles: FeedArticle[];
-  staleIds: string[];
   unchangedCount: number;
 }
 
@@ -77,34 +76,21 @@ async function parseAllFeeds(
 }
 
 async function diffArticles(feedArticles: FeedArticle[]): Promise<ArticleDiff> {
+  const feedUrls = feedArticles.map((a) => a.url);
   const { data: existing, error } = await supabase
     .from("global_articles")
-    .select("id, url");
+    .select("id, url")
+    .in("url", feedUrls);
 
   if (error) throw error;
 
   const existingUrls = new Set(existing.map((a: any) => a.url));
-  const feedUrls = new Set(feedArticles.map((a) => a.url));
+  const newArticles = feedArticles.filter((a) => !existingUrls.has(a.url));
 
   return {
-    newArticles: feedArticles.filter((a) => !existingUrls.has(a.url)),
-    staleIds: existing
-      .filter((a: any) => !feedUrls.has(a.url))
-      .map((a: any) => a.id),
-    unchangedCount: existing.filter((a: any) => feedUrls.has(a.url)).length,
+    newArticles: newArticles,
+    unchangedCount: existing.length,
   };
-}
-
-async function deleteStaleArticles(staleIds: string[]): Promise<void> {
-  if (staleIds.length === 0) return;
-
-  const { error } = await supabase
-    .from("global_articles")
-    .delete()
-    .in("id", staleIds);
-
-  if (error) throw error;
-  console.log(`Deleted ${staleIds.length} stale articles`);
 }
 
 async function insertNewArticles(
@@ -125,7 +111,9 @@ async function insertNewArticles(
 
   for (let i = 0; i < rows.length; i += INSERT_BATCH_SIZE) {
     const batch = rows.slice(i, i + INSERT_BATCH_SIZE);
-    const { error } = await supabase.from("global_articles").insert(batch);
+    const { error } = await supabase
+      .from("global_articles")
+      .upsert(batch, { onConflict: "url", ignoreDuplicates: true });
     if (error) throw error;
   }
 
@@ -205,20 +193,14 @@ Deno.serve(async () => {
       `Parsed ${feedArticles.length} articles from ${feeds.length} feeds`,
     );
 
-    const { newArticles, staleIds, unchangedCount } =
-      await diffArticles(feedArticles);
-    console.log(
-      `Diff: ${newArticles.length} new, ${staleIds.length} stale, ${unchangedCount} unchanged`,
-    );
-
-    await deleteStaleArticles(staleIds);
+    const { newArticles, unchangedCount } = await diffArticles(feedArticles);
+    console.log(`Diff: ${newArticles.length} new, ${unchangedCount} unchanged`);
 
     if (newArticles.length === 0) {
       console.log("No new articles — nothing to do");
       return Response.json({
         success: true,
         new_articles: 0,
-        deleted_articles: staleIds.length,
       });
     }
 
@@ -235,7 +217,6 @@ Deno.serve(async () => {
     return Response.json({
       success: true,
       new_articles: newArticles.length,
-      deleted_articles: staleIds.length,
       interests_scored: interestsScored,
     });
   } catch (error) {
