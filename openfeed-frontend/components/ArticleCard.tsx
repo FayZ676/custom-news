@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
 export function ArticleCard({
   article,
-  score,
 }: {
   article: {
     id: string;
@@ -14,7 +11,6 @@ export function ArticleCard({
     summary: string | null;
     global_feeds: { title: string } | null;
   };
-  score: number;
 }) {
   function timeAgo(dateStr: string): string {
     const seconds = Math.floor(
@@ -33,7 +29,7 @@ export function ArticleCard({
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full min-w-0 p-4 border border-base-300 rounded-lg">
+    <div className="relative flex flex-col gap-2 w-full min-w-0 p-4 border border-base-300 rounded-lg">
       <a
         href={article.url}
         target="_blank"
