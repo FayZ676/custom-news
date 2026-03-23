@@ -16,8 +16,6 @@ export function ArticleCard({
   };
   score: number;
 }) {
-  const [showScore, setShowScore] = useState(false);
-
   function timeAgo(dateStr: string): string {
     const seconds = Math.floor(
       (Date.now() - new Date(dateStr).getTime()) / 1000,
@@ -34,16 +32,8 @@ export function ArticleCard({
     return `${Math.floor(months / 12)}y ago`;
   }
 
-  function matchLabel(score: number): { label: string; className: string } {
-    if (score >= 0.7) return { label: "H", className: "text-green-400" };
-    if (score >= 0.4) return { label: "M", className: "text-yellow-400" };
-    return { label: "L", className: "text-red-400" };
-  }
-
-  const { label, className } = matchLabel(score);
-
   return (
-    <div className="relative w-full min-w-0 p-4 border border-gray-800">
+    <div className="flex flex-col gap-2 w-full min-w-0 p-4 border border-base-300 rounded-lg">
       <a
         href={article.url}
         target="_blank"
@@ -51,20 +41,18 @@ export function ArticleCard({
         className="absolute inset-0"
         aria-label={article.title}
       />
-      <div className="flex items-start justify-between gap-4">
-        <span className="min-w-0 wrap-break-word">{article.title}</span>
-        <button
-          onClick={() => setShowScore((prev) => !prev)}
-          className={`relative shrink-0 text-sm font-medium cursor-pointer ${className}`}
-        >
-          {showScore ? `${(score * 100).toFixed(0)}%` : label}
-        </button>
-      </div>
-      {article.summary && <p className="truncate">{article.summary}</p>}
-      <span>
-        {article.global_feeds?.title && `${article.global_feeds.title}, `}
-        {timeAgo(article.published_at)}
+      <span className="text-xl font-semibold min-w-0 wrap-break-word">
+        {article.title}
       </span>
+      {article.summary && (
+        <p className="truncate font-semibold">{article.summary}</p>
+      )}
+      <div className="flex justify-between text-base-content/50">
+        <span>
+          {article.global_feeds?.title && `${article.global_feeds.title}`}
+        </span>
+        <span>{timeAgo(article.published_at)}</span>
+      </div>
     </div>
   );
 }
