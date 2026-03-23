@@ -1,8 +1,10 @@
+// app/feed/page.tsx
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserInterests } from "@/lib/data/interests";
+import { getUserCategories } from "@/lib/data/subscription";
 import { getArticlesForInterest } from "@/lib/data/articles";
 
 import { FeedDrawer } from "@/components/FeedDrawer";
@@ -19,7 +21,14 @@ async function FeedContent({
 
   const userId = claimsData.claims.sub;
   const interests = await getUserInterests(userId);
-  if (!interests || interests.length === 0) redirect("/onboarding");
+
+  if (!interests || interests.length === 0) {
+    const categories = await getUserCategories(userId);
+    if (categories && categories.length > 0) {
+      redirect("/feed/new-interest");
+    }
+    redirect("/onboarding");
+  }
 
   const params = await searchParams;
   const activeInterest =
