@@ -1,10 +1,9 @@
 "use server";
 
-import { updateTag } from "next/cache";
-
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export async function addInterest(query: string): Promise<string> {
+export async function addInterest(query: string): Promise<never> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
@@ -34,9 +33,7 @@ export async function addInterest(query: string): Promise<string> {
   if (error) throw new Error(error.message);
   await computeAndStoreScores(interest.id, claimsData.claims.sub, embeddings);
 
-  updateTag(`interests:${claimsData.claims.sub}`);
-
-  return interest.id;
+  redirect(`/feed?interest=${interest.id}`);
 }
 
 export async function deleteInterest(interestId: string) {
@@ -49,8 +46,6 @@ export async function deleteInterest(interestId: string) {
     .delete()
     .eq("id", interestId)
     .eq("user_id", data.claims.sub);
-
-  updateTag(`interests:${data.claims.sub}`);
 
   if (error) throw new Error(error.message);
 }

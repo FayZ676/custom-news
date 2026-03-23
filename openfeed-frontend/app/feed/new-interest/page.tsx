@@ -1,4 +1,3 @@
-// app/feed/new-interest/page.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -11,7 +10,7 @@ export default function NewInterestPage() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!query.trim()) return;
 

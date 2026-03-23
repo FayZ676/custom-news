@@ -1,4 +1,3 @@
-// app/feed/page.tsx
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
@@ -37,7 +36,8 @@ async function FeedContent({
   const articles = await getArticlesForInterest(userId, activeInterest.id);
 
   return (
-    <FeedDrawer interests={interests} activeInterest={activeInterest}>
+    <div className="flex flex-col">
+      <FeedDrawer interests={interests} activeInterest={activeInterest} />
       <div className="flex flex-col gap-2 p-4">
         {articles?.length ? (
           articles.map(({ global_articles: article }) => {
@@ -50,7 +50,7 @@ async function FeedContent({
           </p>
         )}
       </div>
-    </FeedDrawer>
+    </div>
   );
 }
 
