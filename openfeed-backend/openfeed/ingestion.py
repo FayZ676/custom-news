@@ -3,8 +3,9 @@ import feedparser
 from openfeed.models import Article
 
 
-def get_articles(url: str) -> list[Article]:
-    d = feedparser.parse(url).entries or []
+# TODO: We should get an alert if a feed is broken.
+def get_articles(url: str, top_n: int = 50) -> list[Article]:
+    d = feedparser.parse(url).entries[:top_n] or []
     articles = []
     for article in d:
         try:

@@ -1,8 +1,19 @@
 import os
+from datetime import datetime
 
+from pydantic import BaseModel
 from supabase import create_client, Client
 
 from openfeed.models import ArticleEmbeddings
+
+
+class Feed(BaseModel):
+    id: str
+    url: str
+    title: str
+    description: str
+    created_at: datetime
+    suggested_category: str | None = None
 
 
 MAX_ARTICLES_PER_INTEREST = 20
@@ -12,6 +23,11 @@ def client() -> Client:
     url: str = os.getenv("SUPABASE_PROJECT_URL", "")
     key: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     return create_client(url, key)
+
+
+def get_global_feeds(db: Client):
+    feeds = db.table("global_feeds").select("*").execute().data
+    return [Feed.model_validate(feed) for feed in feeds]
 
 
 def insert_global_articles(db: Client, articles: list[ArticleEmbeddings]):

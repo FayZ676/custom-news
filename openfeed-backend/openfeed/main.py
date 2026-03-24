@@ -6,15 +6,12 @@ from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
 from openfeed.database import (
     client,
+    get_global_feeds,
     insert_global_articles,
     update_user_articles_scores,
     update_all_user_articles_scores,
 )
-from openfeed.models import (
-    ArticleEmbeddings,
-    FetchArticlesRequest,
-    UpdateUserArticlesScoresRequest,
-)
+from openfeed.models import ArticleEmbeddings, UpdateUserArticlesScoresRequest
 
 
 app = FastAPI(dependencies=[Depends(verify_api_key)])
@@ -34,11 +31,11 @@ app.add_middleware(
 
 
 @app.post("/global/articles")
-def fetch_articles(request: FetchArticlesRequest):
+def fetch_articles():
     articles_with_feed = []
-    for feed_info in request.feeds:
-        articles = get_articles(feed_info.url)
-        articles_with_feed.extend([(feed_info.id, article) for article in articles])
+    for feed in get_global_feeds(db_client):  # type: ignore
+        articles = get_articles(feed.url)
+        articles_with_feed.extend([(feed.id, article) for article in articles])
 
     articles = [a for _, a in articles_with_feed]
     embeddings = embed_texts([str(a) for a in articles])

@@ -1,15 +1,12 @@
 import pytest
 
-from openfeed.models import Feed
 from openfeed.ingestion import get_articles
-
-
-# TODO: Fetch feeds from supabase
-def load_feeds():
-    return []
+from openfeed.database import Feed, client, get_global_feeds
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("feed", load_feeds(), ids=lambda feed: feed.id)
+@pytest.mark.parametrize(
+    "feed", get_global_feeds(client()), ids=lambda feed: feed.title
+)
 def test_get_articles(feed: Feed):
     assert len(get_articles(feed.url)) > 0

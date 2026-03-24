@@ -1,8 +1,9 @@
-from datetime import datetime
+import time as _time
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from email.utils import parsedate_to_datetime
 
-from pydantic import BaseModel, field_validator, model_serializer
+from pydantic import BaseModel, field_validator, model_validator, model_serializer
 
 
 class _HTMLStripper(HTMLParser):
@@ -21,14 +22,6 @@ def _strip_html(text: str) -> str:
     stripper = _HTMLStripper()
     stripper.feed(text)
     return stripper.get_text()
-
-
-class Feed(BaseModel):
-    id: str
-    url: str
-    title: str
-    description: str
-    suggested_category: str
 
 
 class ArticleContent(BaseModel):
@@ -53,6 +46,16 @@ class Article(BaseModel):
     description: str | None = None
     content: list[ArticleContent] | None = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_published(cls, data: object) -> object:
+        if isinstance(data, dict) and "published" not in data:
+            if "updated" in data:
+                data["published"] = data["updated"]
+            elif "updated_parsed" in data:
+                data["published"] = data["updated_parsed"]
+        return data
+
     @field_validator("published", mode="before")
     @classmethod
     def parse_rfc2822_date(cls, v: object) -> datetime:
@@ -61,6 +64,8 @@ class Article(BaseModel):
                 return parsedate_to_datetime(v)
             except Exception:
                 return datetime.fromisoformat(v)
+        if isinstance(v, _time.struct_time):
+            return datetime(*v[:6], tzinfo=timezone.utc)
         return v  # type: ignore[return-value]
 
     @field_validator("summary", "description", mode="before")
@@ -79,11 +84,6 @@ class Article(BaseModel):
         if self.content is not None:
             parts.extend(item.value for item in self.content if item.value is not None)
         return "\n\n".join(parts)
-
-
-class FeedInfo(BaseModel):
-    id: str
-    url: str
 
 
 class ArticleEmbeddings(BaseModel):
@@ -109,10 +109,6 @@ class ArticleEmbeddings(BaseModel):
             "embeddings": self.embeddings,
             "embedding_model": self.embeddings_model,
         }
-
-
-class FetchArticlesRequest(BaseModel):
-    feeds: list[FeedInfo]
 
 
 class UpdateUserArticlesScoresRequest(BaseModel):

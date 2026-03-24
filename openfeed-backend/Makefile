@@ -15,7 +15,10 @@ install-hooks:
 	@echo "✓ Pre-push hook installed"
 
 test:
-	@pytest tests/ -v
+	set -a && \
+	. ./.env && \
+	set +a && \
+	pytest tests/ -v
 
 run:
 	set -a && \
