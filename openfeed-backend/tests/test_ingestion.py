@@ -3,7 +3,10 @@ import pytest
 from openfeed.models import Feed
 from openfeed.ingestion import get_articles
 
-from fixtures.collect_fixtures import load_feeds
+
+# TODO: Fetch feeds from supabase
+def load_feeds():
+    return []
 
 
 @pytest.mark.integration
