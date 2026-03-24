@@ -4,8 +4,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
-from openfeed.database import client, insert_articles
-from openfeed.models import ArticleEmbeddings, FetchArticlesRequest
+from openfeed.database import (
+    client,
+    insert_global_articles,
+    update_user_articles_scores,
+    update_all_user_articles_scores,
+)
+from openfeed.models import (
+    ArticleEmbeddings,
+    FetchArticlesRequest,
+    UpdateUserArticlesScoresRequest,
+)
 
 
 app = FastAPI(dependencies=[Depends(verify_api_key)])
@@ -24,7 +33,7 @@ app.add_middleware(
 )
 
 
-@app.post("/fetch_articles")
+@app.post("/global/articles")
 def fetch_articles(request: FetchArticlesRequest):
     articles_with_feed = []
     for feed_info in request.feeds:
@@ -33,7 +42,6 @@ def fetch_articles(request: FetchArticlesRequest):
 
     articles = [a for _, a in articles_with_feed]
     embeddings = embed_texts([str(a) for a in articles])
-
     articles = [
         ArticleEmbeddings(
             feed_id=feed_id,
@@ -45,4 +53,12 @@ def fetch_articles(request: FetchArticlesRequest):
             articles_with_feed, embeddings.embeddings
         )
     ]
-    insert_articles(db_client, request.table_name, articles)
+    insert_global_articles(db_client, articles)
+    update_all_user_articles_scores(db_client)
+
+
+@app.post("/user/articles/scores")
+def update_user_article_scores(request: UpdateUserArticlesScoresRequest):
+    update_user_articles_scores(
+        db_client, request.user_id, request.interest_id, request.interest_embeddings
+    )

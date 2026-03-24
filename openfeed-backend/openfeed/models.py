@@ -113,4 +113,9 @@ class ArticleEmbeddings(BaseModel):
 
 class FetchArticlesRequest(BaseModel):
     feeds: list[FeedInfo]
-    table_name: str
+
+
+class UpdateUserArticlesScoresRequest(BaseModel):
+    user_id: str
+    interest_id: str
+    interest_embeddings: list[float]
