@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,6 +14,11 @@ from openfeed.database import (
 )
 from openfeed.models import ArticleEmbeddings, UpdateUserArticlesScoresRequest
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(dependencies=[Depends(verify_api_key)])
 db_client = client()
@@ -23,7 +29,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-    ],  # Add your frontend URL
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +38,7 @@ app.add_middleware(
 
 @app.post("/global/articles")
 def fetch_articles():
+    logger.info("POST /global/articles - fetching articles from feeds")
     articles_with_feed = []
     for feed in get_global_feeds(db_client):  # type: ignore
         articles = get_articles(feed.url)
@@ -56,6 +63,11 @@ def fetch_articles():
 
 @app.post("/user/articles/scores")
 def update_user_article_scores(request: UpdateUserArticlesScoresRequest):
+    logger.info(
+        "POST /user/articles/scores - updating scores for user_id=%s, interest_id=%s",
+        request.user_id,
+        request.interest_id,
+    )
     update_user_articles_scores(
         db_client, request.user_id, request.interest_id, request.interest_embeddings
     )
