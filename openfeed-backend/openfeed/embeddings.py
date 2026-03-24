@@ -38,7 +38,7 @@ def embed_texts(texts: list[str]):
         json={
             "input": texts,
             "model": "text-embedding-3-small",
-            "dimensions": "512",
+            "dimensions": 512,
         },
     )
 

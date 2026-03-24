@@ -2,7 +2,7 @@ from datetime import datetime
 from html.parser import HTMLParser
 from email.utils import parsedate_to_datetime
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_serializer
 
 
 class _HTMLStripper(HTMLParser):
@@ -91,6 +91,24 @@ class ArticleEmbeddings(BaseModel):
     article: Article
     embeddings: list[float]
     embeddings_model: str
+
+    @model_serializer
+    def serialize_to_global_articles_schema(self) -> dict:
+        content_parts = [
+            item.value
+            for item in (self.article.content or [])
+            if item.value is not None
+        ]
+        return {
+            "feed_id": self.feed_id,
+            "title": self.article.title,
+            "url": self.article.link,
+            "summary": self.article.summary,
+            "content": "\n\n".join(content_parts) or None,
+            "published_at": self.article.published.isoformat(),
+            "embeddings": self.embeddings,
+            "embedding_model": self.embeddings_model,
+        }
 
 
 class FetchArticlesRequest(BaseModel):

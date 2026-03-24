@@ -6,10 +6,12 @@ from openfeed.models import ArticleEmbeddings
 
 
 def client() -> Client:
-    url: str = os.getenv("SUPABASE_URL", "")
-    key: str = os.getenv("SUPABASE_KEY", "")
+    url: str = os.getenv("SUPABASE_PROJECT_URL", "")
+    key: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
     return create_client(url, key)
 
 
 def insert_articles(client: Client, table_name: str, articles: list[ArticleEmbeddings]):
-    client.table(table_name).insert([a.model_dump_json() for a in articles]).execute()
+    client.table(table_name).insert(
+        [a.model_dump(mode="json") for a in articles]
+    ).execute()
