@@ -8,10 +8,10 @@ select cron.schedule(
   '0 * * * *',
   $$
     select net.http_post(
-      url := (select decrypted_secret from vault.decrypted_secrets where name = 'project_url') || '/functions/v1/fetch_articles',
+      url := (select decrypted_secret from vault.decrypted_secrets where name = 'backend_url') || '/global/articles',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'service_role_key')
+        'x-api-key', (select decrypted_secret from vault.decrypted_secrets where name = 'backend_api_key')
       ),
       body := '{}'::jsonb
     );

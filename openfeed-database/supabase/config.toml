@@ -387,5 +387,5 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 s3_secret_key = "env(S3_SECRET_KEY)"
 
 [db.vault]
-project_url = "env(PROJECT_URL)"
-publishable_key = "env(PUBLISHABLE_KEY)"
+backend_url = "env(BACKEND_URL)"
+backend_api_key = "env(BACKEND_API_KEY)"

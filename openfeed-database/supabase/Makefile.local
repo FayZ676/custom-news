@@ -1,8 +1,8 @@
 include ../.env
 
 fetch_articles:
-	curl -i --location --request POST '$(PROJECT_URL)/functions/v1/fetch_articles' \
-		--header 'Authorization: Bearer $(ANON_KEY)' \
+	curl -i --location --request POST '$(BACKEND_URL)/global/articles' \
+		--header 'x-api-key: $(BACKEND_API_KEY)' \
 		--header 'Content-Type: application/json';
 
 reset:
