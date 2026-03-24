@@ -2,21 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { embedTexts } from "./embeddings";
+import { updateUserArticleScores } from "@/lib/backend";
 
 export async function addInterest(query: string): Promise<never> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
 
-  const { data: embedData, error: embedError } =
-    await supabase.functions.invoke("embed", {
-      body: { input: query },
-    });
-
-  if (embedError) throw new Error(embedError.message);
-
+  const embedData = await embedTexts([query]);
   const embeddings: number[] = embedData.embeddings[0];
-  const model: string = embedData.model;
   const embeddingString = JSON.stringify(embeddings);
 
   const { data: interest, error } = await supabase
@@ -25,14 +20,14 @@ export async function addInterest(query: string): Promise<never> {
       user_id: claimsData.claims.sub,
       query,
       embeddings: embeddingString,
-      embedding_model: model,
+      embedding_model: "",
     })
     .select("id")
     .single();
 
   if (error) throw new Error(error.message);
-  await computeAndStoreScores(interest.id, claimsData.claims.sub, embeddings);
 
+  await updateUserArticleScores(claimsData.claims.sub, interest.id, embeddings);
   redirect(`/feed?interest=${interest.id}`);
 }
 
