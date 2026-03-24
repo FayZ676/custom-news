@@ -175,29 +175,29 @@ async function rescoreInterests(): Promise<number> {
   return interests.length;
 }
 
-async function revalidateFrontend(): Promise<void> {
-  const url = Deno.env.get("NEXT_PUBLIC_URL");
-  const secret = Deno.env.get("REVALIDATE_SECRET");
+// async function revalidateFrontend(): Promise<void> {
+//   const url = Deno.env.get("NEXT_PUBLIC_URL");
+//   const secret = Deno.env.get("REVALIDATE_SECRET");
 
-  if (!url || !secret) {
-    console.warn(
-      "NEXT_PUBLIC_URL or REVALIDATE_SECRET not set — skipping revalidation",
-    );
-    return;
-  }
+//   if (!url || !secret) {
+//     console.warn(
+//       "NEXT_PUBLIC_URL or REVALIDATE_SECRET not set — skipping revalidation",
+//     );
+//     return;
+//   }
 
-  const res = await fetch(`${url}/api/revalidate`, {
-    method: "POST",
-    headers: { "x-revalidate-secret": secret },
-  });
+//   const res = await fetch(`${url}/api/revalidate`, {
+//     method: "POST",
+//     headers: { "x-revalidate-secret": secret },
+//   });
 
-  if (!res.ok) {
-    console.error(`Revalidation failed: ${res.status} ${await res.text()}`);
-    return;
-  }
+//   if (!res.ok) {
+//     console.error(`Revalidation failed: ${res.status} ${await res.text()}`);
+//     return;
+//   }
 
-  console.log("Frontend cache revalidated");
-}
+//   console.log("Frontend cache revalidated");
+// }
 
 // ─── Handler ────────────────────────────────────────────────
 
@@ -228,7 +228,7 @@ Deno.serve(async () => {
     const interestsScored = await rescoreInterests();
     console.log(`Scored ${interestsScored} user interests`);
 
-    await revalidateFrontend();
+    // await revalidateFrontend();
 
     return Response.json({
       success: true,

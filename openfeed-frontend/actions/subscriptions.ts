@@ -1,7 +1,5 @@
 "use server";
 
-import { updateTag } from "next/cache";
-
 import { createClient } from "@/lib/supabase/server";
 
 export async function subscribeToCategory(categoryId: string) {
@@ -16,8 +14,6 @@ export async function subscribeToCategory(categoryId: string) {
       { onConflict: "user_id,category_id" },
     );
 
-  updateTag(`categories:${data.claims.sub}`);
-
   if (error) throw new Error(error.message);
 }
 
@@ -31,8 +27,6 @@ export async function unsubscribeFromCategory(categoryId: string) {
     .delete()
     .eq("user_id", data.claims.sub)
     .eq("category_id", categoryId);
-
-  updateTag(`categories:${data.claims.sub}`);
 
   if (error) throw new Error(error.message);
 }

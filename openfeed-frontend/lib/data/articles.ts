@@ -1,14 +1,9 @@
-import { cacheLife, cacheTag } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function getArticlesForInterest(
   userId: string,
   interestId: string,
 ) {
-  "use cache";
-  cacheLife({ stale: 3600, revalidate: 3600, expire: 7200 });
-  cacheTag(`articles:${userId}`);
-
   const supabase = createServiceRoleClient();
   const { data, error } = await supabase
     .from("user_article_scores")
