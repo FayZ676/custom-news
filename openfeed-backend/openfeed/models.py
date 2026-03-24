@@ -85,6 +85,7 @@ class FeedInfo(BaseModel):
     id: str
     url: str
 
+
 class ArticleEmbeddings(BaseModel):
     feed_id: str
     article: Article
@@ -94,3 +95,4 @@ class ArticleEmbeddings(BaseModel):
 
 class FetchArticlesRequest(BaseModel):
     feeds: list[FeedInfo]
+    table_name: str
