@@ -10,10 +10,12 @@ from openfeed.embeddings import embed_texts
 from openfeed.database import (
     client,
     get_global_feeds,
-    insert_global_articles,
-    get_global_article_urls,
     add_user_interest,
     update_user_interests,
+    insert_global_articles,
+    query_global_articles,
+    get_global_article_urls,
+    get_global_articles_by_id,
 )
 from openfeed.models import UpdateUserArticlesScoresRequest
 
@@ -40,10 +42,18 @@ app.add_middleware(
 
 
 @app.post("/global/articles", status_code=202)
-def fetch_articles(background_tasks: BackgroundTasks):
+def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     background_tasks.add_task(_fetch_articles)
     return Response(status_code=202)
+
+
+@app.post("/global/articles/search")
+def global_articles_search(query: str):
+    logger.info("POST /global/articles/search - searching articles")
+    query_embeddings = embed_texts([query]).embeddings[0]
+    query_results = query_global_articles(db_client, query_embeddings)
+    return get_global_articles_by_id(db_client, {r.article_id for r in query_results})
 
 
 @app.post("/user/interest")

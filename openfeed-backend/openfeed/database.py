@@ -3,7 +3,6 @@ import json
 import itertools
 from uuid import UUID
 from typing import Callable
-from datetime import datetime
 
 from pydantic import BaseModel, Json
 from supabase import create_client, Client
@@ -15,13 +14,9 @@ from openfeed.database_models import (
 )
 
 
-class Feed(BaseModel):
-    id: str
-    url: str
-    title: str
-    description: str
-    created_at: datetime
-    suggested_category: str | None = None
+class MatchArticlesResult(BaseModel):
+    article_id: UUID
+    similarity_score: float
 
 
 MAX_ARTICLES_PER_INTEREST = 20
@@ -43,6 +38,31 @@ def get_global_article_urls(db: Client) -> list[str]:
     return [r["url"] for r in rows]
 
 
+def get_global_articles_by_id(
+    db: Client, article_ids: set[UUID]
+) -> list[PublicGlobalArticles]:
+    ids = [str(aid) for aid in article_ids]
+    rows = db.table("global_articles").select("*").in_("id", ids).execute().data
+    return [PublicGlobalArticles.model_validate(r) for r in rows]
+
+
+def query_global_articles(
+    db: Client, query_embeddings: list[float]
+) -> list[MatchArticlesResult]:
+    data = (
+        db.rpc(
+            "match_articles",
+            {
+                "query_embedding": query_embeddings,
+                "match_count": MAX_ARTICLES_PER_INTEREST,
+            },
+        )
+        .execute()
+        .data
+    )
+    return [MatchArticlesResult.model_validate(r) for r in data]  # type: ignore
+
+
 def get_user_interests(db: Client) -> list[PublicUserInterests]:
     rows = _paginated_query(db, "user_interests", transform=_decode_embeddings)
     return [PublicUserInterests.model_validate(r) for r in rows]
@@ -57,25 +77,15 @@ def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):
 def add_user_interest(
     db: Client, user_id: UUID, interest_id: UUID, interest_embeddings: list[float]
 ):
-    top_articles = (
-        db.rpc(
-            "match_articles",
-            {
-                "query_embedding": interest_embeddings,
-                "match_count": MAX_ARTICLES_PER_INTEREST,
-            },
-        )
-        .execute()
-        .data
-    )
+    top_articles = query_global_articles(db, interest_embeddings)
     scores = [
         {
             "user_id": str(user_id),
             "interest_id": str(interest_id),
-            "article_id": a["id"],
-            "score": a["similarity"],
+            "article_id": a.article_id,
+            "score": a.similarity_score,
         }
-        for a in top_articles  # type: ignore
+        for a in top_articles
     ]
 
     if scores:
