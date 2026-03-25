@@ -12,6 +12,7 @@ from openfeed.database import (
     client,
     get_global_feeds,
     add_user_interest,
+    get_global_articles,
     update_user_interests,
     insert_global_articles,
     query_global_articles,
@@ -40,6 +41,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/global/articles")
+def global_articles_get(page_size: int, page: int):
+    logger.info("POST /global/articles - retrieving articles")
+    return get_global_articles(db_client, page_size, page)
 
 
 @app.post("/global/articles", status_code=202)

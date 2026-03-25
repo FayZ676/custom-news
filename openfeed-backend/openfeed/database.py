@@ -33,6 +33,19 @@ def get_global_feeds(db: Client) -> list[PublicGlobalFeeds]:
     return [PublicGlobalFeeds.model_validate(r) for r in rows]
 
 
+def get_global_articles(
+    db: Client, num_records: int, page_num: int
+) -> list[PublicGlobalArticles]:
+    rows = (
+        db.table("global_articles")
+        .select("*")
+        .range(page_num * num_records, (page_num + 1) * num_records - 1)
+        .execute()
+        .data
+    )
+    return [PublicGlobalArticles.model_validate(r) for r in rows]
+
+
 def get_global_article_urls(db: Client) -> list[str]:
     rows = _paginated_query(db, "global_articles", select="url")
     return [r["url"] for r in rows]
