@@ -1,10 +1,18 @@
 import os
+import json
+import itertools
+from uuid import UUID
+from typing import Callable
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Json
 from supabase import create_client, Client
 
-from openfeed.models import ArticleEmbeddings
+from openfeed.database_models import (
+    PublicGlobalFeeds,
+    PublicGlobalArticles,
+    PublicUserInterests,
+)
 
 
 class Feed(BaseModel):
@@ -25,19 +33,29 @@ def client() -> Client:
     return create_client(url, key)
 
 
-def get_global_feeds(db: Client):
-    feeds = db.table("global_feeds").select("*").execute().data
-    return [Feed.model_validate(feed) for feed in feeds]
+def get_global_feeds(db: Client) -> list[PublicGlobalFeeds]:
+    rows = _paginated_query(db, "global_feeds")
+    return [PublicGlobalFeeds.model_validate(r) for r in rows]
 
 
-def insert_global_articles(db: Client, articles: list[ArticleEmbeddings]):
+def get_global_article_urls(db: Client) -> list[str]:
+    rows = _paginated_query(db, "global_articles", select="url")
+    return [r["url"] for r in rows]
+
+
+def get_user_interests(db: Client) -> list[PublicUserInterests]:
+    rows = _paginated_query(db, "user_interests", transform=_decode_embeddings)
+    return [PublicUserInterests.model_validate(r) for r in rows]
+
+
+def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):
     db.table("global_articles").insert(
         [a.model_dump(mode="json") for a in articles]
     ).execute()
 
 
 def update_user_articles_scores(
-    db: Client, user_id: str, interest_id: str, interest_embeddings: list[float]
+    db: Client, user_id: UUID, interest_id: UUID, interest_embeddings: list[float]
 ):
     top_articles = (
         db.rpc(
@@ -52,8 +70,8 @@ def update_user_articles_scores(
     )
     scores = [
         {
-            "user_id": user_id,
-            "interest_id": interest_id,
+            "user_id": str(user_id),
+            "interest_id": str(interest_id),
             "article_id": a["id"],
             "score": a["similarity"],
         }
@@ -68,10 +86,44 @@ def update_user_articles_scores(
 
 
 def update_all_user_articles_scores(db: Client):
-    user_interests = (
-        db.table("user_interests").select("id, user_id, embeddings").execute()
-    ).data
+    user_interests = get_user_interests(db)
     for interest in user_interests:
         update_user_articles_scores(
-            db, interest["user_id"], interest["id"], interest["embeddings"]  # type: ignore
+            db, interest.user_id, interest.id, interest.embeddings
         )
+
+
+### private ###
+
+
+def _decode_embeddings(row: dict) -> None:
+    """Deserialize the embeddings field in-place, if present."""
+    if (raw := row.get("embeddings")) is not None:
+        row["embeddings"] = json.loads(raw)
+
+
+def _paginated_query(
+    db: Client,
+    table: str,
+    *,
+    select: str = "*",
+    page_size: int = 1000,
+    transform: Callable[[Json], None] | None = None,
+) -> list[dict]:
+    """Fetch all rows from a table with automatic pagination."""
+    results = []
+    for page in itertools.count():
+        rows = (
+            db.table(table)
+            .select(select)
+            .range(page * page_size, (page + 1) * page_size - 1)
+            .execute()
+            .data
+        )
+        if transform:
+            for row in rows:
+                transform(row)
+        results.extend(rows)
+        if len(rows) < page_size:
+            break
+    return results

@@ -1,9 +1,12 @@
+import uuid
 import time as _time
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from email.utils import parsedate_to_datetime
 
-from pydantic import BaseModel, field_validator, model_validator, model_serializer
+from pydantic import BaseModel, field_validator, model_validator
+
+from openfeed.database_models import PublicGlobalArticles
 
 
 class _HTMLStripper(HTMLParser):
@@ -85,33 +88,25 @@ class Article(BaseModel):
             parts.extend(item.value for item in self.content if item.value is not None)
         return "\n\n".join(parts)
 
-
-class ArticleEmbeddings(BaseModel):
-    feed_id: str
-    article: Article
-    embeddings: list[float]
-    embeddings_model: str
-
-    @model_serializer
-    def serialize_to_global_articles_schema(self) -> dict:
-        content_parts = [
-            item.value
-            for item in (self.article.content or [])
-            if item.value is not None
-        ]
-        return {
-            "feed_id": self.feed_id,
-            "title": self.article.title,
-            "url": self.article.link,
-            "summary": self.article.summary,
-            "content": "\n\n".join(content_parts) or None,
-            "published_at": self.article.published.isoformat(),
-            "embeddings": self.embeddings,
-            "embedding_model": self.embeddings_model,
-        }
+    def to_db_schema(
+        self, feed_id: uuid.UUID, embeddings_model: str, embedding: list[float]
+    ):
+        return PublicGlobalArticles(
+            content="\n\n".join([v.value for v in self.content or [] if v.value])
+            or None,
+            published_at=self.published,
+            embedding_model=embeddings_model,
+            embeddings=embedding,
+            feed_id=feed_id,
+            title=self.title,
+            summary=self.summary,
+            url=self.link,
+            id=uuid.uuid4(),
+            created_at=datetime.now(),
+        )
 
 
 class UpdateUserArticlesScoresRequest(BaseModel):
-    user_id: str
-    interest_id: str
+    user_id: uuid.UUID
+    interest_id: uuid.UUID
     interest_embeddings: list[float]

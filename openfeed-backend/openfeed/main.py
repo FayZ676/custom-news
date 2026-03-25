@@ -1,6 +1,8 @@
 import logging
-from fastapi import FastAPI, Depends
+
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
@@ -9,10 +11,11 @@ from openfeed.database import (
     client,
     get_global_feeds,
     insert_global_articles,
+    get_global_article_urls,
     update_user_articles_scores,
     update_all_user_articles_scores,
 )
-from openfeed.models import ArticleEmbeddings, UpdateUserArticlesScoresRequest
+from openfeed.models import UpdateUserArticlesScoresRequest
 
 logging.basicConfig(
     level=logging.INFO,
@@ -36,29 +39,11 @@ app.add_middleware(
 )
 
 
-@app.post("/global/articles")
-def fetch_articles():
-    logger.info("POST /global/articles - fetching articles from feeds")
-    articles_with_feed = []
-    for feed in get_global_feeds(db_client):  # type: ignore
-        articles = get_articles(feed.url)
-        articles_with_feed.extend([(feed.id, article) for article in articles])
-
-    articles = [a for _, a in articles_with_feed]
-    embeddings = embed_texts([str(a) for a in articles])
-    articles = [
-        ArticleEmbeddings(
-            feed_id=feed_id,
-            article=article,
-            embeddings=embedding,
-            embeddings_model=embeddings.model,
-        )
-        for (feed_id, article), embedding in zip(
-            articles_with_feed, embeddings.embeddings
-        )
-    ]
-    insert_global_articles(db_client, articles)
-    update_all_user_articles_scores(db_client)
+@app.post("/global/articles", status_code=202)
+def fetch_articles(background_tasks: BackgroundTasks):
+    logger.info("POST /global/articles - accepted, processing in background")
+    background_tasks.add_task(_fetch_articles)
+    return Response(status_code=202)
 
 
 @app.post("/user/articles/scores")
@@ -71,3 +56,33 @@ def update_user_article_scores(request: UpdateUserArticlesScoresRequest):
     update_user_articles_scores(
         db_client, request.user_id, request.interest_id, request.interest_embeddings
     )
+
+
+def _fetch_articles():
+    seen_urls = set(get_global_article_urls(db_client))
+    feed_articles = (
+        (feed.id, article)
+        for feed in get_global_feeds(db_client)
+        for article in get_articles(feed.url)
+    )
+    unique_found_articles = []
+    for feed_id, article in feed_articles:
+        if article.link not in seen_urls:
+            seen_urls.add(article.link)
+            unique_found_articles.append((feed_id, article))
+
+    article_embeddings = embed_texts(
+        [str(article) for _, article in unique_found_articles]
+    )
+    articles = [
+        article.to_db_schema(feed_id, article_embeddings.model, embedding)
+        for (feed_id, article), embedding in zip(
+            unique_found_articles, article_embeddings.embeddings
+        )
+    ]
+
+    if articles:
+        insert_global_articles(db_client, articles)
+        update_all_user_articles_scores(db_client)
+
+    logger.info("Fetched and inserted %d new articles", len(articles))
