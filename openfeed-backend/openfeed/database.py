@@ -43,6 +43,8 @@ def get_global_articles(
         .execute()
         .data
     )
+    for row in rows:
+        _decode_embeddings(row)
     return [PublicGlobalArticles.model_validate(r) for r in rows]
 
 
@@ -56,6 +58,8 @@ def get_global_articles_by_id(
 ) -> list[PublicGlobalArticles]:
     ids = [str(aid) for aid in article_ids]
     rows = db.table("global_articles").select("*").in_("id", ids).execute().data
+    for row in rows:
+        _decode_embeddings(row)
     return [PublicGlobalArticles.model_validate(r) for r in rows]
 
 
@@ -117,7 +121,7 @@ def update_user_interests(db: Client):
 ### private ###
 
 
-def _decode_embeddings(row: dict) -> None:
+def _decode_embeddings(row: Json) -> None:
     """Deserialize the embeddings field in-place, if present."""
     if (raw := row.get("embeddings")) is not None:
         row["embeddings"] = json.loads(raw)
