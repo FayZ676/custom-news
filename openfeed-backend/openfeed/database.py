@@ -4,8 +4,8 @@ import itertools
 from uuid import UUID
 from typing import Callable
 
-from pydantic import BaseModel, Json
 from supabase import create_client, Client
+from pydantic import BaseModel, Json, Field
 
 from openfeed.database_models import (
     PublicGlobalFeeds,
@@ -15,8 +15,8 @@ from openfeed.database_models import (
 
 
 class MatchArticlesResult(BaseModel):
-    article_id: UUID
-    similarity_score: float
+    article_id: UUID = Field(alias="id")
+    similarity_score: float = Field(alias="similarity")
 
 
 MAX_ARTICLES_PER_INTEREST = 20
@@ -82,7 +82,7 @@ def add_user_interest(
         {
             "user_id": str(user_id),
             "interest_id": str(interest_id),
-            "article_id": a.article_id,
+            "article_id": str(a.article_id),
             "score": a.similarity_score,
         }
         for a in top_articles
