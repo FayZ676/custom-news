@@ -12,8 +12,8 @@ from openfeed.database import (
     get_global_feeds,
     insert_global_articles,
     get_global_article_urls,
-    update_user_articles_scores,
-    update_all_user_articles_scores,
+    add_user_interest,
+    update_user_interests,
 )
 from openfeed.models import UpdateUserArticlesScoresRequest
 
@@ -46,14 +46,14 @@ def fetch_articles(background_tasks: BackgroundTasks):
     return Response(status_code=202)
 
 
-@app.post("/user/articles/scores")
-def update_user_article_scores(request: UpdateUserArticlesScoresRequest):
+@app.post("/user/interest")
+def user_interest_add(request: UpdateUserArticlesScoresRequest):
     logger.info(
-        "POST /user/articles/scores - updating scores for user_id=%s, interest_id=%s",
+        "POST /user/interest - adding interest for user_id=%s, interest_id=%s",
         request.user_id,
         request.interest_id,
     )
-    update_user_articles_scores(
+    add_user_interest(
         db_client, request.user_id, request.interest_id, request.interest_embeddings
     )
 
@@ -83,6 +83,6 @@ def _fetch_articles():
 
     if articles:
         insert_global_articles(db_client, articles)
-        update_all_user_articles_scores(db_client)
+        update_user_interests(db_client)
 
     logger.info("Fetched and inserted %d new articles", len(articles))

@@ -3,7 +3,7 @@ export async function updateUserArticleScores(
   interestId: string,
   interestEmbeddings: number[],
 ) {
-  const res = await fetch(`${process.env.BACKEND_URL}/user/articles/scores`, {
+  const res = await fetch(`${process.env.BACKEND_URL}/user/interest`, {
     method: "POST",
     headers: {
       "x-api-key": process.env.BACKEND_API_KEY!,

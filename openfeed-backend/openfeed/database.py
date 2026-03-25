@@ -54,7 +54,7 @@ def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):
     ).execute()
 
 
-def update_user_articles_scores(
+def add_user_interest(
     db: Client, user_id: UUID, interest_id: UUID, interest_embeddings: list[float]
 ):
     top_articles = (
@@ -85,12 +85,10 @@ def update_user_articles_scores(
         ).execute()
 
 
-def update_all_user_articles_scores(db: Client):
+def update_user_interests(db: Client):
     user_interests = get_user_interests(db)
     for interest in user_interests:
-        update_user_articles_scores(
-            db, interest.user_id, interest.id, interest.embeddings
-        )
+        add_user_interest(db, interest.user_id, interest.id, interest.embeddings)
 
 
 ### private ###
