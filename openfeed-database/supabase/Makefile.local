@@ -25,5 +25,8 @@ functions_test:
 inspect_feeds:
 	deno run --reload --allow-net --allow-read functions/_tests/inspect_feeds.ts > content.txt
 
-gen_types:
+gen_types_ts:
 	supabase gen types typescript --local > ../../openfeed-frontend/lib/supabase/supabase.types.ts
+
+gen_types_py:
+	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/database_models.py
