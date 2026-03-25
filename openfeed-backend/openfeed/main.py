@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +18,7 @@ from openfeed.database import (
     get_global_article_urls,
     get_global_articles_by_id,
 )
-from openfeed.models import UpdateUserArticlesScoresRequest
+from openfeed.models import UpdateUserArticlesScoresRequest, Article
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,7 +76,7 @@ def _fetch_articles():
         for feed in get_global_feeds(db_client)
         for article in get_articles(feed.url)
     )
-    unique_found_articles = []
+    unique_found_articles: list[tuple[UUID, Article]] = []
     for feed_id, article in feed_articles:
         if article.link not in seen_urls:
             seen_urls.add(article.link)
