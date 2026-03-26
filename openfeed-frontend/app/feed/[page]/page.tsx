@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getGlobalArticlesByPage } from "@/lib/backend";
+import { FeedDrawer } from "@/components/FeedDrawer";
+import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
 import { ArticleCard } from "@/components/ArticleCard";
 
 const PAGE_SIZE = 20;
@@ -12,19 +14,11 @@ async function ArticlesContent({ page }: { page: number }) {
 
   return (
     <div className="flex flex-col">
-      <div className="navbar bg-base-100 border-b border-base-300">
-        <div className="navbar-start">
-          <Link href="/feed" className="btn btn-ghost text-xl">
-            OpenFeed
-          </Link>
-        </div>
-        <div className="navbar-center">
-          <span className="text-xl font-semibold">All Articles</span>
-        </div>
-        <div className="navbar-end">
-          <span className="text-base-content/50 pr-4">Page {page}</span>
-        </div>
-      </div>
+      <FeedDrawer
+        left={<MenuDrawerWithData />}
+        center={<span className="text-xl font-semibold">All Articles</span>}
+        right={<span className="text-base-content/50 pr-4">Page {page}</span>}
+      />
       <div className="flex flex-col gap-2 p-4">
         {articles?.length ? (
           articles.map((article) => (

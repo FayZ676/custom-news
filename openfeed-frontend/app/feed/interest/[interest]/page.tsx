@@ -7,6 +7,8 @@ import { getUserCategories } from "@/lib/data/subscription";
 import { getArticlesForInterest } from "@/lib/data/articles";
 
 import { FeedDrawer } from "@/components/FeedDrawer";
+import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
+import { InterestOptionsDrawer } from "@/components/InterestOptionsDrawer";
 import { ArticleCard } from "@/components/ArticleCard";
 
 async function FeedContent({ interestId }: { interestId: string }) {
@@ -31,7 +33,11 @@ async function FeedContent({ interestId }: { interestId: string }) {
 
   return (
     <div className="flex flex-col">
-      <FeedDrawer interests={interests} activeInterest={activeInterest} />
+      <FeedDrawer
+        left={<MenuDrawerWithData />}
+        center={<span className="text-xl">{activeInterest.query}</span>}
+        right={<InterestOptionsDrawer interestId={activeInterest.id} />}
+      />
       <div className="flex flex-col gap-2 p-4">
         {articles?.length ? (
           articles.map(({ global_articles: article }) => {
