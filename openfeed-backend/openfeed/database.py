@@ -3,6 +3,7 @@ import json
 import itertools
 from uuid import UUID
 from typing import Callable
+from datetime import datetime, timedelta, timezone
 
 from supabase import create_client, Client
 from pydantic import BaseModel, Json, Field
@@ -78,6 +79,11 @@ def query_global_articles(
         .data
     )
     return [MatchArticlesResult.model_validate(r) for r in data]  # type: ignore
+
+
+def delete_global_articles(db: Client):
+    one_week_ago = (datetime.now(timezone.utc) - timedelta(weeks=1)).isoformat()
+    db.table("global_articles").delete().lt("created_at", one_week_ago).execute()
 
 
 def get_user_articles_for_interest(

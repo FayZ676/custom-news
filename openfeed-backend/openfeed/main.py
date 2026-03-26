@@ -13,6 +13,7 @@ from openfeed.database import (
     add_user_interest,
     get_user_interests,
     get_global_articles,
+    delete_global_articles,
     insert_global_articles,
     query_global_articles,
     get_global_article_urls,
@@ -54,6 +55,12 @@ def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     background_tasks.add_task(_fetch_articles)
     return Response(status_code=202)
+
+
+@app.delete("/global/articles", status_code=202)
+def global_articles_delete():
+    logger.info("POST /global/articles - accepted, processing in background")
+    return delete_global_articles(db_client)
 
 
 @app.post("/global/articles/search")
