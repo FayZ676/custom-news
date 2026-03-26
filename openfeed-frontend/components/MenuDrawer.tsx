@@ -46,8 +46,8 @@ export function MenuDrawer({ interests }: { interests: Interest[] }) {
             </li>
           ))}
           <li>
-            <Link href="/feed/new-interest" className="btn">
-              New Interest
+            <Link href="/feed" className="btn">
+              Search
             </Link>
           </li>
         </ul>

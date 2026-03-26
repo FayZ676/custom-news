@@ -28,7 +28,7 @@ export async function addInterest(query: string): Promise<never> {
   if (error) throw new Error(error.message);
 
   await updateUserArticleScores(claimsData.claims.sub, interest.id, embeddings);
-  redirect(`/feed?interest=${interest.id}`);
+  redirect(`/feed/interest/${interest.id}`);
 }
 
 export async function deleteInterest(interestId: string) {
