@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { redirect } from "next/navigation";
+import { Check, X, Plus, ArrowRight } from "lucide-react";
 
 import { Database } from "@/lib/supabase/supabase.types";
 
@@ -37,11 +38,9 @@ export function OnboardingForm({ categories }: { categories: Category[] }) {
   }
 
   function addCustomInterest() {
-    if (
-      customInterest.trim() &&
-      !selectedInterests.includes(customInterest.trim())
-    ) {
-      setSelectedInterests((prev) => [...prev, customInterest.trim()]);
+    const trimmed = customInterest.trim();
+    if (trimmed && !selectedInterests.includes(trimmed)) {
+      setSelectedInterests((prev) => [...prev, trimmed]);
       setCustomInterest("");
     }
   }
@@ -56,67 +55,115 @@ export function OnboardingForm({ categories }: { categories: Category[] }) {
   }
 
   return (
-    <div>
-      <h1>Choose your categories</h1>
-      {categories.map((category) => (
-        <div key={category.id}>
-          <input
-            type="checkbox"
-            checked={selectedCategories.includes(category.id)}
-            onChange={() => toggleCategory(category.id)}
-          />
-          <label>{category.name}</label>
-        </div>
-      ))}
-
-      {selectedCategories.length > 0 && (
-        <>
-          {suggestions.length > 0 && (
-            <div>
-              <h2>Suggested interests</h2>
-              {suggestions.map((suggestion) => (
-                <div key={suggestion}>
-                  <input
-                    type="checkbox"
-                    checked={selectedInterests.includes(suggestion)}
-                    onChange={() => toggleInterest(suggestion)}
-                  />
-                  <label>{suggestion}</label>
-                </div>
-              ))}
-            </div>
-          )}
-
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="w-full max-w-lg space-y-10 py-16">
+        {/* Categories */}
+        <section className="space-y-4">
           <div>
-            <h2>Add a custom interest</h2>
-            <input
-              type="text"
-              value={customInterest}
-              onChange={(e) => setCustomInterest(e.target.value)}
-              placeholder="e.g. large language models"
-            />
-            <button onClick={addCustomInterest}>Add</button>
+            <h1 className="text-xl font-semibold">What are you into?</h1>
+            <p className="text-sm text-base-content/50 mt-1">
+              Pick as many as you like.
+            </p>
           </div>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => {
+              const active = selectedCategories.includes(category.id);
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => toggleCategory(category.id)}
+                  className={`btn btn-sm rounded-full ${active ? "btn-neutral" : "btn-outline"}`}
+                >
+                  {active && <Check size={13} strokeWidth={2.5} />}
+                  {category.name}
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-          {selectedInterests.length > 0 && (
-            <div>
-              <h2>Your interests</h2>
-              {selectedInterests.map((interest) => (
-                <span key={interest}>
-                  {interest}
-                  <button onClick={() => toggleInterest(interest)}>
-                    Remove
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+        {selectedCategories.length > 0 && (
+          <>
+            {/* Suggestions */}
+            {suggestions.length > 0 && (
+              <section className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-semibold">Suggested interests</h2>
+                  <p className="text-sm text-base-content/50 mt-1">
+                    Select any that resonate.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((suggestion) => {
+                    const active = selectedInterests.includes(suggestion);
+                    return (
+                      <button
+                        key={suggestion}
+                        onClick={() => toggleInterest(suggestion)}
+                        className={`btn btn-sm rounded-full ${active ? "btn-neutral" : "btn-outline"}`}
+                      >
+                        {active && <Check size={13} strokeWidth={2.5} />}
+                        {suggestion}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-      {selectedCategories.length > 0 && (
-        <button onClick={handleSubmit}>Continue</button>
-      )}
+            {/* Custom interest */}
+            <section className="space-y-4">
+              <div>
+                <h2 className="text-xl font-semibold">Add your own</h2>
+                <p className="text-sm text-base-content/50 mt-1">
+                  Anything not listed above.
+                </p>
+              </div>
+              <div className="join w-full">
+                <input
+                  type="text"
+                  value={customInterest}
+                  onChange={(e) => setCustomInterest(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addCustomInterest()}
+                  placeholder="e.g. large language models"
+                  className="input input-bordered join-item flex-1 focus:outline-none"
+                />
+                <button
+                  onClick={addCustomInterest}
+                  disabled={!customInterest.trim()}
+                  className="btn btn-neutral join-item"
+                >
+                  <Plus size={15} strokeWidth={2.5} />
+                  Add
+                </button>
+              </div>
+
+              {/* Selected interests */}
+              {selectedInterests.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {selectedInterests.map((interest) => (
+                    <span
+                      key={interest}
+                      className="badge badge-neutral badge-lg gap-1.5 py-3"
+                    >
+                      {interest}
+                      <button onClick={() => toggleInterest(interest)}>
+                        <X size={13} strokeWidth={2.5} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Submit */}
+            <button onClick={handleSubmit} className="btn btn-neutral">
+              Continue
+              <ArrowRight size={15} strokeWidth={2.5} />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
