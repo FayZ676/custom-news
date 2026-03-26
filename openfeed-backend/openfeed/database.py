@@ -127,12 +127,6 @@ def add_user_interest(
         ).execute()
 
 
-def update_user_interests(db: Client):
-    user_interests = get_user_interests(db)
-    for interest in user_interests:
-        add_user_interest(db, interest.user_id, interest.id, interest.embeddings)
-
-
 ### private ###
 
 

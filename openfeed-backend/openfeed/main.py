@@ -1,5 +1,4 @@
 import logging
-from uuid import UUID
 
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,8 +11,8 @@ from openfeed.database import (
     client,
     get_global_feeds,
     add_user_interest,
+    get_user_interests,
     get_global_articles,
-    update_user_interests,
     insert_global_articles,
     query_global_articles,
     get_global_article_urls,
@@ -108,6 +107,10 @@ def _fetch_articles():
 
     if articles:
         insert_global_articles(db_client, articles)
-        update_user_interests(db_client)
+        user_interests = get_user_interests(db_client)
+        for interest in user_interests:
+            add_user_interest(
+                db_client, interest.user_id, interest.id, interest.embeddings
+            )
 
     logger.info("Fetched and inserted %d new articles", len(articles))
