@@ -36,7 +36,9 @@ async function FeedContent({ interestId }: { interestId: string }) {
     <div className="flex flex-col">
       <FeedDrawer
         left={<MenuDrawerWithData />}
-        center={<span className="text-xl">{activeInterest.query}</span>}
+        center={
+          <span className="text-xl font-semibold">{activeInterest.query}</span>
+        }
         right={<InterestOptionsDrawer interestId={activeInterest.id} />}
       />
       <div className="flex flex-col gap-2 p-4">
