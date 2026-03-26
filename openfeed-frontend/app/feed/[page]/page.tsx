@@ -37,10 +37,7 @@ function ArticleList({
       <div className="flex flex-col gap-2 p-4">
         {articles.length ? (
           articles.map((article) => (
-            <ArticleCard
-              key={article.id}
-              article={{ ...article, global_feeds: null }}
-            />
+            <ArticleCard key={article.id} article={article} />
           ))
         ) : (
           <p className="text-center text-base-content/50 py-8">
