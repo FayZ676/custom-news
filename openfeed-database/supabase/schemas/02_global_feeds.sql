@@ -1,6 +1,6 @@
 create table "global_feeds" (
     "id" uuid primary key default uuid_generate_v4(),
-    "title" text not null,
+    "title" text not null unique,
     "url" text not null unique,
     "description" text not null,
     "category_id" uuid references global_categories(id),

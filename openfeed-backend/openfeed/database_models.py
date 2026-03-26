@@ -5,6 +5,7 @@ import uuid
 from typing import (
     Annotated,
     Any,
+    List,
     Literal,
     NotRequired,
     Optional,
@@ -55,7 +56,7 @@ class PublicGlobalArticles(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
     embedding_model: Optional[str] = Field(alias="embedding_model")
     embeddings: Optional[list[Any]] = Field(alias="embeddings")
-    feed_id: uuid.UUID = Field(alias="feed_id")
+    feed_title: str = Field(alias="feed_title")
     id: uuid.UUID = Field(alias="id")
     published_at: datetime.datetime = Field(alias="published_at")
     summary: Optional[str] = Field(alias="summary")
@@ -68,7 +69,7 @@ class PublicGlobalArticlesInsert(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     embedding_model: NotRequired[Annotated[str, Field(alias="embedding_model")]]
     embeddings: NotRequired[Annotated[list[Any], Field(alias="embeddings")]]
-    feed_id: Annotated[uuid.UUID, Field(alias="feed_id")]
+    feed_title: Annotated[str, Field(alias="feed_title")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     published_at: Annotated[datetime.datetime, Field(alias="published_at")]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
@@ -81,7 +82,7 @@ class PublicGlobalArticlesUpdate(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     embedding_model: NotRequired[Annotated[str, Field(alias="embedding_model")]]
     embeddings: NotRequired[Annotated[list[Any], Field(alias="embeddings")]]
-    feed_id: NotRequired[Annotated[uuid.UUID, Field(alias="feed_id")]]
+    feed_title: NotRequired[Annotated[str, Field(alias="feed_title")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     published_at: NotRequired[Annotated[datetime.datetime, Field(alias="published_at")]]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]

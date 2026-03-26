@@ -68,3 +68,28 @@ export async function getGlobalArticlesBySearch(query: string) {
 
   return res.json() as Promise<Tables<"global_articles">[]>;
 }
+
+export async function getUserArticlesForInterest(
+  userId: string,
+  interestId: string,
+) {
+  const params = new URLSearchParams({
+    user_id: String(userId),
+    interest_id: String(interestId),
+  });
+  const res = await fetch(
+    `${process.env.BACKEND_URL}/user/articles?${params}`,
+    {
+      method: "GET",
+      headers: {
+        "x-api-key": process.env.BACKEND_API_KEY!,
+      },
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
+  }
+
+  return res.json() as Promise<Tables<"global_articles">[]>;
+}

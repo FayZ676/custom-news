@@ -80,6 +80,21 @@ def query_global_articles(
     return [MatchArticlesResult.model_validate(r) for r in data]  # type: ignore
 
 
+def get_user_articles_for_interest(
+    db: Client, user_id: str, interest_id: str
+) -> list[PublicGlobalArticles]:
+    rows = (
+        db.table("user_article_scores")
+        .select("article_id")
+        .eq("user_id", str(user_id))
+        .eq("interest_id", str(interest_id))
+        .execute()
+        .data
+    )
+    article_ids = {UUID(r["article_id"]) for r in rows}  # type: ignore
+    return get_global_articles_by_id(db, article_ids)
+
+
 def get_user_interests(db: Client) -> list[PublicUserInterests]:
     rows = _paginated_query(db, "user_interests", transform=_decode_embeddings)
     return [PublicUserInterests.model_validate(r) for r in rows]

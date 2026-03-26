@@ -1,16 +1,11 @@
 "use client";
 
+import { Tables } from "@/lib/supabase/supabase.types";
+
 export function ArticleCard({
   article,
 }: {
-  article: {
-    id: string;
-    title: string;
-    url: string;
-    published_at: string;
-    summary: string | null;
-    global_feeds: { title: string } | null;
-  };
+  article: Tables<"global_articles">;
 }) {
   function timeAgo(dateStr: string): string {
     const seconds = Math.floor(
@@ -44,9 +39,7 @@ export function ArticleCard({
         <p className="truncate font-semibold">{article.summary}</p>
       )}
       <div className="flex justify-between text-base-content/50">
-        <span>
-          {article.global_feeds?.title && `${article.global_feeds.title}`}
-        </span>
+        <span>{article.feed_title}</span>
         <span>{timeAgo(article.published_at)}</span>
       </div>
     </div>

@@ -2,7 +2,7 @@ create extension if not exists vector;
 
 create table "global_articles" (
     "id" uuid primary key default gen_random_uuid(),
-    "feed_id" uuid not null references global_feeds(id),
+    "feed_title" text not null references global_feeds(title),
     "title" text not null,
     "url" text not null unique,
     "summary" text,

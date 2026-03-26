@@ -18,6 +18,7 @@ from openfeed.database import (
     query_global_articles,
     get_global_article_urls,
     get_global_articles_by_id,
+    get_user_articles_for_interest,
 )
 from openfeed.models import UpdateUserArticlesScoresRequest, Article
 
@@ -64,6 +65,12 @@ def global_articles_search(query: str):
     return get_global_articles_by_id(db_client, {r.article_id for r in query_results})
 
 
+@app.get("/user/articles")
+def user_articles_get(user_id: str, interest_id: str):
+    logger.info("POST /global/articles - retrieving articles")
+    return get_user_articles_for_interest(db_client, user_id, interest_id)
+
+
 @app.post("/user/interest")
 def user_interest_add(request: UpdateUserArticlesScoresRequest):
     logger.info(
@@ -79,22 +86,22 @@ def user_interest_add(request: UpdateUserArticlesScoresRequest):
 def _fetch_articles():
     seen_urls = set(get_global_article_urls(db_client))
     feed_articles = (
-        (feed.id, article)
+        (feed.title, article)
         for feed in get_global_feeds(db_client)
         for article in get_articles(feed.url)
     )
-    unique_found_articles: list[tuple[UUID, Article]] = []
-    for feed_id, article in feed_articles:
+    unique_found_articles: list[tuple[str, Article]] = []
+    for feed_title, article in feed_articles:
         if article.link not in seen_urls:
             seen_urls.add(article.link)
-            unique_found_articles.append((feed_id, article))
+            unique_found_articles.append((feed_title, article))
 
     article_embeddings = embed_texts(
         [str(article) for _, article in unique_found_articles]
     )
     articles = [
-        article.to_db_schema(feed_id, article_embeddings.model, embedding)
-        for (feed_id, article), embedding in zip(
+        article.to_db_schema(feed_title, article_embeddings.model, embedding)
+        for (feed_title, article), embedding in zip(
             unique_found_articles, article_embeddings.embeddings
         )
     ]

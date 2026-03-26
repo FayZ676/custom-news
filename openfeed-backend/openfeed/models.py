@@ -89,7 +89,7 @@ class Article(BaseModel):
         return "\n\n".join(parts)
 
     def to_db_schema(
-        self, feed_id: uuid.UUID, embeddings_model: str, embedding: list[float]
+        self, feed_title: str, embeddings_model: str, embedding: list[float]
     ):
         return PublicGlobalArticles(
             content="\n\n".join([v.value for v in self.content or [] if v.value])
@@ -97,7 +97,7 @@ class Article(BaseModel):
             published_at=self.published,
             embedding_model=embeddings_model,
             embeddings=embedding,
-            feed_id=feed_id,
+            feed_title=feed_title,
             title=self.title,
             summary=self.summary,
             url=self.link,

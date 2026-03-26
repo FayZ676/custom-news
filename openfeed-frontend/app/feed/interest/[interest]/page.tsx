@@ -4,12 +4,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getUserInterests } from "@/lib/data/interests";
 import { getUserCategories } from "@/lib/data/subscription";
-import { getArticlesForInterest } from "@/lib/data/articles";
 
 import { FeedDrawer } from "@/components/FeedDrawer";
 import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
 import { InterestOptionsDrawer } from "@/components/InterestOptionsDrawer";
 import { ArticleCard } from "@/components/ArticleCard";
+
+import { getUserArticlesForInterest } from "@/lib/backend";
 
 async function FeedContent({ interestId }: { interestId: string }) {
   const supabase = await createClient();
@@ -29,7 +30,7 @@ async function FeedContent({ interestId }: { interestId: string }) {
 
   const activeInterest =
     interests.find((i) => i.id === interestId) ?? interests[0];
-  const articles = await getArticlesForInterest(userId, activeInterest.id);
+  const articles = await getUserArticlesForInterest(userId, activeInterest.id);
 
   return (
     <div className="flex flex-col">
@@ -40,7 +41,7 @@ async function FeedContent({ interestId }: { interestId: string }) {
       />
       <div className="flex flex-col gap-2 p-4">
         {articles?.length ? (
-          articles.map(({ global_articles: article }) => {
+          articles.map((article) => {
             if (!article) return null;
             return <ArticleCard key={article.id} article={article} />;
           })

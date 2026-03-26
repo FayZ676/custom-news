@@ -5,7 +5,7 @@ create extension if not exists "vector" with schema "public";
 
   create table "public"."global_articles" (
     "id" uuid not null default gen_random_uuid(),
-    "feed_id" uuid not null,
+    "feed_title" text not null,
     "title" text not null,
     "url" text not null,
     "summary" text,
@@ -88,6 +88,8 @@ CREATE UNIQUE INDEX global_categories_pkey ON public.global_categories USING btr
 
 CREATE UNIQUE INDEX global_feeds_pkey ON public.global_feeds USING btree (id);
 
+CREATE UNIQUE INDEX global_feeds_title_key ON public.global_feeds USING btree (title);
+
 CREATE UNIQUE INDEX global_feeds_url_key ON public.global_feeds USING btree (url);
 
 CREATE UNIQUE INDEX user_article_scores_pkey ON public.user_article_scores USING btree (user_id, interest_id, article_id);
@@ -110,9 +112,9 @@ alter table "public"."user_category_subscriptions" add constraint "user_category
 
 alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
 
-alter table "public"."global_articles" add constraint "global_articles_feed_id_fkey" FOREIGN KEY (feed_id) REFERENCES public.global_feeds(id) not valid;
+alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) not valid;
 
-alter table "public"."global_articles" validate constraint "global_articles_feed_id_fkey";
+alter table "public"."global_articles" validate constraint "global_articles_feed_title_fkey";
 
 alter table "public"."global_articles" add constraint "global_articles_url_key" UNIQUE using index "global_articles_url_key";
 
@@ -121,6 +123,8 @@ alter table "public"."global_categories" add constraint "global_categories_name_
 alter table "public"."global_feeds" add constraint "global_feeds_category_id_fkey" FOREIGN KEY (category_id) REFERENCES public.global_categories(id) not valid;
 
 alter table "public"."global_feeds" validate constraint "global_feeds_category_id_fkey";
+
+alter table "public"."global_feeds" add constraint "global_feeds_title_key" UNIQUE using index "global_feeds_title_key";
 
 alter table "public"."global_feeds" add constraint "global_feeds_url_key" UNIQUE using index "global_feeds_url_key";
 
