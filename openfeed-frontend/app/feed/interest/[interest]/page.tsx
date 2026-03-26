@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserInterests } from "@/lib/data/interests";
 import { getUserCategories } from "@/lib/data/subscription";
 
-import { FeedDrawer } from "@/components/FeedDrawer";
+import { FeedDrawer } from "@/components/Navbar";
 import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
 import { InterestOptionsDrawer } from "@/components/InterestOptionsDrawer";
 import { ArticleCard } from "@/components/ArticleCard";

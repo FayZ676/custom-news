@@ -9,7 +9,7 @@ import {
 import { Tables } from "@/lib/supabase/supabase.types";
 
 import SearchBar from "@/components/Searchbar";
-import { FeedDrawer } from "@/components/FeedDrawer";
+import { FeedDrawer } from "@/components/Navbar";
 import { ArticleCard } from "@/components/ArticleCard";
 import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
 
