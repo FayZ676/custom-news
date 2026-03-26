@@ -55,7 +55,7 @@ export default async function InterestFeedPage({
 }) {
   const { interest } = await params;
   return (
-    <Suspense fallback={<div>Loading feed ...</div>}>
+    <Suspense fallback={<div>Loading feed...</div>}>
       <FeedContent interestId={interest} />
     </Suspense>
   );

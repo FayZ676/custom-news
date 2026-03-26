@@ -63,7 +63,7 @@ export function FeedDrawer({
               {interests.map((interest) => (
                 <li key={interest.id}>
                   <Link
-                    href={`/feed?interest=${interest.id}`}
+                    href={`/feed/interest/${interest.id}`} // was: /feed?interest=${interest.id}
                     className="btn btn-ghost"
                     onClick={closeLeftDrawer}
                   >
