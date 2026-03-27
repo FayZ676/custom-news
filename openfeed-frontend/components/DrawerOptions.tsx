@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-export function InterestOptionsDrawer({
+export function DrawerOptions({
   onDelete,
   isPending,
 }: {

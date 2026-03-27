@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Article } from "@/lib/backend";
 
-export function ArticleCard({
+export function CardArticle({
   article,
   handleOpen = () => {},
 }: {

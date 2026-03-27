@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export function FeedDrawer({
+export function Navbar({
   left,
   center,
   right,

@@ -6,9 +6,9 @@ import type { Article } from "@/lib/backend";
 import { addInterest } from "@/actions/interests";
 
 import SearchBar from "@/components/Searchbar";
-import { FeedDrawer } from "@/components/Navbar";
-import { MenuDrawer } from "@/components/DrawerMenu";
-import { ArticleCard } from "@/components/CardArticle";
+import { Navbar } from "@/components/Navbar";
+import { DrawerMenu } from "@/components/DrawerMenu";
+import { CardArticle } from "@/components/CardArticle";
 
 type Interest = { id: string; query: string };
 
@@ -44,8 +44,8 @@ export function FeedView({
 
   return (
     <div className="flex flex-col">
-      <FeedDrawer
-        left={<MenuDrawer interests={interests} />}
+      <Navbar
+        left={<DrawerMenu interests={interests} />}
         center={<span className="text-xl font-semibold">{title}</span>}
         right={rightSlot}
       />
@@ -53,7 +53,7 @@ export function FeedView({
       <div className="flex flex-col gap-2 p-4">
         {articles.length ? (
           articles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
+            <CardArticle key={article.id} article={article} />
           ))
         ) : (
           <p className="text-center text-base-content/50 py-8">

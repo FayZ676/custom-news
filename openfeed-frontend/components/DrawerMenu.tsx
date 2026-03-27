@@ -5,7 +5,7 @@ import { useRef } from "react";
 
 type Interest = { id: string; query: string };
 
-export function MenuDrawer({ interests }: { interests: Interest[] }) {
+export function DrawerMenu({ interests }: { interests: Interest[] }) {
   const checkboxRef = useRef<HTMLInputElement>(null);
 
   function closeDrawer() {

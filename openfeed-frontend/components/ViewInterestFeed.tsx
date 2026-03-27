@@ -3,12 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { deleteInterest } from "@/actions/interests";
 import type { Article } from "@/lib/backend";
-import { FeedDrawer } from "@/components/Navbar";
-import { MenuDrawer } from "@/components/DrawerMenu";
-import { ArticleCard } from "@/components/CardArticle";
-import { InterestOptionsDrawer } from "@/components/DrawerOptions";
+import { deleteInterest } from "@/actions/interests";
+
+import { Navbar } from "@/components/Navbar";
+import { CardArticle } from "@/components/CardArticle";
+import { DrawerMenu } from "@/components/DrawerMenu";
+import { DrawerOptions } from "@/components/DrawerOptions";
 
 type Interest = { id: string; query: string };
 
@@ -37,20 +38,18 @@ export function InterestFeedView({
 
   return (
     <div className="flex flex-col">
-      <FeedDrawer
-        left={<MenuDrawer interests={interests} />}
+      <Navbar
+        left={<DrawerMenu interests={interests} />}
         center={
           <span className="text-xl font-semibold">{activeInterest.query}</span>
         }
-        right={
-          <InterestOptionsDrawer onDelete={handleDelete} isPending={deleting} />
-        }
+        right={<DrawerOptions onDelete={handleDelete} isPending={deleting} />}
       />
       <div className="flex flex-col gap-2 p-4">
         {articles?.length ? (
           articles.map((article) =>
             article ? (
-              <ArticleCard
+              <CardArticle
                 key={article.id}
                 article={article}
                 handleOpen={handleOpenArticle}
