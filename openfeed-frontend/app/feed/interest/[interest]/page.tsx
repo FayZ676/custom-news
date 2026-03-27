@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { readUserArticle } from "@/lib/backend";
 import { createClient } from "@/lib/supabase/server";
 import { getUserInterests } from "@/lib/data/interests";
-import { getUserCategories } from "@/lib/data/subscription";
 
 import { FeedDrawer } from "@/components/Navbar";
 import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
@@ -22,11 +21,7 @@ async function FeedContent({ interestId }: { interestId: string }) {
   const interests = await getUserInterests(userId);
 
   if (!interests || interests.length === 0) {
-    const categories = await getUserCategories(userId);
-    if (categories && categories.length > 0) {
-      redirect("/feed/new-interest");
-    }
-    redirect("/onboarding");
+    redirect("/feed");
   }
 
   const activeInterest =

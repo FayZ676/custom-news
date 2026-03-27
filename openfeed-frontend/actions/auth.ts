@@ -9,7 +9,7 @@ export async function signUp(email: string, password: string) {
 
   if (error) throw new Error(error.message);
 
-  redirect("/onboarding");
+  redirect("/feed");
 }
 
 export async function signIn(email: string, password: string) {
