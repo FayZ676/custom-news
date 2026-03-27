@@ -32,10 +32,10 @@ export function CardArticle({
   return (
     <div className="collapse border border-base-300">
       <input type="checkbox" onChange={handleChange} />
-      <div
-        className={`collapse-title pr-4 ${article.is_read ? "opacity-50" : ""}`}
-      >
-        <p className="font-semibold">{article.title}</p>
+      <div className="collapse-title pr-4">
+        <p className={`font-semibold ${article.is_read ? "line-through" : ""}`}>
+          {article.title}
+        </p>
         {article.summary && (
           <p className="truncate text-sm text-base-content/70">
             {article.summary}
