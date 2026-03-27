@@ -2,26 +2,30 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { createClient } from "@/lib/supabase/server";
+import { getUserInterests } from "@/lib/data/interests";
+
 import {
   Article,
   getGlobalArticlesByPage,
   getGlobalArticlesBySearch,
 } from "@/lib/backend";
-import { Tables } from "@/lib/supabase/supabase.types";
 
 import SearchBar from "@/components/Searchbar";
 import { FeedDrawer } from "@/components/Navbar";
+import { MenuDrawer } from "@/components/MenuDrawer";
 import { ArticleCard } from "@/components/ArticleCard";
-import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
 
 const PAGE_SIZE = 20;
 
 function ArticleList({
+  interests,
   articles,
   title,
   rightSlot,
   pagination,
 }: {
+  interests: { id: string; query: string }[];
   articles: Article[];
   title: string;
   rightSlot?: React.ReactNode;
@@ -30,7 +34,7 @@ function ArticleList({
   return (
     <div className="flex flex-col">
       <FeedDrawer
-        left={<MenuDrawerWithData />}
+        left={<MenuDrawer interests={interests} />}
         center={<span className="text-xl font-semibold">{title}</span>}
         right={rightSlot}
       />
@@ -58,6 +62,13 @@ export default async function AllArticlesPage({
   params: Promise<{ page: string }>;
   searchParams: Promise<{ query?: string }>;
 }) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) throw new Error("Not authenticated");
+
+  const userId = claimsData.claims.sub;
+  const interests = await getUserInterests(userId);
+
   const { page: pageStr } = await params;
   const { query } = await searchParams;
   const page = parseInt(pageStr, 10);
@@ -97,6 +108,7 @@ export default async function AllArticlesPage({
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
       <ArticleList
+        interests={interests}
         articles={articles}
         title={query ? "Search Results" : "All Articles"}
         rightSlot={rightSlot}

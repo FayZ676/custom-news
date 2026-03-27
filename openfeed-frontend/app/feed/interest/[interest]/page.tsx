@@ -6,9 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserInterests } from "@/lib/data/interests";
 
 import { FeedDrawer } from "@/components/Navbar";
-import { MenuDrawerWithData } from "@/components/MenuDrawerWithData";
-import { InterestOptionsDrawer } from "@/components/InterestOptionsDrawer";
+import { MenuDrawer } from "@/components/MenuDrawer";
 import { ArticleCard } from "@/components/ArticleCard";
+import { InterestOptionsDrawer } from "@/components/InterestOptionsDrawer";
 
 import { getUserArticlesForInterest } from "@/lib/backend";
 
@@ -38,7 +38,7 @@ async function FeedContent({ interestId }: { interestId: string }) {
   return (
     <div className="flex flex-col">
       <FeedDrawer
-        left={<MenuDrawerWithData />}
+        left={<MenuDrawer interests={interests} />}
         center={
           <span className="text-xl font-semibold">{activeInterest.query}</span>
         }
