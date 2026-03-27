@@ -1,16 +1,11 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
-import { readUserArticle } from "@/lib/backend";
 import { createClient } from "@/lib/supabase/server";
 import { getUserInterests } from "@/lib/data/interests";
+import { getUserArticlesForInterest, readUserArticle } from "@/lib/backend";
 
-import { FeedDrawer } from "@/components/Navbar";
-import { MenuDrawer } from "@/components/MenuDrawer";
-import { ArticleCard } from "@/components/ArticleCard";
-import { InterestOptionsDrawer } from "@/components/InterestOptionsDrawer";
-
-import { getUserArticlesForInterest } from "@/lib/backend";
+import { InterestFeedView } from "@/components/ViewInterestFeed";
 
 async function FeedContent({ interestId }: { interestId: string }) {
   const supabase = await createClient();
@@ -20,9 +15,7 @@ async function FeedContent({ interestId }: { interestId: string }) {
   const userId = claimsData.claims.sub;
   const interests = await getUserInterests(userId);
 
-  if (!interests || interests.length === 0) {
-    redirect("/feed");
-  }
+  if (!interests || interests.length === 0) redirect("/feed");
 
   const activeInterest =
     interests.find((i) => i.id === interestId) ?? interests[0];
@@ -30,39 +23,16 @@ async function FeedContent({ interestId }: { interestId: string }) {
 
   async function handleOpenArticle(articleId: string, isRead: boolean) {
     "use server";
-    if (!isRead) {
-      await readUserArticle(userId, articleId);
-    }
+    if (!isRead) await readUserArticle(userId, articleId);
   }
 
   return (
-    <div className="flex flex-col">
-      <FeedDrawer
-        left={<MenuDrawer interests={interests} />}
-        center={
-          <span className="text-xl font-semibold">{activeInterest.query}</span>
-        }
-        right={<InterestOptionsDrawer interestId={activeInterest.id} />}
-      />
-      <div className="flex flex-col gap-2 p-4">
-        {articles?.length ? (
-          articles.map((article) => {
-            if (!article) return null;
-            return (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                handleOpen={handleOpenArticle}
-              />
-            );
-          })
-        ) : (
-          <p className="text-center text-base-content/50 py-8">
-            No articles available.
-          </p>
-        )}
-      </div>
-    </div>
+    <InterestFeedView
+      initialInterests={interests}
+      activeInterest={activeInterest}
+      articles={articles}
+      handleOpenArticle={handleOpenArticle}
+    />
   );
 }
 

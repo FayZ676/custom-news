@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -9,14 +9,17 @@ import {
   Loader2,
   CircleX,
 } from "lucide-react";
-import { addInterest } from "@/actions/interests";
 
-export default function SearchBar() {
+interface SearchBarProps {
+  onSave: (query: string) => void;
+  saving: boolean;
+  saved: boolean;
+}
+
+export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("query") ?? "");
-  const [saving, startSaveTransition] = useTransition();
-  const [saved, setSaved] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
 
@@ -34,9 +37,7 @@ export default function SearchBar() {
 
   const handleSave = () => {
     if (!query.trim() || saving) return;
-    startSaveTransition(async () => {
-      await addInterest(query.trim());
-    });
+    onSave(query.trim());
   };
 
   const handleClear = () => {
@@ -47,7 +48,6 @@ export default function SearchBar() {
   return (
     <div className="w-full px-4 pt-4">
       <div className="relative rounded-lg border border-base-300 px-4 pt-4 pb-3">
-        {/* Mirror div for auto-resize */}
         <div
           ref={mirrorRef}
           aria-hidden="true"
@@ -84,7 +84,7 @@ export default function SearchBar() {
           <button
             type="button"
             onClick={handleSave}
-            disabled={!query.trim() || saving}
+            disabled={!query.trim() || saving || saved}
             className="btn"
           >
             {saving ? (
@@ -95,7 +95,7 @@ export default function SearchBar() {
             ) : saved ? (
               <>
                 <BookmarkCheck size={14} />
-                <span>Saved!</span>
+                <span>Saved</span>
               </>
             ) : (
               <>
