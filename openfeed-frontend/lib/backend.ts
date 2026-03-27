@@ -1,5 +1,9 @@
 import { Tables } from "./supabase/supabase.types";
 
+export interface Article extends Tables<"global_articles"> {
+  is_read?: boolean;
+}
+
 export async function updateUserArticleScores(
   userId: string,
   interestId: string,
@@ -17,6 +21,27 @@ export async function updateUserArticleScores(
       interest_embeddings: interestEmbeddings,
     }),
   });
+
+  if (!res.ok) {
+    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
+  }
+}
+
+export async function readUserArticle(userId: string, articleId: string) {
+  const params = new URLSearchParams({
+    user_id: userId,
+    article_id: articleId,
+  });
+  const res = await fetch(
+    `${process.env.BACKEND_URL}/user/articles/read?${params}`,
+    {
+      method: "PATCH",
+      headers: {
+        "x-api-key": process.env.BACKEND_API_KEY!,
+        "Content-Type": "application/json",
+      },
+    },
+  );
 
   if (!res.ok) {
     throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
@@ -91,5 +116,5 @@ export async function getUserArticlesForInterest(
     throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
   }
 
-  return res.json() as Promise<Tables<"global_articles">[]>;
+  return res.json() as Promise<Article[]>;
 }

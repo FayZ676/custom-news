@@ -49,7 +49,8 @@ alter table "public"."global_feeds" enable row level security;
     "interest_id" uuid not null,
     "article_id" uuid not null,
     "score" double precision not null,
-    "updated_at" timestamp with time zone not null default now()
+    "updated_at" timestamp with time zone not null default now(),
+    "is_read" boolean not null default false
       );
 
 

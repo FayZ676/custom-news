@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
+import { readUserArticle } from "@/lib/backend";
 import { createClient } from "@/lib/supabase/server";
 import { getUserInterests } from "@/lib/data/interests";
 import { getUserCategories } from "@/lib/data/subscription";
@@ -32,6 +33,13 @@ async function FeedContent({ interestId }: { interestId: string }) {
     interests.find((i) => i.id === interestId) ?? interests[0];
   const articles = await getUserArticlesForInterest(userId, activeInterest.id);
 
+  async function handleOpenArticle(articleId: string, isRead: boolean) {
+    "use server";
+    if (!isRead) {
+      await readUserArticle(userId, articleId);
+    }
+  }
+
   return (
     <div className="flex flex-col">
       <FeedDrawer
@@ -45,7 +53,13 @@ async function FeedContent({ interestId }: { interestId: string }) {
         {articles?.length ? (
           articles.map((article) => {
             if (!article) return null;
-            return <ArticleCard key={article.id} article={article} />;
+            return (
+              <ArticleCard
+                key={article.id}
+                article={article}
+                handleOpen={handleOpenArticle}
+              />
+            );
           })
         ) : (
           <p className="text-center text-base-content/50 py-8">

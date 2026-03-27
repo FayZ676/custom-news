@@ -141,6 +141,7 @@ export type Database = {
         Row: {
           article_id: string;
           interest_id: string;
+          is_read: boolean;
           score: number;
           updated_at: string;
           user_id: string;
@@ -148,6 +149,7 @@ export type Database = {
         Insert: {
           article_id: string;
           interest_id: string;
+          is_read?: boolean;
           score: number;
           updated_at?: string;
           user_id: string;
@@ -155,6 +157,7 @@ export type Database = {
         Update: {
           article_id?: string;
           interest_id?: string;
+          is_read?: boolean;
           score?: number;
           updated_at?: string;
           user_id?: string;

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
+  Article,
   getGlobalArticlesByPage,
   getGlobalArticlesBySearch,
 } from "@/lib/backend";
@@ -21,7 +22,7 @@ function ArticleList({
   rightSlot,
   pagination,
 }: {
-  articles: Tables<"global_articles">[];
+  articles: Article[];
   title: string;
   rightSlot?: React.ReactNode;
   pagination?: React.ReactNode;

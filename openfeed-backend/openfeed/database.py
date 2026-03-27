@@ -20,6 +20,10 @@ class MatchArticlesResult(BaseModel):
     similarity_score: float = Field(alias="similarity")
 
 
+class UserArticle(PublicGlobalArticles):
+    is_read: bool
+
+
 MAX_ARTICLES_PER_INTEREST = 20
 
 
@@ -88,17 +92,29 @@ def delete_global_articles(db: Client):
 
 def get_user_articles_for_interest(
     db: Client, user_id: str, interest_id: str
-) -> list[PublicGlobalArticles]:
+) -> list[UserArticle]:
     rows = (
         db.table("user_articles")
-        .select("article_id")
+        .select("article_id, is_read")
         .eq("user_id", str(user_id))
         .eq("interest_id", str(interest_id))
         .execute()
         .data
     )
-    article_ids = {UUID(r["article_id"]) for r in rows}  # type: ignore
-    return get_global_articles_by_id(db, article_ids)
+    is_read_map = {UUID(r["article_id"]): r["is_read"] for r in rows}  # type: ignore
+    articles = get_global_articles_by_id(db, set(is_read_map.keys()))
+    return [
+        UserArticle.model_validate(
+            {**article.model_dump(), "is_read": is_read_map[article.id]}
+        )
+        for article in articles
+    ]
+
+
+def read_user_article(db: Client, user_id: str, article_id: str):
+    db.table("user_articles").update({"is_read": True}).eq("user_id", user_id).eq(
+        "article_id", article_id
+    ).execute()
 
 
 def get_user_interests(db: Client) -> list[PublicUserInterests]:

@@ -4,6 +4,7 @@ create table "user_articles" (
     "article_id" uuid not null references global_articles(id) on delete cascade,
     "score" float not null,
     "updated_at" timestamptz not null default now(),
+    "is_read" boolean not null default false,
     primary key (user_id, interest_id, article_id)
 );
 

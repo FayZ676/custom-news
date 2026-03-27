@@ -1,12 +1,22 @@
 "use client";
 
-import { Tables } from "@/lib/supabase/supabase.types";
+import { useState } from "react";
+import { Article } from "@/lib/backend";
 
 export function ArticleCard({
   article,
+  handleOpen = () => {},
 }: {
-  article: Tables<"global_articles">;
+  article: Article;
+  handleOpen?: (articleId: string, isRead: boolean) => void;
 }) {
+  const [isRead, setIsRead] = useState(article.is_read ?? false);
+
+  function handleChange() {
+    if (article.is_read !== undefined && !isRead) setIsRead(true);
+    handleOpen(article.id, isRead);
+  }
+
   function timeAgo(dateStr: string): string {
     const seconds = Math.floor(
       (Date.now() - new Date(dateStr).getTime()) / 1000,
@@ -25,8 +35,8 @@ export function ArticleCard({
 
   return (
     <div className="collapse border border-base-300">
-      <input type="checkbox" />
-      <div className="collapse-title pr-4">
+      <input type="checkbox" onChange={handleChange} />
+      <div className={`collapse-title pr-4 ${isRead ? "opacity-50" : ""}`}>
         <p className="font-semibold">{article.title}</p>
         {article.summary && (
           <p className="truncate text-sm text-base-content/70">

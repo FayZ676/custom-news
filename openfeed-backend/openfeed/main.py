@@ -11,11 +11,12 @@ from openfeed.database import (
     client,
     get_global_feeds,
     add_user_interest,
+    read_user_article,
     get_user_interests,
     get_global_articles,
+    query_global_articles,
     delete_global_articles,
     insert_global_articles,
-    query_global_articles,
     get_global_article_urls,
     get_global_articles_by_id,
     get_user_articles_for_interest,
@@ -75,6 +76,12 @@ def global_articles_search(query: str):
 def user_articles_get(user_id: str, interest_id: str):
     logger.info("POST /global/articles - retrieving articles")
     return get_user_articles_for_interest(db_client, user_id, interest_id)
+
+
+@app.patch("/user/articles/read")
+def user_articles_read(user_id: str, article_id: str):
+    logger.info("PATCH /user/articles/read - mark user article as read")
+    return read_user_article(db_client, user_id, article_id)
 
 
 @app.post("/user/interest")
