@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Check, X, Plus, ArrowRight } from "lucide-react";
 
 import { Database } from "@/lib/supabase/supabase.types";
@@ -15,6 +15,8 @@ type Category = Pick<
 >;
 
 export function OnboardingForm({ categories }: { categories: Category[] }) {
+  const router = useRouter();
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [customInterest, setCustomInterest] = useState("");
@@ -51,7 +53,7 @@ export function OnboardingForm({ categories }: { categories: Category[] }) {
       selectedInterests.map((query) => addInterest(query)),
     );
     const lastId = interestIds[interestIds.length - 1];
-    redirect(lastId ? `/feed?interest=${lastId}` : "/feed");
+    router.push(lastId ? `/feed/interest/${lastId}` : "/feed");
   }
 
   return (

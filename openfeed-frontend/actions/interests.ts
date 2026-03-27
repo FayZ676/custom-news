@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { embedTexts } from "./embeddings";
 import { updateUserArticleScores } from "@/lib/backend";
 
-export async function addInterest(query: string): Promise<never> {
+export async function addInterest(query: string): Promise<string> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
@@ -28,7 +28,7 @@ export async function addInterest(query: string): Promise<never> {
   if (error) throw new Error(error.message);
 
   await updateUserArticleScores(claimsData.claims.sub, interest.id, embeddings);
-  redirect(`/feed/interest/${interest.id}`);
+  return interest.id;
 }
 
 export async function deleteInterest(interestId: string) {
