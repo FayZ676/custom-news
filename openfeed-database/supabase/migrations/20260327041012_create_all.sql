@@ -44,7 +44,7 @@ alter table "public"."global_categories" enable row level security;
 alter table "public"."global_feeds" enable row level security;
 
 
-  create table "public"."user_article_scores" (
+  create table "public"."user_articles" (
     "user_id" uuid not null,
     "interest_id" uuid not null,
     "article_id" uuid not null,
@@ -53,7 +53,7 @@ alter table "public"."global_feeds" enable row level security;
       );
 
 
-alter table "public"."user_article_scores" enable row level security;
+alter table "public"."user_articles" enable row level security;
 
 
   create table "public"."user_category_subscriptions" (
@@ -92,9 +92,9 @@ CREATE UNIQUE INDEX global_feeds_title_key ON public.global_feeds USING btree (t
 
 CREATE UNIQUE INDEX global_feeds_url_key ON public.global_feeds USING btree (url);
 
-CREATE UNIQUE INDEX user_article_scores_pkey ON public.user_article_scores USING btree (user_id, interest_id, article_id);
+CREATE UNIQUE INDEX user_articles_pkey ON public.user_articles USING btree (user_id, interest_id, article_id);
 
-CREATE INDEX user_article_scores_user_id_interest_id_score_idx ON public.user_article_scores USING btree (user_id, interest_id, score DESC);
+CREATE INDEX user_articles_user_id_interest_id_score_idx ON public.user_articles USING btree (user_id, interest_id, score DESC);
 
 CREATE UNIQUE INDEX user_category_subscriptions_pkey ON public.user_category_subscriptions USING btree (user_id, category_id);
 
@@ -106,7 +106,7 @@ alter table "public"."global_categories" add constraint "global_categories_pkey"
 
 alter table "public"."global_feeds" add constraint "global_feeds_pkey" PRIMARY KEY using index "global_feeds_pkey";
 
-alter table "public"."user_article_scores" add constraint "user_article_scores_pkey" PRIMARY KEY using index "user_article_scores_pkey";
+alter table "public"."user_articles" add constraint "user_articles_pkey" PRIMARY KEY using index "user_articles_pkey";
 
 alter table "public"."user_category_subscriptions" add constraint "user_category_subscriptions_pkey" PRIMARY KEY using index "user_category_subscriptions_pkey";
 
@@ -128,17 +128,17 @@ alter table "public"."global_feeds" add constraint "global_feeds_title_key" UNIQ
 
 alter table "public"."global_feeds" add constraint "global_feeds_url_key" UNIQUE using index "global_feeds_url_key";
 
-alter table "public"."user_article_scores" add constraint "user_article_scores_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
+alter table "public"."user_articles" add constraint "user_articles_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
 
-alter table "public"."user_article_scores" validate constraint "user_article_scores_article_id_fkey";
+alter table "public"."user_articles" validate constraint "user_articles_article_id_fkey";
 
-alter table "public"."user_article_scores" add constraint "user_article_scores_interest_id_fkey" FOREIGN KEY (interest_id) REFERENCES public.user_interests(id) ON DELETE CASCADE not valid;
+alter table "public"."user_articles" add constraint "user_articles_interest_id_fkey" FOREIGN KEY (interest_id) REFERENCES public.user_interests(id) ON DELETE CASCADE not valid;
 
-alter table "public"."user_article_scores" validate constraint "user_article_scores_interest_id_fkey";
+alter table "public"."user_articles" validate constraint "user_articles_interest_id_fkey";
 
-alter table "public"."user_article_scores" add constraint "user_article_scores_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+alter table "public"."user_articles" add constraint "user_articles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
-alter table "public"."user_article_scores" validate constraint "user_article_scores_user_id_fkey";
+alter table "public"."user_articles" validate constraint "user_articles_user_id_fkey";
 
 alter table "public"."user_category_subscriptions" add constraint "user_category_subscriptions_category_id_fkey" FOREIGN KEY (category_id) REFERENCES public.global_categories(id) ON DELETE CASCADE not valid;
 
@@ -291,47 +291,47 @@ grant truncate on table "public"."global_feeds" to "service_role";
 
 grant update on table "public"."global_feeds" to "service_role";
 
-grant delete on table "public"."user_article_scores" to "anon";
+grant delete on table "public"."user_articles" to "anon";
 
-grant insert on table "public"."user_article_scores" to "anon";
+grant insert on table "public"."user_articles" to "anon";
 
-grant references on table "public"."user_article_scores" to "anon";
+grant references on table "public"."user_articles" to "anon";
 
-grant select on table "public"."user_article_scores" to "anon";
+grant select on table "public"."user_articles" to "anon";
 
-grant trigger on table "public"."user_article_scores" to "anon";
+grant trigger on table "public"."user_articles" to "anon";
 
-grant truncate on table "public"."user_article_scores" to "anon";
+grant truncate on table "public"."user_articles" to "anon";
 
-grant update on table "public"."user_article_scores" to "anon";
+grant update on table "public"."user_articles" to "anon";
 
-grant delete on table "public"."user_article_scores" to "authenticated";
+grant delete on table "public"."user_articles" to "authenticated";
 
-grant insert on table "public"."user_article_scores" to "authenticated";
+grant insert on table "public"."user_articles" to "authenticated";
 
-grant references on table "public"."user_article_scores" to "authenticated";
+grant references on table "public"."user_articles" to "authenticated";
 
-grant select on table "public"."user_article_scores" to "authenticated";
+grant select on table "public"."user_articles" to "authenticated";
 
-grant trigger on table "public"."user_article_scores" to "authenticated";
+grant trigger on table "public"."user_articles" to "authenticated";
 
-grant truncate on table "public"."user_article_scores" to "authenticated";
+grant truncate on table "public"."user_articles" to "authenticated";
 
-grant update on table "public"."user_article_scores" to "authenticated";
+grant update on table "public"."user_articles" to "authenticated";
 
-grant delete on table "public"."user_article_scores" to "service_role";
+grant delete on table "public"."user_articles" to "service_role";
 
-grant insert on table "public"."user_article_scores" to "service_role";
+grant insert on table "public"."user_articles" to "service_role";
 
-grant references on table "public"."user_article_scores" to "service_role";
+grant references on table "public"."user_articles" to "service_role";
 
-grant select on table "public"."user_article_scores" to "service_role";
+grant select on table "public"."user_articles" to "service_role";
 
-grant trigger on table "public"."user_article_scores" to "service_role";
+grant trigger on table "public"."user_articles" to "service_role";
 
-grant truncate on table "public"."user_article_scores" to "service_role";
+grant truncate on table "public"."user_articles" to "service_role";
 
-grant update on table "public"."user_article_scores" to "service_role";
+grant update on table "public"."user_articles" to "service_role";
 
 grant delete on table "public"."user_category_subscriptions" to "anon";
 
@@ -446,7 +446,7 @@ using (true);
 
 
   create policy "Users can manage their own article scores"
-  on "public"."user_article_scores"
+  on "public"."user_articles"
   as permissive
   for all
   to public

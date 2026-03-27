@@ -90,7 +90,7 @@ def get_user_articles_for_interest(
     db: Client, user_id: str, interest_id: str
 ) -> list[PublicGlobalArticles]:
     rows = (
-        db.table("user_article_scores")
+        db.table("user_articles")
         .select("article_id")
         .eq("user_id", str(user_id))
         .eq("interest_id", str(interest_id))
@@ -127,7 +127,7 @@ def add_user_interest(
     ]
 
     if scores:
-        db.table("user_article_scores").upsert(
+        db.table("user_articles").upsert(
             scores,
             on_conflict="user_id,interest_id,article_id",
         ).execute()

@@ -142,7 +142,7 @@ class PublicGlobalFeedsUpdate(TypedDict):
     url: NotRequired[Annotated[str, Field(alias="url")]]
 
 
-class PublicUserArticleScores(BaseModel):
+class PublicUserArticles(BaseModel):
     article_id: uuid.UUID = Field(alias="article_id")
     interest_id: uuid.UUID = Field(alias="interest_id")
     score: float = Field(alias="score")
@@ -150,7 +150,7 @@ class PublicUserArticleScores(BaseModel):
     user_id: uuid.UUID = Field(alias="user_id")
 
 
-class PublicUserArticleScoresInsert(TypedDict):
+class PublicUserArticlesInsert(TypedDict):
     article_id: Annotated[uuid.UUID, Field(alias="article_id")]
     interest_id: Annotated[uuid.UUID, Field(alias="interest_id")]
     score: Annotated[float, Field(alias="score")]
@@ -158,7 +158,7 @@ class PublicUserArticleScoresInsert(TypedDict):
     user_id: Annotated[uuid.UUID, Field(alias="user_id")]
 
 
-class PublicUserArticleScoresUpdate(TypedDict):
+class PublicUserArticlesUpdate(TypedDict):
     article_id: NotRequired[Annotated[uuid.UUID, Field(alias="article_id")]]
     interest_id: NotRequired[Annotated[uuid.UUID, Field(alias="interest_id")]]
     score: NotRequired[Annotated[float, Field(alias="score")]]

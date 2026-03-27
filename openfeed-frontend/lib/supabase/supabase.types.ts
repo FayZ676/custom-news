@@ -137,7 +137,7 @@ export type Database = {
           },
         ];
       };
-      user_article_scores: {
+      user_articles: {
         Row: {
           article_id: string;
           interest_id: string;
@@ -161,14 +161,14 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "user_article_scores_article_id_fkey";
+            foreignKeyName: "user_articles_article_id_fkey";
             columns: ["article_id"];
             isOneToOne: false;
             referencedRelation: "global_articles";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_article_scores_interest_id_fkey";
+            foreignKeyName: "user_articles_interest_id_fkey";
             columns: ["interest_id"];
             isOneToOne: false;
             referencedRelation: "user_interests";
