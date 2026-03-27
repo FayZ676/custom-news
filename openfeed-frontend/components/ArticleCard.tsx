@@ -24,20 +24,25 @@ export function ArticleCard({
   }
 
   return (
-    <div className="card card-border">
-      <div className="card-body">
-        <span className="card-title">{article.title}</span>
+    <div className="collapse border border-base-300">
+      <input type="checkbox" />
+      <div className="collapse-title pr-4">
+        <p className="font-semibold">{article.title}</p>
         {article.summary && (
-          <p className="truncate font-semibold">{article.summary}</p>
+          <p className="truncate text-sm text-base-content/70">
+            {article.summary}
+          </p>
         )}
-        <div className="flex justify-between text-base-content/50">
+        <div className="flex justify-between mt-2 text-xs text-base-content/50">
           <span>{article.feed_title}</span>
           <span>{timeAgo(article.published_at)}</span>
         </div>
       </div>
-      <div className="collapse-content text-sm">
-        Click the "Sign Up" button in the top right corner and follow the
-        registration process.
+      <div className="collapse-content text-sm text-base-content/70">
+        <p>{article.content}</p>
+        <a href={article.url} className="link">
+          Read More
+        </a>
       </div>
     </div>
   );
