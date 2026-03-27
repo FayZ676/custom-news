@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { getUserInterests } from "@/lib/data/interests";
 import {
+  getUserInterests,
   getGlobalArticlesByPage,
   getGlobalArticlesBySearch,
 } from "@/lib/backend";

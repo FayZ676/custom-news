@@ -2,10 +2,16 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import { Search } from "lucide-react";
 
-type Interest = { id: string; query: string };
+import { Interest } from "@/lib/backend";
 
-export function DrawerMenu({ interests }: { interests: Interest[] }) {
+export interface DrawerMenuInterest {
+  interest: Interest;
+  hasUnreadArticles: boolean;
+}
+
+export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
   const checkboxRef = useRef<HTMLInputElement>(null);
 
   function closeDrawer() {
@@ -35,19 +41,23 @@ export function DrawerMenu({ interests }: { interests: Interest[] }) {
         ></label>
         <ul className="menu bg-base-200 min-h-full w-80 p-4">
           {interests.map((interest) => (
-            <li key={interest.id}>
+            <li key={interest.interest.id} className="">
               <Link
-                href={`/feed/interest/${interest.id}`}
-                className="btn btn-ghost"
+                href={`/feed/interest/${interest.interest.id}`}
+                className="flex justify-between btn btn-ghost"
                 onClick={closeDrawer}
               >
-                {interest.query}
+                <span>{interest.interest.query}</span>
+                {interest.hasUnreadArticles && (
+                  <span className="w-2 h-2 rounded-full bg-success"></span>
+                )}
               </Link>
             </li>
           ))}
           <li>
             <Link href="/feed" className="btn">
-              Search
+              <Search size={14} />
+              <span>Search</span>
             </Link>
           </li>
         </ul>

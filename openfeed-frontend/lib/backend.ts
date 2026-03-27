@@ -4,12 +4,17 @@ export interface Article extends Tables<"global_articles"> {
   is_read?: boolean;
 }
 
+export interface Interest {
+  id: string;
+  query: string;
+}
+
 export async function updateUserArticleScores(
   userId: string,
   interestId: string,
   interestEmbeddings: number[],
 ) {
-  const res = await fetch(`${process.env.BACKEND_URL}/user/interest`, {
+  const res = await fetch(`${process.env.BACKEND_URL}/user/interests`, {
     method: "POST",
     headers: {
       "x-api-key": process.env.BACKEND_API_KEY!,
@@ -117,4 +122,25 @@ export async function getUserArticlesForInterest(
   }
 
   return res.json() as Promise<Article[]>;
+}
+
+export async function getUserInterests(userId: string) {
+  const params = new URLSearchParams({
+    user_id: String(userId),
+  });
+  const res = await fetch(
+    `${process.env.BACKEND_URL}/user/interests?${params}`,
+    {
+      method: "GET",
+      headers: {
+        "x-api-key": process.env.BACKEND_API_KEY!,
+      },
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
+  }
+
+  return res.json() as Promise<Interest[]>;
 }

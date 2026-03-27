@@ -3,15 +3,13 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import type { Article } from "@/lib/backend";
+import type { Article, Interest } from "@/lib/backend";
 import { deleteInterest } from "@/actions/interests";
 
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
-import { DrawerMenu } from "@/components/DrawerMenu";
 import { DrawerOptions } from "@/components/DrawerOptions";
-
-type Interest = { id: string; query: string };
+import { DrawerMenu, DrawerMenuInterest } from "@/components/DrawerMenu";
 
 export function InterestFeedView({
   initialInterests,
@@ -28,6 +26,10 @@ export function InterestFeedView({
   const [interests, setInterests] = useState<Interest[]>(initialInterests);
   const [deleting, startDeleteTransition] = useTransition();
 
+  const drawerInterests: DrawerMenuInterest[] = interests.map((interest) => {
+    return { interest: interest, hasUnreadArticles: true };
+  });
+
   const handleDelete = () => {
     setInterests((prev) => prev.filter((i) => i.id !== activeInterest.id));
     startDeleteTransition(async () => {
@@ -39,7 +41,7 @@ export function InterestFeedView({
   return (
     <div className="flex flex-col">
       <Navbar
-        left={<DrawerMenu interests={interests} />}
+        left={<DrawerMenu interests={drawerInterests} />}
         center={
           <span className="text-xl font-semibold">{activeInterest.query}</span>
         }

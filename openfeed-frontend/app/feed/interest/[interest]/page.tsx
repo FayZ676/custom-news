@@ -2,8 +2,11 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { getUserInterests } from "@/lib/data/interests";
-import { getUserArticlesForInterest, readUserArticle } from "@/lib/backend";
+import {
+  readUserArticle,
+  getUserInterests,
+  getUserArticlesForInterest,
+} from "@/lib/backend";
 
 import { InterestFeedView } from "@/components/ViewInterestFeed";
 

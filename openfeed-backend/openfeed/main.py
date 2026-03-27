@@ -9,17 +9,18 @@ from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
 from openfeed.database import (
     client,
-    get_global_feeds,
     add_user_interest,
-    read_user_article,
-    get_user_interests,
-    get_global_articles,
-    query_global_articles,
     delete_global_articles,
-    insert_global_articles,
+    get_global_feeds,
+    get_global_articles,
     get_global_article_urls,
     get_global_articles_by_id,
     get_user_articles_for_interest,
+    get_user_interests,
+    get_user_interests_for_user,
+    insert_global_articles,
+    query_global_articles,
+    read_user_article,
 )
 from openfeed.models import UpdateUserArticlesScoresRequest, Article
 
@@ -84,7 +85,13 @@ def user_articles_read(user_id: str, article_id: str):
     return read_user_article(db_client, user_id, article_id)
 
 
-@app.post("/user/interest")
+@app.get("/user/interests")
+def user_interests_get(user_id: str):
+    logger.info("POST /global/articles - retrieving interests for user")
+    return get_user_interests_for_user(db_client, user_id)
+
+
+@app.post("/user/interests")
 def user_interest_add(request: UpdateUserArticlesScoresRequest):
     logger.info(
         "POST /user/interest - adding interest for user_id=%s, interest_id=%s",

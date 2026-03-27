@@ -24,6 +24,11 @@ class UserArticle(PublicGlobalArticles):
     is_read: bool
 
 
+class UserInterest(BaseModel):
+    id: str
+    query: str
+
+
 MAX_ARTICLES_PER_INTEREST = 20
 
 
@@ -122,6 +127,16 @@ def get_user_interests(db: Client) -> list[PublicUserInterests]:
     return [PublicUserInterests.model_validate(r) for r in rows]
 
 
+def get_user_interests_for_user(db: Client, user_id: str) -> list[UserInterest]:
+    rows = _paginated_query(
+        db,
+        "user_interests",
+        select="id, created_at, query, user_id",
+        filters={"user_id": user_id},
+    )
+    return [UserInterest.model_validate(r) for r in rows]
+
+
 def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):
     db.table("global_articles").insert(
         [a.model_dump(mode="json") for a in articles]
@@ -163,19 +178,18 @@ def _paginated_query(
     table: str,
     *,
     select: str = "*",
+    filters: dict[str, str] | None = None,
     page_size: int = 1000,
     transform: Callable[[Json], None] | None = None,
 ) -> list[dict]:
     """Fetch all rows from a table with automatic pagination."""
     results = []
     for page in itertools.count():
-        rows = (
-            db.table(table)
-            .select(select)
-            .range(page * page_size, (page + 1) * page_size - 1)
-            .execute()
-            .data
-        )
+        query = db.table(table).select(select)
+        if filters:
+            for column, value in filters.items():
+                query = query.eq(column, value)
+        rows = query.range(page * page_size, (page + 1) * page_size - 1).execute().data
         if transform:
             for row in rows:
                 transform(row)

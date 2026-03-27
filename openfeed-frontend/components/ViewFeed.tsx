@@ -7,8 +7,8 @@ import { addInterest } from "@/actions/interests";
 
 import SearchBar from "@/components/Searchbar";
 import { Navbar } from "@/components/Navbar";
-import { DrawerMenu } from "@/components/DrawerMenu";
 import { CardArticle } from "@/components/CardArticle";
+import { DrawerMenu, DrawerMenuInterest } from "@/components/DrawerMenu";
 
 type Interest = { id: string; query: string };
 
@@ -29,6 +29,10 @@ export function FeedView({
   const [saving, startSaveTransition] = useTransition();
   const [saved, setSaved] = useState(false);
 
+  const drawerInterests: DrawerMenuInterest[] = interests.map((interest) => {
+    return { interest: interest, hasUnreadArticles: true };
+  });
+
   const handleSave = (query: string) => {
     const tempId = `temp-${Date.now()}`;
     setSaved(false);
@@ -45,7 +49,7 @@ export function FeedView({
   return (
     <div className="flex flex-col">
       <Navbar
-        left={<DrawerMenu interests={interests} />}
+        left={<DrawerMenu interests={drawerInterests} />}
         center={<span className="text-xl font-semibold">{title}</span>}
         right={rightSlot}
       />
