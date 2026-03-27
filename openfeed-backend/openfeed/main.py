@@ -20,9 +20,13 @@ from openfeed.database import (
     get_user_interests_for_user,
     insert_global_articles,
     query_global_articles,
-    read_user_article,
+    read_user_articles,
 )
-from openfeed.models import UpdateUserArticlesScoresRequest, Article
+from openfeed.models import (
+    Article,
+    UserArticlesReadRequest,
+    UpdateUserArticlesScoresRequest,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -80,9 +84,9 @@ def user_articles_get(user_id: str, interest_id: str):
 
 
 @app.patch("/user/articles/read")
-def user_articles_read(user_id: str, article_id: str):
+def user_articles_read(request: UserArticlesReadRequest):
     logger.info("PATCH /user/articles/read - mark user article as read")
-    return read_user_article(db_client, user_id, article_id)
+    return read_user_articles(db_client, request.user_id, request.article_ids)
 
 
 @app.get("/user/interests")

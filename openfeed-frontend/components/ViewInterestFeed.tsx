@@ -1,41 +1,77 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
-import type { Article, Interest } from "@/lib/backend";
 import { deleteInterest } from "@/actions/interests";
 
+import type { Article, Interest } from "@/lib/backend";
+
+import Toolbar from "@/components/Toolbar";
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { DrawerOptions } from "@/components/DrawerOptions";
 import { DrawerMenu, DrawerMenuInterest } from "@/components/DrawerMenu";
 
-export function InterestFeedView({
-  initialInterests,
+export function ViewInterestFeed({
+  initialDrawerInterests,
   activeInterest,
   articles,
-  handleOpenArticle,
+  handleReadArticles,
 }: {
-  initialInterests: Interest[];
+  initialDrawerInterests: DrawerMenuInterest[];
   activeInterest: Interest;
   articles: Article[];
-  handleOpenArticle: (articleId: string, isRead: boolean) => Promise<void>;
+  handleReadArticles: (articleIds: string[], isRead: boolean) => Promise<void>;
 }) {
   const router = useRouter();
-  const [interests, setInterests] = useState<Interest[]>(initialInterests);
+
+  const [localArticles, setLocalArticles] = useState<Article[]>(articles);
+  const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
+    initialDrawerInterests,
+  );
+
+  const [, startReadTransition] = useTransition();
   const [deleting, startDeleteTransition] = useTransition();
 
-  const drawerInterests: DrawerMenuInterest[] = interests.map((interest) => {
-    return { interest: interest, hasUnreadArticles: true };
-  });
+  const updateActiveUnreadStatus = (updatedArticles: Article[]) => {
+    const hasUnread = updatedArticles.some((a) => a && !a.is_read);
+    setDrawerInterests((prev) =>
+      prev.map((di) =>
+        di.interest.id === activeInterest.id
+          ? { ...di, hasUnreadArticles: hasUnread }
+          : di,
+      ),
+    );
+  };
 
-  const handleDelete = () => {
-    setInterests((prev) => prev.filter((i) => i.id !== activeInterest.id));
+  const handleDeleteArticle = () => {
+    setDrawerInterests((prev) =>
+      prev.filter((di) => di.interest.id !== activeInterest.id),
+    );
     startDeleteTransition(async () => {
       await deleteInterest(activeInterest.id);
       router.push("/feed");
     });
+  };
+
+  const wrappedHandleReadArticles = (articleIds: string[], isRead: boolean) => {
+    const updated = localArticles.map((a) =>
+      a && articleIds.includes(a.id) ? { ...a, is_read: !isRead } : a,
+    );
+    setLocalArticles(updated);
+    updateActiveUnreadStatus(updated);
+    startReadTransition(async () => {
+      await handleReadArticles(articleIds, isRead);
+    });
+  };
+
+  const handleReadAllArticles = () => {
+    const unreadIds = localArticles
+      .filter((a) => a && !a.is_read)
+      .map((a) => a.id);
+    if (unreadIds.length === 0) return;
+    wrappedHandleReadArticles(unreadIds, false);
   };
 
   return (
@@ -45,16 +81,22 @@ export function InterestFeedView({
         center={
           <span className="text-xl font-semibold">{activeInterest.query}</span>
         }
-        right={<DrawerOptions onDelete={handleDelete} isPending={deleting} />}
+        right={
+          <DrawerOptions onDelete={handleDeleteArticle} isPending={deleting} />
+        }
       />
       <div className="flex flex-col gap-2 p-4">
-        {articles?.length ? (
-          articles.map((article) =>
+        <Toolbar
+          handleReadAllArticles={handleReadAllArticles}
+          allRead={localArticles.every((a) => !a || a.is_read)}
+        />
+        {localArticles?.length ? (
+          localArticles.map((article) =>
             article ? (
               <CardArticle
                 key={article.id}
                 article={article}
-                handleOpen={handleOpenArticle}
+                handleReadArticles={wrappedHandleReadArticles}
               />
             ) : null,
           )

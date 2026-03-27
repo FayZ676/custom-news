@@ -27,6 +27,7 @@ class UserArticle(PublicGlobalArticles):
 class UserInterest(BaseModel):
     id: str
     query: str
+    has_unread_articles: bool
 
 
 MAX_ARTICLES_PER_INTEREST = 20
@@ -116,9 +117,9 @@ def get_user_articles_for_interest(
     ]
 
 
-def read_user_article(db: Client, user_id: str, article_id: str):
-    db.table("user_articles").update({"is_read": True}).eq("user_id", user_id).eq(
-        "article_id", article_id
+def read_user_articles(db: Client, user_id: str, article_ids: list[str]):
+    db.table("user_articles").update({"is_read": True}).eq("user_id", user_id).in_(
+        "article_id", article_ids
     ).execute()
 
 
@@ -128,13 +129,23 @@ def get_user_interests(db: Client) -> list[PublicUserInterests]:
 
 
 def get_user_interests_for_user(db: Client, user_id: str) -> list[UserInterest]:
-    rows = _paginated_query(
-        db,
-        "user_interests",
-        select="id, created_at, query, user_id",
-        filters={"user_id": user_id},
+    rows = (
+        db.table("user_interests")
+        .select("id, query, user_articles(is_read)")
+        .eq("user_id", user_id)
+        .execute()
+        .data
     )
-    return [UserInterest.model_validate(r) for r in rows]
+    return [
+        UserInterest(
+            id=r["id"],  # type: ignore
+            query=r["query"],  # type: ignore
+            has_unread_articles=any(
+                not a["is_read"] for a in r.get("user_articles", [])  # type: ignore
+            ),
+        )
+        for r in rows
+    ]
 
 
 def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):

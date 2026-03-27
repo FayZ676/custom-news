@@ -1,20 +1,16 @@
-"use client";
-
-import { useState } from "react";
 import { Article } from "@/lib/backend";
 
 export function CardArticle({
   article,
-  handleOpen = () => {},
+  handleReadArticles = () => {},
 }: {
   article: Article;
-  handleOpen?: (articleId: string, isRead: boolean) => void;
+  handleReadArticles?: (articleIds: string[], isRead: boolean) => void;
 }) {
-  const [isRead, setIsRead] = useState(article.is_read ?? false);
-
   function handleChange() {
-    if (article.is_read !== undefined && !isRead) setIsRead(true);
-    handleOpen(article.id, isRead);
+    if (article.is_read !== undefined && !article.is_read) {
+      handleReadArticles([article.id], article.is_read);
+    }
   }
 
   function timeAgo(dateStr: string): string {
@@ -36,7 +32,9 @@ export function CardArticle({
   return (
     <div className="collapse border border-base-300">
       <input type="checkbox" onChange={handleChange} />
-      <div className={`collapse-title pr-4 ${isRead ? "opacity-50" : ""}`}>
+      <div
+        className={`collapse-title pr-4 ${article.is_read ? "opacity-50" : ""}`}
+      >
         <p className="font-semibold">{article.title}</p>
         {article.summary && (
           <p className="truncate text-sm text-base-content/70">

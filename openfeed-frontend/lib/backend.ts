@@ -7,6 +7,7 @@ export interface Article extends Tables<"global_articles"> {
 export interface Interest {
   id: string;
   query: string;
+  has_unread_articles: boolean;
 }
 
 export async function updateUserArticleScores(
@@ -32,21 +33,15 @@ export async function updateUserArticleScores(
   }
 }
 
-export async function readUserArticle(userId: string, articleId: string) {
-  const params = new URLSearchParams({
-    user_id: userId,
-    article_id: articleId,
-  });
-  const res = await fetch(
-    `${process.env.BACKEND_URL}/user/articles/read?${params}`,
-    {
-      method: "PATCH",
-      headers: {
-        "x-api-key": process.env.BACKEND_API_KEY!,
-        "Content-Type": "application/json",
-      },
+export async function readUserArticles(userId: string, articleIds: string[]) {
+  const res = await fetch(`${process.env.BACKEND_URL}/user/articles/read`, {
+    method: "PATCH",
+    headers: {
+      "x-api-key": process.env.BACKEND_API_KEY!,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({ user_id: userId, article_ids: articleIds }),
+  });
 
   if (!res.ok) {
     throw new Error(`Backend API error (${res.status}): ${await res.text()}`);

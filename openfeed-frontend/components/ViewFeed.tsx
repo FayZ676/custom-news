@@ -10,37 +10,47 @@ import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { DrawerMenu, DrawerMenuInterest } from "@/components/DrawerMenu";
 
-type Interest = { id: string; query: string };
-
-export function FeedView({
-  initialInterests,
+export function ViewFeed({
+  initialDrawerInterests,
   articles,
   title,
   rightSlot,
   pagination,
 }: {
-  initialInterests: Interest[];
+  initialDrawerInterests: DrawerMenuInterest[];
   articles: Article[];
   title: string;
   rightSlot?: React.ReactNode;
   pagination?: React.ReactNode;
 }) {
-  const [interests, setInterests] = useState<Interest[]>(initialInterests);
+  const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
+    initialDrawerInterests,
+  );
   const [saving, startSaveTransition] = useTransition();
   const [saved, setSaved] = useState(false);
-
-  const drawerInterests: DrawerMenuInterest[] = interests.map((interest) => {
-    return { interest: interest, hasUnreadArticles: true };
-  });
 
   const handleSave = (query: string) => {
     const tempId = `temp-${Date.now()}`;
     setSaved(false);
-    setInterests((prev) => [...prev, { id: tempId, query }]);
+    setDrawerInterests((prev) => [
+      ...prev,
+      {
+        interest: { id: tempId, query, has_unread_articles: true },
+        hasUnreadArticles: true,
+      },
+    ]);
     startSaveTransition(async () => {
       const realId = await addInterest(query);
-      setInterests((prev) =>
-        prev.map((i) => (i.id === tempId ? { id: realId, query } : i)),
+      setDrawerInterests((prev) =>
+        prev.map((di) =>
+          di.interest.id === tempId
+            ? {
+                ...di,
+                interest: { id: realId, query, has_unread_articles: true },
+                hasUnreadArticles: true,
+              }
+            : di,
+        ),
       );
       setSaved(true);
     });

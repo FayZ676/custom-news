@@ -3,19 +3,20 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import {
-  readUserArticle,
+  readUserArticles,
   getUserInterests,
   getUserArticlesForInterest,
 } from "@/lib/backend";
 
-import { InterestFeedView } from "@/components/ViewInterestFeed";
+import { ViewInterestFeed } from "@/components/ViewInterestFeed";
+import { DrawerMenuInterest } from "@/components/DrawerMenu";
 
 async function FeedContent({ interestId }: { interestId: string }) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
-
   const userId = claimsData.claims.sub;
+
   const interests = await getUserInterests(userId);
 
   if (!interests || interests.length === 0) redirect("/feed");
@@ -24,17 +25,22 @@ async function FeedContent({ interestId }: { interestId: string }) {
     interests.find((i) => i.id === interestId) ?? interests[0];
   const articles = await getUserArticlesForInterest(userId, activeInterest.id);
 
-  async function handleOpenArticle(articleId: string, isRead: boolean) {
+  const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({
+    interest: i,
+    hasUnreadArticles: i.has_unread_articles,
+  }));
+
+  async function handleReadArticles(articleIds: string[], isRead: boolean) {
     "use server";
-    if (!isRead) await readUserArticle(userId, articleId);
+    if (!isRead) await readUserArticles(userId, articleIds);
   }
 
   return (
-    <InterestFeedView
-      initialInterests={interests}
+    <ViewInterestFeed
+      initialDrawerInterests={initialDrawerInterests}
       activeInterest={activeInterest}
       articles={articles}
-      handleOpenArticle={handleOpenArticle}
+      handleReadArticles={handleReadArticles}
     />
   );
 }

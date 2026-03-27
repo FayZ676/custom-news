@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -9,7 +9,8 @@ import {
   getGlobalArticlesBySearch,
 } from "@/lib/backend";
 
-import { FeedView } from "@/components/ViewFeed";
+import { ViewFeed } from "@/components/ViewFeed";
+import { DrawerMenuInterest } from "@/components/DrawerMenu";
 
 const PAGE_SIZE = 20;
 
@@ -23,18 +24,24 @@ export default async function AllArticlesPage({
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
-
   const userId = claimsData.claims.sub;
-  const interests = await getUserInterests(userId);
 
   const { page: pageStr } = await params;
   const { query } = await searchParams;
   const page = parseInt(pageStr, 10);
   if (isNaN(page) || page < 1) notFound();
 
-  const articles = query
-    ? await getGlobalArticlesBySearch(query)
-    : await getGlobalArticlesByPage(page, PAGE_SIZE);
+  const [interests, articles] = await Promise.all([
+    getUserInterests(userId),
+    query
+      ? getGlobalArticlesBySearch(query)
+      : getGlobalArticlesByPage(page, PAGE_SIZE),
+  ]);
+
+  const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({
+    interest: i,
+    hasUnreadArticles: i.has_unread_articles,
+  }));
 
   const rightSlot = query ? (
     <span className="text-base-content/50 pr-4">
@@ -65,8 +72,8 @@ export default async function AllArticlesPage({
 
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
-      <FeedView
-        initialInterests={interests}
+      <ViewFeed
+        initialDrawerInterests={initialDrawerInterests}
         articles={articles}
         title={query ? "Search Results" : "All Articles"}
         rightSlot={rightSlot}

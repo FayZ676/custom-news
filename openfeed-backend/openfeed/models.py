@@ -110,3 +110,8 @@ class UpdateUserArticlesScoresRequest(BaseModel):
     user_id: uuid.UUID
     interest_id: uuid.UUID
     interest_embeddings: list[float]
+
+
+class UserArticlesReadRequest(BaseModel):
+    user_id: str
+    article_ids: list[str]
