@@ -10,6 +10,7 @@ import {
 } from "@/lib/backend";
 
 import { ViewFeed } from "@/components/ViewFeed";
+import { ViewFeedSkeleton } from "@/components/ViewFeedSkeleton";
 import { DrawerMenuInterest } from "@/components/DrawerMenu";
 
 const PAGE_SIZE = 20;
@@ -71,7 +72,7 @@ export default async function AllArticlesPage({
   );
 
   return (
-    <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
+    <Suspense fallback={<ViewFeedSkeleton count={10} />}>
       <ViewFeed
         initialDrawerInterests={initialDrawerInterests}
         articles={articles}
