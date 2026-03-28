@@ -9,7 +9,21 @@ import {
 } from "@/lib/backend";
 
 import { ViewInterestFeed } from "@/components/ViewInterestFeed";
+import { ViewFeedSkeleton } from "@/components/ViewFeedSkeleton";
 import { DrawerMenuInterest } from "@/components/DrawerMenu";
+
+export default async function InterestFeedPage({
+  params,
+}: {
+  params: Promise<{ interest: string }>;
+}) {
+  const { interest } = await params;
+  return (
+    <Suspense fallback={<ViewFeedSkeleton />}>
+      <FeedContent interestId={interest} />
+    </Suspense>
+  );
+}
 
 async function FeedContent({ interestId }: { interestId: string }) {
   const supabase = await createClient();
@@ -42,18 +56,5 @@ async function FeedContent({ interestId }: { interestId: string }) {
       articles={articles}
       handleReadArticles={handleReadArticles}
     />
-  );
-}
-
-export default async function InterestFeedPage({
-  params,
-}: {
-  params: Promise<{ interest: string }>;
-}) {
-  const { interest } = await params;
-  return (
-    <Suspense fallback={<div>Loading feed...</div>}>
-      <FeedContent interestId={interest} />
-    </Suspense>
   );
 }

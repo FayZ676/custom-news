@@ -21,15 +21,29 @@ export default async function AllArticlesPage({
   params: Promise<{ page: string }>;
   searchParams: Promise<{ query?: string }>;
 }) {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData) throw new Error("Not authenticated");
-  const userId = claimsData.claims.sub;
-
   const { page: pageStr } = await params;
   const { query } = await searchParams;
   const page = parseInt(pageStr, 10);
   if (isNaN(page) || page < 1) notFound();
+
+  return (
+    <Suspense fallback={<ViewFeedSkeleton />}>
+      <AllArticlesContent page={page} query={query} />
+    </Suspense>
+  );
+}
+
+async function AllArticlesContent({
+  page,
+  query,
+}: {
+  page: number;
+  query?: string;
+}) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) throw new Error("Not authenticated");
+  const userId = claimsData.claims.sub;
 
   const [interests, articles] = await Promise.all([
     getUserInterests(userId),
@@ -52,15 +66,13 @@ export default async function AllArticlesPage({
   );
 
   return (
-    <Suspense fallback={<ViewFeedSkeleton />}>
-      <ViewFeed
-        initialDrawerInterests={initialDrawerInterests}
-        articles={articles}
-        title={query ? "Search Results" : "All Articles"}
-        rightSlot={rightSlot}
-        page={!query ? page : undefined}
-        hasMore={!query ? articles.length === PAGE_SIZE : undefined}
-      />
-    </Suspense>
+    <ViewFeed
+      initialDrawerInterests={initialDrawerInterests}
+      articles={articles}
+      title={query ? "Search Results" : "All Articles"}
+      rightSlot={rightSlot}
+      page={!query ? page : undefined}
+      hasMore={!query ? articles.length === PAGE_SIZE : undefined}
+    />
   );
 }
