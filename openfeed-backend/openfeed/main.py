@@ -1,4 +1,6 @@
 import logging
+from typing import Optional
+from contextlib import asynccontextmanager
 
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +10,7 @@ from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
 from openfeed.database import (
+    Client,
     client,
     add_user_interest,
     delete_global_articles,
@@ -33,11 +36,17 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-app = FastAPI(dependencies=[Depends(verify_api_key)])
-db_client = client()
+db_client: Optional[Client] = None
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global db_client
+    db_client = client()
+    yield
+
+
+app = FastAPI(dependencies=[Depends(verify_api_key)], lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -50,10 +59,15 @@ app.add_middleware(
 )
 
 
+def get_db() -> Client:
+    assert db_client is not None, "db_client not initialized"
+    return db_client
+
+
 @app.get("/global/articles")
 def global_articles_get(page_size: int, page: int):
     logger.info("POST /global/articles - retrieving articles")
-    return get_global_articles(db_client, page_size, page)
+    return get_global_articles(get_db(), page_size, page)
 
 
 @app.post("/global/articles", status_code=202)
@@ -66,33 +80,33 @@ def global_articles_update(background_tasks: BackgroundTasks):
 @app.delete("/global/articles", status_code=202)
 def global_articles_delete():
     logger.info("POST /global/articles - accepted, processing in background")
-    return delete_global_articles(db_client)
+    return delete_global_articles(get_db())
 
 
 @app.post("/global/articles/search")
 def global_articles_search(query: str):
     logger.info("POST /global/articles/search - searching articles")
     query_embeddings = embed_texts([query]).embeddings[0]
-    query_results = query_global_articles(db_client, query_embeddings)
-    return get_global_articles_by_id(db_client, {r.article_id for r in query_results})
+    query_results = query_global_articles(get_db(), query_embeddings)
+    return get_global_articles_by_id(get_db(), {r.article_id for r in query_results})
 
 
 @app.get("/user/articles")
 def user_articles_get(user_id: str, interest_id: str):
     logger.info("POST /global/articles - retrieving articles")
-    return get_user_articles_for_interest(db_client, user_id, interest_id)
+    return get_user_articles_for_interest(get_db(), user_id, interest_id)
 
 
 @app.patch("/user/articles/read")
 def user_articles_read(request: UserArticlesReadRequest):
     logger.info("PATCH /user/articles/read - mark user article as read")
-    return read_user_articles(db_client, request.user_id, request.article_ids)
+    return read_user_articles(get_db(), request.user_id, request.article_ids)
 
 
 @app.get("/user/interests")
 def user_interests_get(user_id: str):
     logger.info("POST /global/articles - retrieving interests for user")
-    return get_user_interests_for_user(db_client, user_id)
+    return get_user_interests_for_user(get_db(), user_id)
 
 
 @app.post("/user/interests")
@@ -103,15 +117,15 @@ def user_interest_add(request: UpdateUserArticlesScoresRequest):
         request.interest_id,
     )
     add_user_interest(
-        db_client, request.user_id, request.interest_id, request.interest_embeddings
+        get_db(), request.user_id, request.interest_id, request.interest_embeddings
     )
 
 
 def _fetch_articles():
-    seen_urls = set(get_global_article_urls(db_client))
+    seen_urls = set(get_global_article_urls(get_db()))
     feed_articles = (
         (feed.title, article)
-        for feed in get_global_feeds(db_client)
+        for feed in get_global_feeds(get_db())
         for article in get_articles(feed.url)
     )
     unique_found_articles: list[tuple[str, Article]] = []
@@ -131,11 +145,11 @@ def _fetch_articles():
     ]
 
     if articles:
-        insert_global_articles(db_client, articles)
-        user_interests = get_user_interests(db_client)
+        insert_global_articles(get_db(), articles)
+        user_interests = get_user_interests(get_db())
         for interest in user_interests:
             add_user_interest(
-                db_client, interest.user_id, interest.id, interest.embeddings
+                get_db(), interest.user_id, interest.id, interest.embeddings
             )
 
     logger.info("Fetched and inserted %d new articles", len(articles))

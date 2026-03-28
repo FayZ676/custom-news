@@ -1,3 +1,5 @@
+include .env.prod
+
 PYTHON := $(shell which python)
 GIT_ROOT := $(shell git rev-parse --show-toplevel)
 
@@ -40,3 +42,16 @@ docker_run:
 		-p 8000:8000 \
 		--env-file .env \
 		openfeed-backend
+
+# Deployment
+
+deploy_secrets:
+	modal secret delete openfeed-secrets
+	modal secret create openfeed-secrets \
+		SUPABASE_PROJECT_URL=$(SUPABASE_PROJECT_URL) \
+		SUPABASE_SERVICE_ROLE_KEY=$(SUPABASE_SERVICE_ROLE_KEY) \
+		OPENAI_API_KEY=$(OPENAI_API_KEY) \
+		BACKEND_API_KEY=$(BACKEND_API_KEY)
+
+deploy: deploy_secrets
+	modal deploy openfeed/modal_app.py
