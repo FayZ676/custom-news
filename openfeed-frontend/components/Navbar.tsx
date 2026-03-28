@@ -11,9 +11,11 @@ export function Navbar({
 }) {
   return (
     <div className="navbar bg-base-100">
-      <div className="navbar-start">{left}</div>
-      <div className="navbar-center">{center}</div>
-      {right ? <div className="navbar-end">{right}</div> : null}
+      <div className="navbar-start w-auto">{left}</div>
+      <div className="navbar-center min-w-0 flex-1 justify-center">
+        {center}
+      </div>
+      {right ? <div className="navbar-end w-auto">{right}</div> : null}
     </div>
   );
 }

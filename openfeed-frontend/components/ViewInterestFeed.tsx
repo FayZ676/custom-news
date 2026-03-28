@@ -79,7 +79,9 @@ export function ViewInterestFeed({
       <Navbar
         left={<DrawerMenu interests={drawerInterests} />}
         center={
-          <span className="text-xl font-semibold">{activeInterest.query}</span>
+          <span className="text-xl font-semibold text-center wrap-break-word">
+            {activeInterest.query}
+          </span>
         }
         right={
           <DrawerOptions onDelete={handleDeleteArticle} isPending={deleting} />

@@ -55,7 +55,7 @@ export default function SearchBar({
   };
 
   return (
-    <div className="w-full px-4 pt-4">
+    <div className="w-full p-4">
       <div className="relative rounded-lg border border-base-300 px-4 pt-4 pb-3">
         <div
           ref={mirrorRef}
