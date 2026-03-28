@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import type { Article } from "@/lib/backend";
@@ -8,6 +9,7 @@ import { addInterest } from "@/actions/interests";
 import SearchBar from "@/components/Searchbar";
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
+import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
 import { DrawerMenu, DrawerMenuInterest } from "@/components/DrawerMenu";
 
 export function ViewFeed({
@@ -23,11 +25,25 @@ export function ViewFeed({
   rightSlot?: React.ReactNode;
   pagination?: React.ReactNode;
 }) {
+  const router = useRouter();
   const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
     initialDrawerInterests,
   );
   const [saving, startSaveTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [isSearching, startSearchTransition] = useTransition();
+
+  const handleSearch = (query: string) => {
+    startSearchTransition(() => {
+      router.push(`/feed/1?query=${encodeURIComponent(query)}`);
+    });
+  };
+
+  const handleClear = () => {
+    startSearchTransition(() => {
+      router.push("/feed/1");
+    });
+  };
 
   const handleSave = (query: string) => {
     const tempId = `temp-${Date.now()}`;
@@ -63,9 +79,20 @@ export function ViewFeed({
         center={<span className="text-xl font-semibold">{title}</span>}
         right={rightSlot}
       />
-      <SearchBar onSave={handleSave} saving={saving} saved={saved} />
+      <SearchBar
+        onSave={handleSave}
+        saving={saving}
+        saved={saved}
+        onSearch={handleSearch}
+        onClear={handleClear}
+        searching={isSearching}
+      />
       <div className="flex flex-col gap-2 p-4">
-        {articles.length ? (
+        {isSearching ? (
+          Array.from({ length: 10 }).map((_, i) => (
+            <CardArticleSkeleton key={i} />
+          ))
+        ) : articles.length ? (
           articles.map((article) => (
             <CardArticle key={article.id} article={article} />
           ))

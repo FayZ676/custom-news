@@ -1,7 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   Bookmark,
@@ -14,10 +14,19 @@ interface SearchBarProps {
   onSave: (query: string) => void;
   saving: boolean;
   saved: boolean;
+  onSearch: (query: string) => void;
+  onClear: () => void;
+  searching: boolean;
 }
 
-export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
-  const router = useRouter();
+export default function SearchBar({
+  onSave,
+  saving,
+  saved,
+  onSearch,
+  onClear,
+  searching,
+}: SearchBarProps) {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("query") ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,7 +41,7 @@ export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
 
   const handleSearch = () => {
     if (!query.trim()) return;
-    router.push(`/feed/1?query=${encodeURIComponent(query.trim())}`);
+    onSearch(query.trim());
   };
 
   const handleSave = () => {
@@ -42,7 +51,7 @@ export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
 
   const handleClear = () => {
     setQuery("");
-    router.push("/feed/1");
+    onClear();
   };
 
   return (
@@ -62,8 +71,7 @@ export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
             const value = e.target.value;
             setQuery(value);
             if (!value.trim()) {
-              router.push("/feed/1");
-              router.refresh();
+              onClear();
             }
           }}
           onKeyDown={(e) => {
@@ -84,7 +92,7 @@ export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
           <button
             type="button"
             onClick={handleSave}
-            disabled={!query.trim() || saving || saved}
+            disabled={!query.trim() || saving || saved || searching}
             className="btn"
           >
             {saving ? (
@@ -108,7 +116,7 @@ export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
           <button
             type="button"
             onClick={handleSearch}
-            disabled={!query.trim()}
+            disabled={!query.trim() || searching}
             className="btn"
           >
             <Search size={14} />
@@ -119,7 +127,7 @@ export default function SearchBar({ onSave, saving, saved }: SearchBarProps) {
             <button
               type="button"
               onClick={handleClear}
-              disabled={!query.trim()}
+              disabled={!query.trim() || searching}
               className="btn"
             >
               <CircleX size={14} />
