@@ -88,7 +88,7 @@ export default function SearchBar({
 
         <hr className="border-base-300 -mx-4 my-3" />
 
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <button
             type="button"
             onClick={handleSave}
