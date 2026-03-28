@@ -2,7 +2,7 @@ import { NavbarSkeleton } from "@/components/NavbarSkeleton";
 import { SearchbarSkeleton } from "@/components/SearchbarSkeleton";
 import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
 
-export function ViewFeedSkeleton({ count = 5 }: { count?: number }) {
+export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="flex flex-col">
       <NavbarSkeleton />

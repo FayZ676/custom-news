@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
@@ -52,33 +51,15 @@ export default async function AllArticlesPage({
     <span className="text-base-content/50 pr-4">Page {page}</span>
   );
 
-  const pagination = !query && (
-    <div key="pagination" className="flex justify-between p-4">
-      {page > 1 ? (
-        <Link href={`/feed/${page - 1}`} className="btn">
-          ← Previous
-        </Link>
-      ) : (
-        <div />
-      )}
-      {articles.length === PAGE_SIZE ? (
-        <Link href={`/feed/${page + 1}`} className="btn">
-          Next →
-        </Link>
-      ) : (
-        <div />
-      )}
-    </div>
-  );
-
   return (
-    <Suspense fallback={<ViewFeedSkeleton count={10} />}>
+    <Suspense fallback={<ViewFeedSkeleton />}>
       <ViewFeed
         initialDrawerInterests={initialDrawerInterests}
         articles={articles}
         title={query ? "Search Results" : "All Articles"}
         rightSlot={rightSlot}
-        pagination={pagination}
+        page={!query ? page : undefined}
+        hasMore={!query ? articles.length === PAGE_SIZE : undefined}
       />
     </Suspense>
   );

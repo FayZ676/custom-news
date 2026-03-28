@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -17,13 +18,15 @@ export function ViewFeed({
   articles,
   title,
   rightSlot,
-  pagination,
+  page,
+  hasMore,
 }: {
   initialDrawerInterests: DrawerMenuInterest[];
   articles: Article[];
   title: string;
   rightSlot?: React.ReactNode;
-  pagination?: React.ReactNode;
+  page?: number;
+  hasMore?: boolean;
 }) {
   const router = useRouter();
   const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
@@ -89,7 +92,7 @@ export function ViewFeed({
       />
       <div className="flex flex-col gap-2 p-4">
         {isSearching ? (
-          Array.from({ length: 10 }).map((_, i) => (
+          Array.from({ length: 3 }).map((_, i) => (
             <CardArticleSkeleton key={i} />
           ))
         ) : articles.length ? (
@@ -102,7 +105,40 @@ export function ViewFeed({
           </p>
         )}
       </div>
-      {pagination}
+      {page !== undefined && (
+        <div className="flex justify-between p-4">
+          {page > 1 ? (
+            <Link
+              href={`/feed/${page - 1}`}
+              className={`btn${isSearching || saving ? " btn-disabled" : ""}`}
+              aria-disabled={isSearching || saving}
+              tabIndex={isSearching || saving ? -1 : undefined}
+              onClick={
+                isSearching || saving ? (e) => e.preventDefault() : undefined
+              }
+            >
+              ← Previous
+            </Link>
+          ) : (
+            <div />
+          )}
+          {hasMore ? (
+            <Link
+              href={`/feed/${page + 1}`}
+              className={`btn${isSearching || saving ? " btn-disabled" : ""}`}
+              aria-disabled={isSearching || saving}
+              tabIndex={isSearching || saving ? -1 : undefined}
+              onClick={
+                isSearching || saving ? (e) => e.preventDefault() : undefined
+              }
+            >
+              Next →
+            </Link>
+          ) : (
+            <div />
+          )}
+        </div>
+      )}
     </div>
   );
 }
