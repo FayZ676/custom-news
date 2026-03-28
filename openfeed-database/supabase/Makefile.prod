@@ -1,16 +1,12 @@
 include ../.env.prod
 
 fetch_articles:
-	curl -i --location --request POST '$(PROJECT_URL)/functions/v1/fetch_articles' \
-		--header 'Authorization: Bearer $(SERVICE_ROLE_KEY)' \
-		--header 'Content-Type: application/json' \
-		--data '{}';
+	curl -i --location --request POST '$(BACKEND_URL)/global/articles' \
+		--header 'x-api-key: $(BACKEND_API_KEY)' \
+		--header 'Content-Type: application/json';
 
 reset:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& (supabase functions delete fetch_articles || true) \
-		&& (supabase functions delete embed || true) \
-		&& (supabase functions delete parse_feed || true) \
 		&& mv migrations /tmp/_migrations_backup \
 		&& mv seeds /tmp/_seeds_backup \
 		&& supabase db reset --linked \
@@ -21,17 +17,12 @@ deploy:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-seed --include-all \
 		&& supabase secrets set \
-			OPENAI_API_KEY=$(OPENAI_API_KEY) \
-			NEXT_PUBLIC_URL=$(NEXT_PUBLIC_URL) \
-			REVALIDATE_SECRET=$(REVALIDATE_SECRET) \
+			BACKEND_URL=$(BACKEND_URL) \
+			BACKEND_API_KEY=$(BACKEND_API_KEY) \
 		&& echo " \
-			DELETE FROM vault.secrets WHERE name IN ('project_url', 'publishable_key'); \
-			SELECT vault.create_secret('$(PROJECT_URL)', 'project_url'); \
-			SELECT vault.create_secret('$(PUBLISHABLE_KEY)', 'publishable_key'); \
-			SELECT vault.create_secret('$(SERVICE_ROLE_KEY)', 'service_role_key'); \
-		" | psql "$(DATABASE_URL)" \
-		&& supabase functions deploy fetch_articles \
-		&& supabase functions deploy embed \
-		&& supabase functions deploy parse_feed
+			DELETE FROM vault.secrets WHERE name IN ('backend_url', 'backend_api_key'); \
+			SELECT vault.create_secret('$(BACKEND_URL)', 'backend_url'); \
+			SELECT vault.create_secret('$(BACKEND_API_KEY)', 'backend_api_key'); \
+		" | psql "postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres"
 
 init: reset deploy fetch_articles
