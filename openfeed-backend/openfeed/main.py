@@ -9,6 +9,7 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
+from openfeed.summarize import generate_summary
 from openfeed.database import (
     Client,
     client,
@@ -121,6 +122,16 @@ def user_interest_add(request: UpdateUserArticlesScoresRequest):
     )
 
 
+def _needs_summary(article: Article) -> bool:
+    """Return True if the article has no usable text beyond its title."""
+    has_content = (
+        bool(article.summary)
+        or bool(article.description)
+        or bool(article.content and any(c.value for c in article.content))
+    )
+    return not has_content
+
+
 def _fetch_articles():
     seen_urls = set(get_global_article_urls(get_db()))
     feed_articles = (
@@ -133,6 +144,11 @@ def _fetch_articles():
         if article.link not in seen_urls:
             seen_urls.add(article.link)
             unique_found_articles.append((feed_title, article))
+
+    for _, article in unique_found_articles:
+        if _needs_summary(article):
+            logger.info("Generating summary for article: %s", article.link)
+            article.summary = generate_summary(article.link)
 
     article_embeddings = embed_texts(
         [str(article) for _, article in unique_found_articles]
