@@ -53,7 +53,9 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
                 className="grid-cols-[minmax(0,1fr)_auto]"
                 onClick={closeDrawer}
               >
-                <span className="truncate">{interest.interest.query}</span>
+                <span className="font-semibold truncate">
+                  {interest.interest.query}
+                </span>
                 {interest.unreadArticlesCount > 0 && (
                   <span className="badge badge-outline badge-success badge-sm border">
                     {interest.unreadArticlesCount}
