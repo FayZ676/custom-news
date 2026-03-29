@@ -70,6 +70,7 @@ export async function getGlobalArticlesByPage(
   const { data, error } = await supabase
     .from("global_articles")
     .select("*")
+    .order("published_at", { ascending: false })
     .range(from, to);
 
   if (error) throw new Error(error.message);
@@ -98,7 +99,8 @@ export async function getGlobalArticlesBySearch(
   const { data: articles, error } = await supabase
     .from("global_articles")
     .select("*")
-    .in("id", ids);
+    .in("id", ids)
+    .order("published_at", { ascending: false });
 
   if (error) throw new Error(error.message);
   return articles;
@@ -123,7 +125,8 @@ export async function getUserArticlesForInterest(
   const { data: articles, error } = await supabase
     .from("global_articles")
     .select("*")
-    .in("id", Array.from(isReadMap.keys()));
+    .in("id", Array.from(isReadMap.keys()))
+    .order("published_at", { ascending: false });
 
   if (error) throw new Error(error.message);
 
