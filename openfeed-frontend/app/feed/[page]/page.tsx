@@ -46,10 +46,10 @@ async function AllArticlesContent({
   const userId = claimsData.claims.sub;
 
   const [interests, articles] = await Promise.all([
-    getUserInterests(userId),
+    getUserInterests(supabase, userId),
     query
-      ? getGlobalArticlesBySearch(query)
-      : getGlobalArticlesByPage(page, PAGE_SIZE),
+      ? getGlobalArticlesBySearch(supabase, query)
+      : getGlobalArticlesByPage(supabase, page, PAGE_SIZE),
   ]);
 
   const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({

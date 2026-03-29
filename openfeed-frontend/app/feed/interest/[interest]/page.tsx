@@ -31,13 +31,17 @@ async function FeedContent({ interestId }: { interestId: string }) {
   if (!claimsData) throw new Error("Not authenticated");
   const userId = claimsData.claims.sub;
 
-  const interests = await getUserInterests(userId);
+  const interests = await getUserInterests(supabase, userId);
 
   if (!interests || interests.length === 0) redirect("/feed");
 
   const activeInterest =
     interests.find((i) => i.id === interestId) ?? interests[0];
-  const articles = await getUserArticlesForInterest(userId, activeInterest.id);
+  const articles = await getUserArticlesForInterest(
+    supabase,
+    userId,
+    activeInterest.id,
+  );
 
   const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({
     interest: i,
@@ -46,7 +50,8 @@ async function FeedContent({ interestId }: { interestId: string }) {
 
   async function handleReadArticles(articleIds: string[], isRead: boolean) {
     "use server";
-    if (!isRead) await readUserArticles(userId, articleIds);
+    const supabase = await createClient();
+    if (!isRead) await readUserArticles(supabase, userId, articleIds);
   }
 
   return (

@@ -1,6 +1,5 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { embedTexts } from "./embeddings";
 import { updateUserArticleScores } from "@/lib/backend";
@@ -27,7 +26,12 @@ export async function addInterest(query: string): Promise<string> {
 
   if (error) throw new Error(error.message);
 
-  await updateUserArticleScores(claimsData.claims.sub, interest.id, embeddings);
+  await updateUserArticleScores(
+    supabase,
+    claimsData.claims.sub,
+    interest.id,
+    embeddings,
+  );
   return interest.id;
 }
 

@@ -1,4 +1,6 @@
-import { Tables } from "./supabase/supabase.types";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { Tables, Database } from "./supabase/supabase.types";
+import { embedTexts } from "@/actions/embeddings";
 
 export interface Article extends Tables<"global_articles"> {
   is_read?: boolean;
@@ -10,132 +12,143 @@ export interface Interest {
   has_unread_articles: boolean;
 }
 
+const MAX_ARTICLES_PER_INTEREST = 20;
+
 export async function updateUserArticleScores(
+  supabase: SupabaseClient<Database>,
   userId: string,
   interestId: string,
   interestEmbeddings: number[],
 ) {
-  const res = await fetch(`${process.env.BACKEND_URL}/user/interests`, {
-    method: "POST",
-    headers: {
-      "x-api-key": process.env.BACKEND_API_KEY!,
-      "Content-Type": "application/json",
+  const { data: matches, error: rpcError } = await supabase.rpc(
+    "match_articles",
+    {
+      query_embedding: JSON.stringify(interestEmbeddings),
+      match_count: MAX_ARTICLES_PER_INTEREST,
     },
-    body: JSON.stringify({
-      user_id: userId,
-      interest_id: interestId,
-      interest_embeddings: interestEmbeddings,
-    }),
+  );
+
+  if (rpcError) throw new Error(rpcError.message);
+  if (!matches || matches.length === 0) return;
+
+  const scores = matches.map((m) => ({
+    user_id: userId,
+    interest_id: interestId,
+    article_id: m.id,
+    score: m.similarity,
+  }));
+
+  const { error } = await supabase.from("user_articles").upsert(scores, {
+    onConflict: "user_id,interest_id,article_id",
   });
 
-  if (!res.ok) {
-    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
-  }
+  if (error) throw new Error(error.message);
 }
 
-export async function readUserArticles(userId: string, articleIds: string[]) {
-  const res = await fetch(`${process.env.BACKEND_URL}/user/articles/read`, {
-    method: "PATCH",
-    headers: {
-      "x-api-key": process.env.BACKEND_API_KEY!,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ user_id: userId, article_ids: articleIds }),
-  });
+export async function readUserArticles(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  articleIds: string[],
+) {
+  const { error } = await supabase
+    .from("user_articles")
+    .update({ is_read: true })
+    .eq("user_id", userId)
+    .in("article_id", articleIds);
 
-  if (!res.ok) {
-    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
-  }
+  if (error) throw new Error(error.message);
 }
 
 export async function getGlobalArticlesByPage(
+  supabase: SupabaseClient<Database>,
   page: number,
   pageSize: number = 20,
-) {
-  const params = new URLSearchParams({
-    page: String(page),
-    page_size: String(pageSize),
-  });
-  const res = await fetch(
-    `${process.env.BACKEND_URL}/global/articles?${params}`,
-    {
-      method: "GET",
-      headers: {
-        "x-api-key": process.env.BACKEND_API_KEY!,
-      },
-    },
-  );
+): Promise<Tables<"global_articles">[]> {
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
 
-  if (!res.ok) {
-    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
-  }
+  const { data, error } = await supabase
+    .from("global_articles")
+    .select("*")
+    .range(from, to);
 
-  return res.json() as Promise<Tables<"global_articles">[]>;
+  if (error) throw new Error(error.message);
+  return data;
 }
 
-export async function getGlobalArticlesBySearch(query: string) {
-  const params = new URLSearchParams({
-    query: String(query),
-  });
-  const res = await fetch(
-    `${process.env.BACKEND_URL}/global/articles/search?${params}`,
+export async function getGlobalArticlesBySearch(
+  supabase: SupabaseClient<Database>,
+  query: string,
+): Promise<Tables<"global_articles">[]> {
+  const { embeddings } = await embedTexts([query]);
+
+  const { data: matches, error: rpcError } = await supabase.rpc(
+    "match_articles",
     {
-      method: "POST",
-      headers: {
-        "x-api-key": process.env.BACKEND_API_KEY!,
-      },
+      query_embedding: JSON.stringify(embeddings[0]),
+      match_count: MAX_ARTICLES_PER_INTEREST,
     },
   );
 
-  if (!res.ok) {
-    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
-  }
+  if (rpcError) throw new Error(rpcError.message);
+  if (!matches || matches.length === 0) return [];
 
-  return res.json() as Promise<Tables<"global_articles">[]>;
+  const ids = matches.map((m) => m.id);
+
+  const { data: articles, error } = await supabase
+    .from("global_articles")
+    .select("*")
+    .in("id", ids);
+
+  if (error) throw new Error(error.message);
+  return articles;
 }
 
 export async function getUserArticlesForInterest(
+  supabase: SupabaseClient<Database>,
   userId: string,
   interestId: string,
-) {
-  const params = new URLSearchParams({
-    user_id: String(userId),
-    interest_id: String(interestId),
-  });
-  const res = await fetch(
-    `${process.env.BACKEND_URL}/user/articles?${params}`,
-    {
-      method: "GET",
-      headers: {
-        "x-api-key": process.env.BACKEND_API_KEY!,
-      },
-    },
-  );
+): Promise<Article[]> {
+  const { data: rows, error: uaError } = await supabase
+    .from("user_articles")
+    .select("article_id, is_read")
+    .eq("user_id", userId)
+    .eq("interest_id", interestId);
 
-  if (!res.ok) {
-    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
-  }
+  if (uaError) throw new Error(uaError.message);
+  if (!rows || rows.length === 0) return [];
 
-  return res.json() as Promise<Article[]>;
+  const isReadMap = new Map(rows.map((r) => [r.article_id, r.is_read]));
+
+  const { data: articles, error } = await supabase
+    .from("global_articles")
+    .select("*")
+    .in("id", Array.from(isReadMap.keys()));
+
+  if (error) throw new Error(error.message);
+
+  return articles.map((a) => ({
+    ...a,
+    is_read: isReadMap.get(a.id) ?? false,
+  }));
 }
 
-export async function getUserInterests(userId: string) {
-  const params = new URLSearchParams({
-    user_id: String(userId),
-  });
-  const res = await fetch(
-    `${process.env.BACKEND_URL}/user/interests?${params}`,
-    {
-      method: "GET",
-      headers: {
-        "x-api-key": process.env.BACKEND_API_KEY!,
-      },
-    },
-  );
+export async function getUserInterests(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<Interest[]> {
+  const { data: rows, error } = await supabase
+    .from("user_interests")
+    .select("id, query, user_articles(is_read)")
+    .eq("user_id", userId);
 
-  if (!res.ok) {
-    throw new Error(`Backend API error (${res.status}): ${await res.text()}`);
-  }
+  if (error) throw new Error(error.message);
 
-  return res.json() as Promise<Interest[]>;
+  return (rows ?? []).map((r) => ({
+    id: r.id,
+    query: r.query,
+    has_unread_articles: (r.user_articles ?? []).some(
+      (a: { is_read: boolean }) => !a.is_read,
+    ),
+  }));
 }
