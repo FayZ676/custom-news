@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { Search } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 
 import { Interest } from "@/lib/backend";
 
@@ -30,7 +30,7 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
       />
       <div className="drawer-content">
         <label htmlFor="my-drawer-1" className="btn btn-ghost drawer-button">
-          Menu
+          <Menu />
         </label>
       </div>
       <div className="drawer-side">
@@ -39,7 +39,7 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
           aria-label="close sidebar"
           className="drawer-overlay"
         ></label>
-        <ul className="menu bg-base-200 min-h-full w-80 p-4">
+        <ul className="menu bg-base-200 min-h-full w-80 p-4 gap-1">
           <li>
             <Link href="/feed" className="btn">
               <Search size={14} />
@@ -50,12 +50,14 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
             <li key={interest.interest.id} className="">
               <Link
                 href={`/feed/interest/${interest.interest.id}`}
-                className="flex justify-between"
+                className="grid-cols-[minmax(0,1fr)_auto]"
                 onClick={closeDrawer}
               >
-                <span>{interest.interest.query}</span>
-                {interest.unreadArticlesCount && (
-                  <span className="">{interest.unreadArticlesCount}</span>
+                <span className="truncate">{interest.interest.query}</span>
+                {interest.unreadArticlesCount > 0 && (
+                  <span className="badge badge-outline badge-success badge-sm border">
+                    {interest.unreadArticlesCount}
+                  </span>
                 )}
               </Link>
             </li>

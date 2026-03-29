@@ -2,6 +2,8 @@
 
 import { useRef } from "react";
 
+import { Ellipsis } from "lucide-react";
+
 export function DrawerOptions({
   onDelete,
   isPending,
@@ -25,7 +27,7 @@ export function DrawerOptions({
       />
       <div className="drawer-content ml-auto">
         <label htmlFor="my-drawer-5" className="drawer-button btn btn-ghost">
-          Options
+          <Ellipsis />
         </label>
       </div>
       <div className="drawer-side">
