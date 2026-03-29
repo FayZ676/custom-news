@@ -35,11 +35,13 @@ export function ViewInterestFeed({
   const [deleting, startDeleteTransition] = useTransition();
 
   const updateActiveUnreadStatus = (updatedArticles: Article[]) => {
-    const hasUnread = updatedArticles.some((a) => a && !a.is_read);
+    const unreadArticlesCount = updatedArticles.filter(
+      (a) => a && !a.is_read,
+    ).length;
     setDrawerInterests((prev) =>
       prev.map((di) =>
         di.interest.id === activeInterest.id
-          ? { ...di, hasUnreadArticles: hasUnread }
+          ? { ...di, unreadArticlesCount: unreadArticlesCount }
           : di,
       ),
     );

@@ -1,6 +1,6 @@
+import { embedTexts } from "@/actions/embeddings";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, Database } from "./supabase/supabase.types";
-import { embedTexts } from "@/actions/embeddings";
 
 export interface Article extends Tables<"global_articles"> {
   is_read?: boolean;
@@ -9,7 +9,7 @@ export interface Article extends Tables<"global_articles"> {
 export interface Interest {
   id: string;
   query: string;
-  has_unread_articles: boolean;
+  unread_articles_count: number;
 }
 
 const MAX_ARTICLES_PER_INTEREST = 20;
@@ -147,11 +147,12 @@ export async function getUserInterests(
 
   if (error) throw new Error(error.message);
 
-  return (rows ?? []).map((r) => ({
-    id: r.id,
-    query: r.query,
-    has_unread_articles: (r.user_articles ?? []).some(
-      (a: { is_read: boolean }) => !a.is_read,
-    ),
-  }));
+  return (rows ?? []).map((r) => {
+    const userArticles = (r.user_articles ?? []) as { is_read: boolean }[];
+    return {
+      id: r.id,
+      query: r.query,
+      unread_articles_count: userArticles.filter((a) => !a.is_read).length,
+    };
+  });
 }

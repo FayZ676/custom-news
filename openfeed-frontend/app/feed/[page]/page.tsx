@@ -54,7 +54,7 @@ async function AllArticlesContent({
 
   const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({
     interest: i,
-    hasUnreadArticles: i.has_unread_articles,
+    unreadArticlesCount: i.unread_articles_count,
   }));
 
   const rightSlot = query ? (

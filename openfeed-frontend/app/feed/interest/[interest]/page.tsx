@@ -45,7 +45,7 @@ async function FeedContent({ interestId }: { interestId: string }) {
 
   const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({
     interest: i,
-    hasUnreadArticles: i.has_unread_articles,
+    unreadArticlesCount: i.unread_articles_count,
   }));
 
   async function handleReadArticles(articleIds: string[], isRead: boolean) {

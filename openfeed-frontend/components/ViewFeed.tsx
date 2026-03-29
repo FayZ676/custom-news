@@ -54,8 +54,8 @@ export function ViewFeed({
     setDrawerInterests((prev) => [
       ...prev,
       {
-        interest: { id: tempId, query, has_unread_articles: true },
-        hasUnreadArticles: true,
+        interest: { id: tempId, query, unread_articles_count: 0 },
+        unreadArticlesCount: 0,
       },
     ]);
     startSaveTransition(async () => {
@@ -65,8 +65,8 @@ export function ViewFeed({
           di.interest.id === tempId
             ? {
                 ...di,
-                interest: { id: realId, query, has_unread_articles: true },
-                hasUnreadArticles: true,
+                interest: { id: realId, query, unread_articles_count: 0 },
+                unreadArticlesCount: 0,
               }
             : di,
         ),
