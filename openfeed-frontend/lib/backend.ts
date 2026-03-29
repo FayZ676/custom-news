@@ -12,7 +12,7 @@ export interface Interest {
   unread_articles_count: number;
 }
 
-const MAX_ARTICLES_PER_INTEREST = 20;
+export const MAX_ARTICLES_PER_INTEREST = 20;
 
 export async function updateUserArticleScores(
   supabase: SupabaseClient<Database>,

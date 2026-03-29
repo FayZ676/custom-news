@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import type { Article } from "@/lib/backend";
+import { Article, MAX_ARTICLES_PER_INTEREST } from "@/lib/backend";
 import { addInterest } from "@/actions/interests";
 
 import SearchBar from "@/components/Searchbar";
@@ -55,7 +55,7 @@ export function ViewFeed({
       ...prev,
       {
         interest: { id: tempId, query, unread_articles_count: 0 },
-        unreadArticlesCount: 0,
+        unreadArticlesCount: MAX_ARTICLES_PER_INTEREST,
       },
     ]);
     startSaveTransition(async () => {
@@ -66,7 +66,7 @@ export function ViewFeed({
             ? {
                 ...di,
                 interest: { id: realId, query, unread_articles_count: 0 },
-                unreadArticlesCount: 0,
+                unreadArticlesCount: MAX_ARTICLES_PER_INTEREST,
               }
             : di,
         ),
