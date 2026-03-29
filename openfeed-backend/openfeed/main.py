@@ -9,27 +9,28 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
-from openfeed.database import (
-    Client,
-    client,
-    add_user_interest,
-    delete_global_articles,
-    get_global_feeds,
-    get_global_articles,
-    get_global_article_urls,
-    get_global_articles_by_id,
-    get_user_articles_for_interest,
-    get_user_interests,
-    get_user_interests_for_user,
-    insert_global_articles,
-    query_global_articles,
-    read_user_articles,
-)
 from openfeed.models import (
     Article,
     UserArticlesReadRequest,
     UpdateUserArticlesScoresRequest,
 )
+from openfeed.db.client import Client, client
+from openfeed.db.global_articles import (
+    get_global_articles,
+    query_global_articles,
+    delete_global_articles,
+    insert_global_articles,
+    get_global_article_urls,
+    get_global_articles_by_id,
+)
+from openfeed.db.user_articles import (
+    read_user_articles,
+    insert_user_articles,
+    get_user_articles_for_interest,
+)
+from openfeed.db.global_feeds import get_global_feeds
+from openfeed.db.user_interests import get_user_interests, get_user_interests_for_user
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -116,7 +117,7 @@ def user_interest_add(request: UpdateUserArticlesScoresRequest):
         request.user_id,
         request.interest_id,
     )
-    add_user_interest(
+    insert_user_articles(
         get_db(), request.user_id, request.interest_id, request.interest_embeddings
     )
 
@@ -148,7 +149,7 @@ def _fetch_articles():
         insert_global_articles(get_db(), articles)
         user_interests = get_user_interests(get_db())
         for interest in user_interests:
-            add_user_interest(
+            insert_user_articles(
                 get_db(), interest.user_id, interest.id, interest.embeddings
             )
 
