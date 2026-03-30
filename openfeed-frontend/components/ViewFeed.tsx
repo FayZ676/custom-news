@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { Article, MAX_ARTICLES_PER_INTEREST } from "@/lib/backend";
-import { addInterest } from "@/actions/interests";
+import { Article } from "@/lib/backend";
 
 import SearchBar from "@/components/Searchbar";
 import { Navbar } from "@/components/Navbar";
@@ -17,6 +16,8 @@ export function ViewFeed({
   initialDrawerInterests,
   articles,
   title,
+  handleSaveUserInterest,
+  articlesPerInterest,
   rightSlot,
   page,
   hasMore,
@@ -24,6 +25,8 @@ export function ViewFeed({
   initialDrawerInterests: DrawerMenuInterest[];
   articles: Article[];
   title: string;
+  handleSaveUserInterest: (query: string) => Promise<string>;
+  articlesPerInterest: number;
   rightSlot?: React.ReactNode;
   page?: number;
   hasMore?: boolean;
@@ -55,18 +58,22 @@ export function ViewFeed({
       ...prev,
       {
         interest: { id: tempId, query, unread_articles_count: 0 },
-        unreadArticlesCount: MAX_ARTICLES_PER_INTEREST,
+        unreadArticlesCount: articlesPerInterest,
       },
     ]);
     startSaveTransition(async () => {
-      const realId = await addInterest(query);
+      const interestId = await handleSaveUserInterest(query);
       setDrawerInterests((prev) =>
         prev.map((di) =>
           di.interest.id === tempId
             ? {
                 ...di,
-                interest: { id: realId, query, unread_articles_count: 0 },
-                unreadArticlesCount: MAX_ARTICLES_PER_INTEREST,
+                interest: {
+                  id: interestId,
+                  query,
+                  unread_articles_count: 0,
+                },
+                unreadArticlesCount: articlesPerInterest,
               }
             : di,
         ),

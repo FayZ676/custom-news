@@ -1,4 +1,3 @@
-import { embedTexts } from "@/actions/embeddings";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, Database } from "./supabase/supabase.types";
 
@@ -12,32 +11,17 @@ export interface Interest {
   unread_articles_count: number;
 }
 
-export const MAX_ARTICLES_PER_INTEREST = 20;
+export interface UserArticleScore {
+  user_id: string;
+  interest_id: string;
+  article_id: string;
+  score: number;
+}
 
-export async function updateUserArticleScores(
+export async function updateUserArticles(
   supabase: SupabaseClient<Database>,
-  userId: string,
-  interestId: string,
-  interestEmbeddings: number[],
+  scores: UserArticleScore[],
 ) {
-  const { data: matches, error: rpcError } = await supabase.rpc(
-    "match_articles",
-    {
-      query_embedding: JSON.stringify(interestEmbeddings),
-      match_count: MAX_ARTICLES_PER_INTEREST,
-    },
-  );
-
-  if (rpcError) throw new Error(rpcError.message);
-  if (!matches || matches.length === 0) return;
-
-  const scores = matches.map((m) => ({
-    user_id: userId,
-    interest_id: interestId,
-    article_id: m.id,
-    score: m.similarity,
-  }));
-
   const { error } = await supabase.from("user_articles").upsert(scores, {
     onConflict: "user_id,interest_id,article_id",
   });
@@ -80,7 +64,7 @@ export async function getGlobalArticlesByPage(
 export async function matchArticlesByEmbedding(
   supabase: SupabaseClient<Database>,
   embedding: number[],
-  matchCount: number = MAX_ARTICLES_PER_INTEREST,
+  matchCount: number,
 ): Promise<{ id: string; similarity: number }[]> {
   const { data: matches, error: rpcError } = await supabase.rpc(
     "match_articles",

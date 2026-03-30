@@ -2,9 +2,13 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { embedTexts } from "./embeddings";
-import { updateUserArticleScores } from "@/lib/backend";
 
-export async function addInterest(query: string): Promise<string> {
+interface AddInterestResponse {
+  interestId: string;
+  interestEmbeddings: number[];
+}
+
+export async function addInterest(query: string): Promise<AddInterestResponse> {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) throw new Error("Not authenticated");
@@ -26,13 +30,7 @@ export async function addInterest(query: string): Promise<string> {
 
   if (error) throw new Error(error.message);
 
-  await updateUserArticleScores(
-    supabase,
-    claimsData.claims.sub,
-    interest.id,
-    embeddings,
-  );
-  return interest.id;
+  return { interestId: interest.id, interestEmbeddings: embeddings };
 }
 
 export async function deleteInterest(interestId: string) {
