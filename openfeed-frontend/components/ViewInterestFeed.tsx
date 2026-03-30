@@ -89,7 +89,7 @@ export function ViewInterestFeed({
           <DrawerOptions onDelete={handleDeleteArticle} isPending={deleting} />
         }
       />
-      <div className="flex flex-col gap-2 p-4">
+      <div className="flex flex-col gap-2">
         <Toolbar
           handleReadAllArticles={handleReadAllArticles}
           allRead={localArticles.every((a) => !a || a.is_read)}

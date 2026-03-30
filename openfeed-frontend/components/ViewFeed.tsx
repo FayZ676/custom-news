@@ -83,7 +83,7 @@ export function ViewFeed({
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-8">
       <Navbar
         left={<DrawerMenu interests={drawerInterests} />}
         center={<span className="text-xl font-semibold">{title}</span>}
@@ -97,7 +97,7 @@ export function ViewFeed({
         onClear={handleClear}
         searching={isSearching}
       />
-      <div className="flex flex-col gap-2 p-4">
+      <div className="flex flex-col gap-2">
         {isSearching ? (
           Array.from({ length: 3 }).map((_, i) => (
             <CardArticleSkeleton key={i} />
@@ -113,7 +113,7 @@ export function ViewFeed({
         )}
       </div>
       {page !== undefined && (
-        <div className="flex justify-between p-4">
+        <div className="flex justify-between">
           {page > 1 ? (
             <Link
               href={`/feed/${page - 1}`}

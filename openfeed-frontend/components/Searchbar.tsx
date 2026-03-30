@@ -50,70 +50,83 @@ export default function SearchBar({
   };
 
   return (
-    <div className="w-full p-4">
-      <div className="relative rounded-lg border border-base-300 px-4 pt-4 pb-3">
-        <label className="input input-ghost w-full">
-          <Search size={16} strokeWidth={3} className="opacity-50" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              const value = e.target.value;
-              setQuery(value);
-              if (!value.trim()) {
-                onClear();
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSearch();
-              }
-            }}
-            placeholder="Ask anything, or describe what you're looking for…"
-            className="grow"
+    <div className="flex gap-2 items-center">
+      <label className="input input-lg input-ghost w-full">
+        <Search size={18} strokeWidth={3} className="opacity-50" />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            const value = e.target.value;
+            setQuery(value);
+            if (!value.trim()) {
+              onClear();
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSearch();
+            }
+          }}
+          placeholder="Ask anything, or describe what you're looking for…"
+          disabled={searching}
+          className="grow"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={handleClear}
             disabled={searching}
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={searching}
-              className="cursor-pointer"
-            >
-              <CircleX size={16} strokeWidth={3} className="opacity-50" />
-            </button>
-          )}
-        </label>
-
-        <hr className="border-base-300 -mx-4 my-3" />
-
-        <div className="flex flex-wrap items-center justify-end gap-2">
+            className="cursor-pointer"
+          >
+            <CircleX size={18} strokeWidth={3} className="opacity-50" />
+          </button>
+        )}
+      </label>
+      {query && (
+        <>
+          {/* Icon-only circle button on small screens */}
           <button
             type="button"
             onClick={handleSave}
             disabled={!query.trim() || saving || isSaved || searching}
-            className="btn"
+            className="btn btn-circle sm:hidden"
+          >
+            {saving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : isSaved ? (
+              <BookmarkCheck size={16} strokeWidth={3} />
+            ) : (
+              <Bookmark size={16} strokeWidth={3} />
+            )}
+          </button>
+          {/* Full button with icon and text on sm+ screens */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!query.trim() || saving || isSaved || searching}
+            className="btn w-fit hidden sm:flex"
           >
             {saving ? (
               <>
-                <Loader2 size={14} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin" />
                 <span>Saving...</span>
               </>
             ) : isSaved ? (
               <>
-                <BookmarkCheck size={14} strokeWidth={3} />
+                <BookmarkCheck size={16} strokeWidth={3} />
                 <span>Saved</span>
               </>
             ) : (
               <>
-                <Bookmark size={14} strokeWidth={3} />
-                <span>Save interest</span>
+                <Bookmark size={16} strokeWidth={3} />
+                <span>Save</span>
               </>
             )}
           </button>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }

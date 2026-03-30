@@ -10,7 +10,7 @@ export function Navbar({
   right?: ReactNode;
 }) {
   return (
-    <div className="navbar bg-base-100">
+    <div className="navbar bg-base-100 p-0">
       <div className="navbar-start w-auto">{left}</div>
       <div className="navbar-center min-w-0 flex-1 justify-center">
         {center}
