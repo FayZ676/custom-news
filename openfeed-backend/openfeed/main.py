@@ -15,9 +15,9 @@ from openfeed.db.global_articles import (
     insert_global_articles,
     get_global_article_urls,
 )
-from openfeed.db.user_articles import insert_user_articles
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.user_interests import get_user_interests
+from openfeed.db.user_articles import batch_insert_user_articles
 
 
 logging.basicConfig(
@@ -81,10 +81,10 @@ def _fetch_articles():
 
     if articles:
         insert_global_articles(get_db(), articles)
-        user_interests = get_user_interests(get_db())
-        for interest in user_interests:
-            insert_user_articles(
-                get_db(), interest.user_id, interest.id, interest.embeddings
-            )
+        for page in get_user_interests(get_db()):
+            try:
+                batch_insert_user_articles(get_db(), page)
+            except (OSError, RuntimeError) as e:
+                logger.exception("Failed to update user interest page: %s", e)
 
     logger.info("Fetched and inserted %d new articles", len(articles))

@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field
 
 from openfeed.db.client import Client
-from openfeed.db.utils import _paginated_query
+from openfeed.db.utils import paginated_query
 from openfeed.database_models import PublicGlobalArticles
 
 
@@ -17,8 +17,11 @@ class MatchArticlesResult(BaseModel):
 
 
 def get_global_article_urls(db: Client) -> list[str]:
-    rows = _paginated_query(db, "global_articles", select="url")
-    return [r["url"] for r in rows]
+    return [
+        r["url"]
+        for page in paginated_query(db, "global_articles", select="url")
+        for r in page
+    ]
 
 
 def query_global_articles(

@@ -1,19 +1,21 @@
 import json
 import itertools
-from typing import Callable
+from typing import Any, Callable
+from collections.abc import Iterator
 
 from pydantic import Json
 
 from openfeed.db.client import Client
 
 
-def _decode_embeddings(row: Json) -> None:
+def decode_embeddings(row: Json) -> None:
     """Deserialize the embeddings field in-place, if present."""
     if (raw := row.get("embeddings")) is not None:
         row["embeddings"] = json.loads(raw)
 
 
-def _paginated_query(
+# TODO: Can we use Generic typing here?
+def paginated_query(
     db: Client,
     table: str,
     *,
@@ -21,9 +23,8 @@ def _paginated_query(
     filters: dict[str, str] | None = None,
     page_size: int = 1000,
     transform: Callable[[Json], None] | None = None,
-) -> list[dict]:
-    """Fetch all rows from a table with automatic pagination."""
-    results = []
+) -> Iterator[list[Any]]:
+    """Yield pages of rows from a table, one page per iteration."""
     for page in itertools.count():
         query = db.table(table).select(select)
         if filters:
@@ -33,7 +34,7 @@ def _paginated_query(
         if transform:
             for row in rows:
                 transform(row)
-        results.extend(rows)
+        if rows:
+            yield rows
         if len(rows) < page_size:
             break
-    return results
