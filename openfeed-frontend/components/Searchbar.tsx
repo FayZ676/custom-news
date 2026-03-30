@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   Search,
   Bookmark,
@@ -29,16 +29,7 @@ export default function SearchBar({
 }: SearchBarProps) {
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("query") ?? "");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mirrorRef = useRef<HTMLDivElement>(null);
   const savedQueryRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (mirrorRef.current && textareaRef.current) {
-      mirrorRef.current.textContent = query + "\u200b";
-      textareaRef.current.style.height = mirrorRef.current.offsetHeight + "px";
-    }
-  }, [query]);
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -61,34 +52,39 @@ export default function SearchBar({
   return (
     <div className="w-full p-4">
       <div className="relative rounded-lg border border-base-300 px-4 pt-4 pb-3">
-        <div
-          ref={mirrorRef}
-          aria-hidden="true"
-          className="absolute invisible pointer-events-none whitespace-pre-wrap break-words text-sm leading-relaxed"
-          style={{ width: "calc(100% - 2rem)" }}
-        />
-
-        <textarea
-          ref={textareaRef}
-          value={query}
-          onChange={(e) => {
-            const value = e.target.value;
-            setQuery(value);
-            if (!value.trim()) {
-              onClear();
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSearch();
-            }
-          }}
-          rows={1}
-          spellCheck={false}
-          placeholder="Ask anything, or describe what you're looking for…"
-          className="w-full bg-transparent border-none outline-none resize-none overflow-hidden leading-relaxed placeholder:text-base-content/50 min-h-[24px]"
-        />
+        <label className="input input-ghost w-full">
+          <Search size={16} strokeWidth={3} className="opacity-50" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => {
+              const value = e.target.value;
+              setQuery(value);
+              if (!value.trim()) {
+                onClear();
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
+            placeholder="Ask anything, or describe what you're looking for…"
+            className="grow"
+            disabled={searching}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={searching}
+              className="cursor-pointer"
+            >
+              <CircleX size={16} strokeWidth={3} className="opacity-50" />
+            </button>
+          )}
+        </label>
 
         <hr className="border-base-300 -mx-4 my-3" />
 
@@ -106,38 +102,16 @@ export default function SearchBar({
               </>
             ) : isSaved ? (
               <>
-                <BookmarkCheck size={14} />
+                <BookmarkCheck size={14} strokeWidth={3} />
                 <span>Saved</span>
               </>
             ) : (
               <>
-                <Bookmark size={14} />
-                <span>Save as Interest</span>
+                <Bookmark size={14} strokeWidth={3} />
+                <span>Save interest</span>
               </>
             )}
           </button>
-
-          <button
-            type="button"
-            onClick={handleSearch}
-            disabled={!query.trim() || searching}
-            className="btn"
-          >
-            <Search size={14} />
-            Search
-          </button>
-
-          {query && (
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={!query.trim() || searching}
-              className="btn"
-            >
-              <CircleX size={14} />
-              Clear
-            </button>
-          )}
         </div>
       </div>
     </div>
