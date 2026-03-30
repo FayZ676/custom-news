@@ -51,7 +51,7 @@ export default function SearchBar({
 
   return (
     <div className="flex gap-2 items-center">
-      <label className="input input-lg input-ghost w-full">
+      <label className="input input-md sm:input-lg input-ghost w-full">
         <Search size={18} strokeWidth={3} className="opacity-50" />
         <input
           type="text"
