@@ -39,32 +39,38 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
           aria-label="close sidebar"
           className="drawer-overlay"
         ></label>
-        <ul className="menu bg-base-200 min-h-full w-80 p-4 gap-1">
-          <li>
-            <Link href="/feed" className="btn">
-              <Search size={14} />
-              <span>Search</span>
-            </Link>
-          </li>
-          {interests.map((interest) => (
-            <li key={interest.interest.id} className="">
-              <Link
-                href={`/feed/interest/${interest.interest.id}`}
-                className="grid-cols-[minmax(0,1fr)_auto]"
-                onClick={closeDrawer}
-              >
-                <span className="font-semibold truncate">
-                  {interest.interest.query}
-                </span>
-                {interest.unreadArticlesCount > 0 && (
-                  <span className="badge badge-outline badge-success badge-sm border">
-                    {interest.unreadArticlesCount}
-                  </span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-8 bg-base-100 min-h-full w-80 p-4">
+          <Link href="/feed" className="btn btn-block">
+            <Search size={14} />
+            <span>Browse Articles</span>
+          </Link>
+          <div className="collapse collapse-arrow">
+            <input type="checkbox" defaultChecked />
+            <span className="collapse-title text-xl font-bold p-0">
+              Interests
+            </span>
+            <ul className="collapse-content p-0">
+              {interests.map((interest) => (
+                <li key={interest.interest.id}>
+                  <Link
+                    href={`/feed/interest/${interest.interest.id}`}
+                    className="flex justify-between items-center gap-2 border-b border-base-300 py-3"
+                    onClick={closeDrawer}
+                  >
+                    <span className="font-semibold truncate min-w-0">
+                      {interest.interest.query}
+                    </span>
+                    {interest.unreadArticlesCount > 0 && (
+                      <span className="badge badge-outline badge-success badge-sm border">
+                        {interest.unreadArticlesCount}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
