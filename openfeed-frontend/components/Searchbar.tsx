@@ -31,6 +31,7 @@ export default function SearchBar({
   const [query, setQuery] = useState(searchParams.get("query") ?? "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mirrorRef = useRef<HTMLDivElement>(null);
+  const savedQueryRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (mirrorRef.current && textareaRef.current) {
@@ -46,8 +47,11 @@ export default function SearchBar({
 
   const handleSave = () => {
     if (!query.trim() || saving) return;
+    savedQueryRef.current = query.trim();
     onSave(query.trim());
   };
+
+  const isSaved = saved && savedQueryRef.current === query.trim();
 
   const handleClear = () => {
     setQuery("");
@@ -92,7 +96,7 @@ export default function SearchBar({
           <button
             type="button"
             onClick={handleSave}
-            disabled={!query.trim() || saving || saved || searching}
+            disabled={!query.trim() || saving || isSaved || searching}
             className="btn"
           >
             {saving ? (
@@ -100,7 +104,7 @@ export default function SearchBar({
                 <Loader2 size={14} className="animate-spin" />
                 <span>Saving...</span>
               </>
-            ) : saved ? (
+            ) : isSaved ? (
               <>
                 <BookmarkCheck size={14} />
                 <span>Saved</span>
