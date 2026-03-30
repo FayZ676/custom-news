@@ -30,25 +30,21 @@ export function CardArticle({
   }
 
   return (
-    <div className="collapse border border-base-300">
+    <div className="collapse collapse-arrow border border-base-300">
       <input type="checkbox" onChange={handleChange} />
-      <div className="collapse-title pr-4">
-        <p className={`font-semibold ${article.is_read ? "line-through" : ""}`}>
-          {article.title}
+      <span
+        className={`collapse-title font-semibold ${article.is_read ? "line-through" : ""}`}
+      >
+        {article.title}
+        <span className="font-normal text-base-content/70">
+          , {article.feed_title} ({timeAgo(article.published_at)})
+        </span>
+      </span>
+      <div className="collapse-content flex flex-col gap-2">
+        <p className="text-sm text-base-content/70">
+          {article.content ? article.content : article.summary || ""}
         </p>
-        {article.summary && (
-          <p className="truncate text-sm text-base-content/70">
-            {article.summary}
-          </p>
-        )}
-        <div className="flex justify-between mt-2 text-xs text-base-content/50">
-          <span>{article.feed_title}</span>
-          <span>{timeAgo(article.published_at)}</span>
-        </div>
-      </div>
-      <div className="collapse-content text-sm text-base-content/70">
-        <p>{article.content}</p>
-        <a href={article.url} className="link">
+        <a href={article.url} className="link text-sm">
           Read More
         </a>
       </div>
