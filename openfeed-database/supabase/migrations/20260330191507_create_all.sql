@@ -156,10 +156,10 @@ alter table "public"."user_interests" validate constraint "user_interests_user_i
 set check_function_bodies = off;
 
 CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, match_count integer)
- RETURNS TABLE(id uuid, similarity double precision)
+ RETURNS TABLE(id uuid, title text, summary text, content text, similarity double precision)
  LANGUAGE sql
 AS $function$
-  select id, 1 - (embeddings <=> query_embedding) as similarity
+  select id, title, summary, content, 1 - (embeddings <=> query_embedding) as similarity
   from global_articles
   order by embeddings <=> query_embedding
   limit match_count;

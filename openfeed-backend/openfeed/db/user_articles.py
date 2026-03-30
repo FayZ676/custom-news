@@ -1,32 +1,40 @@
 import logging
 
+from openfeed.reranker import rerank
 from openfeed.db.client import Client
 from openfeed.database_models import PublicUserInterests
-from openfeed.db.global_articles import query_global_articles
+from openfeed.db.global_articles import query_global_articles, MAX_ARTICLES_PER_INTEREST
 
 logger = logging.getLogger(__name__)
 
 
-def batch_insert_user_articles(db: Client, interests: list[PublicUserInterests]) -> int:
+def batch_insert_user_articles(db: Client, interests: list[PublicUserInterests]):
     all_scores: list[dict] = []
-    processed = 0
-
     for interest in interests:
         try:
-            top_articles = query_global_articles(db, interest.embeddings)
+            candidates = query_global_articles(
+                db, interest.embeddings, match_count=MAX_ARTICLES_PER_INTEREST * 2
+            )
+
+            if not candidates:
+                continue
+
+            reranked = rerank(interest.query, [c.document_text for c in candidates])
+            top_reranked = sorted(
+                reranked, key=lambda r: r.relevance_score, reverse=True
+            )[:MAX_ARTICLES_PER_INTEREST]
             all_scores.extend(
                 {
                     "user_id": str(interest.user_id),
                     "interest_id": str(interest.id),
-                    "article_id": str(a.article_id),
-                    "score": a.similarity_score,
+                    "article_id": str(candidates[r.index].article_id),
+                    "score": r.relevance_score,
                 }
-                for a in top_articles
+                for r in top_reranked
             )
-            processed += 1
         except (OSError, RuntimeError) as e:
             logger.exception(
-                "Failed to query articles for interest %s (user %s): %s",
+                "Failed to query/rerank articles for interest %s (user %s): %s",
                 interest.id,
                 interest.user_id,
                 e,
@@ -37,5 +45,3 @@ def batch_insert_user_articles(db: Client, interests: list[PublicUserInterests])
             all_scores,
             on_conflict="user_id,interest_id,article_id",
         ).execute()
-
-    return processed

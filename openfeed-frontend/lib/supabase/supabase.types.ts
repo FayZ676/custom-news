@@ -240,8 +240,11 @@ export type Database = {
       match_articles: {
         Args: { match_count: number; query_embedding: string };
         Returns: {
+          content: string;
           id: string;
           similarity: number;
+          summary: string;
+          title: string;
         }[];
       };
     };

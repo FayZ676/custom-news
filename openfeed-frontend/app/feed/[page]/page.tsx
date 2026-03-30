@@ -2,10 +2,12 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { embedTexts } from "@/actions/embeddings";
 import {
   getUserInterests,
   getGlobalArticlesByPage,
-  getGlobalArticlesBySearch,
+  getGlobalArticlesByIds,
+  matchArticlesByEmbedding,
 } from "@/lib/backend";
 
 import { ViewFeed } from "@/components/ViewFeed";
@@ -33,6 +35,19 @@ export default async function AllArticlesPage({
   );
 }
 
+async function searchArticles(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  query: string,
+) {
+  const { embeddings } = await embedTexts([query]);
+  const matches = await matchArticlesByEmbedding(supabase, embeddings[0]);
+  if (matches.length === 0) return [];
+  return getGlobalArticlesByIds(
+    supabase,
+    matches.map((m) => m.id),
+  );
+}
+
 async function AllArticlesContent({
   page,
   query,
@@ -48,7 +63,7 @@ async function AllArticlesContent({
   const [interests, articles] = await Promise.all([
     getUserInterests(supabase, userId),
     query
-      ? getGlobalArticlesBySearch(supabase, query)
+      ? searchArticles(supabase, query)
       : getGlobalArticlesByPage(supabase, page, PAGE_SIZE),
   ]);
 

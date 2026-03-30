@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Optional
 from datetime import datetime, timezone, timedelta
 
 from pydantic import BaseModel, Field
@@ -13,7 +14,20 @@ MAX_ARTICLES_PER_INTEREST = 20
 
 class MatchArticlesResult(BaseModel):
     article_id: UUID = Field(alias="id")
+    title: str = Field(alias="title")
+    summary: Optional[str] = Field(alias="summary", default=None)
+    content: Optional[str] = Field(alias="content", default=None)
     similarity_score: float = Field(alias="similarity")
+
+    @property
+    def document_text(self) -> str:
+        """Build a text representation for reranking."""
+        parts = [self.title]
+        if self.summary:
+            parts.append(self.summary)
+        elif self.content:
+            parts.append(self.content)
+        return ". ".join(parts)
 
 
 def get_global_article_urls(db: Client) -> list[str]:
@@ -25,14 +39,16 @@ def get_global_article_urls(db: Client) -> list[str]:
 
 
 def query_global_articles(
-    db: Client, query_embeddings: list[float]
+    db: Client,
+    query_embeddings: list[float],
+    match_count: int = MAX_ARTICLES_PER_INTEREST,
 ) -> list[MatchArticlesResult]:
     data = (
         db.rpc(
             "match_articles",
             {
                 "query_embedding": query_embeddings,
-                "match_count": MAX_ARTICLES_PER_INTEREST,
+                "match_count": match_count,
             },
         )
         .execute()

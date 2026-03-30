@@ -77,33 +77,36 @@ export async function getGlobalArticlesByPage(
   return data;
 }
 
-export async function getGlobalArticlesBySearch(
+export async function matchArticlesByEmbedding(
   supabase: SupabaseClient<Database>,
-  query: string,
-): Promise<Tables<"global_articles">[]> {
-  const { embeddings } = await embedTexts([query]);
-
+  embedding: number[],
+  matchCount: number = MAX_ARTICLES_PER_INTEREST,
+): Promise<{ id: string; similarity: number }[]> {
   const { data: matches, error: rpcError } = await supabase.rpc(
     "match_articles",
     {
-      query_embedding: JSON.stringify(embeddings[0]),
-      match_count: MAX_ARTICLES_PER_INTEREST,
+      query_embedding: JSON.stringify(embedding),
+      match_count: matchCount,
     },
   );
 
   if (rpcError) throw new Error(rpcError.message);
   if (!matches || matches.length === 0) return [];
 
-  const ids = matches.map((m) => m.id);
+  return matches.map((m) => ({ id: m.id, similarity: m.similarity }));
+}
 
-  const { data: articles, error } = await supabase
+export async function getGlobalArticlesByIds(
+  supabase: SupabaseClient<Database>,
+  ids: string[],
+): Promise<Tables<"global_articles">[]> {
+  const { data, error } = await supabase
     .from("global_articles")
     .select("*")
-    .in("id", ids)
-    .order("published_at", { ascending: false });
+    .in("id", ids);
 
   if (error) throw new Error(error.message);
-  return articles;
+  return data;
 }
 
 export async function getUserArticlesForInterest(
@@ -121,19 +124,21 @@ export async function getUserArticlesForInterest(
   if (!rows || rows.length === 0) return [];
 
   const isReadMap = new Map(rows.map((r) => [r.article_id, r.is_read]));
+  const articles = await getGlobalArticlesByIds(
+    supabase,
+    Array.from(isReadMap.keys()),
+  );
 
-  const { data: articles, error } = await supabase
-    .from("global_articles")
-    .select("*")
-    .in("id", Array.from(isReadMap.keys()))
-    .order("published_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-
-  return articles.map((a) => ({
-    ...a,
-    is_read: isReadMap.get(a.id) ?? false,
-  }));
+  return articles
+    .sort(
+      (a, b) =>
+        new Date(b.published_at!).getTime() -
+        new Date(a.published_at!).getTime(),
+    )
+    .map((a) => ({
+      ...a,
+      is_read: isReadMap.get(a.id) ?? false,
+    }));
 }
 
 export async function getUserInterests(
