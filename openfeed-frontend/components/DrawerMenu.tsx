@@ -44,7 +44,7 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
             <Search size={14} />
             <span>Browse Articles</span>
           </Link>
-          <div className="collapse collapse-arrow">
+          <div className="collapse collapse-arrow rounded-none">
             <input type="checkbox" defaultChecked />
             <span className="collapse-title text-xl font-bold p-0">
               Interests
