@@ -59,7 +59,9 @@ export function ViewInterestFeed({
 
   const wrappedHandleReadArticles = (articleIds: string[], isRead: boolean) => {
     const updated = localArticles.map((a) =>
-      a && articleIds.includes(a.id) ? { ...a, is_read: !isRead } : a,
+      a && articleIds.includes(a.global_articles.id)
+        ? { ...a, is_read: !isRead }
+        : a,
     );
     setLocalArticles(updated);
     updateActiveUnreadStatus(updated);
@@ -71,7 +73,7 @@ export function ViewInterestFeed({
   const handleReadAllArticles = () => {
     const unreadIds = localArticles
       .filter((a) => a && !a.is_read)
-      .map((a) => a.id);
+      .map((a) => a.global_articles.id);
     if (unreadIds.length === 0) return;
     wrappedHandleReadArticles(unreadIds, false);
   };
@@ -98,7 +100,7 @@ export function ViewInterestFeed({
           localArticles.map((article) =>
             article ? (
               <CardArticle
-                key={article.id}
+                key={article.global_articles.id}
                 article={article}
                 handleReadArticles={wrappedHandleReadArticles}
               />

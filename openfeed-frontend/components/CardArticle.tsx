@@ -9,7 +9,7 @@ export function CardArticle({
 }) {
   function handleChange() {
     if (article.is_read !== undefined && !article.is_read) {
-      handleReadArticles([article.id], article.is_read);
+      handleReadArticles([article.global_articles.id], article.is_read);
     }
   }
 
@@ -35,16 +35,19 @@ export function CardArticle({
       <span
         className={`collapse-title font-semibold ${article.is_read ? "line-through" : ""}`}
       >
-        {article.title}
+        {article.global_articles.title}
         <span className="font-normal text-base-content/70">
-          , {article.feed_title} ({timeAgo(article.published_at)})
+          , {article.global_articles.feed_title} (
+          {timeAgo(article.global_articles.published_at)})
         </span>
       </span>
       <div className="collapse-content flex flex-col gap-2">
         <p className="text-sm text-base-content/70">
-          {article.content ? article.content : article.summary || ""}
+          {article.global_articles.content
+            ? article.global_articles.content
+            : article.global_articles.summary || ""}
         </p>
-        <a href={article.url} className="link text-sm">
+        <a href={article.global_articles.url} className="link text-sm">
           Read More
         </a>
       </div>

@@ -104,7 +104,7 @@ export function ViewFeed({
           ))
         ) : articles.length ? (
           articles.map((article) => (
-            <CardArticle key={article.id} article={article} />
+            <CardArticle key={article.global_articles.id} article={article} />
           ))
         ) : (
           <p className="text-center text-base-content/50 py-8">

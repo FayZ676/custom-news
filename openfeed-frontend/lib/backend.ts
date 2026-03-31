@@ -1,8 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, Database } from "./supabase/supabase.types";
 
-export interface Article extends Tables<"global_articles"> {
-  is_read?: boolean;
+export interface Article {
+  is_read: boolean;
+  global_articles: Tables<"global_articles">;
 }
 
 export interface Interest {
@@ -100,29 +101,18 @@ export async function getUserArticlesForInterest(
 ): Promise<Article[]> {
   const { data: rows, error: uaError } = await supabase
     .from("user_articles")
-    .select("article_id, is_read")
+    .select("is_read, global_articles(*)")
     .eq("user_id", userId)
     .eq("interest_id", interestId);
 
   if (uaError) throw new Error(uaError.message);
   if (!rows || rows.length === 0) return [];
 
-  const isReadMap = new Map(rows.map((r) => [r.article_id, r.is_read]));
-  const articles = await getGlobalArticlesByIds(
-    supabase,
-    Array.from(isReadMap.keys()),
-  );
-
-  return articles
-    .sort(
-      (a, b) =>
-        new Date(b.published_at!).getTime() -
-        new Date(a.published_at!).getTime(),
-    )
-    .map((a) => ({
-      ...a,
-      is_read: isReadMap.get(a.id) ?? false,
-    }));
+  return rows.sort(
+    (a, b) =>
+      new Date(b.global_articles?.published_at!).getTime() -
+      new Date(a.global_articles?.published_at!).getTime(),
+  ) as Article[];
 }
 
 export async function getUserInterests(
