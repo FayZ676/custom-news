@@ -41,7 +41,7 @@ async function searchGlobalArticles(
   );
   const rerankedArticleTexts = await rerankTexts(
     query,
-    articles.map((a) => a.title),
+    articles.map((a) => a.global_articles.title),
   );
   return rerankedArticleTexts
     .map((r) => articles[r.index])
@@ -70,7 +70,7 @@ async function updateUserArticleScores(
 
   const reranked = await rerankTexts(
     interestQuery,
-    articles.map((a) => a.title),
+    articles.map((a) => a.global_articles.title),
   );
 
   const scores: UserArticleScore[] = reranked
@@ -78,7 +78,7 @@ async function updateUserArticleScores(
     .map((r) => ({
       user_id: userId,
       interest_id: interestId,
-      article_id: articles[r.index].id,
+      article_id: articles[r.index].global_articles.id,
       score: r.relevance_score,
     }));
 

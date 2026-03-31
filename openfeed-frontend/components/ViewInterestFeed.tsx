@@ -79,7 +79,7 @@ export function ViewInterestFeed({
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-8">
       <Navbar
         left={<DrawerMenu interests={drawerInterests} />}
         center={
@@ -91,11 +91,11 @@ export function ViewInterestFeed({
           <DrawerOptions onDelete={handleDeleteArticle} isPending={deleting} />
         }
       />
+      <Toolbar
+        handleReadAllArticles={handleReadAllArticles}
+        allRead={localArticles.every((a) => !a || a.is_read)}
+      />
       <div className="flex flex-col gap-2">
-        <Toolbar
-          handleReadAllArticles={handleReadAllArticles}
-          allRead={localArticles.every((a) => !a || a.is_read)}
-        />
         {localArticles?.length ? (
           localArticles.map((article) =>
             article ? (

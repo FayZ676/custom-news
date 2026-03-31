@@ -48,7 +48,7 @@ export async function getGlobalArticlesByPage(
   supabase: SupabaseClient<Database>,
   page: number,
   pageSize: number = 20,
-): Promise<Tables<"global_articles">[]> {
+): Promise<Article[]> {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -59,7 +59,9 @@ export async function getGlobalArticlesByPage(
     .range(from, to);
 
   if (error) throw new Error(error.message);
-  return data;
+  return data.map((a) => {
+    return { is_read: false, global_articles: a };
+  });
 }
 
 export async function matchArticlesByEmbedding(
@@ -84,14 +86,16 @@ export async function matchArticlesByEmbedding(
 export async function getGlobalArticlesByIds(
   supabase: SupabaseClient<Database>,
   ids: string[],
-): Promise<Tables<"global_articles">[]> {
+): Promise<Article[]> {
   const { data, error } = await supabase
     .from("global_articles")
     .select("*")
     .in("id", ids);
 
   if (error) throw new Error(error.message);
-  return data;
+  return data.map((a) => {
+    return { is_read: false, global_articles: a };
+  });
 }
 
 export async function getUserArticlesForInterest(
