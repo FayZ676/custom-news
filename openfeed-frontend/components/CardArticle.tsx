@@ -7,8 +7,12 @@ export function CardArticle({
   article: Article;
   handleReadArticles?: (articleIds: string[], isRead: boolean) => void;
 }) {
-  function handleChange() {
-    if (article.is_read !== undefined && !article.is_read) {
+  function handleToggle(e: React.SyntheticEvent<HTMLDetailsElement>) {
+    if (
+      (e.target as HTMLDetailsElement).open &&
+      article.is_read !== undefined &&
+      !article.is_read
+    ) {
       handleReadArticles([article.global_articles.id], article.is_read);
     }
   }
@@ -30,9 +34,12 @@ export function CardArticle({
   }
 
   return (
-    <div className="collapse collapse-arrow border border-base-300">
-      <input type="checkbox" onChange={handleChange} />
-      <span
+    // Ref: https://github.com/saadeghi/daisyui/blob/master/packages/daisyui/src/components/collapse.css
+    <details
+      className="collapse collapse-arrow border border-base-300"
+      onToggle={handleToggle}
+    >
+      <summary
         className={`collapse-title font-semibold ${article.is_read ? "line-through" : ""}`}
       >
         {article.global_articles.title}
@@ -40,7 +47,7 @@ export function CardArticle({
           , {article.global_articles.feed_title} (
           {timeAgo(article.global_articles.published_at)})
         </span>
-      </span>
+      </summary>
       <div className="collapse-content flex flex-col gap-2">
         <p className="text-sm text-base-content/70">
           {article.global_articles.content
@@ -51,6 +58,6 @@ export function CardArticle({
           Read More
         </a>
       </div>
-    </div>
+    </details>
   );
 }
