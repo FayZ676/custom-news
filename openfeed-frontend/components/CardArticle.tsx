@@ -1,3 +1,9 @@
+"use client";
+
+import { useState } from "react";
+
+import { ChevronDown } from "lucide-react";
+
 import { Article } from "@/lib/backend";
 
 export function CardArticle({
@@ -7,14 +13,13 @@ export function CardArticle({
   article: Article;
   handleReadArticles?: (articleIds: string[], isRead: boolean) => void;
 }) {
-  function handleToggle(e: React.SyntheticEvent<HTMLDetailsElement>) {
-    if (
-      (e.target as HTMLDetailsElement).open &&
-      article.is_read !== undefined &&
-      !article.is_read
-    ) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  function handleToggle() {
+    if (!isOpen && article.is_read !== undefined && !article.is_read) {
       handleReadArticles([article.global_articles.id], article.is_read);
     }
+    setIsOpen((prev) => !prev);
   }
 
   function timeAgo(dateStr: string): string {
@@ -34,30 +39,44 @@ export function CardArticle({
   }
 
   return (
-    // Ref: https://github.com/saadeghi/daisyui/blob/master/packages/daisyui/src/components/collapse.css
-    <details
-      className="collapse collapse-arrow border border-base-300"
-      onToggle={handleToggle}
+    <div
+      className="grid overflow-hidden rounded-box border border-base-300 transition-[grid-template-rows] duration-400"
+      style={{
+        gridTemplateRows: isOpen ? "max-content 1fr" : "max-content 0fr",
+      }}
     >
-      <summary
-        className={`collapse-title font-semibold ${article.is_read ? "line-through" : ""}`}
+      {/* Header / toggle */}
+      <button
+        className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-left hover:bg-base-200"
+        onClick={handleToggle}
       >
-        {article.global_articles.title}
-        <span className="font-normal text-base-content/70">
-          , {article.global_articles.feed_title} (
-          {timeAgo(article.global_articles.published_at)})
+        <span
+          className={`font-semibold ${article.is_read ? "line-through text-base-content/40" : "text-base-content"}`}
+        >
+          {article.global_articles.title}
+          <span className="font-normal text-base-content/70">
+            , {article.global_articles.feed_title} (
+            {timeAgo(article.global_articles.published_at)})
+          </span>
         </span>
-      </summary>
-      <div className="collapse-content flex flex-col gap-2">
-        <p className="text-sm text-base-content/70">
-          {article.global_articles.content
-            ? article.global_articles.content
-            : article.global_articles.summary || ""}
-        </p>
-        <a href={article.global_articles.url} className="link text-sm">
-          Read More
-        </a>
+        <ChevronDown
+          className={`mt-0.5 size-4 shrink-0 text-base-content/70 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      {/* Collapsible content */}
+      <div className="min-h-0">
+        <div className="flex flex-col gap-2 px-4 pb-4 pt-1">
+          <p className="text-sm text-base-content/70">
+            {article.global_articles.content
+              ? article.global_articles.content
+              : article.global_articles.summary || ""}
+          </p>
+          <a href={article.global_articles.url} className="link text-sm">
+            Read More
+          </a>
+        </div>
       </div>
-    </details>
+    </div>
   );
 }
