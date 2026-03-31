@@ -11,5 +11,8 @@ class Settings(BaseSettings):
     embedding_max_tokens_per_input: int = 8_192
     embedding_max_tokens_per_batch: int = 100_000
 
+    resend_api_key: str = os.getenv("RESEND_API_KEY", "")
+    resend_from_email: str = os.getenv("RESEND_FROM_EMAIL", "")
+
 
 settings = Settings()
