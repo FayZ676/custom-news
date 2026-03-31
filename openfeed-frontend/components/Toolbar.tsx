@@ -8,7 +8,7 @@ export default function Toolbar({
   allRead,
 }: ToolbarProps) {
   return (
-    <div>
+    <div className="ml-auto">
       <button
         className="btn"
         onClick={handleReadAllArticles}

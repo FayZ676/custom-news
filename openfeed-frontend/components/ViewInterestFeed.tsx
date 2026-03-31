@@ -71,12 +71,13 @@ export function ViewInterestFeed({
   };
 
   const handleReadAllArticles = () => {
-    const unreadIds = localArticles
-      .filter((a) => a && !a.is_read)
-      .map((a) => a.global_articles.id);
+    const unreadIds = unreadArticles.map((a) => a.global_articles.id);
     if (unreadIds.length === 0) return;
     wrappedHandleReadArticles(unreadIds, false);
   };
+
+  const unreadArticles = localArticles.filter((a) => a && !a.is_read);
+  const readArticles = localArticles.filter((a) => a && a.is_read);
 
   return (
     <div className="flex flex-col gap-8">
@@ -93,24 +94,48 @@ export function ViewInterestFeed({
       />
       <Toolbar
         handleReadAllArticles={handleReadAllArticles}
-        allRead={localArticles.every((a) => !a || a.is_read)}
+        allRead={unreadArticles.length === 0}
       />
-      <div className="flex flex-col gap-2">
-        {localArticles?.length ? (
-          localArticles.map((article) =>
-            article ? (
+      <div className="flex flex-col gap-6">
+        {/* Unread Articles */}
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-semibold uppercase tracking-wide text-base-content/60">
+            Unread
+          </span>
+          {unreadArticles.length ? (
+            unreadArticles.map((article) => (
               <CardArticle
                 key={article.global_articles.id}
                 article={article}
                 handleReadArticles={wrappedHandleReadArticles}
               />
-            ) : null,
-          )
-        ) : (
-          <p className="text-center text-base-content/50 py-8">
-            No articles available.
-          </p>
-        )}
+            ))
+          ) : (
+            <p className="text-center text-base-content/50 py-8">
+              No articles available.
+            </p>
+          )}
+        </div>
+
+        {/* Read Articles */}
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-semibold uppercase tracking-wide text-base-content/60">
+            Read
+          </span>
+          {readArticles.length ? (
+            readArticles.map((article) => (
+              <CardArticle
+                key={article.global_articles.id}
+                article={article}
+                handleReadArticles={wrappedHandleReadArticles}
+              />
+            ))
+          ) : (
+            <p className="text-center text-base-content/50 py-8">
+              No articles available.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
