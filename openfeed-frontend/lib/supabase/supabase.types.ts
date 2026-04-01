@@ -232,6 +232,21 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_settings: {
+        Row: {
+          email_notification_frequency: Database["public"]["Enums"]["email_notification_frequency"];
+          user_id: string;
+        };
+        Insert: {
+          email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
+          user_id: string;
+        };
+        Update: {
+          email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -249,7 +264,7 @@ export type Database = {
       };
     };
     Enums: {
-      [_ in never]: never;
+      email_notification_frequency: "hourly" | "daily" | "weekly";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -382,6 +397,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      email_notification_frequency: ["hourly", "daily", "weekly"],
+    },
   },
 } as const;
