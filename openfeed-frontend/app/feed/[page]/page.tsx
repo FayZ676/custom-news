@@ -5,6 +5,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { Database } from "@/lib/supabase/supabase.types";
 
+import { signOut } from "@/actions/auth";
 import { rerankTexts } from "@/actions/reranker";
 import { addInterest } from "@/actions/interests";
 import { embedTexts } from "@/actions/embeddings";
@@ -19,8 +20,8 @@ import {
 } from "@/lib/backend";
 
 import { ViewFeed } from "@/components/ViewFeed";
+import { DrawerMenuProps } from "@/components/DrawerMenu";
 import { ViewFeedSkeleton } from "@/components/ViewFeedSkeleton";
-import { DrawerMenuInterest } from "@/components/DrawerMenu";
 
 const ARTICLES_PER_PAGE = 20;
 
@@ -131,10 +132,14 @@ async function AllArticlesContent({
     return await saveUserInterest(supabase, query, userId);
   }
 
-  const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({
-    interest: i,
-    unreadArticlesCount: i.unread_articles_count,
-  }));
+  const drawerMenuProps: DrawerMenuProps = {
+    userEmail: claimsData.claims.email,
+    interests: interests.map((i) => ({
+      interest: i,
+      unreadArticlesCount: i.unread_articles_count,
+    })),
+    handleSignOut: signOut,
+  };
 
   const rightSlot = query ? (
     <span className="text-base-content/50 pr-4">
@@ -146,7 +151,7 @@ async function AllArticlesContent({
 
   return (
     <ViewFeed
-      initialDrawerInterests={initialDrawerInterests}
+      drawerMenuProps={drawerMenuProps}
       articles={articles}
       title={query ? "Search Results" : "All Articles"}
       handleSaveUserInterest={handleSaveUserInterest}

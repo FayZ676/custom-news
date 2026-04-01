@@ -10,15 +10,19 @@ import type { Article, Interest } from "@/lib/backend";
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { DrawerOptions } from "@/components/DrawerOptions";
-import { DrawerMenu, DrawerMenuInterest } from "@/components/DrawerMenu";
+import {
+  DrawerMenu,
+  DrawerMenuProps,
+  DrawerMenuInterest,
+} from "@/components/DrawerMenu";
 
 export function ViewInterestFeed({
-  initialDrawerInterests,
+  drawerMenuProps,
   activeInterest,
   articles,
   handleReadArticles,
 }: {
-  initialDrawerInterests: DrawerMenuInterest[];
+  drawerMenuProps: DrawerMenuProps;
   activeInterest: Interest;
   articles: Article[];
   handleReadArticles: (articleIds: string[], isRead: boolean) => Promise<void>;
@@ -27,7 +31,7 @@ export function ViewInterestFeed({
 
   const [localArticles, setLocalArticles] = useState<Article[]>(articles);
   const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
-    initialDrawerInterests,
+    drawerMenuProps.interests,
   );
 
   const [, startReadTransition] = useTransition();
@@ -69,19 +73,13 @@ export function ViewInterestFeed({
     });
   };
 
-  const handleReadAllArticles = () => {
-    const unreadIds = unreadArticles.map((a) => a.global_articles.id);
-    if (unreadIds.length === 0) return;
-    wrappedHandleReadArticles(unreadIds, false);
-  };
-
   const unreadArticles = localArticles.filter((a) => a && !a.is_read);
   const readArticles = localArticles.filter((a) => a && a.is_read);
 
   return (
     <div className="flex flex-col gap-8">
       <Navbar
-        left={<DrawerMenu interests={drawerInterests} />}
+        left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
         center={
           <span className="text-xl font-semibold text-center wrap-break-word">
             {activeInterest.query}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { Search, Menu } from "lucide-react";
+import { Search, LogOut, Menu, UserRound } from "lucide-react";
 
 import { Interest } from "@/lib/backend";
 
@@ -11,7 +11,13 @@ export interface DrawerMenuInterest {
   unreadArticlesCount: number;
 }
 
-export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
+export interface DrawerMenuProps {
+  userEmail: string | undefined;
+  handleSignOut: () => void;
+  interests: DrawerMenuInterest[];
+}
+
+export function DrawerMenu(props: DrawerMenuProps) {
   const checkboxRef = useRef<HTMLInputElement>(null);
 
   function closeDrawer() {
@@ -50,7 +56,7 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
               Interests
             </span>
             <ul className="collapse-content p-0">
-              {interests.map((interest) => (
+              {props.interests.map((interest) => (
                 <li key={interest.interest.id}>
                   <Link
                     href={`/feed/interest/${interest.interest.id}`}
@@ -69,6 +75,16 @@ export function DrawerMenu({ interests }: { interests: DrawerMenuInterest[] }) {
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="flex flex-col gap-4 mt-auto">
+            <div className="flex gap-2 items-center">
+              <UserRound size={14} />
+              <span>{props.userEmail || ""}</span>
+            </div>
+            <button onClick={props.handleSignOut} className="btn">
+              <LogOut size={14} />
+              Sign Out
+            </button>
           </div>
         </div>
       </div>

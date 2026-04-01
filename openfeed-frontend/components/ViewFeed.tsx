@@ -10,10 +10,14 @@ import SearchBar from "@/components/Searchbar";
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
-import { DrawerMenu, DrawerMenuInterest } from "@/components/DrawerMenu";
+import {
+  DrawerMenu,
+  DrawerMenuProps,
+  DrawerMenuInterest,
+} from "@/components/DrawerMenu";
 
 export function ViewFeed({
-  initialDrawerInterests,
+  drawerMenuProps,
   articles,
   title,
   handleSaveUserInterest,
@@ -22,7 +26,7 @@ export function ViewFeed({
   page,
   hasMore,
 }: {
-  initialDrawerInterests: DrawerMenuInterest[];
+  drawerMenuProps: DrawerMenuProps;
   articles: Article[];
   title: string;
   handleSaveUserInterest: (query: string) => Promise<string>;
@@ -33,7 +37,7 @@ export function ViewFeed({
 }) {
   const router = useRouter();
   const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
-    initialDrawerInterests,
+    drawerMenuProps.interests,
   );
   const [saving, startSaveTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -85,7 +89,7 @@ export function ViewFeed({
   return (
     <div className="flex flex-col gap-8">
       <Navbar
-        left={<DrawerMenu interests={drawerInterests} />}
+        left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
         center={<span className="text-xl font-semibold">{title}</span>}
         right={rightSlot}
       />

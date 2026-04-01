@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
+import { signOut } from "@/actions/auth";
+
 import { createClient } from "@/lib/supabase/server";
 import {
   readUserArticles,
@@ -10,7 +12,7 @@ import {
 
 import { ViewInterestFeed } from "@/components/ViewInterestFeed";
 import { ViewFeedSkeleton } from "@/components/ViewFeedSkeleton";
-import { DrawerMenuInterest } from "@/components/DrawerMenu";
+import { DrawerMenuProps } from "@/components/DrawerMenu";
 
 export default async function InterestFeedPage({
   params,
@@ -43,10 +45,14 @@ async function FeedContent({ interestId }: { interestId: string }) {
     activeInterest.id,
   );
 
-  const initialDrawerInterests: DrawerMenuInterest[] = interests.map((i) => ({
-    interest: i,
-    unreadArticlesCount: i.unread_articles_count,
-  }));
+  const drawerMenuProps: DrawerMenuProps = {
+    userEmail: claimsData.claims.email,
+    interests: interests.map((i) => ({
+      interest: i,
+      unreadArticlesCount: i.unread_articles_count,
+    })),
+    handleSignOut: signOut,
+  };
 
   async function handleReadArticles(articleIds: string[], isRead: boolean) {
     "use server";
@@ -56,7 +62,7 @@ async function FeedContent({ interestId }: { interestId: string }) {
 
   return (
     <ViewInterestFeed
-      initialDrawerInterests={initialDrawerInterests}
+      drawerMenuProps={drawerMenuProps}
       activeInterest={activeInterest}
       articles={articles}
       handleReadArticles={handleReadArticles}
