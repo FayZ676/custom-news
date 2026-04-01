@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ChevronDown } from "lucide-react";
 
@@ -13,13 +13,23 @@ export function CardArticle({
   article: Article;
   handleReadArticles?: (articleIds: string[], isRead: boolean) => void;
 }) {
+  const pendingRead = useRef(false);
   const [isOpen, setIsOpen] = useState(false);
 
   function handleToggle() {
-    if (!isOpen && article.is_read !== undefined && !article.is_read) {
-      handleReadArticles([article.global_articles.id], article.is_read);
+    if (isOpen && article.is_read !== undefined && !article.is_read) {
+      pendingRead.current = true;
     }
     setIsOpen((prev) => !prev);
+  }
+
+  function handleTransitionEnd() {
+    if (pendingRead.current) {
+      setTimeout(() => {
+        handleReadArticles([article.global_articles.id], article.is_read);
+        pendingRead.current = false;
+      }, 300);
+    }
   }
 
   function timeAgo(dateStr: string): string {
@@ -44,6 +54,7 @@ export function CardArticle({
       style={{
         gridTemplateRows: isOpen ? "max-content 1fr" : "max-content 0fr",
       }}
+      onTransitionEnd={handleTransitionEnd}
     >
       {/* Header / toggle */}
       <button
