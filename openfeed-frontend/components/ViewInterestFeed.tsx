@@ -7,7 +7,6 @@ import { deleteInterest } from "@/actions/interests";
 
 import type { Article, Interest } from "@/lib/backend";
 
-import Toolbar from "@/components/Toolbar";
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { DrawerOptions } from "@/components/DrawerOptions";
