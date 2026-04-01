@@ -36,7 +36,7 @@ export function DrawerOptions({
           aria-label="close sidebar"
           className="drawer-overlay"
         />
-        <ul className="menu bg-base-200 min-h-full w-80 p-4">
+        <ul className="menu bg-base-100 min-h-full w-80 p-4">
           <li>
             <button
               className="btn"
