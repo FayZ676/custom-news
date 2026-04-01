@@ -92,10 +92,6 @@ export function ViewInterestFeed({
           <DrawerOptions onDelete={handleDeleteArticle} isPending={deleting} />
         }
       />
-      <Toolbar
-        handleReadAllArticles={handleReadAllArticles}
-        allRead={unreadArticles.length === 0}
-      />
       <div className="flex flex-col gap-8">
         {/* Unread Articles */}
         <div className="collapse collapse-arrow rounded-none">
