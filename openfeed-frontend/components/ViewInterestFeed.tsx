@@ -96,45 +96,41 @@ export function ViewInterestFeed({
         handleReadAllArticles={handleReadAllArticles}
         allRead={unreadArticles.length === 0}
       />
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-8">
         {/* Unread Articles */}
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold uppercase tracking-wide text-base-content/60">
-            Unread
+        <div className="collapse collapse-arrow rounded-none">
+          <input type="checkbox" defaultChecked />
+          <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
+            Unread Articles
           </span>
-          {unreadArticles.length ? (
-            unreadArticles.map((article) => (
-              <CardArticle
-                key={article.global_articles.id}
-                article={article}
-                handleReadArticles={wrappedHandleReadArticles}
-              />
-            ))
-          ) : (
-            <p className="text-center text-base-content/50 py-8">
-              No articles available.
-            </p>
-          )}
+          <ul className="collapse-content p-0 flex flex-col gap-2">
+            {unreadArticles.map((article) => (
+              <li key={article.global_articles.id}>
+                <CardArticle
+                  key={article.global_articles.id}
+                  article={article}
+                  handleReadArticles={wrappedHandleReadArticles}
+                />
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Read Articles */}
-        <div className="flex flex-col gap-2">
-          <span className="text-sm font-semibold uppercase tracking-wide text-base-content/60">
-            Read
+        <div className="collapse collapse-arrow rounded-none">
+          <input type="checkbox" />
+          <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
+            Read Articles
           </span>
-          {readArticles.length ? (
-            readArticles.map((article) => (
+          <ul className="collapse-content p-0 flex flex-col gap-2">
+            {readArticles.map((article) => (
               <CardArticle
                 key={article.global_articles.id}
                 article={article}
                 handleReadArticles={wrappedHandleReadArticles}
               />
-            ))
-          ) : (
-            <p className="text-center text-base-content/50 py-8">
-              No articles available.
-            </p>
-          )}
+            ))}
+          </ul>
         </div>
       </div>
     </div>
