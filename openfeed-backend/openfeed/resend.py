@@ -1,3 +1,4 @@
+import math
 import requests
 from pydantic import BaseModel, EmailStr
 
@@ -5,9 +6,9 @@ RESEND_BATCH_LIMIT = 100
 
 
 class EmailInput(BaseModel):
-    to: str | list[EmailStr]
+    to: EmailStr | list[EmailStr]
     subject: str
-    body: str
+    html_body: str
 
 
 class BatchEmailResponse(BaseModel):
@@ -22,7 +23,7 @@ def send_batch_emails(
             "from": from_email,
             "to": e.to if isinstance(e.to, list) else [e.to],
             "subject": e.subject,
-            "html": e.body,
+            "html": e.html_body,
         }
         for e in emails
     ]

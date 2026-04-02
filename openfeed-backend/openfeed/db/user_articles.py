@@ -15,6 +15,7 @@ class UserArticleDetails:
     user_id: str
     email: str
     title: str
+    url: str
     interest: str
     interest_id: str
 
@@ -75,6 +76,7 @@ def get_unread_user_article_details(db: Client, user_ids_emails: dict[str, str])
             user_id=row["user_id"],
             email=user_ids_emails[str(row["user_id"])],
             title=row.get("global_articles", {}).get("title", ""),
+            url=row.get("global_articles", {}).get("url", ""),
             interest=row.get("user_interests", {}).get("query", ""),
             interest_id=row["interest_id"],
         )

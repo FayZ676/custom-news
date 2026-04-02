@@ -123,7 +123,9 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
     }
     send_batch_emails(
         emails=[
-            EmailInput(to=email, subject="Updates", body=_compose_email(details))
+            EmailInput(
+                to=email, subject="Updates", html_body=_compose_email_html(details)
+            )
             for email, details in user_article_details_map.items()
         ],
         api_key=os.getenv("RESEND_API_KEY", ""),
@@ -131,7 +133,7 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
     )
 
 
-def _compose_email(details: list[UserArticleDetails]):
+def _compose_email_html(details: list[UserArticleDetails]) -> str:
     details_per_interest = {
         k: list(g)
         for k, g in groupby(
@@ -139,11 +141,77 @@ def _compose_email(details: list[UserArticleDetails]):
             key=lambda d: d.interest,
         )
     }
-    message = ""
-    for interest, detail in details_per_interest.items():
-        message = interest + "\n"
-        for d in detail:
-            message = message + d.title + "\n"
-        message = message + "\n"
 
-    return message
+    sections_html = ""
+    for interest, group in details_per_interest.items():
+        articles_html = "".join(
+            f"""
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+                <a href="{d.url}" style="color: #1a1a1a; text-decoration: none; font-size: 14px; font-weight: 500;">
+                  {d.title}
+                </a>
+              </td>
+            </tr>
+            """
+            for d in group
+        )
+
+        sections_html += f"""
+        <div style="margin-bottom: 32px;">
+          <h2 style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+                     text-transform: uppercase; color: #888; border-bottom: 2px solid #1a1a1a; padding-bottom: 6px;">
+            {interest}
+          </h2>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            {articles_html}
+          </table>
+        </div>
+        """
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Your openfeed digest</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
+        <tr>
+          <td align="center" style="padding: 32px 16px;">
+            <table width="600" cellpadding="0" cellspacing="0" border="0"
+                   style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+
+              <!-- Header -->
+              <tr>
+                <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #f0f0f0;">
+                  <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #1a1a1a;">openfeed</span>
+                  <span style="font-size: 12px; color: #aaa; margin-left: 8px;">your daily digest</span>
+                </td>
+              </tr>
+
+              <!-- Content -->
+              <tr>
+                <td style="padding: 28px 32px;">
+                  {sections_html}
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 16px 32px 28px 32px; border-top: 1px solid #f0f0f0;">
+                  <p style="margin: 0; font-size: 11px; color: #bbb; text-align: center;">
+                    Sent by openfeed &mdash; <a href="#" style="color: #bbb;">unsubscribe</a>
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
