@@ -6,7 +6,7 @@ create extension if not exists pg_cron;
 select cron.schedule(
   'notification_daily_morning',
   '0 7 * * *',
-  $$
+  $morning$
     select net.http_post(
       url := (select decrypted_secret from vault.decrypted_secrets where name = 'backend_url') || '/user/notifications?frequency=daily',
       headers := jsonb_build_object(
@@ -15,14 +15,14 @@ select cron.schedule(
       ),
       body := '{}'::jsonb
     );
-  $$
+  $morning$
 );
 
 -- 7pm daily
 select cron.schedule(
   'notification_daily_evening',
   '0 19 * * *',
-  $$
+  $evening$
     select net.http_post(
       url := (select decrypted_secret from vault.decrypted_secrets where name = 'backend_url') || '/user/notifications?frequency=daily',
       headers := jsonb_build_object(
@@ -31,5 +31,5 @@ select cron.schedule(
       ),
       body := '{}'::jsonb
     );
-  $$
+  $evening$
 );
