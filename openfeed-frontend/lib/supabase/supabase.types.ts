@@ -234,14 +234,17 @@ export type Database = {
       };
       user_settings: {
         Row: {
+          email_notification: boolean;
           email_notification_frequency: Database["public"]["Enums"]["email_notification_frequency"];
           user_id: string;
         };
         Insert: {
+          email_notification?: boolean;
           email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
           user_id: string;
         };
         Update: {
+          email_notification?: boolean;
           email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
           user_id?: string;
         };

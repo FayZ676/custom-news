@@ -17,6 +17,8 @@ import {
   getGlobalArticlesByIds,
   getGlobalArticlesByPage,
   matchArticlesByEmbedding,
+  getUserSettings,
+  updateUserNotificationSettings,
 } from "@/lib/backend";
 
 import { ViewFeed } from "@/components/ViewFeed";
@@ -115,21 +117,28 @@ async function AllArticlesContent({
   if (!claimsData) throw new Error("Not authenticated");
   const userId = claimsData.claims.sub;
 
-  const [interests, articles] = await Promise.all([
+  const [interests, articles, userSettings] = await Promise.all([
     getUserInterests(supabase, userId),
     query
       ? searchGlobalArticles(supabase, query)
       : getGlobalArticlesByPage(supabase, page, ARTICLES_PER_PAGE),
+    getUserSettings(supabase, userId),
   ]);
 
   async function handleSaveUserInterest(query: string) {
     "use server";
     const supabase = await createClient();
-    const { data: claimsData } = await supabase.auth.getClaims();
-    if (!claimsData) throw new Error("Not authenticated");
-    const userId = claimsData.claims.sub;
-
     return await saveUserInterest(supabase, query, userId);
+  }
+
+  async function handleUpdateNotifications() {
+    "use server";
+    const supabase = await createClient();
+    await updateUserNotificationSettings(
+      supabase,
+      userId,
+      !userSettings.email_notification,
+    );
   }
 
   const drawerMenuProps: DrawerMenuProps = {
@@ -139,6 +148,8 @@ async function AllArticlesContent({
       unreadArticlesCount: i.unread_articles_count,
     })),
     handleSignOut: signOut,
+    settings: userSettings,
+    handleUpdateNotifications: handleUpdateNotifications,
   };
 
   const rightSlot = query ? (

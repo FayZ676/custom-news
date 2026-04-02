@@ -7,7 +7,9 @@ import { createClient } from "@/lib/supabase/server";
 import {
   readUserArticles,
   getUserInterests,
+  getUserSettings,
   getUserArticlesForInterest,
+  updateUserNotificationSettings,
 } from "@/lib/backend";
 
 import { ViewInterestFeed } from "@/components/ViewInterestFeed";
@@ -45,6 +47,18 @@ async function FeedContent({ interestId }: { interestId: string }) {
     activeInterest.id,
   );
 
+  const userSettings = await getUserSettings(supabase, userId);
+
+  async function handleUpdateNotifications() {
+    "use server";
+    const supabase = await createClient();
+    await updateUserNotificationSettings(
+      supabase,
+      userId,
+      !userSettings.email_notification,
+    );
+  }
+
   const drawerMenuProps: DrawerMenuProps = {
     userEmail: claimsData.claims.email,
     interests: interests.map((i) => ({
@@ -52,6 +66,8 @@ async function FeedContent({ interestId }: { interestId: string }) {
       unreadArticlesCount: i.unread_articles_count,
     })),
     handleSignOut: signOut,
+    settings: userSettings,
+    handleUpdateNotifications: handleUpdateNotifications,
   };
 
   async function handleReadArticles(articleIds: string[], isRead: boolean) {

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+
 import { Search, LogOut, Menu, UserRound } from "lucide-react";
 
 import { Interest } from "@/lib/backend";
+import { Database } from "@/lib/supabase/supabase.types";
 
 export interface DrawerMenuInterest {
   interest: Interest;
@@ -15,6 +17,8 @@ export interface DrawerMenuProps {
   userEmail: string | undefined;
   handleSignOut: () => void;
   interests: DrawerMenuInterest[];
+  settings: Database["public"]["Tables"]["user_settings"]["Row"];
+  handleUpdateNotifications: () => Promise<void>;
 }
 
 export function DrawerMenu(props: DrawerMenuProps) {
@@ -76,15 +80,36 @@ export function DrawerMenu(props: DrawerMenuProps) {
               ))}
             </ul>
           </div>
-          <div className="flex flex-col gap-4 mt-auto">
-            <div className="flex gap-2 items-center">
-              <UserRound size={14} />
-              <span>{props.userEmail || ""}</span>
-            </div>
+          <div className="collapse collapse-arrow rounded-none">
+            <input type="checkbox" />
+            <span className="collapse-title text-xl font-bold p-0">
+              Settings
+            </span>
+            <ul className="collapse-content p-0">
+              <li>
+                <div className="flex justify-between items-center gap-2 border-b border-base-300 py-3">
+                  <span className="font-semibold truncate min-w-0">
+                    Email Notifications
+                  </span>
+                  <input
+                    type="checkbox"
+                    defaultChecked={props.settings.email_notification}
+                    className="toggle toggle-success"
+                    onChange={props.handleUpdateNotifications}
+                  />
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2 mt-auto">
             <button onClick={props.handleSignOut} className="btn">
               <LogOut size={14} />
               Sign Out
             </button>
+            <div className="flex gap-2 items-center">
+              <UserRound size={14} />
+              <span>{props.userEmail || ""}</span>
+            </div>
           </div>
         </div>
       </div>
