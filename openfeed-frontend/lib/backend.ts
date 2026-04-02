@@ -2,6 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, Database } from "./supabase/supabase.types";
 
 export interface Article {
+  score: number;
   is_read: boolean;
   global_articles: Tables<"global_articles">;
 }
@@ -59,9 +60,7 @@ export async function getGlobalArticlesByPage(
     .range(from, to);
 
   if (error) throw new Error(error.message);
-  return data.map((a) => {
-    return { is_read: false, global_articles: a };
-  });
+  return data.map((a) => ({ is_read: false, score: 0, global_articles: a }));
 }
 
 export async function matchArticlesByEmbedding(
@@ -93,9 +92,7 @@ export async function getGlobalArticlesByIds(
     .in("id", ids);
 
   if (error) throw new Error(error.message);
-  return data.map((a) => {
-    return { is_read: false, global_articles: a };
-  });
+  return data.map((a) => ({ is_read: false, score: 0, global_articles: a }));
 }
 
 export async function getUserArticlesForInterest(
@@ -105,18 +102,14 @@ export async function getUserArticlesForInterest(
 ): Promise<Article[]> {
   const { data: rows, error: uaError } = await supabase
     .from("user_articles")
-    .select("is_read, global_articles(*)")
+    .select("is_read, score, global_articles(*)")
     .eq("user_id", userId)
     .eq("interest_id", interestId);
 
   if (uaError) throw new Error(uaError.message);
   if (!rows || rows.length === 0) return [];
 
-  return rows.sort(
-    (a, b) =>
-      new Date(b.global_articles?.published_at!).getTime() -
-      new Date(a.global_articles?.published_at!).getTime(),
-  ) as Article[];
+  return rows.sort((a, b) => b.score - a.score) as Article[];
 }
 
 export async function getUserInterests(
