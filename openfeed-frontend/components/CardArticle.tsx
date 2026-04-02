@@ -61,13 +61,9 @@ export function CardArticle({
         className="flex cursor-pointer items-center justify-between gap-2 px-4 py-3 text-left hover:bg-base-200"
         onClick={handleToggle}
       >
-        <span
-          className={`font-semibold ${article.is_read ? "line-through text-base-content/40" : "text-base-content"}`}
-        >
+        <span className={"font-semibold text-base-content"}>
           {article.global_articles.title}
-          <span
-            className={`font-normal ${article.is_read ? "line-through text-base-content/40" : "text-base-content/70"}`}
-          >
+          <span className={"font-normal text-base-content/70"}>
             , {article.global_articles.feed_title} (
             {timeAgo(article.global_articles.published_at)})
           </span>
