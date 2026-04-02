@@ -7,7 +7,7 @@ select cron.schedule(
   'notification_daily',
   '0 0 * * *',
   $$
-    select net.http_delete(
+    select net.http_post(
       url := (select decrypted_secret from vault.decrypted_secrets where name = 'backend_url') || '/user/notifications?frequency=daily',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
