@@ -133,7 +133,9 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
     )
 
 
-def _compose_email_html(details: list[UserArticleDetails]) -> str:
+def _compose_email_html(
+    details: list[UserArticleDetails], feed_url: str = "https://openfeed.app"
+) -> str:
     details_per_interest = {
         k: list(g)
         for k, g in groupby(
@@ -144,29 +146,16 @@ def _compose_email_html(details: list[UserArticleDetails]) -> str:
 
     sections_html = ""
     for interest, group in details_per_interest.items():
-        articles_html = "".join(
-            f"""
-            <tr>
-              <td style="padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-                <a href="{d.url}" style="color: #1a1a1a; text-decoration: none; font-size: 14px; font-weight: 500;">
-                  {d.title}
-                </a>
-              </td>
-            </tr>
-            """
-            for d in group
-        )
+        count = len(group)
+        article_label = "article" if count == 1 else "articles"
 
         sections_html += f"""
-        <div style="margin-bottom: 32px;">
-          <h2 style="margin: 0 0 12px 0; font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-                     text-transform: uppercase; color: #888; border-bottom: 2px solid #1a1a1a; padding-bottom: 6px;">
-            {interest}
-          </h2>
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">
-            {articles_html}
-          </table>
-        </div>
+        <tr>
+          <td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0;">
+            <span style="font-size: 13px; font-weight: 600; color: #1a1a1a;">{interest}</span>
+            <span style="font-size: 13px; color: #888; margin-left: 8px;">{count} new {article_label}</span>
+          </td>
+        </tr>
         """
 
     return f"""
@@ -192,10 +181,23 @@ def _compose_email_html(details: list[UserArticleDetails]) -> str:
                 </td>
               </tr>
 
-              <!-- Content -->
+              <!-- Interest summary -->
               <tr>
-                <td style="padding: 28px 32px;">
-                  {sections_html}
+                <td style="padding: 28px 32px 16px 32px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    {sections_html}
+                  </table>
+                </td>
+              </tr>
+
+              <!-- CTA -->
+              <tr>
+                <td style="padding: 8px 32px 32px 32px;" align="center">
+                  <a href="{feed_url}" style="display: inline-block; background-color: #1a1a1a; color: #ffffff;
+                     text-decoration: none; font-size: 13px; font-weight: 600; padding: 12px 28px;
+                     border-radius: 6px; letter-spacing: 0.01em;">
+                    Read your feed &rarr;
+                  </a>
                 </td>
               </tr>
 

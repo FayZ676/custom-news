@@ -63,7 +63,7 @@ def get_unread_user_article_details(db: Client, user_ids_emails: dict[str, str])
     pages = paginated_query(
         db=db,
         table="user_articles",
-        select="user_id, interest_id, is_read, global_articles(title), user_interests(query)",
+        select="user_id, interest_id, is_read, global_articles(title, url), user_interests(query)",
         filters={
             "is_read": False,
         },
