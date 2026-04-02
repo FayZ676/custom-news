@@ -21,12 +21,3 @@ gen_types_py:
 	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/database_models.py
 
 init: reset deploy fetch_articles gen_types_py gen_types_ts
-
-functions_test:
-	@for test in functions/_tests/test_*.ts; do \
-		echo "Running $$test..."; \
-		deno run --allow-net --allow-read --allow-env --env=../.env "$$test" || exit 1; \
-	done
-
-inspect_feeds:
-	deno run --reload --allow-net --allow-read functions/_tests/inspect_feeds.ts > content.txt
