@@ -17,6 +17,7 @@ from openfeed.db.global_articles import (
     insert_global_articles,
     get_global_article_urls,
 )
+from openfeed.db.user_settings import get_user_ids_for_frequency
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.resend import EmailInput, send_batch_emails
 from openfeed.db.user_interests import get_user_interests
@@ -24,7 +25,7 @@ from openfeed.database_models import PublicEmailNotificationFrequency
 from openfeed.db.user_articles import (
     UserArticleDetails,
     batch_insert_user_articles,
-    get_unread_user_article_details_for_users_with_notifications,
+    get_unread_user_article_details,
 )
 
 
@@ -107,26 +108,12 @@ def _fetch_articles():
 
 
 def _notify_users(frequency: PublicEmailNotificationFrequency):
-    def compose_email(details: list[UserArticleDetails]):
-        details_per_interest = {
-            k: list(g)
-            for k, g in groupby(
-                sorted(details, key=lambda d: d.interest),
-                key=lambda d: d.interest,
-            )
-        }
-        message = ""
-        for interest, detail in details_per_interest.items():
-            message = interest + "\n"
-            for d in detail:
-                message = message + d.title + "\n"
-            message = message + "\n"
-
-        return message
-
-    user_article_details = get_unread_user_article_details_for_users_with_notifications(
-        get_db(), frequency
-    )
+    db = get_db()
+    user_ids = get_user_ids_for_frequency(db, frequency)
+    user_ids_emails: dict[str, str] = {
+        id: db.auth.admin.get_user_by_id(id).user.email for id in user_ids
+    }  # type: ignore
+    user_article_details = get_unread_user_article_details(db, user_ids_emails)
     user_article_details_map = {
         k: list(g)
         for k, g in groupby(
@@ -134,18 +121,29 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
             key=lambda d: d.email,
         )
     }
-
-    if not user_article_details_map:
-        logger.info(
-            "No unread articles for users with notifications, skipping email send"
-        )
-        return
-
     send_batch_emails(
         emails=[
-            EmailInput(to=email, subject="Updates", body=compose_email(details))
+            EmailInput(to=email, subject="Updates", body=_compose_email(details))
             for email, details in user_article_details_map.items()
         ],
         api_key=os.getenv("RESEND_API_KEY", ""),
         from_email=os.getenv("RESEND_FROM_EMAIL", ""),
     )
+
+
+def _compose_email(details: list[UserArticleDetails]):
+    details_per_interest = {
+        k: list(g)
+        for k, g in groupby(
+            sorted(details, key=lambda d: d.interest),
+            key=lambda d: d.interest,
+        )
+    }
+    message = ""
+    for interest, detail in details_per_interest.items():
+        message = interest + "\n"
+        for d in detail:
+            message = message + d.title + "\n"
+        message = message + "\n"
+
+    return message

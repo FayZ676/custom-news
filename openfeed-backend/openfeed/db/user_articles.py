@@ -4,12 +4,8 @@ from dataclasses import dataclass
 from openfeed.reranker import rerank
 from openfeed.db.client import Client
 from openfeed.db.utils import paginated_query
-
+from openfeed.database_models import PublicUserInterests
 from openfeed.db.global_articles import query_global_articles, MAX_ARTICLES_PER_INTEREST
-from openfeed.database_models import (
-    PublicUserInterests,
-    PublicEmailNotificationFrequency,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -62,24 +58,7 @@ def batch_insert_user_articles(db: Client, interests: list[PublicUserInterests])
         ).execute()
 
 
-def get_unread_user_article_details_for_users_with_notifications(
-    db: Client,
-    frequency: PublicEmailNotificationFrequency,
-):
-    settings_rows = (
-        db.table("user_settings")
-        .select("user_id")
-        .eq("email_notification", True)
-        .eq("email_notification_frequency", frequency)
-        .execute()
-        .data
-    )
-
-    if not settings_rows:
-        return []
-
-    user_ids = [str(row["user_id"]) for row in settings_rows]  # type: ignore
-
+def get_unread_user_article_details(db: Client, user_ids_emails: dict[str, str]):
     pages = paginated_query(
         db=db,
         table="user_articles",
@@ -88,13 +67,13 @@ def get_unread_user_article_details_for_users_with_notifications(
             "is_read": False,
         },
         in_filters={
-            "user_id": user_ids,
+            "user_id": list(user_ids_emails.keys()),
         },
     )
     return [
         UserArticleDetails(
             user_id=row["user_id"],
-            email=db.auth.admin.get_user_by_id(str(row["user_id"])).user.email,  # type: ignore
+            email=user_ids_emails[str(row["user_id"])],
             title=row.get("global_articles", {}).get("title", ""),
             interest=row.get("user_interests", {}).get("query", ""),
             interest_id=row["interest_id"],
