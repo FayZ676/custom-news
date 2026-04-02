@@ -55,6 +55,7 @@ deploy_secrets:
 		BACKEND_API_KEY=$(BACKEND_API_KEY) \
 		RESEND_API_KEY=$(RESEND_API_KEY) \
 		RESEND_FROM_EMAIL=$(RESEND_FROM_EMAIL) \
+		FRONTEND_URL=$(FRONTEND_URL) \
 
 deploy: deploy_secrets
 	modal deploy openfeed/modal_app.py

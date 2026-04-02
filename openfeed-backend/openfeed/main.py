@@ -125,7 +125,7 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
         emails=[
             EmailInput(
                 to=email,
-                subject="Updates",
+                subject="You have new articles waiting",
                 html_body=_compose_email_html(details, os.getenv("FRONTEND_URL", "")),
             )
             for email, details in user_article_details_map.items()
