@@ -2,6 +2,8 @@ drop extension if exists "pg_cron";
 
 create extension if not exists "vector" with schema "public";
 
+create type "public"."email_notification_frequency" as enum ('hourly', 'daily', 'weekly');
+
 
   create table "public"."global_articles" (
     "id" uuid not null default gen_random_uuid(),
@@ -79,6 +81,16 @@ alter table "public"."user_category_subscriptions" enable row level security;
 
 alter table "public"."user_interests" enable row level security;
 
+
+  create table "public"."user_settings" (
+    "user_id" uuid not null,
+    "email_notification" boolean not null default true,
+    "email_notification_frequency" public.email_notification_frequency not null default 'daily'::public.email_notification_frequency
+      );
+
+
+alter table "public"."user_settings" enable row level security;
+
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
 CREATE UNIQUE INDEX global_articles_url_key ON public.global_articles USING btree (url);
@@ -101,6 +113,10 @@ CREATE UNIQUE INDEX user_category_subscriptions_pkey ON public.user_category_sub
 
 CREATE UNIQUE INDEX user_interests_pkey ON public.user_interests USING btree (id);
 
+CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
+
+CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
+
 alter table "public"."global_articles" add constraint "global_articles_pkey" PRIMARY KEY using index "global_articles_pkey";
 
 alter table "public"."global_categories" add constraint "global_categories_pkey" PRIMARY KEY using index "global_categories_pkey";
@@ -112,6 +128,8 @@ alter table "public"."user_articles" add constraint "user_articles_pkey" PRIMARY
 alter table "public"."user_category_subscriptions" add constraint "user_category_subscriptions_pkey" PRIMARY KEY using index "user_category_subscriptions_pkey";
 
 alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
+
+alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
 
 alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) not valid;
 
@@ -153,7 +171,24 @@ alter table "public"."user_interests" add constraint "user_interests_user_id_fke
 
 alter table "public"."user_interests" validate constraint "user_interests_user_id_fkey";
 
+alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
+
 set check_function_bodies = off;
+
+CREATE OR REPLACE FUNCTION public.create_user_settings()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+AS $function$
+begin
+    insert into public.user_settings (user_id)
+    values (new.id);
+    return new;
+end;
+$function$
+;
 
 CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, match_count integer)
  RETURNS TABLE(id uuid, title text, summary text, content text, similarity double precision)
@@ -418,6 +453,48 @@ grant truncate on table "public"."user_interests" to "service_role";
 
 grant update on table "public"."user_interests" to "service_role";
 
+grant delete on table "public"."user_settings" to "anon";
+
+grant insert on table "public"."user_settings" to "anon";
+
+grant references on table "public"."user_settings" to "anon";
+
+grant select on table "public"."user_settings" to "anon";
+
+grant trigger on table "public"."user_settings" to "anon";
+
+grant truncate on table "public"."user_settings" to "anon";
+
+grant update on table "public"."user_settings" to "anon";
+
+grant delete on table "public"."user_settings" to "authenticated";
+
+grant insert on table "public"."user_settings" to "authenticated";
+
+grant references on table "public"."user_settings" to "authenticated";
+
+grant select on table "public"."user_settings" to "authenticated";
+
+grant trigger on table "public"."user_settings" to "authenticated";
+
+grant truncate on table "public"."user_settings" to "authenticated";
+
+grant update on table "public"."user_settings" to "authenticated";
+
+grant delete on table "public"."user_settings" to "service_role";
+
+grant insert on table "public"."user_settings" to "service_role";
+
+grant references on table "public"."user_settings" to "service_role";
+
+grant select on table "public"."user_settings" to "service_role";
+
+grant trigger on table "public"."user_settings" to "service_role";
+
+grant truncate on table "public"."user_settings" to "service_role";
+
+grant update on table "public"."user_settings" to "service_role";
+
 
   create policy "global_articles_select_policy"
   on "public"."global_articles"
@@ -474,5 +551,17 @@ with check ((auth.uid() = user_id));
 using ((auth.uid() = user_id))
 with check ((auth.uid() = user_id));
 
+
+
+  create policy "Users can manage their own article scores"
+  on "public"."user_settings"
+  as permissive
+  for all
+  to public
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.create_user_settings();
 
 
