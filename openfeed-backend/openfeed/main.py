@@ -124,7 +124,9 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
     send_batch_emails(
         emails=[
             EmailInput(
-                to=email, subject="Updates", html_body=_compose_email_html(details)
+                to=email,
+                subject="Updates",
+                html_body=_compose_email_html(details, os.getenv("FRONTEND_URL", "")),
             )
             for email, details in user_article_details_map.items()
         ],
@@ -133,9 +135,7 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
     )
 
 
-def _compose_email_html(
-    details: list[UserArticleDetails], feed_url: str = "https://openfeed.app"
-) -> str:
+def _compose_email_html(details: list[UserArticleDetails], feed_url: str) -> str:
     details_per_interest = {
         k: list(g)
         for k, g in groupby(
@@ -176,8 +176,7 @@ def _compose_email_html(
               <!-- Header -->
               <tr>
                 <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #f0f0f0;">
-                  <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #1a1a1a;">openfeed</span>
-                  <span style="font-size: 12px; color: #aaa; margin-left: 8px;">your daily digest</span>
+                  <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #1a1a1a;">Openfeed</span>
                 </td>
               </tr>
 
@@ -196,7 +195,7 @@ def _compose_email_html(
                   <a href="{feed_url}" style="display: inline-block; background-color: #1a1a1a; color: #ffffff;
                      text-decoration: none; font-size: 13px; font-weight: 600; padding: 12px 28px;
                      border-radius: 6px; letter-spacing: 0.01em;">
-                    Read your feed &rarr;
+                    Go to Openfeed &rarr;
                   </a>
                 </td>
               </tr>
