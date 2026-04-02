@@ -66,14 +66,29 @@ def get_unread_user_article_details_for_users_with_notifications(
     db: Client,
     frequency: PublicEmailNotificationFrequency,
 ):
+    settings_rows = (
+        db.table("user_settings")
+        .select("user_id")
+        .eq("email_notification", True)
+        .eq("email_notification_frequency", frequency)
+        .execute()
+        .data
+    )
+
+    if not settings_rows:
+        return []
+
+    user_ids = [str(row["user_id"]) for row in settings_rows]  # type: ignore
+
     pages = paginated_query(
         db=db,
         table="user_articles",
-        select="user_id, interest_id, is_read, global_articles(title), user_interests(query), user_settings!inner(email_notification, email_notification_frequency)",
+        select="user_id, interest_id, is_read, global_articles(title), user_interests(query)",
         filters={
             "is_read": False,
-            "user_settings.email_notification": True,
-            "user_settings.email_notification_frequency": frequency,
+        },
+        in_filters={
+            "user_id": user_ids,
         },
     )
     return [
