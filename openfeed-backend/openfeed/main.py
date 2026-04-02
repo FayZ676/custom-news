@@ -134,9 +134,16 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
             key=lambda d: d.email,
         )
     }
+
+    if not user_article_details_map:
+        logger.info(
+            "No unread articles for users with notifications, skipping email send"
+        )
+        return
+
     send_batch_emails(
         emails=[
-            EmailInput(to=email, subject="", body=compose_email(details))
+            EmailInput(to=email, subject="Updates", body=compose_email(details))
             for email, details in user_article_details_map.items()
         ],
         api_key=os.getenv("RESEND_API_KEY", ""),
