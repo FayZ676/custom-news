@@ -217,6 +217,7 @@ class PublicUserInterestsUpdate(TypedDict):
 
 
 class PublicUserSettings(BaseModel):
+    email_notification: bool = Field(alias="email_notification")
     email_notification_frequency: PublicEmailNotificationFrequency = Field(
         alias="email_notification_frequency"
     )
@@ -224,6 +225,7 @@ class PublicUserSettings(BaseModel):
 
 
 class PublicUserSettingsInsert(TypedDict):
+    email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     email_notification_frequency: NotRequired[
         Annotated[
             PublicEmailNotificationFrequency,
@@ -234,6 +236,7 @@ class PublicUserSettingsInsert(TypedDict):
 
 
 class PublicUserSettingsUpdate(TypedDict):
+    email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     email_notification_frequency: NotRequired[
         Annotated[
             PublicEmailNotificationFrequency,
