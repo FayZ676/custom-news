@@ -1,4 +1,3 @@
-import math
 import requests
 from pydantic import BaseModel, EmailStr
 
