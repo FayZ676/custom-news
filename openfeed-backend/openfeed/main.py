@@ -1,14 +1,16 @@
+import os
 import logging
 from typing import Optional
+from itertools import groupby
 from contextlib import asynccontextmanager
 
 from fastapi.responses import Response
 from fastapi import FastAPI, Depends, BackgroundTasks
 
+from openfeed.models import Article
 from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
-from openfeed.models import Article
 from openfeed.db.client import Client, client
 from openfeed.db.global_articles import (
     delete_global_articles,
@@ -16,8 +18,14 @@ from openfeed.db.global_articles import (
     get_global_article_urls,
 )
 from openfeed.db.global_feeds import get_global_feeds
+from openfeed.resend import EmailInput, send_batch_emails
 from openfeed.db.user_interests import get_user_interests
-from openfeed.db.user_articles import batch_insert_user_articles
+from openfeed.database_models import PublicEmailNotificationFrequency
+from openfeed.db.user_articles import (
+    UserArticleDetails,
+    batch_insert_user_articles,
+    get_unread_user_article_details_for_users_with_notifications,
+)
 
 
 logging.basicConfig(
@@ -41,6 +49,14 @@ app = FastAPI(dependencies=[Depends(verify_api_key)], lifespan=lifespan)
 def get_db() -> Client:
     assert db_client is not None, "db_client not initialized"
     return db_client
+
+
+@app.post("/user/notifications", status_code=202)
+def user_email_notifications_send(
+    frequency: PublicEmailNotificationFrequency, background_tasks: BackgroundTasks
+):
+    background_tasks.add_task(_notify_users, frequency)
+    return Response(status_code=202)
 
 
 @app.post("/global/articles", status_code=202)
@@ -88,3 +104,41 @@ def _fetch_articles():
                 logger.exception("Failed to update user interest page: %s", e)
 
     logger.info("Fetched and inserted %d new articles", len(articles))
+
+
+def _notify_users(frequency: PublicEmailNotificationFrequency):
+    def compose_email(details: list[UserArticleDetails]):
+        details_per_interest = {
+            k: list(g)
+            for k, g in groupby(
+                sorted(details, key=lambda d: d.interest),
+                key=lambda d: d.interest,
+            )
+        }
+        message = ""
+        for interest, detail in details_per_interest.items():
+            message = interest + "\n"
+            for d in detail:
+                message = message + d.title + "\n"
+            message = message + "\n"
+
+        return message
+
+    user_article_details = get_unread_user_article_details_for_users_with_notifications(
+        get_db(), frequency
+    )
+    user_article_details_map = {
+        k: list(g)
+        for k, g in groupby(
+            sorted(user_article_details, key=lambda d: d.email),
+            key=lambda d: d.email,
+        )
+    }
+    send_batch_emails(
+        emails=[
+            EmailInput(to=email, subject="", body=compose_email(details))
+            for email, details in user_article_details_map.items()
+        ],
+        api_key=os.getenv("RESEND_API_KEY", ""),
+        from_email=os.getenv("RESEND_FROM_EMAIL", ""),
+    )
