@@ -6,15 +6,13 @@ import { useState, useTransition } from "react";
 
 import { Article } from "@/lib/backend";
 
+import { useDrawerInterests } from "@/hooks/useDrawerInterest";
+
 import SearchBar from "@/components/Searchbar";
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
-import {
-  DrawerMenu,
-  DrawerMenuProps,
-  DrawerMenuInterest,
-} from "@/components/DrawerMenu";
+import { DrawerMenu, DrawerMenuProps } from "@/components/DrawerMenu";
 
 export function ViewFeed({
   drawerMenuProps,
@@ -36,11 +34,12 @@ export function ViewFeed({
   hasMore?: boolean;
 }) {
   const router = useRouter();
-  const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
-    drawerMenuProps.interests,
-  );
-  const [saving, startSaveTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+
+  const { drawerInterests, addTempInterest, confirmInterest } =
+    useDrawerInterests(drawerMenuProps.interests);
+
+  const [saving, startSaveTransition] = useTransition();
   const [isSearching, startSearchTransition] = useTransition();
 
   const handleSearch = (query: string) => {
@@ -58,30 +57,10 @@ export function ViewFeed({
   const handleSave = (query: string) => {
     const tempId = `temp-${Date.now()}`;
     setSaved(false);
-    setDrawerInterests((prev) => [
-      ...prev,
-      {
-        interest: { id: tempId, query, unread_articles_count: 0 },
-        unreadArticlesCount: articlesPerInterest,
-      },
-    ]);
+    addTempInterest(tempId, query, articlesPerInterest);
     startSaveTransition(async () => {
       const interestId = await handleSaveUserInterest(query);
-      setDrawerInterests((prev) =>
-        prev.map((di) =>
-          di.interest.id === tempId
-            ? {
-                ...di,
-                interest: {
-                  id: interestId,
-                  query,
-                  unread_articles_count: 0,
-                },
-                unreadArticlesCount: articlesPerInterest,
-              }
-            : di,
-        ),
-      );
+      confirmInterest(tempId, interestId, query, articlesPerInterest);
       setSaved(true);
     });
   };

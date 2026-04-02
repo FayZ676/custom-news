@@ -7,14 +7,12 @@ import { deleteInterest } from "@/actions/interests";
 
 import type { Article, Interest } from "@/lib/backend";
 
+import { useDrawerInterests } from "@/hooks/useDrawerInterest";
+
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { DrawerOptions } from "@/components/DrawerOptions";
-import {
-  DrawerMenu,
-  DrawerMenuProps,
-  DrawerMenuInterest,
-} from "@/components/DrawerMenu";
+import { DrawerMenu, DrawerMenuProps } from "@/components/DrawerMenu";
 
 export function ViewInterestFeed({
   drawerMenuProps,
@@ -30,30 +28,19 @@ export function ViewInterestFeed({
   const router = useRouter();
 
   const [localArticles, setLocalArticles] = useState<Article[]>(articles);
-  const [drawerInterests, setDrawerInterests] = useState<DrawerMenuInterest[]>(
-    drawerMenuProps.interests,
-  );
+  const { drawerInterests, removeInterest, updateUnreadCount } =
+    useDrawerInterests(drawerMenuProps.interests);
 
   const [, startReadTransition] = useTransition();
   const [deleting, startDeleteTransition] = useTransition();
 
   const updateActiveUnreadStatus = (updatedArticles: Article[]) => {
-    const unreadArticlesCount = updatedArticles.filter(
-      (a) => a && !a.is_read,
-    ).length;
-    setDrawerInterests((prev) =>
-      prev.map((di) =>
-        di.interest.id === activeInterest.id
-          ? { ...di, unreadArticlesCount: unreadArticlesCount }
-          : di,
-      ),
-    );
+    const count = updatedArticles.filter((a) => a && !a.is_read).length;
+    updateUnreadCount(activeInterest.id, count);
   };
 
   const handleDeleteArticle = () => {
-    setDrawerInterests((prev) =>
-      prev.filter((di) => di.interest.id !== activeInterest.id),
-    );
+    removeInterest(activeInterest.id);
     startDeleteTransition(async () => {
       await deleteInterest(activeInterest.id);
       router.push("/feed");
