@@ -1,12 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
-import { Search, LogOut, Menu, UserRound } from "lucide-react";
+import {
+  Search,
+  LogOut,
+  Menu,
+  UserRound,
+  MessageSquare,
+  MessageSquareCheck,
+} from "lucide-react";
+import { Forminit } from "forminit";
 
 import { Interest } from "@/lib/backend";
 import { Database } from "@/lib/supabase/supabase.types";
+
+const forminit = new Forminit({ proxyUrl: "/api/forminit" });
 
 export interface DrawerMenuInterest {
   interest: Interest;
@@ -23,10 +33,34 @@ export interface DrawerMenuProps {
 
 export function DrawerMenu(props: DrawerMenuProps) {
   const checkboxRef = useRef<HTMLInputElement>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSent, setFeedbackSent] = useState(false);
 
   function closeDrawer() {
     if (checkboxRef.current) {
       checkboxRef.current.checked = false;
+    }
+  }
+
+  function dismissFeedback() {
+    setFeedbackText("");
+    setFeedbackOpen(false);
+  }
+
+  async function handleFeedbackKeyDown(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+  ) {
+    if (e.key === "Enter" && !e.shiftKey && feedbackText.trim()) {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append("fi-sender-email", props.userEmail ?? "");
+      formData.append("fi-text-message", feedbackText);
+      setFeedbackText("");
+      setFeedbackOpen(false);
+      setFeedbackSent(true);
+      setTimeout(() => setFeedbackSent(false), 3000);
+      await forminit.submit("12sccwhqsbm", formData);
     }
   }
 
@@ -102,6 +136,36 @@ export function DrawerMenu(props: DrawerMenuProps) {
             </ul>
           </div>
           <div className="flex flex-col gap-2 mt-auto">
+            {feedbackOpen ? (
+              <textarea
+                className="textarea w-full rounded-lg"
+                placeholder="Feedback (Enter to send)"
+                rows={4}
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                onKeyDown={handleFeedbackKeyDown}
+                onBlur={dismissFeedback}
+                autoFocus
+              />
+            ) : (
+              <button
+                onClick={() => !feedbackSent && setFeedbackOpen(true)}
+                className="btn"
+                disabled={feedbackSent}
+              >
+                {feedbackSent ? (
+                  <>
+                    <MessageSquareCheck size={14} />
+                    Feedback Received
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare size={14} />
+                    Send Feedback
+                  </>
+                )}
+              </button>
+            )}
             <button onClick={props.handleSignOut} className="btn">
               <LogOut size={14} />
               Sign Out
