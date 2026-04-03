@@ -89,7 +89,7 @@ export function DrawerMenu(props: DrawerMenuProps) {
           className="drawer-overlay"
         ></label>
         <div className="flex flex-col gap-8 bg-base-100 min-h-full w-80 p-4">
-          <Link href="/feed" className="btn btn-block">
+          <Link href="/feed" className="btn justify-start">
             <Search size={14} />
             <span>Browse Articles</span>
           </Link>
@@ -155,7 +155,7 @@ export function DrawerMenu(props: DrawerMenuProps) {
                 ) : (
                   <button
                     onClick={() => !feedbackSent && setFeedbackOpen(true)}
-                    className="btn btn-accent"
+                    className="btn btn-accent justify-start"
                     disabled={feedbackSent}
                   >
                     {feedbackSent ? (
@@ -171,7 +171,10 @@ export function DrawerMenu(props: DrawerMenuProps) {
                     )}
                   </button>
                 )}
-                <button onClick={props.handleSignOut} className="btn">
+                <button
+                  onClick={props.handleSignOut}
+                  className="btn justify-start"
+                >
                   <LogOut size={14} />
                   Sign Out
                 </button>
