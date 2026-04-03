@@ -12,9 +12,9 @@ import {
   updateUserNotificationSettings,
 } from "@/lib/backend";
 
-import { ViewInterestFeed } from "@/components/ViewInterestFeed";
-import { ViewFeedSkeleton } from "@/components/ViewFeedSkeleton";
 import { DrawerMenuProps } from "@/components/DrawerMenu";
+import { ViewInterestFeed } from "@/components/ViewInterestFeed";
+import { ViewInterestFeedSkeleton } from "@/components/ViewInterestFeed";
 
 export default async function InterestFeedPage({
   params,
@@ -23,7 +23,7 @@ export default async function InterestFeedPage({
 }) {
   const { interest } = await params;
   return (
-    <Suspense fallback={<ViewFeedSkeleton />}>
+    <Suspense fallback={<ViewInterestFeedSkeleton />}>
       <FeedContent interestId={interest} />
     </Suspense>
   );

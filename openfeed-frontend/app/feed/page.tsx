@@ -22,9 +22,8 @@ import {
   getGlobalFeeds,
 } from "@/lib/backend";
 
-import { ViewFeed } from "@/components/ViewFeed";
 import { DrawerMenuProps } from "@/components/DrawerMenu";
-import { ViewFeedSkeleton } from "@/components/ViewFeedSkeleton";
+import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 
 const ARTICLES_PER_PAGE = 20;
 

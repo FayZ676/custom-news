@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { motion } from "motion/react";
 
 import { Article } from "@/lib/backend";
 import { Database } from "@/lib/supabase/supabase.types";
 
 import { useDrawerInterests } from "@/hooks/useDrawerInterest";
 
-import { Marquee } from "./Marquee";
 import { Navbar } from "@/components/Navbar";
+import { Marquee } from "@/components/Marquee";
 import SearchBar from "@/components/Searchbar";
+import { NavbarSkeleton } from "@/components/Navbar";
+import { SearchbarSkeleton } from "@/components/Searchbar";
 import { DrawerMenu, DrawerMenuProps } from "@/components/DrawerMenu";
 import { CardArticle, CardArticleSkeleton } from "@/components/CardArticle";
 
@@ -71,7 +72,7 @@ export function ViewFeed({
     <div className="flex flex-col gap-8">
       <Navbar
         left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
-        center={<span className="text-xl font-semibold">{title}</span>}
+        center={<span className="text-xl font-semibold truncate">{title}</span>}
         right={rightSlot}
       />
       <SearchBar
@@ -119,6 +120,20 @@ export function ViewFeed({
           />
         </div>
       )}
+    </div>
+  );
+}
+
+export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <div className="flex flex-col gap-8">
+      <NavbarSkeleton />
+      <SearchbarSkeleton />
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: count }).map((_, i) => (
+          <CardArticleSkeleton key={i} />
+        ))}
+      </div>
     </div>
   );
 }

@@ -14,8 +14,10 @@ import { useDrawerInterests } from "@/hooks/useDrawerInterest";
 
 import Fab from "@/components/Fab";
 import { Navbar } from "@/components/Navbar";
+import { NavbarSkeleton } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { DrawerOptions } from "@/components/DrawerOptions";
+import { CardArticleSkeleton } from "@/components/CardArticle";
 import { DrawerMenu, DrawerMenuProps } from "@/components/DrawerMenu";
 
 export function ViewInterestFeed({
@@ -76,7 +78,7 @@ export function ViewInterestFeed({
         <Navbar
           left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
           center={
-            <div className="flex gap-2 items-center max-w-xs md:max-w-sm min-w-0">
+            <div className="flex gap-2 items-center min-w-0">
               <span className="text-xl font-semibold truncate">
                 {activeInterest.query}
               </span>
@@ -133,5 +135,31 @@ export function ViewInterestFeed({
         </div>
       </div>
     </>
+  );
+}
+
+export function ViewInterestFeedSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <div className="flex flex-col gap-8">
+      <NavbarSkeleton />
+      <div className="flex flex-col gap-8">
+        <div className="collapse collapse-arrow rounded-none">
+          <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
+            Unread Articles
+          </span>
+          <div className="collapse-content p-0 flex flex-col gap-2">
+            {Array.from({ length: count }).map((_, i) => (
+              <CardArticleSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+        <div className="collapse collapse-arrow rounded-none">
+          <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
+            Read Articles
+          </span>
+          <div className="collapse-content p-0 flex flex-col gap-2" />
+        </div>
+      </div>
+    </div>
   );
 }
