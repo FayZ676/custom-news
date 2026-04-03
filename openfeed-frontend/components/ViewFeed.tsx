@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { CornerRightDown } from "lucide-react";
+
 import { Article } from "@/lib/backend";
 import { Database } from "@/lib/supabase/supabase.types";
 
@@ -99,9 +101,16 @@ export function ViewFeed({
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <span className="text-base-content/70">
-            Sourcing the latest news from
-          </span>
+          <div className="flex gap-2 items-center">
+            <span className="text-base-content/50 font-light text-sm">
+              Sourcing the latest and most relevant news from
+            </span>
+            <CornerRightDown
+              size={12}
+              strokeWidth={2}
+              className="mt-2 text-base-content/50"
+            />
+          </div>
           <Marquee
             items={feeds}
             rows={4}
