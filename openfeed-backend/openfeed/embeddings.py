@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from collections.abc import Iterator
 
@@ -101,7 +100,7 @@ def _post_embeddings(texts: list[str]) -> _OpenAIEmbeddingResponse:
     response = requests.post(
         "https://api.openai.com/v1/embeddings",
         headers={
-            "Authorization": f"Bearer {os.getenv("OPENAI_API_KEY", "")}",
+            "Authorization": f"Bearer {settings.openai_api_key}",
             "Content-Type": "application/json",
         },
         json={

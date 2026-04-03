@@ -1,4 +1,3 @@
-import os
 import logging
 from typing import Optional
 from itertools import groupby
@@ -8,6 +7,7 @@ from fastapi.responses import Response
 from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.models import Article
+from openfeed.config import settings
 from openfeed.auth import verify_api_key
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
@@ -126,12 +126,12 @@ def _notify_users(frequency: PublicEmailNotificationFrequency):
             EmailInput(
                 to=email,
                 subject="You have new articles waiting",
-                html_body=_compose_email_html(details, os.getenv("FRONTEND_URL", "")),
+                html_body=_compose_email_html(details, settings.frontend_url),
             )
             for email, details in user_article_details_map.items()
         ],
-        api_key=os.getenv("RESEND_API_KEY", ""),
-        from_email=os.getenv("RESEND_FROM_EMAIL", ""),
+        api_key=settings.resend_api_key,
+        from_email=settings.resend_from_email,
     )
 
 
