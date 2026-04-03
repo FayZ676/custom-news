@@ -98,7 +98,7 @@ export function DrawerMenu(props: DrawerMenuProps) {
             <span className="collapse-title text-xl font-bold p-0">
               Interests
             </span>
-            <ul className="collapse-content p-0">
+            <ul className="collapse-content p-1">
               {props.interests.map((interest) => (
                 <li key={interest.interest.id}>
                   <Link
@@ -124,61 +124,63 @@ export function DrawerMenu(props: DrawerMenuProps) {
             <span className="collapse-title text-xl font-bold p-0">
               Settings
             </span>
-            <ul className="collapse-content p-0">
-              <li>
-                <div className="flex justify-between items-center gap-2 border-b border-base-300 py-3">
-                  <span className="font-semibold truncate min-w-0">
-                    Email Notifications
-                  </span>
-                  <input
-                    type="checkbox"
-                    defaultChecked={props.settings.email_notification}
-                    className="toggle toggle-success"
-                    onChange={props.handleUpdateNotifications}
+            <div className="collapse-content p-1 flex flex-col gap-4">
+              <ul>
+                <li>
+                  <div className="flex justify-between items-center gap-2 border-b border-base-300 py-3">
+                    <span className="font-semibold truncate min-w-0">
+                      Email Notifications
+                    </span>
+                    <input
+                      type="checkbox"
+                      defaultChecked={props.settings.email_notification}
+                      className="toggle toggle-success"
+                      onChange={props.handleUpdateNotifications}
+                    />
+                  </div>
+                </li>
+              </ul>
+              <div className="flex flex-col gap-2">
+                {feedbackOpen ? (
+                  <textarea
+                    className="textarea w-full rounded-lg"
+                    placeholder="Feedback (Enter to send)"
+                    rows={4}
+                    value={feedbackText}
+                    onChange={(e) => setFeedbackText(e.target.value)}
+                    onKeyDown={handleFeedbackKeyDown}
+                    onBlur={dismissFeedback}
+                    autoFocus
                   />
-                </div>
-              </li>
-            </ul>
-          </div>
-          <div className="flex flex-col gap-2 mt-auto">
-            {feedbackOpen ? (
-              <textarea
-                className="textarea w-full rounded-lg"
-                placeholder="Feedback (Enter to send)"
-                rows={4}
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                onKeyDown={handleFeedbackKeyDown}
-                onBlur={dismissFeedback}
-                autoFocus
-              />
-            ) : (
-              <button
-                onClick={() => !feedbackSent && setFeedbackOpen(true)}
-                className="btn"
-                disabled={feedbackSent}
-              >
-                {feedbackSent ? (
-                  <>
-                    <MessageSquareCheck size={14} />
-                    Feedback Received
-                  </>
                 ) : (
-                  <>
-                    <MessageSquare size={14} />
-                    Send Feedback
-                  </>
+                  <button
+                    onClick={() => !feedbackSent && setFeedbackOpen(true)}
+                    className="btn btn-accent"
+                    disabled={feedbackSent}
+                  >
+                    {feedbackSent ? (
+                      <>
+                        <MessageSquareCheck size={14} />
+                        Feedback Received
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare size={14} />
+                        Send Feedback
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
-            )}
-            <button onClick={props.handleSignOut} className="btn">
-              <LogOut size={14} />
-              Sign Out
-            </button>
-            <div className="flex gap-2 items-center">
-              <UserRound size={14} />
-              <span>{props.userEmail || ""}</span>
+                <button onClick={props.handleSignOut} className="btn">
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
+              </div>
             </div>
+          </div>
+          <div className="flex gap-2 items-center mt-auto">
+            <UserRound size={14} />
+            <span>{props.userEmail || ""}</span>
           </div>
         </div>
       </div>
