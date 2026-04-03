@@ -74,7 +74,12 @@ export function DrawerMenu(props: DrawerMenuProps) {
       />
       <div className="drawer-content">
         <label htmlFor="my-drawer-1" className="btn btn-ghost drawer-button">
-          <Menu />
+          <div className="indicator">
+            {props.interests.some((i) => i.unreadArticlesCount > 0) && (
+              <span className="indicator-item status status-success status-md"></span>
+            )}
+            <Menu />
+          </div>
         </label>
       </div>
       <div className="drawer-side">
