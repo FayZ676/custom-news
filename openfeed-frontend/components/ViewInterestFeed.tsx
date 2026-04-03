@@ -68,65 +68,70 @@ export function ViewInterestFeed({
   const readArticles = localArticles.filter((a) => a && a.is_read);
 
   return (
-    <div className="flex flex-col gap-8">
+    <>
       <div className="md:hidden">
         <Fab />
       </div>
-      <Navbar
-        left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
-        center={
-          <div className="flex gap-2 items-center max-w-xs md:max-w-sm min-w-0">
-            <span className="text-xl font-semibold truncate">
-              {activeInterest.query}
-            </span>
-            <div className="hidden md:block">
-              <Link href="/feed" className="btn btn-circle btn-accent">
-                <Search size={16} strokeWidth={3} />
-              </Link>
-            </div>
-          </div>
-        }
-        right={
-          <DrawerOptions onDelete={handleDeleteArticle} isPending={deleting} />
-        }
-      />
       <div className="flex flex-col gap-8">
-        {/* Unread Articles */}
-        <div className="collapse collapse-arrow rounded-none">
-          <input type="checkbox" defaultChecked />
-          <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
-            Unread Articles
-          </span>
-          <ul className="collapse-content p-0 flex flex-col gap-2">
-            {unreadArticles.map((article) => (
-              <li key={article.global_articles.id}>
+        <Navbar
+          left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
+          center={
+            <div className="flex gap-2 items-center max-w-xs md:max-w-sm min-w-0">
+              <span className="text-xl font-semibold truncate">
+                {activeInterest.query}
+              </span>
+              <div className="hidden md:block">
+                <Link href="/feed" className="btn btn-circle btn-accent">
+                  <Search size={16} strokeWidth={3} />
+                </Link>
+              </div>
+            </div>
+          }
+          right={
+            <DrawerOptions
+              onDelete={handleDeleteArticle}
+              isPending={deleting}
+            />
+          }
+        />
+        <div className="flex flex-col gap-8">
+          {/* Unread Articles */}
+          <div className="collapse collapse-arrow rounded-none">
+            <input type="checkbox" defaultChecked />
+            <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
+              Unread Articles
+            </span>
+            <ul className="collapse-content p-0 flex flex-col gap-2">
+              {unreadArticles.map((article) => (
+                <li key={article.global_articles.id}>
+                  <CardArticle
+                    key={article.global_articles.id}
+                    article={article}
+                    handleReadArticles={wrappedHandleReadArticles}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Read Articles */}
+          <div className="collapse collapse-arrow rounded-none">
+            <input type="checkbox" />
+            <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
+              Read Articles
+            </span>
+            <ul className="collapse-content p-0 flex flex-col gap-2">
+              {readArticles.map((article) => (
                 <CardArticle
                   key={article.global_articles.id}
                   article={article}
                   handleReadArticles={wrappedHandleReadArticles}
                 />
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Read Articles */}
-        <div className="collapse collapse-arrow rounded-none">
-          <input type="checkbox" />
-          <span className="collapse-title pb-4 mb-4 border-b border-base-300 font-bold text-base-content/60">
-            Read Articles
-          </span>
-          <ul className="collapse-content p-0 flex flex-col gap-2">
-            {readArticles.map((article) => (
-              <CardArticle
-                key={article.global_articles.id}
-                article={article}
-                handleReadArticles={wrappedHandleReadArticles}
-              />
-            ))}
-          </ul>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
