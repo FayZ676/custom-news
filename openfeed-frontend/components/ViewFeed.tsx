@@ -85,21 +85,17 @@ export function ViewFeed({
         onClear={handleClear}
         searching={isSearching}
       />
-      {articles.length > 0 ? (
+      {isSearching ? (
         <div className="flex flex-col gap-2">
-          {isSearching ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <CardArticleSkeleton key={i} />
-            ))
-          ) : articles.length ? (
-            articles.map((article) => (
-              <CardArticle key={article.global_articles.id} article={article} />
-            ))
-          ) : (
-            <p className="text-center text-base-content/50 py-8">
-              No articles found.
-            </p>
-          )}
+          {Array.from({ length: 3 }).map((_, i) => (
+            <CardArticleSkeleton key={i} />
+          ))}
+        </div>
+      ) : articles.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {articles.map((article) => (
+            <CardArticle key={article.global_articles.id} article={article} />
+          ))}
         </div>
       ) : (
         <div className="flex flex-col gap-4">
