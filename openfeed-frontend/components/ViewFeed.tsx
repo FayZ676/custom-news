@@ -75,7 +75,7 @@ export function ViewFeed({
       <Navbar
         left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
         center={
-          <span className="text-base md:text-xl font-semibold">{title}</span>
+          <span className="text-lg md:text-xl font-semibold">{title}</span>
         }
         right={rightSlot}
       />
