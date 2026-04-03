@@ -1,6 +1,6 @@
 import { NavbarSkeleton } from "@/components/Navbar";
-import { SearchbarSkeleton } from "@/components/SearchbarSkeleton";
-import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
+import { SearchbarSkeleton } from "@/components/Searchbar";
+import { CardArticleSkeleton } from "@/components/CardArticle";
 
 export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
   return (

@@ -13,9 +13,8 @@ import { useDrawerInterests } from "@/hooks/useDrawerInterest";
 import { Marquee } from "./Marquee";
 import { Navbar } from "@/components/Navbar";
 import SearchBar from "@/components/Searchbar";
-import { CardArticle } from "@/components/CardArticle";
-import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
 import { DrawerMenu, DrawerMenuProps } from "@/components/DrawerMenu";
+import { CardArticle, CardArticleSkeleton } from "@/components/CardArticle";
 
 export function ViewFeed({
   feeds,

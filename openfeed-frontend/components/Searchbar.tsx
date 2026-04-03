@@ -130,3 +130,11 @@ export default function SearchBar({
     </div>
   );
 }
+
+export function SearchbarSkeleton() {
+  return (
+    <div className="flex gap-2 items-center">
+      <div className="skeleton input input-lg w-full rounded-lg" />
+    </div>
+  );
+}
