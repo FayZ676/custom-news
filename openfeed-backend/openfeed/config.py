@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    api_key: str
+    backend_api_key: str
     openai_api_key: str
     voyageai_api_key: str
     resend_api_key: str
