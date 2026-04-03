@@ -161,12 +161,12 @@ export function DrawerMenu(props: DrawerMenuProps) {
                     {feedbackSent ? (
                       <>
                         <MessageSquareCheck size={14} />
-                        Feedback Received
+                        Message Received
                       </>
                     ) : (
                       <>
                         <MessageSquare size={14} />
-                        Send Feedback
+                        Feedback & Support
                       </>
                     )}
                   </button>
