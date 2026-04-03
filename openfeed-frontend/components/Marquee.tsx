@@ -14,7 +14,6 @@ function MarqueeRow({
 }) {
   const controls = useAnimationControls();
   const [hovered, setHovered] = useState(false);
-  const xRef = useRef(0);
 
   useEffect(() => {
     if (hovered) {

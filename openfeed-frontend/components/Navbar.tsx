@@ -11,11 +11,28 @@ export function Navbar({
 }) {
   return (
     <div className="navbar bg-base-100 p-0">
-      <div className="navbar-start w-auto">{left}</div>
-      <div className="navbar-center min-w-0 flex-1 justify-center">
-        {center}
+      <div className="navbar-start">{left}</div>
+      <div className="navbar-center">{center}</div>
+      <div className="navbar-end">{right}</div>
+    </div>
+  );
+}
+
+export function NavbarSkeleton() {
+  return (
+    <div className="navbar bg-base-100">
+      <div className="navbar-start">
+        {/* Menu button placeholder */}
+        <div className="skeleton h-10 w-16 rounded-lg" />
       </div>
-      {right ? <div className="navbar-end w-auto">{right}</div> : null}
+      <div className="navbar-center">
+        {/* Title placeholder */}
+        <div className="skeleton h-6 w-32 rounded-lg" />
+      </div>
+      <div className="navbar-end">
+        {/* Right slot placeholder (e.g. pagination arrows) */}
+        <div className="skeleton h-10 w-20 rounded-lg" />
+      </div>
     </div>
   );
 }

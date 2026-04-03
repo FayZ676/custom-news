@@ -1,4 +1,4 @@
-import { NavbarSkeleton } from "@/components/NavbarSkeleton";
+import { NavbarSkeleton } from "@/components/Navbar";
 import { SearchbarSkeleton } from "@/components/SearchbarSkeleton";
 import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
 
