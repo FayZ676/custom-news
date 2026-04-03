@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+
+import { Search } from "lucide-react";
 
 import { deleteInterest } from "@/actions/interests";
 
@@ -9,6 +12,7 @@ import type { Article, Interest } from "@/lib/backend";
 
 import { useDrawerInterests } from "@/hooks/useDrawerInterest";
 
+import Fab from "@/components/Fab";
 import { Navbar } from "@/components/Navbar";
 import { CardArticle } from "@/components/CardArticle";
 import { DrawerOptions } from "@/components/DrawerOptions";
@@ -65,12 +69,22 @@ export function ViewInterestFeed({
 
   return (
     <div className="flex flex-col gap-8">
+      <div className="md:hidden">
+        <Fab />
+      </div>
       <Navbar
         left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
         center={
-          <span className="text-xl font-semibold text-center wrap-break-word">
-            {activeInterest.query}
-          </span>
+          <div className="flex gap-2 items-center max-w-xs md:max-w-sm min-w-0">
+            <span className="text-xl font-semibold truncate">
+              {activeInterest.query}
+            </span>
+            <div className="hidden md:block">
+              <Link href="/feed" className="btn btn-circle btn-accent">
+                <Search size={16} strokeWidth={3} />
+              </Link>
+            </div>
+          </div>
         }
         right={
           <DrawerOptions onDelete={handleDeleteArticle} isPending={deleting} />

@@ -89,10 +89,6 @@ export function DrawerMenu(props: DrawerMenuProps) {
           className="drawer-overlay"
         ></label>
         <div className="flex flex-col gap-8 bg-base-100 min-h-full w-80 p-4">
-          <Link href="/feed" className="btn btn-secondary justify-start">
-            <Search size={14} />
-            <span>Browse Articles</span>
-          </Link>
           <div className="collapse collapse-arrow rounded-none">
             <input type="checkbox" defaultChecked />
             <span className="collapse-title text-xl font-bold p-0">
