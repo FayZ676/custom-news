@@ -26,7 +26,10 @@ export function DrawerOptions({
         className="drawer-toggle"
       />
       <div className="drawer-content ml-auto">
-        <label htmlFor="my-drawer-5" className="drawer-button btn btn-ghost">
+        <label
+          htmlFor="my-drawer-5"
+          className="drawer-button btn btn-circle btn-ghost"
+        >
           <Ellipsis />
         </label>
       </div>

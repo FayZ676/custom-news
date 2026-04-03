@@ -73,7 +73,10 @@ export function DrawerMenu(props: DrawerMenuProps) {
         className="drawer-toggle"
       />
       <div className="drawer-content">
-        <label htmlFor="my-drawer-1" className="btn btn-ghost drawer-button">
+        <label
+          htmlFor="my-drawer-1"
+          className="drawer-button btn btn-circle btn-ghost"
+        >
           <div className="indicator">
             {props.interests.some((i) => i.unreadArticlesCount > 0) && (
               <span className="indicator-item status status-success status-md"></span>

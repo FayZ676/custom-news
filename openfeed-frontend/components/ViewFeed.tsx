@@ -72,7 +72,9 @@ export function ViewFeed({
     <div className="flex flex-col gap-8">
       <Navbar
         left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
-        center={<span className="text-xl font-semibold truncate">{title}</span>}
+        center={
+          <span className="text-base md:text-xl font-semibold">{title}</span>
+        }
         right={rightSlot}
       />
       <SearchBar

@@ -79,7 +79,7 @@ export function ViewInterestFeed({
           left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
           center={
             <div className="flex gap-2 items-center min-w-0">
-              <span className="text-xl font-semibold truncate">
+              <span className="text-base md:text-xl font-semibold">
                 {activeInterest.query}
               </span>
               <div className="hidden md:block">
