@@ -89,7 +89,7 @@ export function DrawerMenu(props: DrawerMenuProps) {
           className="drawer-overlay"
         ></label>
         <div className="flex flex-col gap-8 bg-base-100 min-h-full w-80 p-4">
-          <Link href="/feed" className="btn justify-start">
+          <Link href="/feed" className="btn btn-secondary justify-start">
             <Search size={14} />
             <span>Browse Articles</span>
           </Link>
@@ -173,7 +173,7 @@ export function DrawerMenu(props: DrawerMenuProps) {
                 )}
                 <button
                   onClick={props.handleSignOut}
-                  className="btn justify-start"
+                  className="btn btn-accent justify-start"
                 >
                   <LogOut size={14} />
                   Sign Out

@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { Ellipsis } from "lucide-react";
+import { Ellipsis, Trash } from "lucide-react";
 
 export function DrawerOptions({
   onDelete,
@@ -39,13 +39,14 @@ export function DrawerOptions({
         <ul className="menu bg-base-100 min-h-full w-80 p-4">
           <li>
             <button
-              className="btn"
+              className="btn btn-accent justify-start"
               disabled={isPending}
               onClick={() => {
                 closeDrawer();
                 onDelete();
               }}
             >
+              <Trash size={14} />
               Delete Interest
             </button>
           </li>
