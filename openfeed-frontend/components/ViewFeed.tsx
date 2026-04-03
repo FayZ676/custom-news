@@ -3,27 +3,30 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { motion } from "motion/react";
 
 import { Article } from "@/lib/backend";
+import { Database } from "@/lib/supabase/supabase.types";
 
 import { useDrawerInterests } from "@/hooks/useDrawerInterest";
 
-import SearchBar from "@/components/Searchbar";
+import { Marquee } from "./Marquee";
 import { Navbar } from "@/components/Navbar";
+import SearchBar from "@/components/Searchbar";
 import { CardArticle } from "@/components/CardArticle";
 import { CardArticleSkeleton } from "@/components/CardArticleSkeleton";
 import { DrawerMenu, DrawerMenuProps } from "@/components/DrawerMenu";
 
 export function ViewFeed({
+  feeds,
   drawerMenuProps,
   articles,
   title,
   handleSaveUserInterest,
   articlesPerInterest,
   rightSlot,
-  page,
-  hasMore,
 }: {
+  feeds: Database["public"]["Tables"]["global_feeds"]["Row"][];
   drawerMenuProps: DrawerMenuProps;
   articles: Article[];
   title: string;
@@ -44,13 +47,13 @@ export function ViewFeed({
 
   const handleSearch = (query: string) => {
     startSearchTransition(() => {
-      router.push(`/feed/1?query=${encodeURIComponent(query)}`);
+      router.push(`/feed?query=${encodeURIComponent(query)}`);
     });
   };
 
   const handleClear = () => {
     startSearchTransition(() => {
-      router.push("/feed/1");
+      router.push("/feed");
     });
   };
 
@@ -80,53 +83,41 @@ export function ViewFeed({
         onClear={handleClear}
         searching={isSearching}
       />
-      <div className="flex flex-col gap-2">
-        {isSearching ? (
-          Array.from({ length: 3 }).map((_, i) => (
-            <CardArticleSkeleton key={i} />
-          ))
-        ) : articles.length ? (
-          articles.map((article) => (
-            <CardArticle key={article.global_articles.id} article={article} />
-          ))
-        ) : (
-          <p className="text-center text-base-content/50 py-8">
-            No articles found.
-          </p>
-        )}
-      </div>
-      {page !== undefined && (
-        <div className="flex justify-between">
-          {page > 1 ? (
-            <Link
-              href={`/feed/${page - 1}`}
-              className={`btn${isSearching || saving ? " btn-disabled" : ""}`}
-              aria-disabled={isSearching || saving}
-              tabIndex={isSearching || saving ? -1 : undefined}
-              onClick={
-                isSearching || saving ? (e) => e.preventDefault() : undefined
-              }
-            >
-              ← Previous
-            </Link>
+      {articles.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {isSearching ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <CardArticleSkeleton key={i} />
+            ))
+          ) : articles.length ? (
+            articles.map((article) => (
+              <CardArticle key={article.global_articles.id} article={article} />
+            ))
           ) : (
-            <div />
+            <p className="text-center text-base-content/50 py-8">
+              No articles found.
+            </p>
           )}
-          {hasMore ? (
-            <Link
-              href={`/feed/${page + 1}`}
-              className={`btn${isSearching || saving ? " btn-disabled" : ""}`}
-              aria-disabled={isSearching || saving}
-              tabIndex={isSearching || saving ? -1 : undefined}
-              onClick={
-                isSearching || saving ? (e) => e.preventDefault() : undefined
-              }
-            >
-              Next →
-            </Link>
-          ) : (
-            <div />
-          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <span className="text-base-content/70">
+            Sourcing the latest news from
+          </span>
+          <Marquee
+            items={feeds}
+            rows={4}
+            duration={360}
+            renderItem={(feed) => (
+              <Link
+                key={feed.id}
+                href={feed.url}
+                className="badge badge-md whitespace-nowra text-base-content/50 font-semibold"
+              >
+                {feed.title}
+              </Link>
+            )}
+          />
         </div>
       )}
     </div>

@@ -20,6 +20,14 @@ export interface UserArticleScore {
   score: number;
 }
 
+export async function getGlobalFeeds(
+  supabase: SupabaseClient<Database>,
+): Promise<Database["public"]["Tables"]["global_feeds"]["Row"][]> {
+  const { data, error } = await supabase.from("global_feeds").select("*");
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function updateUserArticles(
   supabase: SupabaseClient<Database>,
   scores: UserArticleScore[],
