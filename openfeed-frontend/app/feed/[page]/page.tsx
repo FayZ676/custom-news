@@ -164,7 +164,7 @@ async function AllArticlesContent({
     <ViewFeed
       drawerMenuProps={drawerMenuProps}
       articles={articles}
-      title={query ? "Search Results" : "All Articles"}
+      title="The Latest Times"
       handleSaveUserInterest={handleSaveUserInterest}
       articlesPerInterest={ARTICLES_PER_PAGE}
       rightSlot={rightSlot}
