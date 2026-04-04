@@ -77,21 +77,13 @@ export function ViewFeed({
         left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
         center={
           <div className="flex justify-center">
-            {/* lg+ */}
             <Image
               src={"logo.svg"}
               alt="The Latest Times"
               width={300}
               height={300}
-              className="hidden sm:block"
-            />
-            {/* below md */}
-            <Image
-              src={"logo small.svg"}
-              alt="The Latest Times"
-              width={200}
-              height={200}
-              className="block sm:hidden"
+              loading="eager"
+              style={{ height: "auto" }}
             />
           </div>
         }
