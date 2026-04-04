@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -75,7 +76,24 @@ export function ViewFeed({
       <Navbar
         left={<DrawerMenu {...drawerMenuProps} interests={drawerInterests} />}
         center={
-          <span className="text-lg md:text-xl font-semibold">{title}</span>
+          <div className="flex justify-center">
+            {/* lg+ */}
+            <Image
+              src={"logo.svg"}
+              alt="The Latest Times"
+              width={300}
+              height={300}
+              className="hidden sm:block"
+            />
+            {/* below md */}
+            <Image
+              src={"logo small.svg"}
+              alt="The Latest Times"
+              width={200}
+              height={200}
+              className="block sm:hidden"
+            />
+          </div>
         }
         right={rightSlot}
       />
