@@ -15,7 +15,6 @@ import {
   getUserInterests,
   updateUserArticles,
   getGlobalArticlesByIds,
-  getGlobalArticlesByPage,
   matchArticlesByEmbedding,
   getUserSettings,
   updateUserNotificationSettings,

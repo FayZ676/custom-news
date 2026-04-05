@@ -1,19 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-
-import { CornerRightDown } from "lucide-react";
+import { useState, useTransition, useEffect } from "react";
 
 import { Article } from "@/lib/backend";
 import { Database } from "@/lib/supabase/supabase.types";
+import { getCurrentDate, getUserLocation } from "@/lib/utils";
 
 import { useDrawerInterests } from "@/hooks/useDrawerInterest";
 
+import Banner from "@/components/Banner";
 import { Navbar } from "@/components/Navbar";
-import { Marquee } from "@/components/Marquee";
 import SearchBar from "@/components/Searchbar";
 import { NavbarSkeleton } from "@/components/Navbar";
 import { SearchbarSkeleton } from "@/components/Searchbar";
@@ -41,12 +39,18 @@ export function ViewFeed({
 }) {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
+  const [date] = useState(getCurrentDate());
+  const [location, setLocation] = useState("Locating...");
 
   const { drawerInterests, addTempInterest, confirmInterest } =
     useDrawerInterests(drawerMenuProps.interests);
 
   const [saving, startSaveTransition] = useTransition();
   const [isSearching, startSearchTransition] = useTransition();
+
+  useEffect(() => {
+    getUserLocation().then(setLocation);
+  }, []);
 
   const handleSearch = (query: string) => {
     startSearchTransition(() => {
@@ -89,6 +93,7 @@ export function ViewFeed({
         }
         right={rightSlot}
       />
+      <Banner location={location} date={date} feeds={feeds} />
       <SearchBar
         onSave={handleSave}
         saving={saving}
@@ -97,46 +102,23 @@ export function ViewFeed({
         onClear={handleClear}
         searching={isSearching}
       />
-      {isSearching ? (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <CardArticleSkeleton key={i} />
-          ))}
-        </div>
-      ) : articles.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          {articles.map((article) => (
-            <CardArticle key={article.global_articles.id} article={article} />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          <div className="flex gap-2 items-center">
-            <span className="text-base-content/50 font-light text-sm">
-              Sourcing the latest and most relevant news from
-            </span>
-            <CornerRightDown
-              size={12}
-              strokeWidth={2}
-              className="mt-2 text-base-content/50"
-            />
-          </div>
-          <Marquee
-            items={feeds}
-            rows={4}
-            duration={360}
-            renderItem={(feed) => (
-              <Link
-                key={feed.id}
-                href={feed.url}
-                className="badge badge-md whitespace-nowra text-base-content/50 font-semibold"
-              >
-                {feed.title}
-              </Link>
-            )}
-          />
-        </div>
-      )}
+      <div className="flex flex-col gap-2">
+        {isSearching ? (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <CardArticleSkeleton key={i} />
+            ))}
+          </>
+        ) : articles.length > 0 ? (
+          <>
+            {articles.map((article) => (
+              <CardArticle key={article.global_articles.id} article={article} />
+            ))}
+          </>
+        ) : (
+          <></>
+        )}
+      </div>
     </div>
   );
 }
