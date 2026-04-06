@@ -1,18 +1,20 @@
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { createClient } from "@/lib/supabase/server";
-import { Database } from "@/lib/supabase/supabase.types";
-
 import { signOut } from "@/actions/auth";
+
+import { InterestArticle, updateUserArticlesRead } from "@/lib/backend";
+import { createClient } from "@/lib/supabase/server";
+import { Database, Tables } from "@/lib/supabase/supabase.types";
+
 import { rerankTexts } from "@/actions/reranker";
 import { addInterest } from "@/actions/interests";
 import { embedTexts } from "@/actions/embeddings";
+import { deleteInterest } from "@/actions/interests";
 
 import {
   UserArticleScore,
-  getUserInterests,
+  getUserInterestArticles,
   updateUserArticles,
   getGlobalArticlesByIds,
   matchArticlesByEmbedding,
@@ -21,15 +23,14 @@ import {
   getGlobalFeeds,
 } from "@/lib/backend";
 
-import { DrawerMenuProps } from "@/components/DrawerMenu";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 
 const ARTICLES_PER_PAGE = 20;
 
 async function searchGlobalArticles(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: SupabaseClient<Database>,
   query: string,
-) {
+): Promise<InterestArticle[]> {
   const { embeddings } = await embedTexts([query]);
   const matches = await matchArticlesByEmbedding(
     supabase,
@@ -43,7 +44,7 @@ async function searchGlobalArticles(
   );
   const rerankedArticleTexts = await rerankTexts(
     query,
-    articles.map((a) => a.global_articles.title),
+    articles.map((a) => a.global_article.title),
   );
   return rerankedArticleTexts
     .map((r) => articles[r.index])
@@ -72,7 +73,7 @@ async function updateUserArticleScores(
 
   const reranked = await rerankTexts(
     interestQuery,
-    articles.map((a) => a.global_articles.title),
+    articles.map((a) => a.global_article.title),
   );
 
   const scores: UserArticleScore[] = reranked
@@ -80,7 +81,7 @@ async function updateUserArticleScores(
     .map((r) => ({
       user_id: userId,
       interest_id: interestId,
-      article_id: articles[r.index].global_articles.id,
+      article_id: articles[r.index].global_article.id,
       score: r.relevance_score,
     }));
 
@@ -110,12 +111,13 @@ async function AllArticlesContent({ query }: { query?: string }) {
   if (!claimsData) throw new Error("Not authenticated");
   const userId = claimsData.claims.sub;
 
-  const [feeds, interests, articles, userSettings] = await Promise.all([
-    getGlobalFeeds(supabase),
-    getUserInterests(supabase, userId),
-    query ? searchGlobalArticles(supabase, query) : [],
-    getUserSettings(supabase, userId),
-  ]);
+  const [feeds, interestArticles, queryArticles, userSettings] =
+    await Promise.all([
+      getGlobalFeeds(supabase),
+      getUserInterestArticles(supabase, userId),
+      query ? searchGlobalArticles(supabase, query) : [],
+      getUserSettings(supabase, userId),
+    ]);
 
   async function handleSaveUserInterest(query: string) {
     "use server";
@@ -133,25 +135,29 @@ async function AllArticlesContent({ query }: { query?: string }) {
     );
   }
 
-  const drawerMenuProps: DrawerMenuProps = {
-    userEmail: claimsData.claims.email,
-    interests: interests.map((i) => ({
-      interest: i,
-      unreadArticlesCount: i.unread_articles_count,
-    })),
-    handleSignOut: signOut,
-    settings: userSettings,
-    handleUpdateNotifications: handleUpdateNotifications,
-  };
+  async function handleReadArticles(articleIds: string[], isRead: boolean) {
+    "use server";
+    const supabase = await createClient();
+    await updateUserArticlesRead(supabase, userId, articleIds, isRead);
+  }
+
+  async function handleDeleteInterest(interestId: string) {
+    "use server";
+    await deleteInterest(interestId);
+  }
 
   return (
     <ViewFeed
+      userEmail={claimsData.claims.email || ""}
+      userSettings={userSettings}
       feeds={feeds}
-      drawerMenuProps={drawerMenuProps}
-      articles={articles}
-      title="The Latest Times"
+      queryArticles={queryArticles}
+      interestArticles={interestArticles}
+      handleSignOut={signOut}
+      handleDeleteInterest={handleDeleteInterest}
+      handleReadUserArticles={handleReadArticles}
       handleSaveUserInterest={handleSaveUserInterest}
-      articlesPerInterest={ARTICLES_PER_PAGE}
+      handleUpdateNotifications={handleUpdateNotifications}
     />
   );
 }

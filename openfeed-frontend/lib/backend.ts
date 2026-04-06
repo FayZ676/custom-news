@@ -1,16 +1,19 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, Database } from "./supabase/supabase.types";
 
-export interface Article {
+export interface QueryArticle {
   score: number;
-  is_read: boolean;
-  global_articles: Tables<"global_articles">;
+  global_article: Tables<"global_articles">;
 }
 
-export interface Interest {
+export interface InterestArticle extends QueryArticle {
+  is_read: boolean;
+}
+
+export interface InterestArticles {
   id: string;
   query: string;
-  unread_articles_count: number;
+  articles: InterestArticle[];
 }
 
 export interface UserArticleScore {
@@ -39,14 +42,15 @@ export async function updateUserArticles(
   if (error) throw new Error(error.message);
 }
 
-export async function readUserArticles(
+export async function updateUserArticlesRead(
   supabase: SupabaseClient<Database>,
   userId: string,
   articleIds: string[],
+  isRead: boolean,
 ) {
   const { error } = await supabase
     .from("user_articles")
-    .update({ is_read: true })
+    .update({ is_read: isRead })
     .eq("user_id", userId)
     .in("article_id", articleIds);
 
@@ -57,7 +61,7 @@ export async function getGlobalArticlesByPage(
   supabase: SupabaseClient<Database>,
   page: number,
   pageSize: number = 20,
-): Promise<Article[]> {
+): Promise<InterestArticle[]> {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -68,7 +72,7 @@ export async function getGlobalArticlesByPage(
     .range(from, to);
 
   if (error) throw new Error(error.message);
-  return data.map((a) => ({ is_read: false, score: 0, global_articles: a }));
+  return data.map((a) => ({ is_read: false, score: 0, global_article: a }));
 }
 
 export async function matchArticlesByEmbedding(
@@ -93,21 +97,21 @@ export async function matchArticlesByEmbedding(
 export async function getGlobalArticlesByIds(
   supabase: SupabaseClient<Database>,
   ids: string[],
-): Promise<Article[]> {
+): Promise<InterestArticle[]> {
   const { data, error } = await supabase
     .from("global_articles")
     .select("*")
     .in("id", ids);
 
   if (error) throw new Error(error.message);
-  return data.map((a) => ({ is_read: false, score: 0, global_articles: a }));
+  return data.map((a) => ({ is_read: false, score: 0, global_article: a }));
 }
 
 export async function getUserArticlesForInterest(
   supabase: SupabaseClient<Database>,
   userId: string,
   interestId: string,
-): Promise<Article[]> {
+): Promise<InterestArticle[]> {
   const { data: rows, error: uaError } = await supabase
     .from("user_articles")
     .select("is_read, score, global_articles(*)")
@@ -117,28 +121,37 @@ export async function getUserArticlesForInterest(
   if (uaError) throw new Error(uaError.message);
   if (!rows || rows.length === 0) return [];
 
-  return rows.sort((a, b) => b.score - a.score) as Article[];
+  return rows
+    .map((r) => ({
+      is_read: r.is_read,
+      score: r.score,
+      global_article: r.global_articles as Tables<"global_articles">,
+    }))
+    .sort((a, b) => b.score - a.score);
 }
 
-export async function getUserInterests(
+export async function getUserInterestArticles(
   supabase: SupabaseClient<Database>,
   userId: string,
-): Promise<Interest[]> {
+): Promise<InterestArticles[]> {
   const { data: rows, error } = await supabase
     .from("user_interests")
-    .select("id, query, user_articles(is_read)")
+    .select("id, query, user_articles(is_read, score, global_articles(*))")
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
 
-  return (rows ?? []).map((r) => {
-    const userArticles = (r.user_articles ?? []) as { is_read: boolean }[];
-    return {
-      id: r.id,
-      query: r.query,
-      unread_articles_count: userArticles.filter((a) => !a.is_read).length,
-    };
-  });
+  return (rows ?? []).map((r) => ({
+    id: r.id,
+    query: r.query,
+    articles: (r.user_articles as any[])
+      .map((ua) => ({
+        is_read: ua.is_read,
+        score: ua.score,
+        global_article: ua.global_articles as Tables<"global_articles">,
+      }))
+      .sort((a: InterestArticle, b: InterestArticle) => b.score - a.score),
+  }));
 }
 
 export async function getUserSettings(

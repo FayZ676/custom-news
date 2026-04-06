@@ -8,7 +8,7 @@ import { Search } from "lucide-react";
 
 import { deleteInterest } from "@/actions/interests";
 
-import type { Article, Interest } from "@/lib/backend";
+import type { InterestArticle, Interest } from "@/lib/backend";
 
 import { useDrawerInterests } from "@/hooks/useDrawerInterest";
 
@@ -28,19 +28,20 @@ export function ViewInterestFeed({
 }: {
   drawerMenuProps: DrawerMenuProps;
   activeInterest: Interest;
-  articles: Article[];
+  articles: InterestArticle[];
   handleReadArticles: (articleIds: string[], isRead: boolean) => Promise<void>;
 }) {
   const router = useRouter();
 
-  const [localArticles, setLocalArticles] = useState<Article[]>(articles);
+  const [localArticles, setLocalArticles] =
+    useState<InterestArticle[]>(articles);
   const { drawerInterests, removeInterest, updateUnreadCount } =
     useDrawerInterests(drawerMenuProps.interests);
 
   const [, startReadTransition] = useTransition();
   const [deleting, startDeleteTransition] = useTransition();
 
-  const updateActiveUnreadStatus = (updatedArticles: Article[]) => {
+  const updateActiveUnreadStatus = (updatedArticles: InterestArticle[]) => {
     const count = updatedArticles.filter((a) => a && !a.is_read).length;
     updateUnreadCount(activeInterest.id, count);
   };
@@ -55,7 +56,7 @@ export function ViewInterestFeed({
 
   const wrappedHandleReadArticles = (articleIds: string[], isRead: boolean) => {
     const updated = localArticles.map((a) =>
-      a && articleIds.includes(a.global_articles.id)
+      a && articleIds.includes(a.global_article.id)
         ? { ...a, is_read: !isRead }
         : a,
     );
@@ -105,9 +106,9 @@ export function ViewInterestFeed({
             </span>
             <ul className="collapse-content p-0 flex flex-col gap-2">
               {unreadArticles.map((article) => (
-                <li key={article.global_articles.id}>
+                <li key={article.global_article.id}>
                   <CardArticle
-                    key={article.global_articles.id}
+                    key={article.global_article.id}
                     article={article}
                     handleReadArticles={wrappedHandleReadArticles}
                   />
@@ -125,7 +126,7 @@ export function ViewInterestFeed({
             <ul className="collapse-content p-0 flex flex-col gap-2">
               {readArticles.map((article) => (
                 <CardArticle
-                  key={article.global_articles.id}
+                  key={article.global_article.id}
                   article={article}
                   handleReadArticles={wrappedHandleReadArticles}
                 />
