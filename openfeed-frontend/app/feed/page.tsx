@@ -3,9 +3,9 @@ import { SupabaseClient } from "@supabase/supabase-js";
 
 import { signOut } from "@/actions/auth";
 
-import { InterestArticle, updateUserArticlesRead } from "@/lib/backend";
 import { createClient } from "@/lib/supabase/server";
-import { Database, Tables } from "@/lib/supabase/supabase.types";
+import { Database } from "@/lib/supabase/supabase.types";
+import { InterestArticle, updateUserArticlesRead } from "@/lib/backend";
 
 import { rerankTexts } from "@/actions/reranker";
 import { addInterest } from "@/actions/interests";
@@ -23,6 +23,7 @@ import {
   getGlobalFeeds,
 } from "@/lib/backend";
 
+import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 
 const ARTICLES_PER_PAGE = 20;
@@ -147,18 +148,22 @@ async function AllArticlesContent({ query }: { query?: string }) {
   }
 
   return (
-    <ViewFeed
-      userEmail={claimsData.claims.email || ""}
-      userSettings={userSettings}
-      feeds={feeds}
-      queryArticles={queryArticles}
-      interestArticles={interestArticles}
-      handleSignOut={signOut}
-      handleDeleteInterest={handleDeleteInterest}
-      handleReadUserArticles={handleReadArticles}
-      handleSaveUserInterest={handleSaveUserInterest}
-      handleUpdateNotifications={handleUpdateNotifications}
-    />
+    <div className="flex flex-col gap-10">
+      <ViewFeed
+        feeds={feeds}
+        queryArticles={queryArticles}
+        interestArticles={interestArticles}
+        handleDeleteInterest={handleDeleteInterest}
+        handleReadUserArticles={handleReadArticles}
+        handleSaveUserInterest={handleSaveUserInterest}
+      />
+      <Footer
+        userEmail={claimsData.claims.email || ""}
+        userSettings={userSettings}
+        handleSignOut={signOut}
+        handleUpdateNotifications={handleUpdateNotifications}
+      />
+    </div>
   );
 }
 
@@ -170,8 +175,17 @@ export default async function AllArticlesPage({
   const { query } = await searchParams;
 
   return (
-    <Suspense fallback={<ViewFeedSkeleton />}>
+    <Suspense fallback={<AllArticlesContentSkeleton />}>
       <AllArticlesContent query={query} />
     </Suspense>
+  );
+}
+
+function AllArticlesContentSkeleton() {
+  return (
+    <div className="flex flex-col gap-10">
+      <ViewFeedSkeleton />
+      <FooterSkeleton />
+    </div>
   );
 }

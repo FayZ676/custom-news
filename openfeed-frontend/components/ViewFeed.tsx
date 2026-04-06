@@ -4,15 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, useEffect, useOptimistic } from "react";
 
-import {
-  LogOut,
-  MessageSquare,
-  MessageSquareCheck,
-  UserRound,
-} from "lucide-react";
-
-import { Forminit } from "forminit";
-
 import { InterestArticles, QueryArticle } from "@/lib/backend";
 import { Database } from "@/lib/supabase/supabase.types";
 import { getCurrentDate, getUserLocation } from "@/lib/utils";
@@ -28,13 +19,9 @@ import {
 import { SearchbarSkeleton } from "@/components/Searchbar";
 
 export interface ViewFeedProps {
-  userEmail: string;
-  userSettings: Database["public"]["Tables"]["user_settings"]["Row"];
   feeds: Database["public"]["Tables"]["global_feeds"]["Row"][];
   queryArticles: QueryArticle[];
   interestArticles: InterestArticles[];
-  handleSignOut: () => Promise<void>;
-  handleUpdateNotifications: () => Promise<void>;
   handleDeleteInterest: (interestId: string) => Promise<void>;
   handleSaveUserInterest: (query: string) => Promise<string>;
   handleReadUserArticles: (
@@ -44,24 +31,17 @@ export interface ViewFeedProps {
 }
 
 export function ViewFeed({
-  userEmail,
-  userSettings,
   feeds,
   queryArticles,
   interestArticles,
-  handleSignOut,
   handleDeleteInterest,
   handleReadUserArticles,
   handleSaveUserInterest,
-  handleUpdateNotifications,
 }: ViewFeedProps) {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
   const [date] = useState(getCurrentDate());
   const [location, setLocation] = useState("Locating...");
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackSent, setFeedbackSent] = useState(false);
 
   const [saving, startSaveTransition] = useTransition();
   const [deleting, startDeleteTransition] = useTransition();
@@ -76,29 +56,6 @@ export function ViewFeed({
   useEffect(() => {
     getUserLocation().then(setLocation);
   }, []);
-
-  const forminit = new Forminit({ proxyUrl: "/api/forminit" });
-
-  function dismissFeedback() {
-    setFeedbackText("");
-    setFeedbackOpen(false);
-  }
-
-  async function handleFeedbackKeyDown(
-    e: React.KeyboardEvent<HTMLTextAreaElement>,
-  ) {
-    if (e.key === "Enter" && !e.shiftKey && feedbackText.trim()) {
-      e.preventDefault();
-      const formData = new FormData();
-      formData.append("fi-sender-email", userEmail);
-      formData.append("fi-text-message", feedbackText);
-      setFeedbackText("");
-      setFeedbackOpen(false);
-      setFeedbackSent(true);
-      setTimeout(() => setFeedbackSent(false), 3000);
-      await forminit.submit("12sccwhqsbm", formData);
-    }
-  }
 
   const handleSearch = (query: string) => {
     startSearchTransition(() => {
@@ -178,64 +135,6 @@ export function ViewFeed({
           </>
         )}
       </div>
-      <footer>
-        <ul>
-          <li>
-            <div className="flex justify-between items-center gap-2 border-b border-base-300 py-3">
-              <span className="font-semibold truncate min-w-0">
-                Email Notifications
-              </span>
-              <input
-                type="checkbox"
-                defaultChecked={userSettings.email_notification}
-                className="toggle toggle-success"
-                onChange={handleUpdateNotifications}
-              />
-            </div>
-          </li>
-        </ul>
-        {feedbackOpen ? (
-          <textarea
-            className="textarea w-full rounded-lg"
-            placeholder="Feedback (Enter to send)"
-            rows={4}
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            onKeyDown={handleFeedbackKeyDown}
-            onBlur={dismissFeedback}
-            autoFocus
-          />
-        ) : (
-          <button
-            onClick={() => !feedbackSent && setFeedbackOpen(true)}
-            className="btn btn-accent justify-start"
-            disabled={feedbackSent}
-          >
-            {feedbackSent ? (
-              <>
-                <MessageSquareCheck size={14} />
-                Message Received
-              </>
-            ) : (
-              <>
-                <MessageSquare size={14} />
-                Feedback & Support
-              </>
-            )}
-          </button>
-        )}
-        <button
-          onClick={handleSignOut}
-          className="btn btn-accent justify-start"
-        >
-          <LogOut size={14} />
-          Sign Out
-        </button>
-        <div className="flex gap-2 items-center mt-auto">
-          <UserRound size={14} />
-          <span>{userEmail}</span>
-        </div>
-      </footer>
     </div>
   );
 }
