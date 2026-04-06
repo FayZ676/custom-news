@@ -112,18 +112,18 @@ export function ViewFeed({
         onClear={handleClear}
         searching={isSearching}
       />
-      <div className="flex flex-col gap-2">
-        {isSearching ? (
-          <>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <SectionArticleSkeleton key={i} />
-            ))}
-          </>
-        ) : queryArticles.length > 0 ? (
-          <SectionArticles articles={queryArticles} />
-        ) : (
-          <>
-            {optimisticInterests.map((interest) => (
+      {isSearching ? (
+        <>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SectionArticleSkeleton key={i} />
+          ))}
+        </>
+      ) : queryArticles.length > 0 ? (
+        <SectionArticles articles={queryArticles} />
+      ) : (
+        <div className="flex flex-col gap-6">
+          {optimisticInterests.map((interest) => (
+            <>
               <SectionInterest
                 key={interest.id}
                 interest={interest}
@@ -131,10 +131,11 @@ export function ViewFeed({
                 handleDeleteInterest={handleDelete}
                 handleReadArticles={handleRead}
               />
-            ))}
-          </>
-        )}
-      </div>
+              <hr className="border" />
+            </>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
