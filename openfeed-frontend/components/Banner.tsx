@@ -12,7 +12,7 @@ export default function Banner(props: BannerProps) {
   return (
     <div className="flex flex-col gap-1">
       <hr className="border-t" />
-      <div className="mx-auto">
+      <div className="mx-auto font-bold">
         {props.location}, {props.date}
       </div>
       <hr className="border-t-2" />
@@ -26,7 +26,7 @@ export default function Banner(props: BannerProps) {
             <a
               key={`${feed.id}-${i}`}
               href={feed.url}
-              className="px-2 border-r italic"
+              className="px-2 border-r font-bold italic"
             >
               {feed.title}
             </a>
