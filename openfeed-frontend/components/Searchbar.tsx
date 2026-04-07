@@ -1,7 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import {
   Search,
   Bookmark,
@@ -11,24 +10,26 @@ import {
 } from "lucide-react";
 
 interface SearchBarProps {
-  onSave: (query: string) => void;
+  query: string;
   saving: boolean;
   saved: boolean;
+  searching: boolean;
+  onSave: (query: string) => void;
   onSearch: (query: string) => void;
   onClear: () => void;
-  searching: boolean;
+  onQueryChange: (query: string) => void;
 }
 
 export default function SearchBar({
-  onSave,
+  query,
   saving,
   saved,
-  onSearch,
-  onClear,
   searching,
+  onSave,
+  onClear,
+  onSearch,
+  onQueryChange,
 }: SearchBarProps) {
-  const searchParams = useSearchParams();
-  const [query, setQuery] = useState(searchParams.get("query") ?? "");
   const savedQueryRef = useRef<string | null>(null);
 
   const handleSearch = () => {
@@ -45,7 +46,7 @@ export default function SearchBar({
   const isSaved = saved && savedQueryRef.current === query.trim();
 
   const handleClear = () => {
-    setQuery("");
+    onQueryChange("");
     onClear();
   };
 
@@ -58,7 +59,7 @@ export default function SearchBar({
           value={query}
           onChange={(e) => {
             const value = e.target.value;
-            setQuery(value);
+            onQueryChange(value);
             if (!value.trim()) {
               onClear();
             }

@@ -1,7 +1,9 @@
 "use client";
 
+import React from "react";
+
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect, useOptimistic } from "react";
 
 import { InterestArticles, QueryArticle } from "@/lib/backend";
@@ -39,9 +41,13 @@ export function ViewFeed({
   handleSaveUserInterest,
 }: ViewFeedProps) {
   const router = useRouter();
+
+  const searchParams = useSearchParams();
+
   const [saved, setSaved] = useState(false);
   const [date] = useState(getCurrentDate());
   const [location, setLocation] = useState("Locating...");
+  const [query, setQuery] = useState(searchParams.get("query") ?? "");
 
   const [saving, startSaveTransition] = useTransition();
   const [deleting, startDeleteTransition] = useTransition();
@@ -68,6 +74,7 @@ export function ViewFeed({
     startSaveTransition(async () => {
       await handleSaveUserInterest(query);
       setSaved(true);
+      setQuery("");
       router.push("/feed");
     });
   };
@@ -105,12 +112,14 @@ export function ViewFeed({
       </div>
       <Banner location={location} date={date} feeds={feeds} />
       <SearchBar
-        onSave={handleSave}
-        saving={saving}
+        query={query}
         saved={saved}
-        onSearch={handleSearch}
-        onClear={handleClear}
+        saving={saving}
         searching={isSearching}
+        onSave={handleSave}
+        onClear={handleClear}
+        onSearch={handleSearch}
+        onQueryChange={setQuery}
       />
       {isSearching ? (
         <>
@@ -123,16 +132,15 @@ export function ViewFeed({
       ) : (
         <div className="flex flex-col gap-6">
           {optimisticInterests.map((interest) => (
-            <>
+            <React.Fragment key={interest.id}>
               <SectionInterest
-                key={interest.id}
                 interest={interest}
                 deleting={deleting}
                 handleDeleteInterest={handleDelete}
                 handleReadArticles={handleRead}
               />
               <hr className="border" />
-            </>
+            </React.Fragment>
           ))}
         </div>
       )}
