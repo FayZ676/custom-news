@@ -154,7 +154,7 @@ async function AllArticlesContent({ query }: { query?: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-6">
       <div className="flex justify-center">
         <Image
           src={"logo.svg"}
@@ -200,7 +200,7 @@ export default async function AllArticlesPage({
 
 function AllArticlesContentSkeleton() {
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-6">
       <ViewFeedSkeleton />
       <FooterSkeleton />
     </div>

@@ -60,7 +60,7 @@ export default function SectionInterest({
   };
 
   return (
-    <div className="flex flex-col gap-8 py-6 border-b">
+    <div className="flex flex-col gap-6 py-6 border-b">
       <div className="flex items-center justify-between">
         <h1 className="text-5xl font-extrabold">
           {toTitleCase(interest.query)}

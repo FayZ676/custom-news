@@ -89,7 +89,7 @@ export function ViewFeed({
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <SearchBar
         query={query}
         saved={saved}
@@ -134,7 +134,7 @@ export function ViewFeed({
 
 export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <NavbarSkeleton />
       <SearchbarSkeleton />
       <div className="flex flex-col gap-2">
