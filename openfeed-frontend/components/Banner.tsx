@@ -1,19 +1,47 @@
+"use client";
+
+import { useState, useEffect } from "react";
+
 import { motion } from "motion/react";
+import { CloudOff } from "lucide-react";
+
+import { getUserWeatherForecast, WeatherForecast } from "@/lib/weather";
+import { getEdition, getUserLocation, UserLocation } from "@/lib/utils";
 
 import { Database } from "@/lib/supabase/supabase.types";
 
 export interface BannerProps {
-  location: string;
   date: string;
   feeds: Database["public"]["Tables"]["global_feeds"]["Row"][];
 }
 
-export default function Banner(props: BannerProps) {
+export function Banner(props: BannerProps) {
+  const edition = getEdition();
+  const [location, setLocation] = useState<UserLocation | null>(null);
+  const [forecast, setForecast] = useState<WeatherForecast | null>(null);
+
+  useEffect(() => {
+    getUserLocation().then(async (loc) => {
+      if (!loc) return;
+      setLocation(loc);
+      const weather = await getUserWeatherForecast(loc.lat, loc.lon);
+      setForecast(weather);
+    });
+  }, []);
+
   return (
     <div className="flex flex-col gap-1">
       <hr className="border-t" />
-      <div className="mx-auto font-bold">
-        {props.location}, {props.date}
+      <div className="grid grid-cols-[1fr_3fr_1fr] items-center">
+        <span className="text-left">
+          VOL. {edition.volume}, No. {edition.edition}
+        </span>
+        <span className="text-center">
+          {location ? location.city : "Location N/A"}, {props.date}
+        </span>
+        <span className="text-right text-2xl self-center">
+          {forecast ? forecast.icon : "Weather N/A"}
+        </span>
       </div>
       <hr className="border-t-2" />
       <div className="overflow-hidden whitespace-nowrap">

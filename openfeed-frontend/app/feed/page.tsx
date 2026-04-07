@@ -1,11 +1,12 @@
+import Image from "next/image";
 import { Suspense } from "react";
+
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { signOut } from "@/actions/auth";
 
 import { createClient } from "@/lib/supabase/server";
 import { Database } from "@/lib/supabase/supabase.types";
-import { InterestArticle, updateUserArticlesRead } from "@/lib/backend";
 
 import { rerankTexts } from "@/actions/reranker";
 import { addInterest } from "@/actions/interests";
@@ -21,8 +22,13 @@ import {
   getUserSettings,
   updateUserNotificationSettings,
   getGlobalFeeds,
+  InterestArticle,
+  updateUserArticlesRead,
 } from "@/lib/backend";
 
+import { getCurrentDate } from "@/lib/utils";
+
+import { Banner } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 
@@ -149,6 +155,17 @@ async function AllArticlesContent({ query }: { query?: string }) {
 
   return (
     <div className="flex flex-col gap-10">
+      <div className="flex justify-center">
+        <Image
+          src={"logo.svg"}
+          alt="The Latest Times"
+          width={300}
+          height={300}
+          loading="eager"
+          style={{ height: "auto" }}
+        />
+      </div>
+      <Banner date={getCurrentDate()} feeds={feeds} />
       <ViewFeed
         feeds={feeds}
         queryArticles={queryArticles}

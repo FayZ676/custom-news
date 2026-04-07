@@ -1,3 +1,11 @@
+export interface UserLocation {
+  city: string;
+  lat: number;
+  lon: number;
+}
+
+const APP_VERSIONS = [{ volume: 0, startDate: "2025-11-24" }] as const;
+
 export function getCurrentDate(): string {
   return new Date().toLocaleDateString("en-US", {
     month: "long",
@@ -6,31 +14,42 @@ export function getCurrentDate(): string {
   });
 }
 
-export async function getUserLocation(): Promise<string> {
+export async function getUserLocation(): Promise<UserLocation | null> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      resolve("Unknown Location");
+      resolve(null);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
+        const { latitude: lat, longitude: lon } = coords;
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+            {
+              headers: {
+                "User-Agent":
+                  "OpenFeed/1.0 (https://github.com/FayZ676/custom-news)",
+              },
+            },
           );
           const data = await res.json();
           const city =
             data.address?.city ||
             data.address?.town ||
             data.address?.village ||
+            data.address?.municipality ||
+            data.address?.suburb ||
+            data.address?.district ||
             data.address?.county ||
-            "Unknown Location";
-          resolve(city);
+            data.address?.state ||
+            null;
+          resolve(city ? { city, lat, lon } : null);
         } catch {
-          resolve("Unknown Location");
+          resolve(null);
         }
       },
-      () => resolve("Unknown Location"),
+      () => resolve(null),
     );
   });
 }
@@ -51,3 +70,16 @@ export function timeAgo(dateStr: string): string {
 
 export const toTitleCase = (str: string) =>
   str.replace(/\b\w/g, (char) => char.toUpperCase());
+
+export function getEdition(): { volume: number; edition: number } {
+  const today = new Date();
+  const current = [...APP_VERSIONS]
+    .reverse()
+    .find((v) => new Date(v.startDate) <= today)!;
+  const edition =
+    Math.floor(
+      (today.getTime() - new Date(current.startDate).getTime()) /
+        (1000 * 60 * 60 * 24),
+    ) + 1;
+  return { volume: current.volume, edition };
+}

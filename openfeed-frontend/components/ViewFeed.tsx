@@ -1,8 +1,5 @@
 "use client";
 
-import React from "react";
-
-import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect, useOptimistic } from "react";
 
@@ -10,7 +7,6 @@ import { InterestArticles, QueryArticle } from "@/lib/backend";
 import { Database } from "@/lib/supabase/supabase.types";
 import { getCurrentDate, getUserLocation } from "@/lib/utils";
 
-import Banner from "@/components/Banner";
 import SearchBar from "@/components/Searchbar";
 import { NavbarSkeleton } from "@/components/Navbar";
 import SectionInterest from "@/components/SectionInterest";
@@ -45,8 +41,6 @@ export function ViewFeed({
   const searchParams = useSearchParams();
 
   const [saved, setSaved] = useState(false);
-  const [date] = useState(getCurrentDate());
-  const [location, setLocation] = useState("Locating...");
   const [query, setQuery] = useState(searchParams.get("query") ?? "");
 
   const [saving, startSaveTransition] = useTransition();
@@ -58,10 +52,6 @@ export function ViewFeed({
     (current: InterestArticles[], deletedId: string) =>
       current.filter((interest) => interest.id !== deletedId),
   );
-
-  useEffect(() => {
-    getUserLocation().then(setLocation);
-  }, []);
 
   const handleSearch = (query: string) => {
     startSearchTransition(() => {
@@ -100,17 +90,6 @@ export function ViewFeed({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-center">
-        <Image
-          src={"logo.svg"}
-          alt="The Latest Times"
-          width={300}
-          height={300}
-          loading="eager"
-          style={{ height: "auto" }}
-        />
-      </div>
-      <Banner location={location} date={date} feeds={feeds} />
       <SearchBar
         query={query}
         saved={saved}
