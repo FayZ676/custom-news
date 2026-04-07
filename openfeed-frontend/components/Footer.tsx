@@ -70,8 +70,8 @@ export function Footer({
     }
   }
 
-  function handleNotifications() {
-    handleToggleNotifications();
+  async function handleNotifications() {
+    await handleToggleNotifications();
     router.refresh();
   }
 
@@ -105,8 +105,8 @@ export function Footer({
         <div className="flex border-b py-3 justify-between">
           <span>Sign Out</span>
           <button
-            onClick={(e) => {
-              handleSignOut;
+            onClick={async () => {
+              await handleSignOut();
               router.refresh();
             }}
             className="cursor-pointer"
