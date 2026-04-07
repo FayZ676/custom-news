@@ -85,7 +85,7 @@ export function Footer({
             <ul className="dropdown-content menu bg-base-100 rounded-none border z-1 w-52 p-2 shadow-sm not-italic">
               <li className="rounded-none">
                 <button
-                  onClick={handleToggleNotifications}
+                  onClick={handleNotifications}
                   className={`rounded-none ${emailNotification ? "font-bold underline" : ""}`}
                 >
                   On
@@ -93,7 +93,7 @@ export function Footer({
               </li>
               <li className="rounded-none">
                 <button
-                  onClick={handleToggleNotifications}
+                  onClick={handleNotifications}
                   className={`rounded-none ${!emailNotification ? "font-bold underline" : ""}`}
                 >
                   Off
@@ -104,7 +104,13 @@ export function Footer({
         </div>
         <div className="flex border-b py-3 justify-between">
           <span>Sign Out</span>
-          <button onClick={handleSignOut} className="cursor-pointer">
+          <button
+            onClick={(e) => {
+              handleSignOut;
+              router.refresh();
+            }}
+            className="cursor-pointer"
+          >
             <LogOutIcon />
           </button>
         </div>
