@@ -4,6 +4,7 @@ import { startTransition, useOptimistic, useState } from "react";
 
 import { EllipsisVertical } from "lucide-react";
 
+import { toTitleCase } from "@/lib/utils";
 import { InterestArticle, InterestArticles } from "@/lib/backend";
 
 import { SectionArticles } from "@/components/SectionArticles";
@@ -61,8 +62,8 @@ export default function SectionInterest({
   return (
     <div className="flex flex-col gap-8 py-6 border-b">
       <div className="flex items-center justify-between">
-        <h1 className="font-extrabold text-5xl uppercase italic">
-          {interest.query}
+        <h1 className="text-5xl font-extrabold">
+          {toTitleCase(interest.query)}
         </h1>
         <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
           <div
@@ -119,7 +120,7 @@ export default function SectionInterest({
           handleReadArticle={handleToggleArticleReadOptimistic}
         />
       ) : (
-        <p>All caught up</p>
+        <p className="italic">All caught up</p>
       )}
       {showReadArticles && (
         <>

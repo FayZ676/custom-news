@@ -76,12 +76,10 @@ export function Footer({
   }
 
   return (
-    <footer className="italic">
+    <footer>
       <div>
         <div className="flex border-b py-3 justify-between">
-          <span className="font-semibold truncate min-w-0">
-            Email Notifications
-          </span>
+          <span>Email Notifications</span>
           <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
             <Mail tabIndex={0} role="button" className="cursor-pointer" />
             <ul className="dropdown-content menu bg-base-100 rounded-none border z-1 w-52 p-2 shadow-sm not-italic">
@@ -105,7 +103,7 @@ export function Footer({
           </div>
         </div>
         <div className="flex border-b py-3 justify-between">
-          <span className="font-semibold truncate min-w-0">Sign Out</span>
+          <span>Sign Out</span>
           <button onClick={handleSignOut} className="cursor-pointer">
             <LogOutIcon />
           </button>

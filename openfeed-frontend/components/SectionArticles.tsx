@@ -18,7 +18,7 @@ export function SectionArticles({
       {articles.map((article) => {
         return (
           <li key={article.global_article.id} className="flex flex-col gap-2">
-            <h2 className="font-extrabold text-3xl italic underline">
+            <h2 className="text-3xl hover:underline">
               <a href={article.global_article.url}>
                 {article.global_article.title}
               </a>

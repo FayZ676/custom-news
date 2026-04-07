@@ -48,3 +48,6 @@ export function timeAgo(dateStr: string): string {
   if (months < 12) return `${months}mo ago`;
   return `${Math.floor(months / 12)}y ago`;
 }
+
+export const toTitleCase = (str: string) =>
+  str.replace(/\b\w/g, (char) => char.toUpperCase());
