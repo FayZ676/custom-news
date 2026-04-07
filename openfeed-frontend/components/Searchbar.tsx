@@ -1,13 +1,25 @@
 "use client";
 
-import { useRef } from "react";
-import {
-  Search,
-  Bookmark,
-  BookmarkCheck,
-  Loader2,
-  CircleX,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Search, CircleX } from "lucide-react";
+
+const PLACEHOLDERS = [
+  "What's happening in AI today",
+  "Latest in climate policy",
+  "Top tech stories this week",
+  "New space exploration updates",
+  "Recent breakthroughs in medicine",
+  "Global economic trends this month",
+  "Latest in renewable energy",
+  "Developments in quantum computing",
+  "World leaders in the news",
+  "Emerging cybersecurity threats",
+  "Breakthroughs in cancer research",
+  "Updates on the housing market",
+  "New findings in deep sea exploration",
+  "Progress on Mars missions",
+  "Latest in electric vehicle technology",
+];
 
 interface SearchBarProps {
   query: string;
@@ -31,6 +43,19 @@ export default function SearchBar({
   onQueryChange,
 }: SearchBarProps) {
   const savedQueryRef = useRef<string | null>(null);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderVisible(false);
+      setTimeout(() => {
+        setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
+        setPlaceholderVisible(true);
+      }, 300);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSearch = () => {
     if (!query.trim()) return;
@@ -58,26 +83,37 @@ export default function SearchBar({
       <div className="flex gap-2 items-center w-full">
         <label className="input input-lg w-full rounded-none border-base-content">
           <Search size={18} strokeWidth={3} />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => {
-              const value = e.target.value;
-              onQueryChange(value);
-              if (!value.trim()) {
-                onClear();
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSearch();
-              }
-            }}
-            placeholder="Ask anything ..."
-            disabled={searching}
-            className="grow"
-          />
+          <div className="relative grow">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => {
+                const value = e.target.value;
+                onQueryChange(value);
+                if (!value.trim()) {
+                  onClear();
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSearch();
+                }
+              }}
+              placeholder=""
+              disabled={searching}
+              className="w-full bg-transparent outline-none"
+            />
+            {!query && (
+              <span
+                className={`absolute inset-0 flex items-center pointer-events-none text-base-content/40 transition-opacity duration-300 ${
+                  placeholderVisible ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                {PLACEHOLDERS[placeholderIndex]}
+              </span>
+            )}
+          </div>
           {query && (
             <button
               type="button"
