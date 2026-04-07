@@ -131,15 +131,22 @@ export function ViewFeed({
         <SectionArticles articles={queryArticles} />
       ) : (
         <div className="flex flex-col">
-          {optimisticInterests.map((interest) => (
-            <SectionInterest
-              key={interest.id}
-              interest={interest}
-              deleting={deleting}
-              handleDeleteInterest={handleDelete}
-              handleReadArticles={handleRead}
-            />
-          ))}
+          {optimisticInterests
+            .slice()
+            .sort((a, b) => {
+              const aHasUnread = a.articles.some((article) => !article.is_read);
+              const bHasUnread = b.articles.some((article) => !article.is_read);
+              return Number(bHasUnread) - Number(aHasUnread);
+            })
+            .map((interest) => (
+              <SectionInterest
+                key={interest.id}
+                interest={interest}
+                deleting={deleting}
+                handleDeleteInterest={handleDelete}
+                handleReadArticles={handleRead}
+              />
+            ))}
         </div>
       )}
     </div>
