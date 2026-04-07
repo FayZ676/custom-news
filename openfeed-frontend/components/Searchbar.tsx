@@ -90,47 +90,20 @@ export default function SearchBar({
           )}
         </label>
         {query && (
-          <>
-            {/* Icon-only circle button on small screens */}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!query.trim() || saving || isSaved || searching}
-              className="btn btn-circle sm:hidden"
-            >
-              {saving ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : isSaved ? (
-                <BookmarkCheck size={16} strokeWidth={3} />
-              ) : (
-                <Bookmark size={16} strokeWidth={3} />
-              )}
-            </button>
-            {/* Full button with icon and text on sm+ screens */}
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!query.trim() || saving || isSaved || searching}
-              className="btn w-fit hidden sm:flex"
-            >
-              {saving ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : isSaved ? (
-                <>
-                  <BookmarkCheck size={16} strokeWidth={3} />
-                  <span>Saved</span>
-                </>
-              ) : (
-                <>
-                  <Bookmark size={16} strokeWidth={3} />
-                  <span>Save</span>
-                </>
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!query.trim() || saving || isSaved || searching}
+            className="cursor-pointer"
+          >
+            {saving ? (
+              <span className="text-base-content/50 underline">Saving</span>
+            ) : isSaved ? (
+              <span className="underline">Saved!</span>
+            ) : (
+              <span className="underline">Save</span>
+            )}
+          </button>
         )}
       </div>
     </div>
