@@ -8,6 +8,7 @@ const APP_VERSIONS = [{ volume: 0, startDate: "2025-11-24" }] as const;
 
 export function getCurrentDate(): string {
   return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
