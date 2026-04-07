@@ -35,7 +35,7 @@ export function Banner(props: BannerProps) {
         <span className="text-left text-sm">
           VOL. {edition.volume}, No. {edition.edition}
         </span>
-        <span className="text-center">
+        <span className="text-center font-semibold">
           {location ? location.city : "Location N/A"}, {props.date}
         </span>
         <span className="text-sm text-right self-center">
