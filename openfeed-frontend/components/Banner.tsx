@@ -26,7 +26,7 @@ export default function Banner(props: BannerProps) {
             <a
               key={`${feed.id}-${i}`}
               href={feed.url}
-              className="px-2 border-r font-bold italic"
+              className="px-2 border-r italic"
             >
               {feed.title}
             </a>
