@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   LogOut,
+  Mail,
   MessageSquare,
   MessageSquareCheck,
   UserRound,
+  LogOutIcon,
 } from "lucide-react";
 
 import { Database } from "@/lib/supabase/supabase.types";
@@ -26,15 +29,29 @@ export function Footer({
   handleSignOut,
   handleUpdateNotifications,
 }: FooterProps) {
+  const router = useRouter();
+
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
+  const [emailNotification, setEmailNotification] = useState(
+    userSettings.email_notification,
+  );
 
   const forminit = new Forminit({ proxyUrl: "/api/forminit" });
 
   function dismissFeedback() {
     setFeedbackText("");
     setFeedbackOpen(false);
+  }
+
+  async function handleToggleNotifications() {
+    setEmailNotification((prev) => !prev);
+    try {
+      await handleUpdateNotifications();
+    } catch {
+      setEmailNotification((prev) => !prev); // revert on error
+    }
   }
 
   async function handleFeedbackKeyDown(
@@ -53,60 +70,47 @@ export function Footer({
     }
   }
 
+  function handleNotifications() {
+    handleToggleNotifications();
+    router.refresh();
+  }
+
   return (
-    <footer>
-      <ul>
-        <li>
-          <div className="flex justify-between items-center gap-2 border-b border-base-300 py-3">
-            <span className="font-semibold truncate min-w-0">
-              Email Notifications
-            </span>
-            <input
-              type="checkbox"
-              defaultChecked={userSettings.email_notification}
-              className="toggle toggle-success"
-              onChange={handleUpdateNotifications}
-            />
+    <footer className="italic">
+      <div>
+        <div className="flex border-b py-3 justify-between">
+          <span className="font-semibold truncate min-w-0">
+            Email Notifications
+          </span>
+          <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
+            <Mail tabIndex={0} role="button" className="cursor-pointer" />
+            <ul className="dropdown-content menu bg-base-100 rounded-none border z-1 w-52 p-2 shadow-sm not-italic">
+              <li className="rounded-none">
+                <button
+                  onClick={handleToggleNotifications}
+                  className={`rounded-none ${emailNotification ? "font-bold underline" : ""}`}
+                >
+                  On
+                </button>
+              </li>
+              <li className="rounded-none">
+                <button
+                  onClick={handleToggleNotifications}
+                  className={`rounded-none ${!emailNotification ? "font-bold underline" : ""}`}
+                >
+                  Off
+                </button>
+              </li>
+            </ul>
           </div>
-        </li>
-      </ul>
-      {feedbackOpen ? (
-        <textarea
-          className="textarea w-full rounded-lg"
-          placeholder="Feedback (Enter to send)"
-          rows={4}
-          value={feedbackText}
-          onChange={(e) => setFeedbackText(e.target.value)}
-          onKeyDown={handleFeedbackKeyDown}
-          onBlur={dismissFeedback}
-          autoFocus
-        />
-      ) : (
-        <button
-          onClick={() => !feedbackSent && setFeedbackOpen(true)}
-          className="btn btn-accent justify-start"
-          disabled={feedbackSent}
-        >
-          {feedbackSent ? (
-            <>
-              <MessageSquareCheck size={14} />
-              Message Received
-            </>
-          ) : (
-            <>
-              <MessageSquare size={14} />
-              Feedback & Support
-            </>
-          )}
-        </button>
-      )}
-      <button onClick={handleSignOut} className="btn btn-accent justify-start">
-        <LogOut size={14} />
-        Sign Out
-      </button>
-      <div className="flex gap-2 items-center mt-auto">
-        <UserRound size={14} />
-        <span>{userEmail}</span>
+        </div>
+        <div className="flex border-b py-3 justify-between">
+          <span className="font-semibold truncate min-w-0">Sign Out</span>
+          <button onClick={handleSignOut} className="cursor-pointer">
+            <LogOutIcon />
+          </button>
+        </div>
+        <span className="flex py-3">{userEmail}</span>
       </div>
     </footer>
   );
