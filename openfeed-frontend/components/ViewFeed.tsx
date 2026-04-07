@@ -130,17 +130,15 @@ export function ViewFeed({
       ) : queryArticles.length > 0 ? (
         <SectionArticles articles={queryArticles} />
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col">
           {optimisticInterests.map((interest) => (
-            <React.Fragment key={interest.id}>
-              <SectionInterest
-                interest={interest}
-                deleting={deleting}
-                handleDeleteInterest={handleDelete}
-                handleReadArticles={handleRead}
-              />
-              <hr className="border" />
-            </React.Fragment>
+            <SectionInterest
+              key={interest.id}
+              interest={interest}
+              deleting={deleting}
+              handleDeleteInterest={handleDelete}
+              handleReadArticles={handleRead}
+            />
           ))}
         </div>
       )}

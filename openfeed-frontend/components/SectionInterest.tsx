@@ -59,7 +59,7 @@ export default function SectionInterest({
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 py-6 border-b">
       <div className="flex items-center justify-between">
         <h1 className="font-extrabold text-5xl uppercase italic">
           {interest.query}
