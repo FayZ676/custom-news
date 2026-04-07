@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 
 import { motion } from "motion/react";
-import { CloudOff } from "lucide-react";
 
 import { getUserWeatherForecast, WeatherForecast } from "@/lib/weather";
 import { getEdition, getUserLocation, UserLocation } from "@/lib/utils";
@@ -33,18 +32,20 @@ export function Banner(props: BannerProps) {
     <div className="flex flex-col gap-1">
       <hr className="border-t" />
       <div className="grid grid-cols-[1fr_3fr_1fr] items-center">
-        <span className="text-left">
+        <span className="text-left text-sm">
           VOL. {edition.volume}, No. {edition.edition}
         </span>
         <span className="text-center">
           {location ? location.city : "Location N/A"}, {props.date}
         </span>
-        <span className="text-right text-2xl self-center">
-          {forecast ? forecast.icon : "Weather N/A"}
+        <span className="text-sm text-right self-center">
+          {forecast
+            ? `${forecast.temperature} °F, ${forecast.description}`
+            : "Weather N/A"}
         </span>
       </div>
       <hr className="border-t-2" />
-      <div className="overflow-hidden whitespace-nowrap">
+      <div className="overflow-hidden whitespace-nowrap text-sm">
         <motion.div
           className="inline-flex"
           animate={{ x: ["0%", "-50%"] }}

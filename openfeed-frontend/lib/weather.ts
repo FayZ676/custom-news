@@ -2,25 +2,6 @@ export interface WeatherForecast {
   temperature: number;
   weatherCode: number;
   description: string;
-  icon: string;
-}
-
-function getWeatherIcon(code: number, isDay: boolean): string {
-  if (code === 0) return isDay ? "☀️" : "🌙";
-  if (code <= 2) return isDay ? "🌤️" : "🌤️";
-  if (code === 3) return "☁️";
-  if (code <= 48) return "🌫️";
-  if (code <= 55) return "🌦️";
-  if (code <= 57) return "🌧️";
-  if (code <= 65) return "🌧️";
-  if (code <= 67) return "🌨️";
-  if (code <= 75) return "❄️";
-  if (code === 77) return "❄️";
-  if (code <= 82) return "🌧️";
-  if (code <= 86) return "🌨️";
-  if (code === 95) return "⛈️";
-  if (code <= 99) return "⛈️";
-  return "🌡️";
 }
 
 function getWeatherDescription(code: number): string {
@@ -53,12 +34,10 @@ export async function getUserWeatherForecast(
     const data = await res.json();
     const current = data.current;
     const weatherCode: number = current.weather_code;
-    const isDay: boolean = current.is_day === 1;
     return {
       temperature: Math.round(current.temperature_2m),
       weatherCode,
       description: getWeatherDescription(weatherCode),
-      icon: getWeatherIcon(weatherCode, isDay),
     };
   } catch {
     return null;
