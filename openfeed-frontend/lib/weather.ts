@@ -28,7 +28,7 @@ export async function getUserWeatherForecast(
   lon: number,
 ): Promise<WeatherForecast | null> {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&temperature_unit=celsius`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&temperature_unit=fahrenheit`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
