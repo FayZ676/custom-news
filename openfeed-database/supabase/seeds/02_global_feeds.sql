@@ -16,12 +16,8 @@ FROM (VALUES
     ('The Verge', 'https://www.theverge.com/rss/index.xml', 'Technology news, product reviews, and culture coverage.'),
     ('Hacker News', 'https://news.ycombinator.com/rss', 'Community-curated technology, startup, and programming news.'),
     ('MIT Technology Review', 'https://www.technologyreview.com/feed', 'Authoritative coverage of emerging technologies and their impact on society.'),
-    ('TechRepublic', 'https://www.techrepublic.com/rssfeeds/articles/', 'IT news, analysis, and advice for technology professionals.'),
-    ('Engadget', 'https://www.engadget.com/rss.xml', 'Consumer electronics, gadgets, and technology news.'),
-    ('ZDNet', 'https://www.zdnet.com/news/rss.xml', 'Technology news for IT professionals and business decision-makers.'),
     ('The Register', 'https://www.theregister.com/headlines.atom', 'Irreverent but well-sourced enterprise tech and open-source news.'),
     ('IEEE Spectrum', 'https://spectrum.ieee.org/feeds/feed.rss', 'Authoritative technology and engineering news from the IEEE.'),
-    ('Product Hunt', 'https://www.producthunt.com/feed', 'The best new products, apps, and tools launched every day.'),
     ('Stratechery', 'https://stratechery.com/feed/', 'Analysis of technology and media strategy and their impact on society.'),
 
     -- =============================================
@@ -32,7 +28,6 @@ FROM (VALUES
     ('Hugging Face Blog', 'https://huggingface.co/blog/feed.xml', 'Open-source ML models, datasets, and community research.'),
     ('fast.ai Blog', 'https://www.fast.ai/index.xml', 'Accessible deep learning research and education.'),
     ('Last Week in AI', 'https://lastweekin.ai/feed', 'Curated weekly digest of the most important AI news and papers.'),
-    ('NVIDIA Technical Blog', 'https://developer.nvidia.com/blog/feed', 'Developer-focused tutorials, research, and deep dives from NVIDIA on GPU computing and AI.'),
     ('Microsoft Research Blog', 'https://www.microsoft.com/en-us/research/feed/', 'Research updates, papers, and breakthroughs from Microsoft Research across AI, systems, and more.'),
     ('MIT News – Machine Learning', 'https://news.mit.edu/topic/mitmachine-learning-rss.xml', 'MIT research news focused specifically on machine learning and AI breakthroughs.'),
 
@@ -41,7 +36,6 @@ FROM (VALUES
     -- =============================================
     ('MarkTechPost', 'https://www.marktechpost.com/feed', 'Byte-sized summaries of machine learning, deep learning, and AI research papers and trends.'),
     ('Ahead of AI', 'https://magazine.sebastianraschka.com/feed', 'In-depth ML research breakdowns and commentary by Sebastian Raschka.'),
-    ('Synced Review', 'https://syncedreview.com/feed', 'AI technology and industry news bridging academic research and real-world applications.'),
 
     -- =============================================
     -- Security
@@ -66,7 +60,6 @@ FROM (VALUES
     ('The Pragmatic Engineer', 'https://blog.pragmaticengineer.com/rss/', 'Deep dives on software engineering, engineering culture, and the tech industry.'),
     ('CSS-Tricks', 'https://css-tricks.com/feed/', 'Front-end web development techniques, tutorials, and news.'),
     ('Smashing Magazine', 'https://www.smashingmagazine.com/feed/', 'Web design, UX, and front-end development articles.'),
-    ('DEV Community', 'https://dev.to/feed', 'Community-written posts on programming languages, tools, and career development.'),
     ('Stack Overflow Blog', 'https://stackoverflow.blog/feed/', 'Developer surveys, industry insights, and engineering posts from Stack Overflow.'),
     ('Martin Fowler''s Bliki', 'https://martinfowler.com/feed.atom', 'Software architecture, agile practices, and refactoring patterns.'),
 
@@ -96,9 +89,6 @@ FROM (VALUES
     -- Consumer Tech
     -- =============================================
     ('Daring Fireball', 'https://daringfireball.net/feeds/main', 'Apple-focused technology commentary and analysis by John Gruber.'),
-    ('9to5Mac', 'https://9to5mac.com/feed/', 'Apple news, rumors, and product coverage.'),
-    ('9to5Google', 'https://9to5google.com/feed/', 'Google product news, Android coverage, and Pixel reviews.'),
-    ('MacRumors', 'https://feeds.macrumors.com/MacRumors-All', 'Apple rumors, product announcements, and community discussion.'),
     ('Tom''s Hardware', 'https://www.tomshardware.com/feeds/all', 'PC hardware reviews, benchmarks, and component news.'),
 
     -- =============================================
@@ -107,13 +97,6 @@ FROM (VALUES
     ('404 Media', 'https://www.404media.co/rss', 'Independent tech journalism covering AI, surveillance, online culture, and the internet''s impact on society.'),
     ('Rest of World', 'https://restofworld.org/feed/latest', 'Reporting on how technology is shaping economies and societies outside of Silicon Valley.'),
 
-    -- =============================================
-    -- arXiv Research Preprints
-    -- (high volume — best paired with semantic filtering)
-    -- =============================================
-    ('arXiv – Computation & Language', 'https://arxiv.org/rss/cs.CL', 'Daily preprints in NLP, LLMs, and computational linguistics from arXiv.'),
-    ('arXiv – Machine Learning', 'https://arxiv.org/rss/cs.LG', 'Daily preprints in machine learning, optimization, and learning theory from arXiv.'),
-    ('arXiv – Computer Vision', 'https://arxiv.org/rss/cs.CV', 'Daily preprints in computer vision and pattern recognition from arXiv.')
 
 ) AS feeds(title, url, description)
 ON CONFLICT (url) DO NOTHING;
