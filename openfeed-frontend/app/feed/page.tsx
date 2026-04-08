@@ -27,12 +27,11 @@ import {
 } from "@/lib/backend";
 
 import { getCurrentDate } from "@/lib/utils";
+import { MIN_SIMILARITY_THRESHOLD, MAX_MATCH_COUNT } from "@/lib/config";
 
 import { Banner } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
-
-const ARTICLES_PER_PAGE = 20;
 
 async function searchGlobalArticles(
   supabase: SupabaseClient<Database>,
@@ -42,7 +41,8 @@ async function searchGlobalArticles(
   const matches = await matchArticlesByEmbedding(
     supabase,
     embeddings[0],
-    ARTICLES_PER_PAGE * 2,
+    MAX_MATCH_COUNT,
+    MIN_SIMILARITY_THRESHOLD,
   );
   if (matches.length === 0) return [];
   const articles = await getGlobalArticlesByIds(
@@ -53,9 +53,7 @@ async function searchGlobalArticles(
     query,
     articles.map((a) => a.global_article.title),
   );
-  return rerankedArticleTexts
-    .map((r) => articles[r.index])
-    .slice(0, ARTICLES_PER_PAGE);
+  return rerankedArticleTexts.map((r) => articles[r.index]);
 }
 
 async function updateUserArticleScores(
@@ -64,12 +62,12 @@ async function updateUserArticleScores(
   interestId: string,
   interestQuery: string,
   interestEmbeddings: number[],
-  articlesCount: number,
 ) {
   const matches = await matchArticlesByEmbedding(
     supabase,
     interestEmbeddings,
-    articlesCount * 2,
+    MAX_MATCH_COUNT,
+    MIN_SIMILARITY_THRESHOLD,
   );
   if (matches.length === 0) return;
 
@@ -83,14 +81,12 @@ async function updateUserArticleScores(
     articles.map((a) => a.global_article.title),
   );
 
-  const scores: UserArticleScore[] = reranked
-    .slice(0, articlesCount)
-    .map((r) => ({
-      user_id: userId,
-      interest_id: interestId,
-      article_id: articles[r.index].global_article.id,
-      score: r.relevance_score,
-    }));
+  const scores: UserArticleScore[] = reranked.map((r) => ({
+    user_id: userId,
+    interest_id: interestId,
+    article_id: articles[r.index].global_article.id,
+    score: r.relevance_score,
+  }));
 
   await updateUserArticles(supabase, scores);
 }
@@ -107,7 +103,6 @@ async function saveUserInterest(
     response.interestId,
     query,
     response.interestEmbeddings,
-    ARTICLES_PER_PAGE,
   );
   return response.interestId;
 }

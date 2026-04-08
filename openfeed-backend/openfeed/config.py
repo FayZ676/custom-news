@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     embedding_dimensions: int = 512
     embedding_max_tokens_per_input: int = 8_192
     embedding_max_tokens_per_batch: int = 100_000
+    min_similarity_threshold: float = 0.7
+    max_match_count: int = 1000
 
     model_config = SettingsConfigDict(
         env_file=".env",
