@@ -76,12 +76,17 @@ export function Footer({
   }
 
   return (
-    <footer>
+    <footer className="fixed bottom-0 left-0 right-0 max-w-4xl mx-auto px-4 text-sm">
       <div>
         <div className="flex border-b py-3 justify-between">
           <span>Email Notifications</span>
           <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
-            <Mail tabIndex={0} role="button" className="cursor-pointer" />
+            <Mail
+              tabIndex={0}
+              role="button"
+              className="cursor-pointer"
+              size={18}
+            />
             <ul className="dropdown-content menu bg-base-100 rounded-none border z-1 w-52 p-2 shadow-sm not-italic">
               <li className="rounded-none">
                 <button
@@ -111,10 +116,10 @@ export function Footer({
             }}
             className="cursor-pointer"
           >
-            <LogOutIcon />
+            <LogOutIcon size={18} />
           </button>
         </div>
-        <span className="flex py-3">{userEmail}</span>
+        <span className="flex py-3 italic">{userEmail}</span>
       </div>
     </footer>
   );
