@@ -26,21 +26,6 @@ def send_user_notifications(db: Client, frequency: PublicEmailNotificationFreque
     }  # type: ignore
     user_article_details = get_unread_user_article_details(db, user_ids_emails)
 
-    if not user_article_details:
-        send_batch_template_emails(
-            emails=[
-                TemplateEmailInput(
-                    to=email,
-                    template_id=CAUGHT_UP_TEMPLATE_ALIAS,
-                    variables={"FEED_URL": settings.frontend_url},
-                )
-                for email in user_ids_emails.values()
-            ],
-            api_key=settings.resend_api_key,
-            from_email=settings.resend_from_email,
-        )
-        return
-
     user_article_details_map = {
         k: list(g)
         for k, g in groupby(
@@ -48,21 +33,42 @@ def send_user_notifications(db: Client, frequency: PublicEmailNotificationFreque
             key=lambda d: d.email,
         )
     }
-    send_batch_template_emails(
-        emails=[
-            TemplateEmailInput(
-                to=email,
-                template_id=NEW_ARTICLES_TEMPLATE_ALIAS,
-                variables={
-                    "INTERESTS_SUMMARY": _build_interests_summary_html(details),
-                    "FEED_URL": settings.frontend_url,
-                },
-            )
-            for email, details in user_article_details_map.items()
-        ],
-        api_key=settings.resend_api_key,
-        from_email=settings.resend_from_email,
-    )
+
+    emails_with_articles = set(user_article_details_map.keys())
+    emails_without_articles = [
+        email for email in user_ids_emails.values() if email not in emails_with_articles
+    ]
+
+    if emails_without_articles:
+        send_batch_template_emails(
+            emails=[
+                TemplateEmailInput(
+                    to=email,
+                    template_id=CAUGHT_UP_TEMPLATE_ALIAS,
+                    variables={"FEED_URL": settings.frontend_url},
+                )
+                for email in emails_without_articles
+            ],
+            api_key=settings.resend_api_key,
+            from_email=settings.resend_from_email,
+        )
+
+    if user_article_details_map:
+        send_batch_template_emails(
+            emails=[
+                TemplateEmailInput(
+                    to=email,
+                    template_id=NEW_ARTICLES_TEMPLATE_ALIAS,
+                    variables={
+                        "INTERESTS_SUMMARY": _build_interests_summary_html(details),
+                        "FEED_URL": settings.frontend_url,
+                    },
+                )
+                for email, details in user_article_details_map.items()
+            ],
+            api_key=settings.resend_api_key,
+            from_email=settings.resend_from_email,
+        )
 
 
 def _build_interests_summary_html(details: list[UserArticleDetails]) -> str:
