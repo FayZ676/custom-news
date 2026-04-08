@@ -256,7 +256,11 @@ export type Database = {
     };
     Functions: {
       match_articles: {
-        Args: { match_count: number; query_embedding: string };
+        Args: {
+          match_count: number;
+          min_similarity: number;
+          query_embedding: string;
+        };
         Returns: {
           content: string;
           id: string;
