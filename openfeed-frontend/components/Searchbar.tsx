@@ -76,11 +76,12 @@ export default function SearchBar({
   };
 
   return (
-    <div className="flex flex-col gap-2 items-center">
-      <span className="text-sm italic mr-auto">
-        Interested in something specific? Search for it here!
+    <div className="flex flex-col gap-2">
+      <span className="text-sm text-center font-extralight mx-auto">
+        Sourcing the latest and most relevant news from across the web since
+        2025
       </span>
-      <div className="flex gap-2 items-center w-full">
+      <div className="flex gap-3 items-center w-full">
         <label className="input input-lg w-full rounded-none border-base-content">
           <Search size={18} strokeWidth={3} />
           <div className="relative grow">
@@ -135,9 +136,9 @@ export default function SearchBar({
             {saving ? (
               <span className="text-base-content/50 underline">Saving</span>
             ) : isSaved ? (
-              <span className="underline">Saved!</span>
+              <span className="font-extrabold underline">Saved!</span>
             ) : (
-              <span className="underline">Save</span>
+              <span className="font-extrabold underline">Save</span>
             )}
           </button>
         )}
