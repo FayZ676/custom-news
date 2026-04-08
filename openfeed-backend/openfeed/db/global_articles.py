@@ -42,6 +42,7 @@ def query_global_articles(
     db: Client,
     query_embeddings: list[float],
     match_count: int = MAX_ARTICLES_PER_INTEREST,
+    min_similarity: float = 0.0,
 ) -> list[MatchArticlesResult]:
     data = (
         db.rpc(
@@ -49,6 +50,7 @@ def query_global_articles(
             {
                 "query_embedding": query_embeddings,
                 "match_count": match_count,
+                "min_similarity": min_similarity,
             },
         )
         .execute()

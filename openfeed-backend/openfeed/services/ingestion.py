@@ -6,13 +6,13 @@ from openfeed.db.global_articles import (
     insert_global_articles,
     get_global_article_urls,
     query_global_articles,
-    MAX_ARTICLES_PER_INTEREST,
 )
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.user_interests import get_user_interests
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
 from openfeed.models import Article
+from openfeed.config import settings
 
 
 logger = logging.getLogger(__name__)
@@ -55,16 +55,16 @@ def score_articles_for_interests(db: Client):
         for interest in interests_page:
             try:
                 candidates = query_global_articles(
-                    db, interest.embeddings, match_count=MAX_ARTICLES_PER_INTEREST * 2
+                    db,
+                    interest.embeddings,
+                    match_count=1000,
+                    min_similarity=settings.min_similarity_threshold,
                 )
 
                 if not candidates:
                     continue
 
                 reranked = rerank(interest.query, [c.document_text for c in candidates])
-                top_reranked = sorted(
-                    reranked, key=lambda r: r.relevance_score, reverse=True
-                )[:MAX_ARTICLES_PER_INTEREST]
                 all_scores.extend(
                     {
                         "user_id": str(interest.user_id),
@@ -72,7 +72,7 @@ def score_articles_for_interests(db: Client):
                         "article_id": str(candidates[r.index].article_id),
                         "score": r.relevance_score,
                     }
-                    for r in top_reranked
+                    for r in reranked
                 )
             except (OSError, RuntimeError) as e:
                 logger.exception(
