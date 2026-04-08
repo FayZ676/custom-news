@@ -41,8 +41,8 @@ def get_global_article_urls(db: Client) -> list[str]:
 def query_global_articles(
     db: Client,
     query_embeddings: list[float],
-    match_count: int = MAX_ARTICLES_PER_INTEREST,
-    min_similarity: float = 0.0,
+    match_count: int,
+    min_similarity: float,
 ) -> list[MatchArticlesResult]:
     data = (
         db.rpc(

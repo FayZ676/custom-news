@@ -57,7 +57,7 @@ def score_articles_for_interests(db: Client):
                 candidates = query_global_articles(
                     db,
                     interest.embeddings,
-                    match_count=1000,
+                    match_count=settings.max_match_count,
                     min_similarity=settings.min_similarity_threshold,
                 )
 

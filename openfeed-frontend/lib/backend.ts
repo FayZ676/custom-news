@@ -79,7 +79,7 @@ export async function matchArticlesByEmbedding(
   supabase: SupabaseClient<Database>,
   embedding: number[],
   matchCount: number,
-  minSimilarity: number = 0.0,
+  minSimilarity: number,
 ): Promise<{ id: string; similarity: number }[]> {
   const { data: matches, error: rpcError } = await supabase.rpc(
     "match_articles",

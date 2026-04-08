@@ -27,7 +27,7 @@ import {
 } from "@/lib/backend";
 
 import { getCurrentDate } from "@/lib/utils";
-import { MIN_SIMILARITY_THRESHOLD } from "@/lib/config";
+import { MIN_SIMILARITY_THRESHOLD, MAX_MATCH_COUNT } from "@/lib/config";
 
 import { Banner } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
@@ -41,7 +41,7 @@ async function searchGlobalArticles(
   const matches = await matchArticlesByEmbedding(
     supabase,
     embeddings[0],
-    1000,
+    MAX_MATCH_COUNT,
     MIN_SIMILARITY_THRESHOLD,
   );
   if (matches.length === 0) return [];
@@ -66,7 +66,7 @@ async function updateUserArticleScores(
   const matches = await matchArticlesByEmbedding(
     supabase,
     interestEmbeddings,
-    1000,
+    MAX_MATCH_COUNT,
     MIN_SIMILARITY_THRESHOLD,
   );
   if (matches.length === 0) return;
