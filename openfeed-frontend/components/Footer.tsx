@@ -76,7 +76,7 @@ export function Footer({
   }
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 max-w-4xl mx-auto px-4 text-sm">
+    <footer className="mt-auto text-sm">
       <div>
         <div className="flex border-b py-3 justify-between">
           <span>Email Notifications</span>
