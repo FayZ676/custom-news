@@ -31,7 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${lora.className} antialiased max-w-4xl mx-auto p-4`}>
+      <body
+        className={`${lora.className} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
+      >
         {children}
       </body>
     </html>

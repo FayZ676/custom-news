@@ -100,34 +100,38 @@ export function ViewFeed({
         onSearch={handleSearch}
         onQueryChange={setQuery}
       />
-      {isSearching ? (
-        <>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <SectionArticleSkeleton key={i} />
-          ))}
-        </>
-      ) : queryArticles.length > 0 ? (
-        <SectionArticles articles={queryArticles} />
-      ) : (
-        <div className="flex flex-col">
-          {optimisticInterests
-            .slice()
-            .sort((a, b) => {
-              const aHasUnread = a.articles.some((article) => !article.is_read);
-              const bHasUnread = b.articles.some((article) => !article.is_read);
-              return Number(bHasUnread) - Number(aHasUnread);
-            })
-            .map((interest) => (
-              <SectionInterest
-                key={interest.id}
-                interest={interest}
-                deleting={deleting}
-                handleDeleteInterest={handleDelete}
-                handleReadArticles={handleRead}
-              />
+      {(isSearching || searchParams.get("query")) &&
+        (isSearching ? (
+          <>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SectionArticleSkeleton key={i} />
             ))}
-        </div>
-      )}
+          </>
+        ) : queryArticles.length > 0 ? (
+          <SectionArticles articles={queryArticles} />
+        ) : (
+          <p className="text-sm italic">
+            No articles found matching your query. Try something more specific.
+          </p>
+        ))}
+      <div className="flex flex-col">
+        {optimisticInterests
+          .slice()
+          .sort((a, b) => {
+            const aHasUnread = a.articles.some((article) => !article.is_read);
+            const bHasUnread = b.articles.some((article) => !article.is_read);
+            return Number(bHasUnread) - Number(aHasUnread);
+          })
+          .map((interest) => (
+            <SectionInterest
+              key={interest.id}
+              interest={interest}
+              deleting={deleting}
+              handleDeleteInterest={handleDelete}
+              handleReadArticles={handleRead}
+            />
+          ))}
+      </div>
     </div>
   );
 }

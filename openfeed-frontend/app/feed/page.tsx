@@ -149,7 +149,7 @@ async function AllArticlesContent({ query }: { query?: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 flex-1">
       <div className="flex justify-center">
         <Image
           src={"logo.svg"}
