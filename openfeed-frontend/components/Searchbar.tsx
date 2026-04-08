@@ -106,7 +106,7 @@ export default function SearchBar({
             />
             {!query && (
               <span
-                className={`absolute inset-0 flex items-center pointer-events-none text-base-content/40 transition-opacity duration-300 ${
+                className={`absolute inset-0 flex items-center pointer-events-none text-base-content/40 transition-opacity duration-300 overflow-hidden whitespace-nowrap ${
                   placeholderVisible ? "opacity-100" : "opacity-0"
                 }`}
               >
