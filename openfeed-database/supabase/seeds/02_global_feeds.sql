@@ -95,7 +95,7 @@ FROM (VALUES
     -- Independent / Investigative Tech Journalism
     -- =============================================
     ('404 Media', 'https://www.404media.co/rss', 'Independent tech journalism covering AI, surveillance, online culture, and the internet''s impact on society.'),
-    ('Rest of World', 'https://restofworld.org/feed/latest', 'Reporting on how technology is shaping economies and societies outside of Silicon Valley.'),
+    ('Rest of World', 'https://restofworld.org/feed/latest', 'Reporting on how technology is shaping economies and societies outside of Silicon Valley.')
 
 
 ) AS feeds(title, url, description)
