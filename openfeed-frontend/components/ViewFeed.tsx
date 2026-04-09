@@ -3,9 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect, useOptimistic } from "react";
 
-import { InterestArticles, QueryArticle } from "@/lib/backend";
 import { Database } from "@/lib/supabase/supabase.types";
-import { getCurrentDate, getUserLocation } from "@/lib/utils";
+import { QueryArticle, InterestArticles } from "@/lib/data/global_articles";
 
 import SearchBar from "@/components/Searchbar";
 import { NavbarSkeleton } from "@/components/Navbar";

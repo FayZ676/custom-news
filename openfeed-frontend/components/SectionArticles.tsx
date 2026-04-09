@@ -2,7 +2,7 @@
 
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
-import { InterestArticle, QueryArticle } from "@/lib/backend";
+import { QueryArticle, InterestArticle } from "@/lib/data/global_articles";
 
 interface SectionArticlesProps {
   articles: InterestArticle[] | QueryArticle[];
