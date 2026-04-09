@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Tables, Database } from "@/lib/supabase/supabase.types";
 
-import { InterestArticle } from "@/lib/data/global_articles";
+import { InterestArticle } from "@/lib/supabase/queries/global_articles";
 
 export interface UserArticleScore {
   user_id: string;

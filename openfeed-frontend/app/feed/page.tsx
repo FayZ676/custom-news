@@ -11,24 +11,24 @@ import { Database } from "@/lib/supabase/supabase.types";
 import { rerankTexts } from "@/lib/reranker";
 import { embedTexts } from "@/lib/embeddings";
 
-import { getGlobalFeeds } from "@/lib/data/global_feeds";
-import { getUserSettings } from "@/lib/data/user_settings";
+import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
+import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import {
   updateUserArticlesRead,
   UserArticleScore,
-} from "@/lib/data/user_articles";
-import { updateUserArticles } from "@/lib/data/user_articles";
+} from "@/lib/supabase/queries/user_articles";
+import { updateUserArticles } from "@/lib/supabase/queries/user_articles";
 import {
   getGlobalArticlesByIds,
   InterestArticle,
-} from "@/lib/data/global_articles";
+} from "@/lib/supabase/queries/global_articles";
 import {
   getUserInterestArticles,
   insertUserInterest,
   deleteUserInterest,
-} from "@/lib/data/user_interests";
-import { matchArticlesByEmbedding } from "@/lib/data/match_articles";
-import { updateUserNotificationSettings } from "@/lib/data/user_settings";
+} from "@/lib/supabase/queries/user_interests";
+import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
+import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
 
 import { getCurrentDate } from "@/lib/utils";
 import { MIN_SIMILARITY_THRESHOLD, MAX_MATCH_COUNT } from "@/lib/config";

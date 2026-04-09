@@ -5,7 +5,10 @@ import { startTransition, useOptimistic, useState } from "react";
 import { EllipsisVertical } from "lucide-react";
 
 import { toTitleCase } from "@/lib/utils";
-import { InterestArticle, InterestArticles } from "@/lib/data/global_articles";
+import {
+  InterestArticle,
+  InterestArticles,
+} from "@/lib/supabase/queries/global_articles";
 
 import { SectionArticles } from "@/components/SectionArticles";
 

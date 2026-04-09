@@ -4,7 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition, useEffect, useOptimistic } from "react";
 
 import { Database } from "@/lib/supabase/supabase.types";
-import { QueryArticle, InterestArticles } from "@/lib/data/global_articles";
+import {
+  QueryArticle,
+  InterestArticles,
+} from "@/lib/supabase/queries/global_articles";
 
 import SearchBar from "@/components/Searchbar";
 import { NavbarSkeleton } from "@/components/Navbar";
