@@ -1,4 +1,4 @@
-import { signUp } from "@/actions/auth";
+import { signUp } from "@/lib/supabase/auth";
 
 export default function SignUpPage() {
   return (

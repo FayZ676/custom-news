@@ -3,15 +3,17 @@ import { Suspense } from "react";
 
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { signOut } from "@/actions/auth";
+import { signOut } from "@/lib/supabase/auth";
 
 import { createClient } from "@/lib/supabase/server";
 import { Database } from "@/lib/supabase/supabase.types";
 
-import { rerankTexts } from "@/actions/reranker";
-import { addInterest } from "@/actions/interests";
-import { embedTexts } from "@/actions/embeddings";
-import { deleteInterest } from "@/actions/interests";
+import { rerankTexts } from "@/lib/reranker";
+import { embedTexts } from "@/lib/embeddings";
+import {
+  insertUserInterest,
+  deleteUserInterest,
+} from "@/lib/data/user_interests";
 
 import {
   UserArticleScore,
@@ -96,7 +98,7 @@ async function saveUserInterest(
   query: string,
   userId: string,
 ) {
-  const response = await addInterest(query);
+  const response = await insertUserInterest(supabase, userId, query);
   await updateUserArticleScores(
     supabase,
     userId,
@@ -145,7 +147,7 @@ async function AllArticlesContent({ query }: { query?: string }) {
 
   async function handleDeleteInterest(interestId: string) {
     "use server";
-    await deleteInterest(interestId);
+    await deleteUserInterest(supabase, userId, interestId);
   }
 
   return (
