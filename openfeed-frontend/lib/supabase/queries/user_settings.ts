@@ -28,3 +28,16 @@ export async function updateUserNotificationSettings(
 
   if (error) throw new Error(error.message);
 }
+
+export async function updateUserTimezone(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  timezone: string,
+) {
+  const { error } = await supabase
+    .from("user_settings")
+    .update({ timezone })
+    .eq("user_id", userId);
+
+  if (error) throw new Error(error.message);
+}

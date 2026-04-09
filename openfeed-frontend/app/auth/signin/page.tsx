@@ -1,4 +1,4 @@
-import { signIn } from "@/lib/supabase/auth";
+import SignInForm from "@/components/SignInForm";
 
 export default function SignInPage() {
   return (
@@ -11,33 +11,7 @@ export default function SignInPage() {
           </p>
         </div>
 
-        <form
-          className="space-y-3"
-          action={async (formData: FormData) => {
-            "use server";
-            const email = formData.get("email") as string;
-            const password = formData.get("password") as string;
-            await signIn(email, password);
-          }}
-        >
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            className="input input-bordered w-full focus:outline-none"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            className="input input-bordered w-full focus:outline-none"
-          />
-          <button type="submit" className="btn btn-neutral w-full mt-2">
-            Sign in
-          </button>
-        </form>
+        <SignInForm />
 
         {/* <p className="text-sm text-center text-base-content/50">
           Don't have an account?{" "}

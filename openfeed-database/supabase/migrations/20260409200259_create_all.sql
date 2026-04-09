@@ -85,7 +85,8 @@ alter table "public"."user_interests" enable row level security;
   create table "public"."user_settings" (
     "user_id" uuid not null,
     "email_notification" boolean not null default true,
-    "email_notification_frequency" public.email_notification_frequency not null default 'daily'::public.email_notification_frequency
+    "email_notification_frequency" public.email_notification_frequency not null default 'daily'::public.email_notification_frequency,
+    "timezone" text not null default 'UTC'::text
       );
 
 
@@ -131,7 +132,7 @@ alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMA
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
 
-alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) not valid;
+alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) ON DELETE CASCADE not valid;
 
 alter table "public"."global_articles" validate constraint "global_articles_feed_title_fkey";
 
@@ -190,14 +191,29 @@ end;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, match_count integer)
+CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, match_count integer, min_similarity double precision)
  RETURNS TABLE(id uuid, title text, summary text, content text, similarity double precision)
  LANGUAGE sql
 AS $function$
   select id, title, summary, content, 1 - (embeddings <=> query_embedding) as similarity
   from global_articles
+  where (1 - (embeddings <=> query_embedding)) >= min_similarity
   order by embeddings <=> query_embedding
   limit match_count;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.validate_user_settings_timezone()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ STABLE
+AS $function$
+begin
+    if not exists (select 1 from pg_timezone_names where name = new.timezone) then
+        raise exception 'Invalid timezone: %', new.timezone;
+    end if;
+    return new;
+end;
 $function$
 ;
 
@@ -561,6 +577,8 @@ with check ((auth.uid() = user_id));
 using ((auth.uid() = user_id))
 with check ((auth.uid() = user_id));
 
+
+CREATE TRIGGER check_user_settings_timezone BEFORE INSERT OR UPDATE OF timezone ON public.user_settings FOR EACH ROW EXECUTE FUNCTION public.validate_user_settings_timezone();
 
 CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.create_user_settings();
 

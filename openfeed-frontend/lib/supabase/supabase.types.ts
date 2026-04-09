@@ -236,16 +236,19 @@ export type Database = {
         Row: {
           email_notification: boolean;
           email_notification_frequency: Database["public"]["Enums"]["email_notification_frequency"];
+          timezone: string;
           user_id: string;
         };
         Insert: {
           email_notification?: boolean;
           email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
+          timezone?: string;
           user_id: string;
         };
         Update: {
           email_notification?: boolean;
           email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
+          timezone?: string;
           user_id?: string;
         };
         Relationships: [];
