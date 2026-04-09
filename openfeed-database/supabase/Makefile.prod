@@ -13,9 +13,13 @@ reset:
 		; mv /tmp/_migrations_backup migrations \
 		; mv /tmp/_seeds_backup seeds
 
+seed:
+	supabase link --project-ref $(PROJECT_ID) \
+		&& supabase db push --include-seed
+
 deploy:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-seed --include-all \
+		&& supabase db push --include-all \
 		&& supabase secrets set \
 			BACKEND_URL=$(BACKEND_URL) \
 			BACKEND_API_KEY=$(BACKEND_API_KEY) \
@@ -29,4 +33,4 @@ update:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-all
 
-init: reset deploy fetch_articles
+init: reset deploy seed fetch_articles
