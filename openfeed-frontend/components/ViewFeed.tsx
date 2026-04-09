@@ -1,16 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition, useEffect, useOptimistic } from "react";
+import { useState, useTransition, useOptimistic } from "react";
 
-import { Database } from "@/lib/supabase/supabase.types";
 import {
   QueryArticle,
   InterestArticles,
 } from "@/lib/supabase/queries/global_articles";
 
 import SearchBar from "@/components/Searchbar";
-import { NavbarSkeleton } from "@/components/Navbar";
 import SectionInterest from "@/components/SectionInterest";
 import {
   SectionArticles,
@@ -19,7 +17,6 @@ import {
 import { SearchbarSkeleton } from "@/components/Searchbar";
 
 export interface ViewFeedProps {
-  feeds: Database["public"]["Tables"]["global_feeds"]["Row"][];
   queryArticles: QueryArticle[];
   interestArticles: InterestArticles[];
   handleDeleteInterest: (interestId: string) => Promise<void>;
@@ -31,7 +28,6 @@ export interface ViewFeedProps {
 }
 
 export function ViewFeed({
-  feeds,
   queryArticles,
   interestArticles,
   handleDeleteInterest,
@@ -141,7 +137,6 @@ export function ViewFeed({
 export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-6">
-      <NavbarSkeleton />
       <SearchbarSkeleton />
       <div className="flex flex-col gap-2">
         {Array.from({ length: count }).map((_, i) => (

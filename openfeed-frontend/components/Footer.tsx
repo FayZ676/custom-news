@@ -126,5 +126,19 @@ export function Footer({
 }
 
 export function FooterSkeleton() {
-  return "Footer here";
+  return (
+    <footer className="mt-auto text-sm">
+      <div>
+        <div className="flex border-b py-3 justify-between items-center">
+          <div className="skeleton h-4 w-36 rounded" />
+          <div className="skeleton h-4 w-4 rounded" />
+        </div>
+        <div className="flex border-b py-3 justify-between items-center">
+          <div className="skeleton h-4 w-20 rounded" />
+          <div className="skeleton h-4 w-4 rounded" />
+        </div>
+        <div className="skeleton h-4 w-44 rounded my-3" />
+      </div>
+    </footer>
+  );
 }

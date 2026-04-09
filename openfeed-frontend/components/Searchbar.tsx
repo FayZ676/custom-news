@@ -149,8 +149,11 @@ export default function SearchBar({
 
 export function SearchbarSkeleton() {
   return (
-    <div className="flex gap-2 items-center">
-      <div className="skeleton input input-lg w-full rounded-full bg-[unset]!" />
+    <div className="flex flex-col gap-2">
+      <div className="skeleton h-4 w-96 max-w-full rounded mx-auto" />
+      <div className="flex gap-3 items-center w-full">
+        <div className="skeleton input input-lg w-full rounded-none bg-[unset]!" />
+      </div>
     </div>
   );
 }

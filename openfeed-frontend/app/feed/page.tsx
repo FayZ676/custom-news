@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -33,9 +34,13 @@ import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_sett
 import { getCurrentDate } from "@/lib/utils";
 import { MIN_SIMILARITY_THRESHOLD, MAX_MATCH_COUNT } from "@/lib/config";
 
-import { Banner } from "@/components/Banner";
+import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
+
+// ---------------------------------------------------------------------------
+// Shared helpers
+// ---------------------------------------------------------------------------
 
 async function searchGlobalArticles(
   supabase: SupabaseClient<Database>,
@@ -111,25 +116,67 @@ async function saveUserInterest(
   return response.interestId;
 }
 
-async function AllArticlesContent({ query }: { query?: string }) {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData) throw new Error("Not authenticated");
-  const userId = claimsData.claims.sub;
+// ---------------------------------------------------------------------------
+// Per-section async server components
+// ---------------------------------------------------------------------------
 
-  const [feeds, interestArticles, queryArticles, userSettings] =
-    await Promise.all([
-      getGlobalFeeds(supabase),
-      getUserInterestArticles(supabase, userId),
-      query ? searchGlobalArticles(supabase, query) : [],
-      getUserSettings(supabase, userId),
-    ]);
+async function BannerContent({ date }: { date: string }) {
+  const supabase = await createClient();
+  const feeds = await getGlobalFeeds(supabase);
+  return <Banner date={date} feeds={feeds} />;
+}
+
+async function ViewFeedContent({
+  userId,
+  query,
+}: {
+  userId: string;
+  query?: string;
+}) {
+  const supabase = await createClient();
+  const [interestArticles, queryArticles] = await Promise.all([
+    getUserInterestArticles(supabase, userId),
+    query ? searchGlobalArticles(supabase, query) : Promise.resolve([]),
+  ]);
 
   async function handleSaveUserInterest(query: string) {
     "use server";
     const supabase = await createClient();
     return await saveUserInterest(supabase, query, userId);
   }
+
+  async function handleReadArticles(articleIds: string[], isRead: boolean) {
+    "use server";
+    const supabase = await createClient();
+    await updateUserArticlesRead(supabase, userId, articleIds, isRead);
+  }
+
+  async function handleDeleteInterest(interestId: string) {
+    "use server";
+    const supabase = await createClient();
+    await deleteUserInterest(supabase, userId, interestId);
+  }
+
+  return (
+    <ViewFeed
+      queryArticles={queryArticles}
+      interestArticles={interestArticles}
+      handleDeleteInterest={handleDeleteInterest}
+      handleReadUserArticles={handleReadArticles}
+      handleSaveUserInterest={handleSaveUserInterest}
+    />
+  );
+}
+
+async function FooterContent({
+  userId,
+  email,
+}: {
+  userId: string;
+  email: string;
+}) {
+  const supabase = await createClient();
+  const userSettings = await getUserSettings(supabase, userId);
 
   async function handleUpdateNotifications() {
     "use server";
@@ -141,16 +188,33 @@ async function AllArticlesContent({ query }: { query?: string }) {
     );
   }
 
-  async function handleReadArticles(articleIds: string[], isRead: boolean) {
-    "use server";
-    const supabase = await createClient();
-    await updateUserArticlesRead(supabase, userId, articleIds, isRead);
-  }
+  return (
+    <Footer
+      userEmail={email}
+      userSettings={userSettings}
+      handleSignOut={signOut}
+      handleUpdateNotifications={handleUpdateNotifications}
+    />
+  );
+}
 
-  async function handleDeleteInterest(interestId: string) {
-    "use server";
-    await deleteUserInterest(supabase, userId, interestId);
-  }
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+export default async function AllArticlesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ query?: string }>;
+}) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) redirect("/auth/signin");
+
+  const userId = claimsData.claims.sub;
+  const email = claimsData.claims.email ?? "";
+  const { query } = await searchParams;
+  const date = getCurrentDate();
 
   return (
     <div className="flex flex-col gap-6 flex-1">
@@ -164,44 +228,18 @@ async function AllArticlesContent({ query }: { query?: string }) {
           style={{ height: "auto" }}
         />
       </div>
-      <Banner date={getCurrentDate()} feeds={feeds} />
-      <ViewFeed
-        feeds={feeds}
-        queryArticles={queryArticles}
-        interestArticles={interestArticles}
-        handleDeleteInterest={handleDeleteInterest}
-        handleReadUserArticles={handleReadArticles}
-        handleSaveUserInterest={handleSaveUserInterest}
-      />
-      <Footer
-        userEmail={claimsData.claims.email || ""}
-        userSettings={userSettings}
-        handleSignOut={signOut}
-        handleUpdateNotifications={handleUpdateNotifications}
-      />
-    </div>
-  );
-}
 
-export default async function AllArticlesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ query?: string }>;
-}) {
-  const { query } = await searchParams;
+      <Suspense fallback={<BannerSkeleton />}>
+        <BannerContent date={date} />
+      </Suspense>
 
-  return (
-    <Suspense fallback={<AllArticlesContentSkeleton />}>
-      <AllArticlesContent query={query} />
-    </Suspense>
-  );
-}
+      <Suspense fallback={<ViewFeedSkeleton />}>
+        <ViewFeedContent userId={userId} query={query} />
+      </Suspense>
 
-function AllArticlesContentSkeleton() {
-  return (
-    <div className="flex flex-col gap-6">
-      <ViewFeedSkeleton />
-      <FooterSkeleton />
+      <Suspense fallback={<FooterSkeleton />}>
+        <FooterContent userId={userId} email={email} />
+      </Suspense>
     </div>
   );
 }
