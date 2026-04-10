@@ -1,9 +1,6 @@
-create type "email_notification_frequency" as enum ('hourly', 'daily', 'weekly');
-
 create table "user_settings" (
     "user_id" uuid not null references auth.users(id) on delete cascade,
     "email_notification" boolean not null default true,
-    "email_notification_frequency" email_notification_frequency not null default 'daily',
     "timezone" text not null default 'UTC',
     primary key (user_id)
 );
