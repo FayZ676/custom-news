@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 def fetch_and_embed_articles(db: Client):
     seen_urls = set(get_global_article_urls(db))
+    # TODO: Get article TTL from global_settings
     feed_articles = (
         (feed.title, article)
         for feed in get_global_feeds(db)

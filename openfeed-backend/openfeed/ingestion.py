@@ -9,6 +9,7 @@ def get_articles(url: str, top_n: int = 50) -> list[Article]:
     articles = []
     for article in d:
         try:
+            # TODO: Only keep articles newer than some TTL
             articles.append(Article.model_validate(article))
         except Exception as e:
             print(e)
