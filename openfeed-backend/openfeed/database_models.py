@@ -50,8 +50,6 @@ AuthOauthResponseType: TypeAlias = Literal["code"]
 
 AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 
-PublicEmailNotificationFrequency: TypeAlias = Literal["hourly", "daily", "weekly"]
-
 
 class PublicGlobalArticles(BaseModel):
     content: Optional[str] = Field(alias="content")
@@ -218,32 +216,17 @@ class PublicUserInterestsUpdate(TypedDict):
 
 class PublicUserSettings(BaseModel):
     email_notification: bool = Field(alias="email_notification")
-    email_notification_frequency: PublicEmailNotificationFrequency = Field(
-        alias="email_notification_frequency"
-    )
     timezone: str = Field(alias="timezone")
     user_id: uuid.UUID = Field(alias="user_id")
 
 
 class PublicUserSettingsInsert(TypedDict):
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
-    email_notification_frequency: NotRequired[
-        Annotated[
-            PublicEmailNotificationFrequency,
-            Field(alias="email_notification_frequency"),
-        ]
-    ]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
     user_id: Annotated[uuid.UUID, Field(alias="user_id")]
 
 
 class PublicUserSettingsUpdate(TypedDict):
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
-    email_notification_frequency: NotRequired[
-        Annotated[
-            PublicEmailNotificationFrequency,
-            Field(alias="email_notification_frequency"),
-        ]
-    ]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]

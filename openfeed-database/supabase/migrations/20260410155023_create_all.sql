@@ -2,8 +2,6 @@ drop extension if exists "pg_cron";
 
 create extension if not exists "vector" with schema "public";
 
-create type "public"."email_notification_frequency" as enum ('hourly', 'daily', 'weekly');
-
 
   create table "public"."global_articles" (
     "id" uuid not null default gen_random_uuid(),
@@ -85,7 +83,6 @@ alter table "public"."user_interests" enable row level security;
   create table "public"."user_settings" (
     "user_id" uuid not null,
     "email_notification" boolean not null default true,
-    "email_notification_frequency" public.email_notification_frequency not null default 'daily'::public.email_notification_frequency,
     "timezone" text not null default 'UTC'::text
       );
 

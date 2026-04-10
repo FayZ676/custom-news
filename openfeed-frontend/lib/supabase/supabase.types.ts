@@ -235,19 +235,16 @@ export type Database = {
       user_settings: {
         Row: {
           email_notification: boolean;
-          email_notification_frequency: Database["public"]["Enums"]["email_notification_frequency"];
           timezone: string;
           user_id: string;
         };
         Insert: {
           email_notification?: boolean;
-          email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
           timezone?: string;
           user_id: string;
         };
         Update: {
           email_notification?: boolean;
-          email_notification_frequency?: Database["public"]["Enums"]["email_notification_frequency"];
           timezone?: string;
           user_id?: string;
         };
@@ -274,7 +271,7 @@ export type Database = {
       };
     };
     Enums: {
-      email_notification_frequency: "hourly" | "daily" | "weekly";
+      [_ in never]: never;
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -407,8 +404,6 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {
-      email_notification_frequency: ["hourly", "daily", "weekly"],
-    },
+    Enums: {},
   },
 } as const;
