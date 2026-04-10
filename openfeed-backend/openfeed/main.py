@@ -10,7 +10,6 @@ from openfeed.db.client import Client, client
 from openfeed.db.global_articles import delete_global_articles
 from openfeed.services.ingestion import fetch_and_embed_articles
 from openfeed.services.notifications import send_user_notifications
-from openfeed.database_models import PublicEmailNotificationFrequency
 
 
 logging.basicConfig(
@@ -36,18 +35,11 @@ def get_db() -> Client:
     return db_client
 
 
-@app.post("/user/notifications", status_code=202)
-def user_email_notifications_send(
-    frequency: PublicEmailNotificationFrequency, background_tasks: BackgroundTasks
-):
-    background_tasks.add_task(send_user_notifications, get_db(), frequency)
-    return Response(status_code=202)
-
-
 @app.post("/global/articles", status_code=202)
 def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     background_tasks.add_task(fetch_and_embed_articles, get_db())
+    background_tasks.add_task(send_user_notifications, get_db())
     return Response(status_code=202)
 
 

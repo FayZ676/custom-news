@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     embedding_max_tokens_per_batch: int = 100_000
     min_similarity_threshold: float = 0.4
     max_match_count: int = 1000
+    notification_hours: list[int] = [6, 18]
 
     model_config = SettingsConfigDict(
         env_file=".env",

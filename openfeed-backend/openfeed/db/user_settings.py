@@ -1,18 +1,15 @@
 from openfeed.db.client import Client
-from openfeed.database_models import PublicEmailNotificationFrequency
+from openfeed.database_models import PublicUserSettings
 
 
-def get_user_ids_for_frequency(
-    db: Client,
-    frequency: PublicEmailNotificationFrequency,
-):
+def get_all_email_notification_users(db: Client) -> list[PublicUserSettings]:
+    """Return all users who have email notifications enabled, regardless of frequency."""
     return [
-        str(row["user_id"])  # type: ignore
+        PublicUserSettings.model_validate(row)
         for row in (
             db.table("user_settings")
-            .select("user_id")
+            .select("*")
             .eq("email_notification", True)
-            .eq("email_notification_frequency", frequency)
             .execute()
             .data
         )
