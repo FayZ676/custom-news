@@ -61,7 +61,7 @@ alter table "public"."global_settings" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "headline" text not null,
     "summary" text not null,
-    "related_articles" uuid[] not null default '{}'::uuid[]
+    "related_articles_urls" text[] not null default '{}'::text[]
       );
 
 
