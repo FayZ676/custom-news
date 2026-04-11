@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import Optional
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from pydantic import BaseModel, Field
 
@@ -59,12 +59,12 @@ def query_global_articles(
     return [MatchArticlesResult.model_validate(r) for r in data]  # type: ignore
 
 
-def delete_global_articles(db: Client):
-    one_week_ago = (datetime.now(timezone.utc) - timedelta(weeks=1)).isoformat()
-    db.table("global_articles").delete().lt("created_at", one_week_ago).execute()
-
-
 def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):
     db.table("global_articles").insert(
         [a.model_dump(mode="json") for a in articles]
     ).execute()
+
+
+def delete_global_articles(db: Client, ttl: timedelta):
+    cutoff = (datetime.now(timezone.utc) - ttl).isoformat()
+    db.table("global_articles").delete().lt("published_at", cutoff).execute()

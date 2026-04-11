@@ -7,9 +7,8 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.auth import verify_api_key
 from openfeed.db.client import Client, client
-from openfeed.db.global_articles import delete_global_articles
-from openfeed.services.ingestion import fetch_and_embed_articles
 from openfeed.services.notifications import send_user_notifications
+from openfeed.services.ingestion import fetch_and_embed_articles, delete_old_articles
 
 
 logging.basicConfig(
@@ -46,4 +45,4 @@ def global_articles_update(background_tasks: BackgroundTasks):
 @app.delete("/global/articles", status_code=202)
 def global_articles_delete():
     logger.info("DELETE /global/articles - deleting old articles")
-    return delete_global_articles(get_db())
+    return delete_old_articles(get_db())

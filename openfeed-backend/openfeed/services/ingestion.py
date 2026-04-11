@@ -1,24 +1,29 @@
 import logging
+import isodate
+from datetime import datetime, timezone, timedelta
 
-from openfeed.db.client import Client
 from openfeed.reranker import rerank
+from openfeed.db.client import Client
 from openfeed.db.global_articles import (
     insert_global_articles,
     get_global_article_urls,
     query_global_articles,
+    delete_global_articles,
 )
+from openfeed.models import Article
+from openfeed.embeddings import embed_texts
+from openfeed.ingestion import get_articles
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.user_interests import get_user_interests
 from openfeed.db.global_settings import get_global_settings
-from openfeed.ingestion import get_articles
-from openfeed.embeddings import embed_texts
-from openfeed.models import Article
 
 
 logger = logging.getLogger(__name__)
 
 
 def fetch_and_embed_articles(db: Client):
+    global_settings = get_global_settings(db)
+
     seen_urls = set(get_global_article_urls(db))
     feed_articles = (
         (feed.title, article)
@@ -26,8 +31,9 @@ def fetch_and_embed_articles(db: Client):
         for article in get_articles(feed.url)
     )
     unique_found_articles: list[tuple[str, Article]] = []
+    cutoff = datetime.now(timezone.utc) - _parse_ttl(global_settings.article_ttl)
     for feed_title, article in feed_articles:
-        if article.link not in seen_urls:
+        if article.link not in seen_urls and article.published >= cutoff:
             seen_urls.add(article.link)
             unique_found_articles.append((feed_title, article))
 
@@ -50,9 +56,7 @@ def fetch_and_embed_articles(db: Client):
 
 def score_articles_for_interests(db: Client):
     global_settings = get_global_settings(db)
-
     all_scores: list[dict] = []
-
     for interests_page in get_user_interests(db):
         for interest in interests_page:
             try:
@@ -89,3 +93,17 @@ def score_articles_for_interests(db: Client):
             all_scores,
             on_conflict="user_id,interest_id,article_id",
         ).execute()
+
+
+def delete_old_articles(db: Client):
+    global_settings = get_global_settings(db)
+    ttl = _parse_ttl(global_settings.article_ttl)
+    delete_global_articles(db, ttl)
+    logger.info("Deleted articles older than %s", global_settings.article_ttl)
+
+
+def _parse_ttl(article_ttl: str) -> timedelta:
+    duration = isodate.parse_duration(article_ttl)
+    if isinstance(duration, timedelta):
+        return duration
+    return duration.totimedelta(start=datetime.now(timezone.utc))
