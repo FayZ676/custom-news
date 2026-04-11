@@ -1,6 +1,7 @@
 import logging
-import isodate
 from datetime import datetime, timezone, timedelta
+
+import pytimeparse
 
 from openfeed.reranker import rerank
 from openfeed.db.client import Client
@@ -103,7 +104,7 @@ def delete_old_articles(db: Client):
 
 
 def _parse_ttl(article_ttl: str) -> timedelta:
-    duration = isodate.parse_duration(article_ttl)
-    if isinstance(duration, timedelta):
-        return duration
-    return duration.totimedelta(start=datetime.now(timezone.utc))
+    seconds = pytimeparse.parse(article_ttl)
+    if seconds is None:
+        raise ValueError(f"Unable to parse TTL string: {article_ttl!r}")
+    return timedelta(seconds=seconds)

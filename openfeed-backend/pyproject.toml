@@ -9,6 +9,7 @@ dependencies = [
     "modal>=1.4.0",
     "pydantic[email]>=2.10.0",
     "pydantic-settings>=2.7.0",
+    "pytimeparse>=1.1.8",
     "requests>=2.32.5",
     "tenacity>=9.1.4",
     "tiktoken>=0.12.0",
