@@ -1,10 +1,11 @@
 import logging
+from zoneinfo import ZoneInfo
 from itertools import groupby
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from openfeed.config import settings
 from openfeed.db.client import Client
+from openfeed.db.global_settings import get_global_settings
 from openfeed.db.user_settings import get_all_email_notification_users
 from openfeed.db.user_articles import (
     UserArticleDetails,
@@ -43,27 +44,18 @@ def send_user_notifications(db: Client) -> None:
         _send_new_articles_emails(articles_by_email)
 
 
-def _is_in_notification_window(user: PublicUserSettings, now_utc: datetime) -> bool:
-    """Return True if the user's local hour is a configured notification hour."""
-    try:
-        local_hour = now_utc.astimezone(ZoneInfo(user.timezone)).hour
-        return local_hour in settings.notification_hours
-    except ZoneInfoNotFoundError:
-        logger.warning(
-            "Unknown timezone '%s' for user %s, skipping.",
-            user.timezone,
-            user.user_id,
-        )
-        return False
-
-
-def _get_users_to_notify(db: Client, now_utc: datetime) -> list[PublicUserSettings]:
-    """Return all users whose local time currently falls in a notification window."""
+def _get_users_to_notify(db: Client, now_utc: datetime):
+    global_settings = get_global_settings(db)
     return [
-        user
-        for user in get_all_email_notification_users(db)
-        if _is_in_notification_window(user, now_utc)
+        u
+        for u in get_all_email_notification_users(db)
+        if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
     ]
+
+
+def _is_in_notification_window(user, now_utc, notification_hours: list[int]) -> bool:
+    local_hour = now_utc.astimezone(ZoneInfo(user.timezone)).hour
+    return local_hour in notification_hours
 
 
 def _fetch_user_emails(db: Client, users: list[PublicUserSettings]) -> dict[str, str]:

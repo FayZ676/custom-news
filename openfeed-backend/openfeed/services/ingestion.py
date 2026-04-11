@@ -9,10 +9,10 @@ from openfeed.db.global_articles import (
 )
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.user_interests import get_user_interests
+from openfeed.db.global_settings import get_global_settings
 from openfeed.ingestion import get_articles
 from openfeed.embeddings import embed_texts
 from openfeed.models import Article
-from openfeed.config import settings
 
 
 logger = logging.getLogger(__name__)
@@ -49,6 +49,8 @@ def fetch_and_embed_articles(db: Client):
 
 
 def score_articles_for_interests(db: Client):
+    global_settings = get_global_settings(db)
+
     all_scores: list[dict] = []
 
     for interests_page in get_user_interests(db):
@@ -57,8 +59,8 @@ def score_articles_for_interests(db: Client):
                 candidates = query_global_articles(
                     db,
                     interest.embeddings,
-                    match_count=settings.max_match_count,
-                    min_similarity=settings.min_similarity_threshold,
+                    match_count=global_settings.max_match_count,
+                    min_similarity=global_settings.min_similarity_threshold,
                 )
 
                 if not candidates:

@@ -142,6 +142,62 @@ class PublicGlobalFeedsUpdate(TypedDict):
     url: NotRequired[Annotated[str, Field(alias="url")]]
 
 
+class PublicGlobalSettings(BaseModel):
+    article_ttl: str = Field(alias="article_ttl")
+    id: uuid.UUID = Field(alias="id")
+    max_match_count: int = Field(alias="max_match_count")
+    min_similarity_threshold: float = Field(alias="min_similarity_threshold")
+    notification_hours: List[int] = Field(alias="notification_hours")
+    singleton: bool = Field(alias="singleton")
+
+
+class PublicGlobalSettingsInsert(TypedDict):
+    article_ttl: Annotated[str, Field(alias="article_ttl")]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    max_match_count: Annotated[int, Field(alias="max_match_count")]
+    min_similarity_threshold: Annotated[float, Field(alias="min_similarity_threshold")]
+    notification_hours: Annotated[List[int], Field(alias="notification_hours")]
+    singleton: NotRequired[Annotated[bool, Field(alias="singleton")]]
+
+
+class PublicGlobalSettingsUpdate(TypedDict):
+    article_ttl: NotRequired[Annotated[str, Field(alias="article_ttl")]]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    max_match_count: NotRequired[Annotated[int, Field(alias="max_match_count")]]
+    min_similarity_threshold: NotRequired[
+        Annotated[float, Field(alias="min_similarity_threshold")]
+    ]
+    notification_hours: NotRequired[
+        Annotated[List[int], Field(alias="notification_hours")]
+    ]
+    singleton: NotRequired[Annotated[bool, Field(alias="singleton")]]
+
+
+class PublicGlobalStories(BaseModel):
+    headline: str = Field(alias="headline")
+    id: uuid.UUID = Field(alias="id")
+    related_articles: List[uuid.UUID] = Field(alias="related_articles")
+    summary: str = Field(alias="summary")
+
+
+class PublicGlobalStoriesInsert(TypedDict):
+    headline: Annotated[str, Field(alias="headline")]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    related_articles: NotRequired[
+        Annotated[List[uuid.UUID], Field(alias="related_articles")]
+    ]
+    summary: Annotated[str, Field(alias="summary")]
+
+
+class PublicGlobalStoriesUpdate(TypedDict):
+    headline: NotRequired[Annotated[str, Field(alias="headline")]]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    related_articles: NotRequired[
+        Annotated[List[uuid.UUID], Field(alias="related_articles")]
+    ]
+    summary: NotRequired[Annotated[str, Field(alias="summary")]]
+
+
 class PublicUserArticles(BaseModel):
     article_id: uuid.UUID = Field(alias="article_id")
     interest_id: uuid.UUID = Field(alias="interest_id")
@@ -166,24 +222,6 @@ class PublicUserArticlesUpdate(TypedDict):
     is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
     score: NotRequired[Annotated[float, Field(alias="score")]]
     updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
-    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
-
-
-class PublicUserCategorySubscriptions(BaseModel):
-    category_id: uuid.UUID = Field(alias="category_id")
-    created_at: datetime.datetime = Field(alias="created_at")
-    user_id: uuid.UUID = Field(alias="user_id")
-
-
-class PublicUserCategorySubscriptionsInsert(TypedDict):
-    category_id: Annotated[uuid.UUID, Field(alias="category_id")]
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
-
-
-class PublicUserCategorySubscriptionsUpdate(TypedDict):
-    category_id: NotRequired[Annotated[uuid.UUID, Field(alias="category_id")]]
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
 
 

@@ -137,6 +137,54 @@ export type Database = {
           },
         ];
       };
+      global_settings: {
+        Row: {
+          article_ttl: string;
+          id: string;
+          max_match_count: number;
+          min_similarity_threshold: number;
+          notification_hours: number[];
+          singleton: boolean;
+        };
+        Insert: {
+          article_ttl: string;
+          id?: string;
+          max_match_count: number;
+          min_similarity_threshold: number;
+          notification_hours: number[];
+          singleton?: boolean;
+        };
+        Update: {
+          article_ttl?: string;
+          id?: string;
+          max_match_count?: number;
+          min_similarity_threshold?: number;
+          notification_hours?: number[];
+          singleton?: boolean;
+        };
+        Relationships: [];
+      };
+      global_stories: {
+        Row: {
+          headline: string;
+          id: string;
+          related_articles: string[];
+          summary: string;
+        };
+        Insert: {
+          headline: string;
+          id?: string;
+          related_articles?: string[];
+          summary: string;
+        };
+        Update: {
+          headline?: string;
+          id?: string;
+          related_articles?: string[];
+          summary?: string;
+        };
+        Relationships: [];
+      };
       user_articles: {
         Row: {
           article_id: string;
@@ -175,32 +223,6 @@ export type Database = {
             columns: ["interest_id"];
             isOneToOne: false;
             referencedRelation: "user_interests";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      user_category_subscriptions: {
-        Row: {
-          category_id: string;
-          created_at: string;
-          user_id: string;
-        };
-        Insert: {
-          category_id: string;
-          created_at?: string;
-          user_id: string;
-        };
-        Update: {
-          category_id?: string;
-          created_at?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_category_subscriptions_category_id_fkey";
-            columns: ["category_id"];
-            isOneToOne: false;
-            referencedRelation: "global_categories";
             referencedColumns: ["id"];
           },
         ];

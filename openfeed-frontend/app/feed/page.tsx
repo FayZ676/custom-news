@@ -28,11 +28,14 @@ import {
   insertUserInterest,
   deleteUserInterest,
 } from "@/lib/supabase/queries/user_interests";
+import {
+  getGlobalSettings,
+  GlobalSettings,
+} from "@/lib/supabase/queries/global_settings";
 import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
 import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
 
 import { getCurrentDate } from "@/lib/utils";
-import { MIN_SIMILARITY_THRESHOLD, MAX_MATCH_COUNT } from "@/lib/config";
 
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
@@ -45,13 +48,14 @@ import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 async function searchGlobalArticles(
   supabase: SupabaseClient<Database>,
   query: string,
+  settings: GlobalSettings,
 ): Promise<InterestArticle[]> {
   const { embeddings } = await embedTexts([query]);
   const matches = await matchArticlesByEmbedding(
     supabase,
     embeddings[0],
-    MAX_MATCH_COUNT,
-    MIN_SIMILARITY_THRESHOLD,
+    settings.max_match_count,
+    settings.min_similarity_threshold,
   );
   if (matches.length === 0) return [];
   const articles = await getGlobalArticlesByIds(
@@ -71,12 +75,13 @@ async function updateUserArticleScores(
   interestId: string,
   interestQuery: string,
   interestEmbeddings: number[],
+  settings: GlobalSettings,
 ) {
   const matches = await matchArticlesByEmbedding(
     supabase,
     interestEmbeddings,
-    MAX_MATCH_COUNT,
-    MIN_SIMILARITY_THRESHOLD,
+    settings.max_match_count,
+    settings.min_similarity_threshold,
   );
   if (matches.length === 0) return;
 
@@ -104,6 +109,7 @@ async function saveUserInterest(
   supabase: Awaited<ReturnType<typeof createClient>>,
   query: string,
   userId: string,
+  settings: GlobalSettings,
 ) {
   const response = await insertUserInterest(supabase, userId, query);
   await updateUserArticleScores(
@@ -112,6 +118,7 @@ async function saveUserInterest(
     response.interestId,
     query,
     response.interestEmbeddings,
+    settings,
   );
   return response.interestId;
 }
@@ -134,15 +141,19 @@ async function ViewFeedContent({
   query?: string;
 }) {
   const supabase = await createClient();
-  const [interestArticles, queryArticles] = await Promise.all([
+  const [globalSettings, interestArticles] = await Promise.all([
+    getGlobalSettings(supabase),
     getUserInterestArticles(supabase, userId),
-    query ? searchGlobalArticles(supabase, query) : Promise.resolve([]),
   ]);
+  const queryArticles = query
+    ? await searchGlobalArticles(supabase, query, globalSettings)
+    : [];
 
   async function handleSaveUserInterest(query: string) {
     "use server";
     const supabase = await createClient();
-    return await saveUserInterest(supabase, query, userId);
+    const settings = await getGlobalSettings(supabase);
+    return await saveUserInterest(supabase, query, userId, settings);
   }
 
   async function handleReadArticles(articleIds: string[], isRead: boolean) {
