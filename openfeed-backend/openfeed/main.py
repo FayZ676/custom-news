@@ -38,6 +38,7 @@ def get_db() -> Client:
 def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     background_tasks.add_task(fetch_and_embed_articles, get_db())
+    # TODO: Generate Top Stories
     background_tasks.add_task(send_user_notifications, get_db())
     return Response(status_code=202)
 
