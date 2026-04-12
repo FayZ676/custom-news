@@ -1,30 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-
-import { motion } from "motion/react";
-
 import { getUserWeatherForecast, WeatherForecast } from "@/lib/weather";
 import { getEdition, getUserLocation, UserLocation } from "@/lib/utils";
-
 import { Database } from "@/lib/supabase/supabase.types";
+import { useTickerScroll } from "@/hooks/useTickerScroll";
 
 export interface BannerProps {
   date: string;
   feeds: Database["public"]["Tables"]["global_feeds"]["Row"][];
 }
 
-export function Banner(props: BannerProps) {
+export function Banner({ date, feeds }: BannerProps) {
   const edition = getEdition();
   const [location, setLocation] = useState<UserLocation | null>(null);
   const [forecast, setForecast] = useState<WeatherForecast | null>(null);
+  const { tickerRef, pause, resume, handleWheel } = useTickerScroll();
 
   useEffect(() => {
     getUserLocation().then(async (loc) => {
       if (!loc) return;
       setLocation(loc);
-      const weather = await getUserWeatherForecast(loc.lat, loc.lon);
-      setForecast(weather);
+      setForecast(await getUserWeatherForecast(loc.lat, loc.lon));
     });
   }, []);
 
@@ -36,7 +33,7 @@ export function Banner(props: BannerProps) {
           VOL. {edition.volume}, No. {edition.edition}
         </span>
         <span className="text-center font-semibold">
-          {location ? location.city : "Location N/A"}, {props.date}
+          {location?.city ?? "Location N/A"}, {date}
         </span>
         <span className="text-sm text-right self-center">
           {forecast
@@ -45,18 +42,20 @@ export function Banner(props: BannerProps) {
         </span>
       </div>
       <hr className="border-t-2" />
-      <div className="overflow-hidden whitespace-nowrap text-sm">
-        <motion.div
-          className="inline-flex"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{ duration: 500, ease: "linear", repeat: Infinity }}
-        >
-          {[...props.feeds, ...props.feeds].map((feed, i) => (
+      <div
+        ref={tickerRef}
+        className="overflow-x-hidden whitespace-nowrap text-sm cursor-ew-resize"
+        onMouseEnter={pause}
+        onMouseLeave={resume}
+        onWheel={handleWheel}
+      >
+        <div className="inline-flex">
+          {[...feeds, ...feeds].map((feed, i) => (
             <a key={`${feed.id}-${i}`} href={feed.url} className="px-2 italic">
               {feed.title}
             </a>
           ))}
-        </motion.div>
+        </div>
       </div>
       <hr className="border-t" />
     </div>

@@ -25,9 +25,9 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
   );
 
   return (
-    <div className="flex flex-col gap-2">
-      <h3 className="font-semibold">Trending News</h3>
-      <section className="flex items-start gap-3 overflow-x-auto pb-2 scrollbar-hide">
+    <section className="flex flex-col gap-2">
+      <h3 className="font-bold text-red-700">Trending News</h3>
+      <div className="flex items-start gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {storiesOrdered.map((story, i) => (
           <React.Fragment key={story.id}>
             {i > 0 && (
@@ -41,7 +41,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
             </p>
           </React.Fragment>
         ))}
-      </section>
+      </div>
 
       <dialog
         ref={dialogRef}
@@ -93,24 +93,28 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
           <button>close</button>
         </form>
       </dialog>
-    </div>
+    </section>
   );
 }
 
 export function ViewTopStoriesSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <section className="flex items-start gap-2 overflow-x-auto pb-2 scrollbar-hide">
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="shrink-0 w-36 sm:w-44 lg:w-60 h-28 sm:h-28 lg:h-24 border border-neutral-300 p-2 flex flex-col gap-2"
-        >
-          <div className="skeleton h-3 w-full rounded" />
-          <div className="skeleton h-3 w-4/5 rounded" />
-          <div className="skeleton h-2 w-full rounded mt-1" />
-          <div className="skeleton h-2 w-3/4 rounded" />
-        </div>
-      ))}
+    <section className="flex flex-col gap-2">
+      <h3 className="font-bold text-neutral-400">Trending News</h3>
+      <div className="flex items-start gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        {Array.from({ length: count }).map((_, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && (
+              <div className="shrink-0 w-px self-stretch bg-neutral-400" />
+            )}
+            <div className="shrink-0 w-36 sm:w-44 lg:w-60 flex flex-col gap-1.5">
+              <div className="skeleton h-3 w-full rounded" />
+              <div className="skeleton h-3 w-4/5 rounded" />
+              <div className="skeleton h-3 w-3/5 rounded" />
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
     </section>
   );
 }

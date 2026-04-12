@@ -78,7 +78,7 @@ export function Footer({
   return (
     <footer className="mt-auto text-sm">
       <div>
-        <div className="flex border-b py-3 justify-between">
+        <div className="flex border-neutral-300 border-b py-3 justify-between">
           <span>Email Notifications</span>
           <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
             <Mail
@@ -107,7 +107,7 @@ export function Footer({
             </ul>
           </div>
         </div>
-        <div className="flex border-b py-3 justify-between">
+        <div className="flex border-neutral-300 border-b py-3 justify-between">
           <span>Sign Out</span>
           <button
             onClick={async () => {
