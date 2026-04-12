@@ -6,7 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
     "feedparser>=6.0.11",
-    "hdbscan=>0.8.42",
+    "hdbscan>=0.8.42",
     "modal>=1.4.0",
     "pydantic[email]>=2.10.0",
     "pydantic-settings>=2.7.0",
