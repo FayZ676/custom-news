@@ -45,6 +45,7 @@ export default function SearchBar({
   const savedQueryRef = useRef<string | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [placeholderVisible, setPlaceholderVisible] = useState(true);
+  const [hasSearched, setHasSearched] = useState(!!query);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -59,6 +60,7 @@ export default function SearchBar({
 
   const handleSearch = () => {
     if (!query.trim()) return;
+    setHasSearched(true);
     onSearch(query.trim());
   };
 
@@ -71,6 +73,7 @@ export default function SearchBar({
   const isSaved = saved && savedQueryRef.current === query.trim();
 
   const handleClear = () => {
+    setHasSearched(false);
     onQueryChange("");
     onClear();
   };
@@ -85,6 +88,7 @@ export default function SearchBar({
             value={query}
             onChange={(e) => {
               const value = e.target.value;
+              setHasSearched(false);
               onQueryChange(value);
               if (!value.trim()) {
                 onClear();
@@ -122,20 +126,40 @@ export default function SearchBar({
         )}
       </label>
       {query && (
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!query.trim() || saving || isSaved || searching}
-          className="cursor-pointer ml-auto px-2"
-        >
-          {saving ? (
-            <span className="text-base-content/50 underline">Saving ...</span>
-          ) : isSaved ? (
-            <span className="font-extrabold underline">Query Saved</span>
-          ) : (
-            <span className="font-extrabold underline">Save Query</span>
+        <div className="flex w-full">
+          <button
+            type="button"
+            onClick={handleSearch}
+            disabled={!query.trim() || searching}
+            className="cursor-pointer px-2"
+          >
+            {searching ? (
+              <span className="text-base-content/50 underline">
+                Searching ...
+              </span>
+            ) : (
+              <span className="font-extrabold underline">Search</span>
+            )}
+          </button>
+          {hasSearched && (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!query.trim() || saving || isSaved || searching}
+              className="cursor-pointer ml-auto px-2"
+            >
+              {saving ? (
+                <span className="text-base-content/50 underline">
+                  Saving ...
+                </span>
+              ) : isSaved ? (
+                <span className="font-extrabold underline">Query Saved</span>
+              ) : (
+                <span className="font-extrabold underline">Save Query</span>
+              )}
+            </button>
           )}
-        </button>
+        </div>
       )}
     </div>
   );
