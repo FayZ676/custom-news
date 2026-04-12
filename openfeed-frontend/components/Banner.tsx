@@ -15,7 +15,8 @@ export function Banner({ date, feeds }: BannerProps) {
   const edition = getEdition();
   const [location, setLocation] = useState<UserLocation | null>(null);
   const [forecast, setForecast] = useState<WeatherForecast | null>(null);
-  const { tickerRef, pause, resume, handleWheel } = useTickerScroll();
+  const { containerRef, innerRef, pause, resume, handleWheel } =
+    useTickerScroll();
 
   useEffect(() => {
     getUserLocation().then(async (loc) => {
@@ -43,13 +44,13 @@ export function Banner({ date, feeds }: BannerProps) {
       </div>
       <hr className="border-t-2" />
       <div
-        ref={tickerRef}
-        className="overflow-x-hidden whitespace-nowrap text-sm cursor-ew-resize"
+        ref={containerRef}
+        className="overflow-hidden whitespace-nowrap text-sm cursor-ew-resize"
         onMouseEnter={pause}
         onMouseLeave={resume}
         onWheel={handleWheel}
       >
-        <div className="inline-flex">
+        <div ref={innerRef} className="inline-flex will-change-transform">
           {[...feeds, ...feeds].map((feed, i) => (
             <a key={`${feed.id}-${i}`} href={feed.url} className="px-2 italic">
               {feed.title}
