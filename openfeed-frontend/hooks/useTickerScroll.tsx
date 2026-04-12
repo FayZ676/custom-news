@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from "react";
 
-const TICKER_SPEED = 0.05; // px/ms
+const TICKER_SPEED = 0.01; // px/ms
 const RESUME_DELAY_MS = 1500;
 
 export function useTickerScroll() {
