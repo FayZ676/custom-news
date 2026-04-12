@@ -77,8 +77,8 @@ export default function SearchBar({
 
   return (
     <div className="flex gap-3 items-center w-full">
-      <label className="input input-lg w-full rounded-none border-base-content">
-        <Search size={18} strokeWidth={3} />
+      <label className="input input-lg w-full rounded-none border-neutral-300">
+        <Search size={18} strokeWidth={3} className="text-neutral-400" />
         <div className="relative grow">
           <input
             type="text"

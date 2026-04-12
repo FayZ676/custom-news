@@ -52,11 +52,7 @@ export function Banner(props: BannerProps) {
           transition={{ duration: 500, ease: "linear", repeat: Infinity }}
         >
           {[...props.feeds, ...props.feeds].map((feed, i) => (
-            <a
-              key={`${feed.id}-${i}`}
-              href={feed.url}
-              className="px-2 border-r italic"
-            >
+            <a key={`${feed.id}-${i}`} href={feed.url} className="px-2 italic">
               {feed.title}
             </a>
           ))}

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useRef, useState } from "react";
 import Link from "next/link";
 
@@ -19,22 +20,26 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
     dialogRef.current?.showModal();
   }
 
+  const storiesOrdered = [...stories].sort(
+    (a, b) => b.related_articles_urls.length - a.related_articles_urls.length,
+  );
+
   return (
-    <>
-      <section className="flex items-start gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        {stories.map((story) => (
-          <div
-            key={story.id}
-            className="shrink-0 w-36 sm:w-44 lg:w-60 h-28 sm:h-28 lg:h-24 border p-2 cursor-pointer overflow-hidden"
-            onClick={() => openModal(story)}
-          >
-            <p className="text-xs lg:text-sm font-bold leading-snug">
+    <div className="flex flex-col gap-2">
+      <h3 className="font-semibold">Trending News</h3>
+      <section className="flex items-start gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        {storiesOrdered.map((story, i) => (
+          <React.Fragment key={story.id}>
+            {i > 0 && (
+              <div className="shrink-0 w-px self-stretch bg-neutral-400" />
+            )}
+            <p
+              onClick={() => openModal(story)}
+              className="shrink-0 w-36 sm:w-44 lg:w-60 cursor-pointer overflow-hidden text-sm lg:text-base leading-snug"
+            >
               {story.headline}
             </p>
-            <p className="mt-1 text-xs font-light text-neutral-500 line-clamp-2">
-              {story.summary}
-            </p>
-          </div>
+          </React.Fragment>
         ))}
       </section>
 
@@ -88,7 +93,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
           <button>close</button>
         </form>
       </dialog>
-    </>
+    </div>
   );
 }
 
