@@ -39,7 +39,12 @@ import { getCurrentDate } from "@/lib/utils";
 
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
+import {
+  ViewTopStories,
+  ViewTopStoriesSkeleton,
+} from "@/components/ViewTopStories";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
+import { getStories } from "@/lib/supabase/queries/global_stories";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -179,6 +184,12 @@ async function ViewFeedContent({
   );
 }
 
+async function ViewTopStoriesContent() {
+  const supabase = await createClient();
+  const topStories = await getStories(supabase);
+  return <ViewTopStories stories={topStories} />;
+}
+
 async function FooterContent({
   userId,
   email,
@@ -242,6 +253,10 @@ export default async function AllArticlesPage({
 
       <Suspense fallback={<BannerSkeleton />}>
         <BannerContent date={date} />
+      </Suspense>
+
+      <Suspense fallback={<ViewTopStoriesSkeleton />}>
+        <ViewTopStoriesContent />
       </Suspense>
 
       <Suspense fallback={<ViewFeedSkeleton />}>

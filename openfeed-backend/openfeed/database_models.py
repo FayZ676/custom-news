@@ -176,15 +176,15 @@ class PublicGlobalSettingsUpdate(TypedDict):
 class PublicGlobalStories(BaseModel):
     headline: str = Field(alias="headline")
     id: uuid.UUID = Field(alias="id")
-    related_articles: List[uuid.UUID] = Field(alias="related_articles")
+    related_articles_urls: List[str] = Field(alias="related_articles_urls")
     summary: str = Field(alias="summary")
 
 
 class PublicGlobalStoriesInsert(TypedDict):
     headline: Annotated[str, Field(alias="headline")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    related_articles: NotRequired[
-        Annotated[List[uuid.UUID], Field(alias="related_articles")]
+    related_articles_urls: NotRequired[
+        Annotated[List[str], Field(alias="related_articles_urls")]
     ]
     summary: Annotated[str, Field(alias="summary")]
 
@@ -192,8 +192,8 @@ class PublicGlobalStoriesInsert(TypedDict):
 class PublicGlobalStoriesUpdate(TypedDict):
     headline: NotRequired[Annotated[str, Field(alias="headline")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    related_articles: NotRequired[
-        Annotated[List[uuid.UUID], Field(alias="related_articles")]
+    related_articles_urls: NotRequired[
+        Annotated[List[str], Field(alias="related_articles_urls")]
     ]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
 

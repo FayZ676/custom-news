@@ -168,19 +168,19 @@ export type Database = {
         Row: {
           headline: string;
           id: string;
-          related_articles: string[];
+          related_articles_urls: string[];
           summary: string;
         };
         Insert: {
           headline: string;
           id?: string;
-          related_articles?: string[];
+          related_articles_urls?: string[];
           summary: string;
         };
         Update: {
           headline?: string;
           id?: string;
-          related_articles?: string[];
+          related_articles_urls?: string[];
           summary?: string;
         };
         Relationships: [];

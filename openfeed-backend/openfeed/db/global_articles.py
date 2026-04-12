@@ -5,8 +5,8 @@ from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, Field
 
 from openfeed.db.client import Client
-from openfeed.db.utils import paginated_query
 from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.utils import decode_embeddings, paginated_query
 
 
 MAX_ARTICLES_PER_INTEREST = 20
@@ -28,6 +28,14 @@ class MatchArticlesResult(BaseModel):
         elif self.content:
             parts.append(self.content)
         return ". ".join(parts)
+
+
+def get_global_articles(db: Client) -> list[PublicGlobalArticles]:
+    return [
+        PublicGlobalArticles.model_validate(r)
+        for page in paginated_query(db, "global_articles", transform=decode_embeddings)
+        for r in page
+    ]
 
 
 def get_global_article_urls(db: Client) -> list[str]:

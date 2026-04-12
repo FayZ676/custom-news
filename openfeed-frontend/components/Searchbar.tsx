@@ -76,73 +76,67 @@ export default function SearchBar({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm text-center font-extralight mx-auto">
-        Sourcing the latest and most relevant news from across the web since
-        2025
-      </span>
-      <div className="flex gap-3 items-center w-full">
-        <label className="input input-lg w-full rounded-none border-base-content">
-          <Search size={18} strokeWidth={3} />
-          <div className="relative grow">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => {
-                const value = e.target.value;
-                onQueryChange(value);
-                if (!value.trim()) {
-                  onClear();
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSearch();
-                }
-              }}
-              placeholder=""
-              disabled={searching}
-              className="w-full bg-transparent outline-none"
-            />
-            {!query && (
-              <span
-                className={`absolute inset-0 flex items-center pointer-events-none text-base-content/40 transition-opacity duration-300 overflow-hidden whitespace-nowrap ${
-                  placeholderVisible ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                {PLACEHOLDERS[placeholderIndex]}
-              </span>
-            )}
-          </div>
-          {query && (
-            <button
-              type="button"
-              onClick={handleClear}
-              disabled={searching}
-              className="cursor-pointer"
+    <div className="flex gap-3 items-center w-full">
+      <label className="input input-lg w-full rounded-none border-base-content">
+        <Search size={18} strokeWidth={3} />
+        <div className="relative grow">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => {
+              const value = e.target.value;
+              onQueryChange(value);
+              if (!value.trim()) {
+                onClear();
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearch();
+              }
+            }}
+            placeholder=""
+            disabled={searching}
+            className="w-full bg-transparent"
+          />
+          {!query && (
+            <span
+              className={`absolute inset-0 flex items-center pointer-events-none text-base-content/40 transition-opacity duration-300 overflow-hidden whitespace-nowrap ${
+                placeholderVisible ? "opacity-100" : "opacity-0"
+              }`}
             >
-              <CircleX size={18} strokeWidth={3} className="opacity-50" />
-            </button>
+              {PLACEHOLDERS[placeholderIndex]}
+            </span>
           )}
-        </label>
+        </div>
         {query && (
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!query.trim() || saving || isSaved || searching}
+            onClick={handleClear}
+            disabled={searching}
             className="cursor-pointer"
           >
-            {saving ? (
-              <span className="text-base-content/50 underline">Saving</span>
-            ) : isSaved ? (
-              <span className="font-extrabold underline">Saved!</span>
-            ) : (
-              <span className="font-extrabold underline">Save</span>
-            )}
+            <CircleX size={18} strokeWidth={3} className="opacity-50" />
           </button>
         )}
-      </div>
+      </label>
+      {query && (
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!query.trim() || saving || isSaved || searching}
+          className="cursor-pointer"
+        >
+          {saving ? (
+            <span className="text-base-content/50 underline">Saving</span>
+          ) : isSaved ? (
+            <span className="font-extrabold underline">Saved!</span>
+          ) : (
+            <span className="font-extrabold underline">Save</span>
+          )}
+        </button>
+      )}
     </div>
   );
 }
