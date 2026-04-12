@@ -1,7 +1,7 @@
 // hooks/useTickerScroll.ts
 import { useRef, useEffect, useCallback } from "react";
 
-const TICKER_SPEED = 0.02; // px per ms
+const TICKER_SPEED = 0.01; // px per ms
 const RESUME_DELAY_MS = 1500;
 
 export function useTickerScroll() {
