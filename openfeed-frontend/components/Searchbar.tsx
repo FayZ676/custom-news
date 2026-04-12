@@ -76,7 +76,7 @@ export default function SearchBar({
   };
 
   return (
-    <div className="flex gap-3 items-center w-full">
+    <div className="flex flex-col gap-2 items-center w-full">
       <label className="input input-lg w-full rounded-none border-neutral-300">
         <Search size={18} strokeWidth={3} className="text-neutral-400" />
         <div className="relative grow">
@@ -126,14 +126,14 @@ export default function SearchBar({
           type="button"
           onClick={handleSave}
           disabled={!query.trim() || saving || isSaved || searching}
-          className="cursor-pointer"
+          className="cursor-pointer ml-auto px-2"
         >
           {saving ? (
-            <span className="text-base-content/50 underline">Saving</span>
+            <span className="text-base-content/50 underline">Saving ...</span>
           ) : isSaved ? (
-            <span className="font-extrabold underline">Saved!</span>
+            <span className="font-extrabold underline">Query Saved</span>
           ) : (
-            <span className="font-extrabold underline">Save</span>
+            <span className="font-extrabold underline">Save Query</span>
           )}
         </button>
       )}

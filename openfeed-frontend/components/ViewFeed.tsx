@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabase/queries/global_articles";
 
 import SearchBar from "@/components/Searchbar";
+import SearchbarTooltip from "./SearchbarTooltip";
 import SectionInterest from "@/components/SectionInterest";
 import {
   SectionArticles,
@@ -88,16 +89,19 @@ export function ViewFeed({
 
   return (
     <div className="flex flex-col gap-6">
-      <SearchBar
-        query={query}
-        saved={saved}
-        saving={saving}
-        searching={isSearching}
-        onSave={handleSave}
-        onClear={handleClear}
-        onSearch={handleSearch}
-        onQueryChange={setQuery}
-      />
+      <div className="flex flex-col gap-2">
+        <SearchbarTooltip />
+        <SearchBar
+          query={query}
+          saved={saved}
+          saving={saving}
+          searching={isSearching}
+          onSave={handleSave}
+          onClear={handleClear}
+          onSearch={handleSearch}
+          onQueryChange={setQuery}
+        />
+      </div>
       {(isSearching || searchParams.get("query")) &&
         (isSearching ? (
           <>
