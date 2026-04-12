@@ -22,7 +22,7 @@ from openfeed.database_models import PublicUserSettings
 logger = logging.getLogger(__name__)
 
 
-def send_user_notifications(db: Client) -> None:
+def notify_users(db: Client) -> None:
     """Send notifications to users whose local time is currently a notification hour."""
     users_to_notify = _get_users_to_notify(db, datetime.now(timezone.utc))
 

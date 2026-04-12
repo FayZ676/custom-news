@@ -7,12 +7,10 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.auth import verify_api_key
 from openfeed.db.client import Client, client
-from openfeed.services.notifications import send_user_notifications
-from openfeed.services.ingestion import (
-    fetch_and_embed_articles,
-    delete_old_articles,
-    identify_top_stories,
-)
+from openfeed.services.scoring import score_articles
+from openfeed.services.extraction import top_stories
+from openfeed.services.notifications import notify_users
+from openfeed.services.ingestion import fetch_articles, delete_old_articles
 
 
 logging.basicConfig(
@@ -42,9 +40,10 @@ def get_db() -> Client:
 def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     db = get_db()
-    background_tasks.add_task(fetch_and_embed_articles, db)
-    background_tasks.add_task(identify_top_stories, db)
-    background_tasks.add_task(send_user_notifications, db)
+    background_tasks.add_task(fetch_articles, db)
+    background_tasks.add_task(score_articles, db)
+    background_tasks.add_task(top_stories, db)
+    background_tasks.add_task(notify_users, db)
     return Response(status_code=202)
 
 
