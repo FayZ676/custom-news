@@ -37,7 +37,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
             )}
             <p
               onClick={() => openModal(story)}
-              className="shrink-0 w-36 sm:w-44 lg:w-60 cursor-pointer overflow-hidden text-sm lg:text-base leading-snug"
+              className="shrink-0 w-36 sm:w-44 lg:w-60 cursor-pointer overflow-hidden text-sm lg:text-base font-semibold leading-snug"
             >
               {story.headline}
             </p>
@@ -67,9 +67,9 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs underline hover:underline"
+                          className="text-xs font-bold underline hover:underline"
                         >
-                          Source {i + 1}
+                          Article {i + 1}
                         </Link>
                       ),
                     )}

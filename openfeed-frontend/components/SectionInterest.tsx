@@ -46,12 +46,12 @@ export default function SectionInterest({
 
   const handleToggleArticleReadOptimistic = async (
     articleIds: string[],
-    currentIsRead: boolean,
+    isRead: boolean,
   ) => {
     startTransition(() => {
-      setOptimisticArticles({ ids: articleIds, isRead: !currentIsRead });
+      setOptimisticArticles({ ids: articleIds, isRead });
     });
-    await handleReadArticles(articleIds, !currentIsRead);
+    await handleReadArticles(articleIds, isRead);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -65,9 +65,7 @@ export default function SectionInterest({
   return (
     <div className="flex flex-col gap-6 py-6 border-neutral-300 border-b">
       <div className="flex items-center justify-between">
-        <h1 className="text-5xl font-extrabold">
-          {toTitleCase(interest.query)}
-        </h1>
+        <h1 className="text-3xl">{toTitleCase(interest.query)}</h1>
         <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
           <div
             tabIndex={0}
