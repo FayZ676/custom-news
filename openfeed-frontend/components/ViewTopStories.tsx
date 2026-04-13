@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import { Tables } from "@/lib/supabase/supabase.types";
 
+import Modal from "@/components/Modal";
+
 interface ViewTopStoriesProps {
   stories: Tables<"global_stories">[];
 }
@@ -43,56 +45,40 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
         ))}
       </div>
 
-      <dialog
-        ref={dialogRef}
-        className="modal modal-bottom sm:modal-middle rounded-none"
-      >
-        <div className="modal-box rounded-none">
-          {selectedStory && (
-            <>
-              <form method="dialog">
-                <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-                  ✕
-                </button>
-              </form>
+      <Modal ref={dialogRef}>
+        {selectedStory && (
+          <>
+            <h3 className="font-bold text-base leading-snug pr-6">
+              {selectedStory.headline}
+            </h3>
 
-              <h3 className="font-bold text-base leading-snug pr-6">
-                {selectedStory.headline}
-              </h3>
+            <p className="mt-3 text-sm font-light leading-relaxed">
+              {selectedStory.summary}
+            </p>
 
-              <p className="mt-3 text-sm font-light leading-relaxed">
-                {selectedStory.summary}
-              </p>
-
-              {selectedStory.related_articles_urls &&
-                selectedStory.related_articles_urls.length > 0 && (
-                  <div className="pt-4">
-                    <div className="flex flex-wrap gap-2">
-                      {(selectedStory.related_articles_urls as string[]).map(
-                        (url, i) => (
-                          <Link
-                            key={i}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs underline hover:underline"
-                          >
-                            Source {i + 1}
-                          </Link>
-                        ),
-                      )}
-                    </div>
+            {selectedStory.related_articles_urls &&
+              selectedStory.related_articles_urls.length > 0 && (
+                <div className="pt-4">
+                  <div className="flex flex-wrap gap-2">
+                    {(selectedStory.related_articles_urls as string[]).map(
+                      (url, i) => (
+                        <Link
+                          key={i}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs underline hover:underline"
+                        >
+                          Source {i + 1}
+                        </Link>
+                      ),
+                    )}
                   </div>
-                )}
-            </>
-          )}
-        </div>
-
-        {/* Close on backdrop click */}
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
-      </dialog>
+                </div>
+              )}
+          </>
+        )}
+      </Modal>
     </section>
   );
 }
