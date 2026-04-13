@@ -52,7 +52,7 @@ export function SectionArticles({
               className={`flex flex-col gap-2 cursor-pointer ${isRead ? "opacity-50" : ""}`}
               onClick={() => openModal(article)}
             >
-              <h2 className="text-xl hover:underline font-semibold">
+              <h2 className="text-lg hover:underline font-semibold">
                 {toTitleCase(article.global_article.title)} &middot;{" "}
                 <span className="text-neutral-500 text-base font-normal">
                   {timeAgo(article.global_article.published_at)} &middot;{" "}
