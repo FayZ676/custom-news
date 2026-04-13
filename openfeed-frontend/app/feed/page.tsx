@@ -239,7 +239,7 @@ export default async function AllArticlesPage({
   const date = getCurrentDate();
 
   return (
-    <div className="flex flex-col gap-6 flex-1">
+    <div className="flex flex-col gap-4 flex-1">
       <div className="flex justify-center">
         <Image
           src={"logo.svg"}
