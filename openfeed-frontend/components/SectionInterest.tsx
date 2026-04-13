@@ -66,22 +66,21 @@ export default function SectionInterest({
     <div className="flex flex-col gap-4 py-6 border-neutral-300 border-b">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl">{toTitleCase(interest.query)}</h1>
-        <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
-          <div
-            tabIndex={0}
+        <details className="dropdown dropdown-bottom dropdown-end">
+          <summary
             role="button"
-            className="btn btn-ghost m-1 rounded-none p-2"
+            className="btn btn-ghost m-1 rounded-none p-2 list-none"
           >
             <EllipsisVertical />
-          </div>
-          <ul
-            tabIndex={-1}
-            className="dropdown-content menu bg-base-100 rounded-none border z-1 w-52 p-2 shadow-sm"
-          >
+          </summary>
+          <ul className="dropdown-content menu bg-base-100 rounded-none border z-1 w-52 p-2 shadow-sm">
             <li>
               <button
                 onClick={(e) => {
                   e.preventDefault();
+                  (
+                    e.currentTarget.closest("details") as HTMLDetailsElement
+                  ).open = false;
                   setShowReadArticles(!showReadArticles);
                 }}
                 className="rounded-none"
@@ -93,6 +92,9 @@ export default function SectionInterest({
               <button
                 onClick={(e) => {
                   e.preventDefault();
+                  (
+                    e.currentTarget.closest("details") as HTMLDetailsElement
+                  ).open = false;
                   handleMarkAllAsRead();
                 }}
                 className="rounded-none"
@@ -105,6 +107,9 @@ export default function SectionInterest({
                 disabled={deleting}
                 onClick={async (e) => {
                   e.preventDefault();
+                  (
+                    e.currentTarget.closest("details") as HTMLDetailsElement
+                  ).open = false;
                   handleDeleteInterest(interest.id);
                 }}
                 className="rounded-none"
@@ -113,7 +118,7 @@ export default function SectionInterest({
               </button>
             </li>
           </ul>
-        </div>
+        </details>
       </div>
       {unreadArticles.length > 0 ? (
         <SectionArticles
