@@ -80,7 +80,7 @@ export default function SearchBar({
 
   return (
     <div className="flex flex-col gap-2 items-center w-full">
-      <label className="input input-lg w-full rounded-none border-neutral-300">
+      <label className="input w-full rounded-none border-neutral-300">
         <Search size={18} strokeWidth={3} className="text-neutral-400" />
         <div className="relative grow">
           <input
