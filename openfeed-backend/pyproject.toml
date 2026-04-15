@@ -8,6 +8,7 @@ dependencies = [
     "feedparser>=6.0.11",
     "hdbscan>=0.8.42",
     "modal>=1.4.0",
+    "openai>=2.31.0",
     "pydantic[email]>=2.10.0",
     "pydantic-settings>=2.7.0",
     "pytimeparse>=1.1.8",
