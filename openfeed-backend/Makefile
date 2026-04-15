@@ -16,11 +16,8 @@ install-hooks:
 	@chmod +x $(GIT_ROOT)/.git/hooks/pre-push
 	@echo "✓ Pre-push hook installed"
 
-test:
-	set -a && \
-	. ./.env && \
-	set +a && \
-	pytest tests/ -v
+types:
+	.venv/bin/pyright openfeed/
 
 run:
 	set -a && \
