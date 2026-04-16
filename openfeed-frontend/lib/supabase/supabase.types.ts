@@ -38,37 +38,37 @@ export type Database = {
         Row: {
           content: string | null;
           created_at: string;
-          embedding_model: string | null;
           embeddings: string | null;
           feed_title: string;
           id: string;
           published_at: string;
           summary: string | null;
           title: string;
+          title_embeddings: string | null;
           url: string;
         };
         Insert: {
           content?: string | null;
           created_at?: string;
-          embedding_model?: string | null;
           embeddings?: string | null;
           feed_title: string;
           id?: string;
           published_at: string;
           summary?: string | null;
           title: string;
+          title_embeddings?: string | null;
           url: string;
         };
         Update: {
           content?: string | null;
           created_at?: string;
-          embedding_model?: string | null;
           embeddings?: string | null;
           feed_title?: string;
           id?: string;
           published_at?: string;
           summary?: string | null;
           title?: string;
+          title_embeddings?: string | null;
           url?: string;
         };
         Relationships: [
@@ -230,7 +230,6 @@ export type Database = {
       user_interests: {
         Row: {
           created_at: string;
-          embedding_model: string;
           embeddings: string;
           id: string;
           query: string;
@@ -238,7 +237,6 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
-          embedding_model: string;
           embeddings: string;
           id?: string;
           query: string;
@@ -246,7 +244,6 @@ export type Database = {
         };
         Update: {
           created_at?: string;
-          embedding_model?: string;
           embeddings?: string;
           id?: string;
           query?: string;

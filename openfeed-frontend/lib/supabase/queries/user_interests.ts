@@ -18,7 +18,6 @@ export async function insertUserInterest(
       user_id: userId,
       query,
       embeddings: JSON.stringify(embeddings),
-      embedding_model: "",
     })
     .select("id")
     .single();
