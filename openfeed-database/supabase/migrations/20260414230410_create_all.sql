@@ -11,8 +11,8 @@ create extension if not exists "vector" with schema "public";
     "summary" text,
     "content" text,
     "published_at" timestamp with time zone not null,
+    "title_embeddings" public.vector(512),
     "embeddings" public.vector(512),
-    "embedding_model" text,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -86,7 +86,6 @@ alter table "public"."user_articles" enable row level security;
     "user_id" uuid not null,
     "query" text not null,
     "embeddings" public.vector(512) not null,
-    "embedding_model" text not null,
     "created_at" timestamp with time zone not null default now()
       );
 

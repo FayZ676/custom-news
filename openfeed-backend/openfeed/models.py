@@ -89,13 +89,13 @@ class Article(BaseModel):
         return "\n\n".join(parts)
 
     def to_db_schema(
-        self, feed_title: str, embeddings_model: str, embedding: list[float]
+        self, feed_title: str, title_embedding: list[float], embedding: list[float]
     ):
         return PublicGlobalArticles(
             content="\n\n".join([v.value for v in self.content or [] if v.value])
             or None,
             published_at=self.published,
-            embedding_model=embeddings_model,
+            title_embeddings=title_embedding,
             embeddings=embedding,
             feed_title=feed_title,
             title=self.title,

@@ -9,9 +9,10 @@ from openfeed.db.client import Client
 
 
 def decode_embeddings(row: Json) -> None:
-    """Deserialize the embeddings field in-place, if present."""
-    if (raw := row.get("embeddings")) is not None:
-        row["embeddings"] = json.loads(raw)
+    """Deserialize the embeddings fields in-place, if present."""
+    for field in ("embeddings", "title_embeddings"):
+        if (raw := row.get(field)) is not None and isinstance(raw, str):
+            row[field] = json.loads(raw)
 
 
 # TODO: Can we use Generic typing here?

@@ -35,13 +35,18 @@ def fetch_articles(db: Client):
             seen_urls.add(article.link)
             unique_found_articles.append((feed_title, article))
 
+    title_embeddings = embed_texts(
+        [article.title for _, article in unique_found_articles]
+    )
     article_embeddings = embed_texts(
         [str(article) for _, article in unique_found_articles]
     )
     articles = [
-        article.to_db_schema(feed_title, article_embeddings.model, embedding)
-        for (feed_title, article), embedding in zip(
-            unique_found_articles, article_embeddings.embeddings
+        article.to_db_schema(feed_title, title_embedding, embedding)
+        for (feed_title, article), title_embedding, embedding in zip(
+            unique_found_articles,
+            title_embeddings.embeddings,
+            article_embeddings.embeddings,
         )
     ]
 

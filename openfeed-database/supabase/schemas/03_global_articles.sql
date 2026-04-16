@@ -8,8 +8,8 @@ create table "global_articles" (
     "summary" text,
     "content" text,
     "published_at" timestamptz not null,
+    "title_embeddings" vector(512),
     "embeddings" vector(512),
-    "embedding_model" text,
     "created_at" timestamptz not null default now()
 );
 
