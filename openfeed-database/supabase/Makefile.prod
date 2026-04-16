@@ -9,17 +9,17 @@ reset:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& mv migrations /tmp/_migrations_backup \
 		&& mv seeds /tmp/_seeds_backup \
-		&& supabase db reset --linked \
+		&& supabase db reset --linked --yes \
 		; mv /tmp/_migrations_backup migrations \
 		; mv /tmp/_seeds_backup seeds
 
 seed:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-seed
+		&& supabase db push --include-seed --yes
 
 deploy:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-all \
+		&& supabase db push --include-all --yes \
 		&& supabase secrets set \
 			BACKEND_URL=$(BACKEND_URL) \
 			BACKEND_API_KEY=$(BACKEND_API_KEY) \
