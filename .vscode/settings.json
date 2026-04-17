@@ -1,3 +1,4 @@
 {
+  "python.analysis.extraPaths": ["openfeed-backend/tests"],
   "python.defaultInterpreterPath": "${workspaceFolder}/openfeed-backend/.venv/bin/python"
 }
