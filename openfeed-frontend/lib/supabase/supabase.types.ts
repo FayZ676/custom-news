@@ -38,37 +38,34 @@ export type Database = {
         Row: {
           content: string | null;
           created_at: string;
-          embeddings: string | null;
           feed_title: string;
           id: string;
           published_at: string;
           summary: string | null;
+          summary_embeddings: string | null;
           title: string;
-          title_embeddings: string | null;
           url: string;
         };
         Insert: {
           content?: string | null;
           created_at?: string;
-          embeddings?: string | null;
           feed_title: string;
           id?: string;
           published_at: string;
           summary?: string | null;
+          summary_embeddings?: string | null;
           title: string;
-          title_embeddings?: string | null;
           url: string;
         };
         Update: {
           content?: string | null;
           created_at?: string;
-          embeddings?: string | null;
           feed_title?: string;
           id?: string;
           published_at?: string;
           summary?: string | null;
+          summary_embeddings?: string | null;
           title?: string;
-          title_embeddings?: string | null;
           url?: string;
         };
         Relationships: [
