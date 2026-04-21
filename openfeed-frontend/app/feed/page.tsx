@@ -39,6 +39,7 @@ import { getStories } from "@/lib/supabase/queries/global_stories";
 
 import { getCurrentDate } from "@/lib/utils";
 
+import { TabSwitcher } from "@/components/TabSwitcher";
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
@@ -273,29 +274,7 @@ export default async function AllArticlesPage({
         <BannerContent date={date} />
       </Suspense>
 
-      <div role="tablist" className="tabs tabs-border tabs-lg font-bold gap-4">
-        <Link
-          href="/feed?tab=my-news"
-          role="tab"
-          className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0`}
-        >
-          My News
-        </Link>
-        <Link
-          href="/feed?tab=trending"
-          role="tab"
-          className={`tab ${tab === "trending" ? "tab-active" : ""} p-0`}
-        >
-          Trending
-        </Link>
-        <Link
-          href="/feed?tab=search"
-          role="tab"
-          className={`tab ${tab === "search" ? "tab-active" : ""} p-0`}
-        >
-          Search
-        </Link>
-      </div>
+      <TabSwitcher />
 
       {tab === "my-news" && (
         <Suspense fallback={<ViewFeedSkeleton />}>
