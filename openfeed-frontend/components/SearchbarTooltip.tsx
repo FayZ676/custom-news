@@ -10,7 +10,7 @@ export default function SearchbarTooltip() {
   return (
     <>
       <button
-        className="ml-auto text-xs text-neutral-500 italic underline cursor-pointer"
+        className="ml-auto text-sm text-neutral-500 italic underline cursor-pointer"
         onClick={() => modalRef.current?.showModal()}
       >
         Need help?
@@ -22,15 +22,13 @@ export default function SearchbarTooltip() {
           <p>
             <span className="font-bold">Search</span> — Type something you're
             interested in into the searchbar.{" "}
-            <span className="font-bold">Be specific.</span> Press the{" "}
-            <kbd className="kbd kbd-sm">Enter</kbd> key on your keyboard to see
-            related articles.
+            <span className="font-bold">Be specific.</span>
           </p>
           <p>
             <span className="font-bold">Save</span> — After typing a query,
             click the <span className="font-bold underline">Save</span> button
-            to add it as a persistent interest. New articles related to your
-            query will automatically appear in your feed periodically.
+            to add it to your News Feed. New articles related to your interest
+            will automatically appear in your news feed.
           </p>
           <p>
             <span className="font-bold">Clear</span> — Click the{" "}

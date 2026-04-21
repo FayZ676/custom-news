@@ -1,27 +1,16 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition, useOptimistic } from "react";
+import { useRouter } from "next/navigation";
+import { useTransition, useOptimistic } from "react";
 
-import {
-  QueryArticle,
-  InterestArticles,
-} from "@/lib/supabase/queries/global_articles";
+import { InterestArticles } from "@/lib/supabase/queries/global_articles";
 
-import SearchBar from "@/components/Searchbar";
-import SearchbarTooltip from "./SearchbarTooltip";
 import SectionInterest from "@/components/SectionInterest";
-import {
-  SectionArticles,
-  SectionArticleSkeleton,
-} from "@/components/SectionArticles";
-import { SearchbarSkeleton } from "@/components/Searchbar";
+import { SectionArticleSkeleton } from "@/components/SectionArticles";
 
 export interface ViewFeedProps {
-  queryArticles: QueryArticle[];
   interestArticles: InterestArticles[];
   handleDeleteInterest: (interestId: string) => Promise<void>;
-  handleSaveUserInterest: (query: string) => Promise<string>;
   handleReadUserArticles: (
     articleIds: string[],
     isRead: boolean,
@@ -29,44 +18,19 @@ export interface ViewFeedProps {
 }
 
 export function ViewFeed({
-  queryArticles,
   interestArticles,
   handleDeleteInterest,
   handleReadUserArticles,
-  handleSaveUserInterest,
 }: ViewFeedProps) {
   const router = useRouter();
 
-  const searchParams = useSearchParams();
-
-  const [saved, setSaved] = useState(false);
-  const [query, setQuery] = useState(searchParams.get("query") ?? "");
-
-  const [saving, startSaveTransition] = useTransition();
   const [deleting, startDeleteTransition] = useTransition();
-  const [isSearching, startSearchTransition] = useTransition();
 
   const [optimisticInterests, removeOptimisticInterest] = useOptimistic(
     interestArticles,
     (current: InterestArticles[], deletedId: string) =>
       current.filter((interest) => interest.id !== deletedId),
   );
-
-  const handleSearch = (query: string) => {
-    startSearchTransition(() => {
-      router.push(`/feed?query=${encodeURIComponent(query)}`);
-    });
-  };
-
-  const handleSave = (query: string) => {
-    setSaved(false);
-    startSaveTransition(async () => {
-      await handleSaveUserInterest(query);
-      setSaved(true);
-      setQuery("");
-      router.push("/feed");
-    });
-  };
 
   const handleDelete = (interestId: string) => {
     startDeleteTransition(async () => {
@@ -76,64 +40,39 @@ export function ViewFeed({
     });
   };
 
-  const handleClear = () => {
-    startSearchTransition(() => {
-      router.push("/feed");
-    });
-  };
-
   const handleRead = async (articleIds: string[], isRead: boolean) => {
     await handleReadUserArticles(articleIds, isRead);
     router.refresh();
   };
 
+  if (optimisticInterests.length === 0) {
+    return (
+      <p className="text-sm italic text-neutral-500">
+        No interests yet. Use the{" "}
+        <span className="font-semibold not-italic">Search</span> tab to find
+        topics and save them to your news feed.
+      </p>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <SearchbarTooltip />
-        <SearchBar
-          query={query}
-          saved={saved}
-          saving={saving}
-          searching={isSearching}
-          onSave={handleSave}
-          onClear={handleClear}
-          onSearch={handleSearch}
-          onQueryChange={setQuery}
-        />
-      </div>
-      {(isSearching || searchParams.get("query")) &&
-        (isSearching ? (
-          <>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <SectionArticleSkeleton key={i} />
-            ))}
-          </>
-        ) : queryArticles.length > 0 ? (
-          <SectionArticles articles={queryArticles} />
-        ) : (
-          <p className="text-sm italic">
-            No articles found matching your query. Try something more specific.
-          </p>
+    <div className="flex flex-col gap-6">
+      {optimisticInterests
+        .slice()
+        .sort((a, b) => {
+          const aHasUnread = a.articles.some((article) => !article.is_read);
+          const bHasUnread = b.articles.some((article) => !article.is_read);
+          return Number(bHasUnread) - Number(aHasUnread);
+        })
+        .map((interest) => (
+          <SectionInterest
+            key={interest.id}
+            interest={interest}
+            deleting={deleting}
+            handleDeleteInterest={handleDelete}
+            handleReadArticles={handleRead}
+          />
         ))}
-      <div className="flex flex-col">
-        {optimisticInterests
-          .slice()
-          .sort((a, b) => {
-            const aHasUnread = a.articles.some((article) => !article.is_read);
-            const bHasUnread = b.articles.some((article) => !article.is_read);
-            return Number(bHasUnread) - Number(aHasUnread);
-          })
-          .map((interest) => (
-            <SectionInterest
-              key={interest.id}
-              interest={interest}
-              deleting={deleting}
-              handleDeleteInterest={handleDelete}
-              handleReadArticles={handleRead}
-            />
-          ))}
-      </div>
     </div>
   );
 }
@@ -141,12 +80,9 @@ export function ViewFeed({
 export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="flex flex-col gap-6">
-      <SearchbarSkeleton />
-      <div className="flex flex-col gap-2">
-        {Array.from({ length: count }).map((_, i) => (
-          <SectionArticleSkeleton key={i} />
-        ))}
-      </div>
+      {Array.from({ length: count }).map((_, i) => (
+        <SectionArticleSkeleton key={i} />
+      ))}
     </div>
   );
 }

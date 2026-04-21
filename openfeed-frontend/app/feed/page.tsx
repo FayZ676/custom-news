@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -34,17 +35,24 @@ import {
 } from "@/lib/supabase/queries/global_settings";
 import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
 import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
+import { getStories } from "@/lib/supabase/queries/global_stories";
 
 import { getCurrentDate } from "@/lib/utils";
 
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
+import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 import {
   ViewTopStories,
   ViewTopStoriesSkeleton,
 } from "@/components/ViewTopStories";
-import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
-import { getStories } from "@/lib/supabase/queries/global_stories";
+import { ViewSearch, ViewSearchSkeleton } from "@/components/ViewSearch";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type Tab = "my-news" | "trending" | "search";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -54,7 +62,7 @@ async function searchGlobalArticles(
   supabase: SupabaseClient<Database>,
   query: string,
   settings: GlobalSettings,
-): Promise<InterestArticle[]> {
+) {
   const { embeddings } = await embedTexts([query]);
   const matches = await matchArticlesByEmbedding(
     supabase,
@@ -67,11 +75,11 @@ async function searchGlobalArticles(
     supabase,
     matches.map((m) => m.id),
   );
-  const rerankedArticleTexts = await rerankTexts(
+  const reranked = await rerankTexts(
     query,
     articles.map((a) => a.global_article.title),
   );
-  return rerankedArticleTexts.map((r) => articles[r.index]);
+  return reranked.map((r) => articles[r.index]);
 }
 
 async function updateUserArticleScores(
@@ -138,28 +146,9 @@ async function BannerContent({ date }: { date: string }) {
   return <Banner date={date} feeds={feeds} />;
 }
 
-async function ViewFeedContent({
-  userId,
-  query,
-}: {
-  userId: string;
-  query?: string;
-}) {
+async function ViewMyNewsContent({ userId }: { userId: string }) {
   const supabase = await createClient();
-  const [globalSettings, interestArticles] = await Promise.all([
-    getGlobalSettings(supabase),
-    getUserInterestArticles(supabase, userId),
-  ]);
-  const queryArticles = query
-    ? await searchGlobalArticles(supabase, query, globalSettings)
-    : [];
-
-  async function handleSaveUserInterest(query: string) {
-    "use server";
-    const supabase = await createClient();
-    const settings = await getGlobalSettings(supabase);
-    return await saveUserInterest(supabase, query, userId, settings);
-  }
+  const interestArticles = await getUserInterestArticles(supabase, userId);
 
   async function handleReadArticles(articleIds: string[], isRead: boolean) {
     "use server";
@@ -175,19 +164,45 @@ async function ViewFeedContent({
 
   return (
     <ViewFeed
-      queryArticles={queryArticles}
       interestArticles={interestArticles}
       handleDeleteInterest={handleDeleteInterest}
       handleReadUserArticles={handleReadArticles}
-      handleSaveUserInterest={handleSaveUserInterest}
     />
   );
 }
 
-async function ViewTopStoriesContent() {
+async function ViewTrendingContent() {
   const supabase = await createClient();
-  const topStories = await getStories(supabase);
-  return <ViewTopStories stories={topStories} />;
+  const stories = await getStories(supabase);
+  return <ViewTopStories stories={stories} />;
+}
+
+async function ViewSearchContent({
+  userId,
+  query,
+}: {
+  userId: string;
+  query?: string;
+}) {
+  const supabase = await createClient();
+  const settings = await getGlobalSettings(supabase);
+  const queryArticles = query
+    ? await searchGlobalArticles(supabase, query, settings)
+    : [];
+
+  async function handleSaveUserInterest(query: string) {
+    "use server";
+    const supabase = await createClient();
+    const settings = await getGlobalSettings(supabase);
+    return await saveUserInterest(supabase, query, userId, settings);
+  }
+
+  return (
+    <ViewSearch
+      queryArticles={queryArticles}
+      handleSaveUserInterest={handleSaveUserInterest}
+    />
+  );
 }
 
 async function FooterContent({
@@ -227,7 +242,7 @@ async function FooterContent({
 export default async function AllArticlesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string }>;
+  searchParams: Promise<{ tab?: string; query?: string }>;
 }) {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -235,8 +250,11 @@ export default async function AllArticlesPage({
 
   const userId = claimsData.claims.sub;
   const email = claimsData.claims.email ?? "";
-  const { query } = await searchParams;
+  const { tab: rawTab, query } = await searchParams;
   const date = getCurrentDate();
+
+  const tab: Tab =
+    rawTab === "trending" || rawTab === "search" ? rawTab : "my-news";
 
   return (
     <div className="flex flex-col gap-4 flex-1">
@@ -255,13 +273,47 @@ export default async function AllArticlesPage({
         <BannerContent date={date} />
       </Suspense>
 
-      <Suspense fallback={<ViewTopStoriesSkeleton />}>
-        <ViewTopStoriesContent />
-      </Suspense>
+      <div role="tablist" className="tabs tabs-border tabs-lg font-bold gap-4">
+        <Link
+          href="/feed?tab=my-news"
+          role="tab"
+          className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0`}
+        >
+          My News
+        </Link>
+        <Link
+          href="/feed?tab=trending"
+          role="tab"
+          className={`tab ${tab === "trending" ? "tab-active" : ""} p-0`}
+        >
+          Trending
+        </Link>
+        <Link
+          href="/feed?tab=search"
+          role="tab"
+          className={`tab ${tab === "search" ? "tab-active" : ""} p-0`}
+        >
+          Search
+        </Link>
+      </div>
 
-      <Suspense fallback={<ViewFeedSkeleton />}>
-        <ViewFeedContent userId={userId} query={query} />
-      </Suspense>
+      {tab === "my-news" && (
+        <Suspense fallback={<ViewFeedSkeleton />}>
+          <ViewMyNewsContent userId={userId} />
+        </Suspense>
+      )}
+
+      {tab === "trending" && (
+        <Suspense fallback={<ViewTopStoriesSkeleton />}>
+          <ViewTrendingContent />
+        </Suspense>
+      )}
+
+      {tab === "search" && (
+        <Suspense key={query ?? ""} fallback={<ViewSearchSkeleton />}>
+          <ViewSearchContent userId={userId} query={query} />
+        </Suspense>
+      )}
 
       <Suspense fallback={<FooterSkeleton />}>
         <FooterContent userId={userId} email={email} />
