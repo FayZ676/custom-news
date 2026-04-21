@@ -41,6 +41,15 @@ class ArticleContent(BaseModel):
         return _strip_html(v) or None
 
 
+class EntitiesResponse(BaseModel):
+    summary: str
+    entities: list[str]
+
+
+class ArticleMetadata(EntitiesResponse):
+    summary_embeddings: list[float]
+
+
 class Article(BaseModel):
     title: str
     link: str
@@ -89,17 +98,18 @@ class Article(BaseModel):
         return "\n\n".join(parts)
 
     def to_db_schema(
-        self, feed_title: str, title_embedding: list[float], embedding: list[float]
+        self,
+        feed_title: str,
+        metadata: ArticleMetadata,
     ):
         return PublicGlobalArticles(
             content="\n\n".join([v.value for v in self.content or [] if v.value])
             or None,
             published_at=self.published,
-            title_embeddings=title_embedding,
-            embeddings=embedding,
             feed_title=feed_title,
             title=self.title,
-            summary=self.summary,
+            summary=metadata.summary,
+            summary_embeddings=metadata.summary_embeddings,
             url=self.link,
             id=uuid.uuid4(),
             created_at=datetime.now(),

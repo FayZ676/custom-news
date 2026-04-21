@@ -54,39 +54,40 @@ AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 class PublicGlobalArticles(BaseModel):
     content: Optional[str] = Field(alias="content")
     created_at: datetime.datetime = Field(alias="created_at")
-    embeddings: Optional[list[Any]] = Field(alias="embeddings")
     feed_title: str = Field(alias="feed_title")
     id: uuid.UUID = Field(alias="id")
     published_at: datetime.datetime = Field(alias="published_at")
     summary: Optional[str] = Field(alias="summary")
+    summary_embeddings: Optional[list[Any]] = Field(alias="summary_embeddings")
     title: str = Field(alias="title")
-    title_embeddings: Optional[list[Any]] = Field(alias="title_embeddings")
     url: str = Field(alias="url")
 
 
 class PublicGlobalArticlesInsert(TypedDict):
     content: NotRequired[Annotated[str, Field(alias="content")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    embeddings: NotRequired[Annotated[list[Any], Field(alias="embeddings")]]
     feed_title: Annotated[str, Field(alias="feed_title")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     published_at: Annotated[datetime.datetime, Field(alias="published_at")]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
+    summary_embeddings: NotRequired[
+        Annotated[list[Any], Field(alias="summary_embeddings")]
+    ]
     title: Annotated[str, Field(alias="title")]
-    title_embeddings: NotRequired[Annotated[list[Any], Field(alias="title_embeddings")]]
     url: Annotated[str, Field(alias="url")]
 
 
 class PublicGlobalArticlesUpdate(TypedDict):
     content: NotRequired[Annotated[str, Field(alias="content")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    embeddings: NotRequired[Annotated[list[Any], Field(alias="embeddings")]]
     feed_title: NotRequired[Annotated[str, Field(alias="feed_title")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     published_at: NotRequired[Annotated[datetime.datetime, Field(alias="published_at")]]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
+    summary_embeddings: NotRequired[
+        Annotated[list[Any], Field(alias="summary_embeddings")]
+    ]
     title: NotRequired[Annotated[str, Field(alias="title")]]
-    title_embeddings: NotRequired[Annotated[list[Any], Field(alias="title_embeddings")]]
     url: NotRequired[Annotated[str, Field(alias="url")]]
 
 

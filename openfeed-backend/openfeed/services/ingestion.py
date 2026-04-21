@@ -10,9 +10,9 @@ from openfeed.db.global_articles import (
     delete_global_articles,
 )
 from openfeed.models import Article
-from openfeed.embeddings import embed_texts
 from openfeed.ingestion import get_articles
 from openfeed.db.global_feeds import get_global_feeds
+from openfeed.preprocess import extract_article_metadata
 from openfeed.db.global_settings import get_global_settings
 
 
@@ -35,25 +35,20 @@ def fetch_articles(db: Client):
             seen_urls.add(article.link)
             unique_found_articles.append((feed_title, article))
 
-    title_embeddings = embed_texts(
-        [article.title for _, article in unique_found_articles]
-    )
-    article_embeddings = embed_texts(
+    article_metadata = extract_article_metadata(
         [str(article) for _, article in unique_found_articles]
     )
     articles = [
-        article.to_db_schema(feed_title, title_embedding, embedding)
-        for (feed_title, article), title_embedding, embedding in zip(
-            unique_found_articles,
-            title_embeddings.embeddings,
-            article_embeddings.embeddings,
+        article.to_db_schema(feed_title, metadata)
+        for (feed_title, article), metadata in zip(
+            unique_found_articles, article_metadata
         )
     ]
 
-    logger.info("Fetched and inserted %d new articles", len(articles))
-
     if articles:
         insert_global_articles(db, articles)
+
+    logger.info("Fetched and inserted %d new articles", len(articles))
 
     return articles
 
