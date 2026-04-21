@@ -27,7 +27,7 @@ export function TabSwitcher() {
         prefetch={true}
         className={`tab ${tab === "trending" ? "tab-active" : ""} p-0`}
       >
-        Trending
+        Trending News
       </Link>
       <Link
         href="/feed?tab=search"
