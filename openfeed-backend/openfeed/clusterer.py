@@ -25,7 +25,7 @@ def cluster_articles(
 
 
 def reduce_clusters(
-    clusters: list[list[PublicGlobalArticles]], threshold: float = 0.7
+    clusters: list[list[PublicGlobalArticles]], threshold: float = 0.5
 ) -> list[list[PublicGlobalArticles]]:
     # TODO: Paralellize
     return [
