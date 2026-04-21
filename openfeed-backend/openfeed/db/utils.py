@@ -10,7 +10,7 @@ from openfeed.db.client import Client
 
 def decode_embeddings(row: Json) -> None:
     """Deserialize the embeddings fields in-place, if present."""
-    for field in ("embeddings", "title_embeddings"):
+    for field in ["summary_embeddings"]:
         if (raw := row.get(field)) is not None and isinstance(raw, str):
             row[field] = json.loads(raw)
 
