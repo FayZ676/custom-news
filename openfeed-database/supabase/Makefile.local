@@ -20,4 +20,4 @@ gen_types_ts:
 gen_types_py:
 	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/database_models.py
 
-init: reset deploy fetch_articles gen_types_py gen_types_ts
+init: reset deploy gen_types_py gen_types_ts fetch_articles

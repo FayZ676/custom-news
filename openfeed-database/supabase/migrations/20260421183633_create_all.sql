@@ -9,10 +9,9 @@ create extension if not exists "vector" with schema "public";
     "title" text not null,
     "url" text not null,
     "summary" text,
+    "summary_embeddings" public.vector(512),
     "content" text,
     "published_at" timestamp with time zone not null,
-    "title_embeddings" public.vector(512),
-    "embeddings" public.vector(512),
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -209,10 +208,10 @@ CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, 
  RETURNS TABLE(id uuid, title text, summary text, content text, similarity double precision)
  LANGUAGE sql
 AS $function$
-  select id, title, summary, content, 1 - (embeddings <=> query_embedding) as similarity
+  select id, title, summary, content, 1 - (summary_embeddings <=> query_embedding) as similarity
   from global_articles
-  where (1 - (embeddings <=> query_embedding)) >= min_similarity
-  order by embeddings <=> query_embedding
+  where (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
+  order by summary_embeddings <=> query_embedding
   limit match_count;
 $function$
 ;

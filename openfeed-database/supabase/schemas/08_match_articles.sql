@@ -6,9 +6,9 @@ create or replace function match_articles(
 returns table (id uuid, title text, summary text, content text, similarity float)
 language sql
 as $$
-  select id, title, summary, content, 1 - (embeddings <=> query_embedding) as similarity
+  select id, title, summary, content, 1 - (summary_embeddings <=> query_embedding) as similarity
   from global_articles
-  where (1 - (embeddings <=> query_embedding)) >= min_similarity
-  order by embeddings <=> query_embedding
+  where (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
+  order by summary_embeddings <=> query_embedding
   limit match_count;
 $$;

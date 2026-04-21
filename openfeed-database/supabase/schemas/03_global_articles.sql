@@ -6,10 +6,9 @@ create table "global_articles" (
     "title" text not null,
     "url" text not null unique,
     "summary" text,
+    "summary_embeddings" vector(512),
     "content" text,
     "published_at" timestamptz not null,
-    "title_embeddings" vector(512),
-    "embeddings" vector(512),
     "created_at" timestamptz not null default now()
 );
 
