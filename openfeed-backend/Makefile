@@ -43,7 +43,7 @@ docker_run:
 # Deployment
 
 deploy_secrets:
-	modal secret delete openfeed-secrets
+	modal secret delete openfeed-secrets --yes
 	modal secret create openfeed-secrets \
 		SUPABASE_PROJECT_URL=$(SUPABASE_PROJECT_URL) \
 		SUPABASE_SERVICE_ROLE_KEY=$(SUPABASE_SERVICE_ROLE_KEY) \
