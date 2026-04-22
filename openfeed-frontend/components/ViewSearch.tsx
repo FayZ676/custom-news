@@ -41,6 +41,7 @@ export function ViewSearch({
       await handleSaveUserInterest(q);
       setSaved(true);
       setQuery("");
+      router.refresh();
       router.push("/feed?tab=search");
     });
   };
