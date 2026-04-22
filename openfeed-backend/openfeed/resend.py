@@ -2,8 +2,7 @@ import requests
 from pydantic import BaseModel, EmailStr
 
 RESEND_BATCH_LIMIT = 100
-NEW_ARTICLES_TEMPLATE_ALIAS = "thelatesttimes-new-articles"
-CAUGHT_UP_TEMPLATE_ALIAS = "thelatesttimes-caught-up"
+DIGEST_TEMPLATE_ALIAS = "thelatesttimes-digest"
 
 
 class TemplateEmailInput(BaseModel):
@@ -107,12 +106,12 @@ def send_batch_template_emails(
     return BatchEmailResponse(data=[item["id"] for item in raw["data"]])
 
 
-def create_template_new_articles(api_key: str) -> CreateTemplateResponse:
+def create_template_digest(api_key: str) -> CreateTemplateResponse:
     return _create_and_publish_template(
-        name="The Latest Times - New Articles",
-        alias=NEW_ARTICLES_TEMPLATE_ALIAS,
-        subject="You have new articles waiting",
-        html=_NEW_ARTICLES_TEMPLATE_HTML,
+        name="The Latest Times - Digest",
+        alias=DIGEST_TEMPLATE_ALIAS,
+        subject="Your Latest Times digest",
+        html=_DIGEST_TEMPLATE_HTML,
         variables=[
             {"key": "INTERESTS_SUMMARY", "type": "string"},
             {"key": "FEED_URL", "type": "string"},
@@ -121,20 +120,7 @@ def create_template_new_articles(api_key: str) -> CreateTemplateResponse:
     )
 
 
-def create_template_caught_up(api_key: str) -> CreateTemplateResponse:
-    return _create_and_publish_template(
-        name="The Latest Times - Caught Up",
-        alias=CAUGHT_UP_TEMPLATE_ALIAS,
-        subject="You're all caught up",
-        html=_CAUGHT_UP_TEMPLATE_HTML,
-        variables=[
-            {"key": "FEED_URL", "type": "string"},
-        ],
-        api_key=api_key,
-    )
-
-
-_NEW_ARTICLES_TEMPLATE_HTML = """\
+_DIGEST_TEMPLATE_HTML = """\
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -152,11 +138,23 @@ _NEW_ARTICLES_TEMPLATE_HTML = """\
           <!-- Header -->
           <tr>
             <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #1a1a1a;">The Latest Times</span>
+              <img src="https://uopbwbyktgayhpbvvgvs.supabase.co/storage/v1/object/public/assets/logo.svg"
+                   alt="The Latest Times"
+                   height="28"
+                   style="display: block; height: 28px; width: auto; border: 0;" />
             </td>
           </tr>
 
-          <!-- Interest summary -->
+          <!-- Top stories summary -->
+          <tr>
+            <td style="padding: 28px 32px 16px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                {{{TOP_STORIES_SUMMARY}}}
+              </table>
+            </td>
+          </tr>
+
+          <!-- Interest summary or caught-up message -->
           <tr>
             <td style="padding: 28px 32px 16px 32px;">
               <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -193,66 +191,7 @@ _NEW_ARTICLES_TEMPLATE_HTML = """\
 </html>"""
 
 
-_CAUGHT_UP_TEMPLATE_HTML = """\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>You're all caught up</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f5f5f5;">
-    <tr>
-      <td align="center" style="padding: 32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" border="0"
-               style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
-
-          <!-- Header -->
-          <tr>
-            <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #f0f0f0;">
-              <span style="font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: #1a1a1a;">The Latest Times</span>
-            </td>
-          </tr>
-
-          <!-- Message -->
-          <tr>
-            <td style="padding: 32px 32px 24px 32px; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #1a1a1a;">You're all caught up &#10003;</p>
-              <p style="margin: 0; font-size: 14px; color: #888;">No new articles since your last visit. Check back soon.</p>
-            </td>
-          </tr>
-
-          <!-- CTA -->
-          <tr>
-            <td style="padding: 8px 32px 32px 32px;" align="center">
-              <a href="{{{FEED_URL}}}" style="display: inline-block; background-color: #1a1a1a; color: #ffffff;
-                 text-decoration: none; font-size: 13px; font-weight: 600; padding: 12px 28px;
-                 border-radius: 6px; letter-spacing: 0.01em;">
-                Go to The Latest Times &rarr;
-              </a>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 16px 32px 28px 32px; border-top: 1px solid #f0f0f0;">
-              <p style="margin: 0; font-size: 11px; color: #bbb; text-align: center;">
-                Sent by The Latest Times &mdash; <a href="{{{FEED_URL}}}" style="color: #bbb;">To unsubscribe, visit your dashboard settings</a>
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>"""
-
-
 if __name__ == "__main__":
     from openfeed.config import settings
 
-    create_template_caught_up(settings.resend_api_key)
-    create_template_new_articles(settings.resend_api_key)
+    create_template_digest(settings.resend_api_key)

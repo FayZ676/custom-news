@@ -14,12 +14,19 @@ from openfeed.db.user_articles import (
 from openfeed.resend import (
     TemplateEmailInput,
     send_batch_template_emails,
-    NEW_ARTICLES_TEMPLATE_ALIAS,
-    CAUGHT_UP_TEMPLATE_ALIAS,
+    DIGEST_TEMPLATE_ALIAS,
 )
 from openfeed.database_models import PublicUserSettings
 
 logger = logging.getLogger(__name__)
+
+
+_CAUGHT_UP_HTML = (
+    '<tr><td style="padding: 32px 0; text-align: center;">'
+    '<p style="margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #1a1a1a;">You\'re all caught up &#10003;</p>'
+    '<p style="margin: 0; font-size: 14px; color: #888;">No new articles since your last visit. Check back soon.</p>'
+    "</td></tr>"
+)
 
 
 def notify_users(db: Client) -> None:
@@ -35,13 +42,25 @@ def notify_users(db: Client) -> None:
         get_unread_user_article_details(db, user_ids_emails)
     )
 
-    caught_up_emails = [
-        e for e in user_ids_emails.values() if e not in articles_by_email
-    ]
-    if caught_up_emails:
-        _send_caught_up_emails(caught_up_emails)
-    if articles_by_email:
-        _send_new_articles_emails(articles_by_email)
+    send_batch_template_emails(
+        emails=[
+            TemplateEmailInput(
+                to=email,
+                template_id=DIGEST_TEMPLATE_ALIAS,
+                variables={
+                    "INTERESTS_SUMMARY": (
+                        _build_interests_summary_html(articles_by_email[email])
+                        if email in articles_by_email
+                        else _CAUGHT_UP_HTML
+                    ),
+                    "FEED_URL": settings.frontend_url,
+                },
+            )
+            for email in user_ids_emails.values()
+        ],
+        api_key=settings.resend_api_key,
+        from_email=settings.resend_from_email,
+    )
 
 
 def _get_users_to_notify(db: Client, now_utc: datetime):
@@ -77,43 +96,6 @@ def _group_details_by_email(
             key=lambda d: d.email,
         )
     }
-
-
-def _send_caught_up_emails(emails: list[str]) -> None:
-    """Notify users who have no unread articles that they are all caught up."""
-    send_batch_template_emails(
-        emails=[
-            TemplateEmailInput(
-                to=email,
-                template_id=CAUGHT_UP_TEMPLATE_ALIAS,
-                variables={"FEED_URL": settings.frontend_url},
-            )
-            for email in emails
-        ],
-        api_key=settings.resend_api_key,
-        from_email=settings.resend_from_email,
-    )
-
-
-def _send_new_articles_emails(
-    articles_by_email: dict[str, list[UserArticleDetails]],
-) -> None:
-    """Send a personalised new-articles digest to each user with unread content."""
-    send_batch_template_emails(
-        emails=[
-            TemplateEmailInput(
-                to=email,
-                template_id=NEW_ARTICLES_TEMPLATE_ALIAS,
-                variables={
-                    "INTERESTS_SUMMARY": _build_interests_summary_html(details),
-                    "FEED_URL": settings.frontend_url,
-                },
-            )
-            for email, details in articles_by_email.items()
-        ],
-        api_key=settings.resend_api_key,
-        from_email=settings.resend_from_email,
-    )
 
 
 def _build_interests_summary_html(details: list[UserArticleDetails]) -> str:
