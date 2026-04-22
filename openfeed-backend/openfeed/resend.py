@@ -113,6 +113,7 @@ def create_template_digest(api_key: str) -> CreateTemplateResponse:
         subject="Your Latest Times digest",
         html=_DIGEST_TEMPLATE_HTML,
         variables=[
+            {"key": "TOP_STORIES_SUMMARY", "type": "string"},
             {"key": "INTERESTS_SUMMARY", "type": "string"},
             {"key": "FEED_URL", "type": "string"},
         ],
