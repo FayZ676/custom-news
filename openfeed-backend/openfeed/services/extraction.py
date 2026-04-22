@@ -7,7 +7,8 @@ from openfeed.db.client import Client
 from openfeed.openai_client import openai_client
 from openfeed.db.global_articles import get_global_articles
 from openfeed.clusterer import cluster_articles, reduce_clusters
-from openfeed.db.global_stories import delete_stories, insert_stories
+from openfeed.db.global_stories import get_stories, update_story_urls
+from openfeed.db.global_stories import delete_stories_by_ids, insert_stories
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
 
 
@@ -17,15 +18,48 @@ class TopStoryLLMResponse(BaseModel):
 
 
 def top_stories(db: Client):
+    stories = get_stories(db)
     articles = get_global_articles(db)
     clusters = cluster_articles(articles)
     clusters = reduce_clusters(clusters)
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        stories = list(executor.map(_generate_story, clusters))
+    new_clusters, matched_story_ids = _deduplicate_clusters(db, clusters, stories)
+    stale_story_ids = [s.id for s in stories if s.id not in matched_story_ids]
 
-    delete_stories(db)
-    insert_stories(db, stories)
+    if stale_story_ids:
+        delete_stories_by_ids(db, stale_story_ids)
+    if new_clusters:
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            new_stories = list(executor.map(_generate_story, new_clusters))
+        insert_stories(db, new_stories)
+
+
+def _deduplicate_clusters(
+    db: Client,
+    clusters: list[list[PublicGlobalArticles]],
+    stories: list[PublicGlobalStories],
+) -> tuple[list[list[PublicGlobalArticles]], set[uuid.UUID]]:
+    matched_story_ids: set[uuid.UUID] = set()
+    new_clusters: list[list[PublicGlobalArticles]] = []
+    for cluster in clusters:
+        cluster_urls = {article.url for article in cluster}
+        duplicate_story = next(
+            (
+                story
+                for story in stories
+                if set(story.related_articles_urls) <= cluster_urls
+            ),
+            None,
+        )
+
+        if duplicate_story is None:
+            new_clusters.append(cluster)
+        else:
+            matched_story_ids.add(duplicate_story.id)
+            if cluster_urls > set(duplicate_story.related_articles_urls):
+                update_story_urls(db, duplicate_story.id, list(cluster_urls))
+
+    return new_clusters, matched_story_ids
 
 
 def _generate_story(articles: list[PublicGlobalArticles]) -> PublicGlobalStories:

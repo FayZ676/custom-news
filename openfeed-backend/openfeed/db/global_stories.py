@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from openfeed.db.client import Client
 from openfeed.db.utils import paginated_query
 from openfeed.database_models import PublicGlobalStories
@@ -17,7 +19,11 @@ def get_stories(db: Client) -> list[PublicGlobalStories]:
     ]
 
 
-def delete_stories(db: Client):
-    db.table("global_stories").delete().neq(
-        "id", "00000000-0000-0000-0000-000000000000"
+def update_story_urls(db: Client, story_id: UUID, urls: list[str]):
+    db.table("global_stories").update({"related_articles_urls": urls}).eq(
+        "id", str(story_id)
     ).execute()
+
+
+def delete_stories_by_ids(db: Client, story_ids: list[UUID]):
+    db.table("global_stories").delete().in_("id", [str(i) for i in story_ids]).execute()
