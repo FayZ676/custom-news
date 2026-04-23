@@ -116,6 +116,24 @@ class PublicGlobalCategoriesUpdate(TypedDict):
     name: NotRequired[Annotated[str, Field(alias="name")]]
 
 
+class PublicGlobalEmails(BaseModel):
+    created_at: datetime.datetime = Field(alias="created_at")
+    email_text: str = Field(alias="email_text")
+    id: uuid.UUID = Field(alias="id")
+
+
+class PublicGlobalEmailsInsert(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    email_text: Annotated[str, Field(alias="email_text")]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+
+
+class PublicGlobalEmailsUpdate(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    email_text: NotRequired[Annotated[str, Field(alias="email_text")]]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+
+
 class PublicGlobalFeeds(BaseModel):
     category_id: Optional[uuid.UUID] = Field(alias="category_id")
     created_at: datetime.datetime = Field(alias="created_at")

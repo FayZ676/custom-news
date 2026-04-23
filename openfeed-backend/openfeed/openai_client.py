@@ -118,12 +118,14 @@ class OpenAIClient:
         model: Literal["gpt-5.4", "gpt-5.4-nano"],
         prompt: str,
         response_model: type[T],
+        temperature: float = 0.0,
         reasoning_effort: ReasoningEffort | None = None,
     ) -> T:
         def call():
             response = self._client.responses.parse(
                 model=model,
                 input=prompt,
+                temperature=temperature,
                 text_format=response_model,
                 reasoning=reasoning_effort and Reasoning(effort=reasoning_effort, summary="concise"),  # type: ignore
             )

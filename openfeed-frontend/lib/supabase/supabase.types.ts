@@ -99,6 +99,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      global_emails: {
+        Row: {
+          created_at: string;
+          email_text: string;
+          id: string;
+        };
+        Insert: {
+          created_at?: string;
+          email_text: string;
+          id?: string;
+        };
+        Update: {
+          created_at?: string;
+          email_text?: string;
+          id?: string;
+        };
+        Relationships: [];
+      };
       global_feeds: {
         Row: {
           category_id: string | null;

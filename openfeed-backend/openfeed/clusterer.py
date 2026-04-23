@@ -1,11 +1,14 @@
 import numpy as np
+from uuid import UUID
 from pydantic import BaseModel
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
 from sklearn.metrics import pairwise_distances
 
+from openfeed.db.client import Client
 from openfeed.openai_client import openai_client
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.global_stories import update_story_urls
+from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
 
 
 def cluster_articles(
@@ -34,6 +37,34 @@ def reduce_clusters(
         if score_cluster(["\n".join(article.summary or "" for article in cluster)])
         > threshold
     ]
+
+
+def deduplicate_clusters(
+    db: Client,
+    clusters: list[list[PublicGlobalArticles]],
+    stories: list[PublicGlobalStories],
+) -> tuple[list[list[PublicGlobalArticles]], set[UUID]]:
+    matched_story_ids: set[UUID] = set()
+    new_clusters: list[list[PublicGlobalArticles]] = []
+    for cluster in clusters:
+        cluster_urls = {article.url for article in cluster}
+        duplicate_story = next(
+            (
+                story
+                for story in stories
+                if set(story.related_articles_urls) <= cluster_urls
+            ),
+            None,
+        )
+
+        if duplicate_story is None:
+            new_clusters.append(cluster)
+        else:
+            matched_story_ids.add(duplicate_story.id)
+            if cluster_urls > set(duplicate_story.related_articles_urls):
+                update_story_urls(db, duplicate_story.id, list(cluster_urls))
+
+    return new_clusters, matched_story_ids
 
 
 def score_cluster(summaries: list[str]):

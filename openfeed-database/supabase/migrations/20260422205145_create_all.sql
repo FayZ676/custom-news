@@ -30,6 +30,16 @@ alter table "public"."global_articles" enable row level security;
 alter table "public"."global_categories" enable row level security;
 
 
+  create table "public"."global_emails" (
+    "id" uuid not null default gen_random_uuid(),
+    "email_text" text not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."global_emails" enable row level security;
+
+
   create table "public"."global_feeds" (
     "id" uuid not null default extensions.uuid_generate_v4(),
     "title" text not null,
@@ -109,6 +119,8 @@ CREATE UNIQUE INDEX global_categories_name_key ON public.global_categories USING
 
 CREATE UNIQUE INDEX global_categories_pkey ON public.global_categories USING btree (id);
 
+CREATE UNIQUE INDEX global_emails_pkey ON public.global_emails USING btree (id);
+
 CREATE UNIQUE INDEX global_feeds_pkey ON public.global_feeds USING btree (id);
 
 CREATE UNIQUE INDEX global_feeds_title_key ON public.global_feeds USING btree (title);
@@ -134,6 +146,8 @@ CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user
 alter table "public"."global_articles" add constraint "global_articles_pkey" PRIMARY KEY using index "global_articles_pkey";
 
 alter table "public"."global_categories" add constraint "global_categories_pkey" PRIMARY KEY using index "global_categories_pkey";
+
+alter table "public"."global_emails" add constraint "global_emails_pkey" PRIMARY KEY using index "global_emails_pkey";
 
 alter table "public"."global_feeds" add constraint "global_feeds_pkey" PRIMARY KEY using index "global_feeds_pkey";
 
@@ -313,6 +327,48 @@ grant trigger on table "public"."global_categories" to "service_role";
 grant truncate on table "public"."global_categories" to "service_role";
 
 grant update on table "public"."global_categories" to "service_role";
+
+grant delete on table "public"."global_emails" to "anon";
+
+grant insert on table "public"."global_emails" to "anon";
+
+grant references on table "public"."global_emails" to "anon";
+
+grant select on table "public"."global_emails" to "anon";
+
+grant trigger on table "public"."global_emails" to "anon";
+
+grant truncate on table "public"."global_emails" to "anon";
+
+grant update on table "public"."global_emails" to "anon";
+
+grant delete on table "public"."global_emails" to "authenticated";
+
+grant insert on table "public"."global_emails" to "authenticated";
+
+grant references on table "public"."global_emails" to "authenticated";
+
+grant select on table "public"."global_emails" to "authenticated";
+
+grant trigger on table "public"."global_emails" to "authenticated";
+
+grant truncate on table "public"."global_emails" to "authenticated";
+
+grant update on table "public"."global_emails" to "authenticated";
+
+grant delete on table "public"."global_emails" to "service_role";
+
+grant insert on table "public"."global_emails" to "service_role";
+
+grant references on table "public"."global_emails" to "service_role";
+
+grant select on table "public"."global_emails" to "service_role";
+
+grant trigger on table "public"."global_emails" to "service_role";
+
+grant truncate on table "public"."global_emails" to "service_role";
+
+grant update on table "public"."global_emails" to "service_role";
 
 grant delete on table "public"."global_feeds" to "anon";
 
@@ -580,6 +636,15 @@ using (true);
   on "public"."global_categories"
   as permissive
   for select
+  to anon, authenticated
+using (true);
+
+
+
+  create policy "global_emails_allow_all"
+  on "public"."global_emails"
+  as permissive
+  for all
   to anon, authenticated
 using (true);
 

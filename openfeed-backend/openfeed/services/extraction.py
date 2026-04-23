@@ -5,16 +5,12 @@ from pydantic import BaseModel
 
 from openfeed.db.client import Client
 from openfeed.openai_client import openai_client
+from openfeed.db.global_stories import get_stories
+from openfeed.db.global_emails import insert_email
 from openfeed.db.global_articles import get_global_articles
-from openfeed.clusterer import cluster_articles, reduce_clusters
-from openfeed.db.global_stories import get_stories, update_story_urls
 from openfeed.db.global_stories import delete_stories_by_ids, insert_stories
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
-
-
-class TopStoryLLMResponse(BaseModel):
-    headline: str
-    summary: str
+from openfeed.clusterer import cluster_articles, reduce_clusters, deduplicate_clusters
 
 
 def top_stories(db: Client):
@@ -22,8 +18,7 @@ def top_stories(db: Client):
     articles = get_global_articles(db)
     clusters = cluster_articles(articles)
     clusters = reduce_clusters(clusters)
-
-    new_clusters, matched_story_ids = _deduplicate_clusters(db, clusters, stories)
+    new_clusters, matched_story_ids = deduplicate_clusters(db, clusters, stories)
     stale_story_ids = [s.id for s in stories if s.id not in matched_story_ids]
 
     if stale_story_ids:
@@ -31,38 +26,19 @@ def top_stories(db: Client):
     if new_clusters:
         with ThreadPoolExecutor(max_workers=5) as executor:
             new_stories = list(executor.map(_generate_story, new_clusters))
+
+        stories = [s for s in stories if s.id not in stale_story_ids] + new_stories
+        email = _generate_email([s.summary for s in stories])
+        # TODO: Should we upsert instead of insert?
+        insert_email(db, email)
         insert_stories(db, new_stories)
 
 
-def _deduplicate_clusters(
-    db: Client,
-    clusters: list[list[PublicGlobalArticles]],
-    stories: list[PublicGlobalStories],
-) -> tuple[list[list[PublicGlobalArticles]], set[uuid.UUID]]:
-    matched_story_ids: set[uuid.UUID] = set()
-    new_clusters: list[list[PublicGlobalArticles]] = []
-    for cluster in clusters:
-        cluster_urls = {article.url for article in cluster}
-        duplicate_story = next(
-            (
-                story
-                for story in stories
-                if set(story.related_articles_urls) <= cluster_urls
-            ),
-            None,
-        )
-
-        if duplicate_story is None:
-            new_clusters.append(cluster)
-        else:
-            matched_story_ids.add(duplicate_story.id)
-            if cluster_urls > set(duplicate_story.related_articles_urls):
-                update_story_urls(db, duplicate_story.id, list(cluster_urls))
-
-    return new_clusters, matched_story_ids
-
-
 def _generate_story(articles: list[PublicGlobalArticles]) -> PublicGlobalStories:
+    class TopStoryLLMResponse(BaseModel):
+        headline: str
+        summary: str
+
     prompt = f"""You are a veteran newspaper copy editor writing front-page briefs.
 
 ## Article Summaries
@@ -86,6 +62,23 @@ Distill the above summaries into ONE punchy story brief.
         summary=llm_response.summary,
         related_articles_urls=[article.url for article in articles],
     )
+
+
+def _generate_email(story_texts: list[str]) -> str:
+    class EmailResponse(BaseModel):
+        email: str
+
+    prompt = f"""
+### Top Stories
+{"\n - ".join(story_texts)}
+
+### Instructions
+Generate an email for our newsletter concisely summarizing the above top stories.
+End with a call to action directing users to visit 'The Latest Times' for more info on the above stories as well as to see additional stories."""
+    llm_response = openai_client.generate_response(
+        "gpt-5.4", prompt, EmailResponse, temperature=1.0
+    )
+    return llm_response.email
 
 
 if __name__ == "__main__":
