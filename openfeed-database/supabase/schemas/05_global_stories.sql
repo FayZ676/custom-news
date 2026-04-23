@@ -2,7 +2,11 @@ create table "global_stories" (
     "id" uuid primary key default gen_random_uuid(),
     "headline" text not null,
     "summary" text not null,
-    "related_articles_urls" text[] not null default '{}'
+    "related_articles_urls" text[] not null default '{}',
+    "score" float not null,
+    "score_prev" float not null,
+    "velocity" float not null,
+    "created_at" timestamptz not null default now()
 );
 
 alter table "global_stories" enable row level security;

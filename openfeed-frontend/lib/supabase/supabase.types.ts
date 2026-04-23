@@ -181,22 +181,34 @@ export type Database = {
       };
       global_stories: {
         Row: {
+          created_at: string;
           headline: string;
           id: string;
           related_articles_urls: string[];
+          score: number;
+          score_prev: number;
           summary: string;
+          velocity: number;
         };
         Insert: {
+          created_at?: string;
           headline: string;
           id?: string;
           related_articles_urls?: string[];
+          score: number;
+          score_prev: number;
           summary: string;
+          velocity: number;
         };
         Update: {
+          created_at?: string;
           headline?: string;
           id?: string;
           related_articles_urls?: string[];
+          score?: number;
+          score_prev?: number;
           summary?: string;
+          velocity?: number;
         };
         Relationships: [];
       };

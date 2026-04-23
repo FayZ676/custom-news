@@ -70,7 +70,11 @@ alter table "public"."global_settings" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "headline" text not null,
     "summary" text not null,
-    "related_articles_urls" text[] not null default '{}'::text[]
+    "related_articles_urls" text[] not null default '{}'::text[],
+    "score" double precision not null,
+    "score_prev" double precision not null,
+    "velocity" double precision not null,
+    "created_at" timestamp with time zone not null default now()
       );
 
 

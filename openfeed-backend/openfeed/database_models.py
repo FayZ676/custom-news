@@ -193,28 +193,40 @@ class PublicGlobalSettingsUpdate(TypedDict):
 
 
 class PublicGlobalStories(BaseModel):
+    created_at: datetime.datetime = Field(alias="created_at")
     headline: str = Field(alias="headline")
     id: uuid.UUID = Field(alias="id")
     related_articles_urls: List[str] = Field(alias="related_articles_urls")
+    score: float = Field(alias="score")
+    score_prev: float = Field(alias="score_prev")
     summary: str = Field(alias="summary")
+    velocity: float = Field(alias="velocity")
 
 
 class PublicGlobalStoriesInsert(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     headline: Annotated[str, Field(alias="headline")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     related_articles_urls: NotRequired[
         Annotated[List[str], Field(alias="related_articles_urls")]
     ]
+    score: Annotated[float, Field(alias="score")]
+    score_prev: Annotated[float, Field(alias="score_prev")]
     summary: Annotated[str, Field(alias="summary")]
+    velocity: Annotated[float, Field(alias="velocity")]
 
 
 class PublicGlobalStoriesUpdate(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     headline: NotRequired[Annotated[str, Field(alias="headline")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     related_articles_urls: NotRequired[
         Annotated[List[str], Field(alias="related_articles_urls")]
     ]
+    score: NotRequired[Annotated[float, Field(alias="score")]]
+    score_prev: NotRequired[Annotated[float, Field(alias="score_prev")]]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
+    velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
 
 
 class PublicUserArticles(BaseModel):
