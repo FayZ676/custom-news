@@ -84,7 +84,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
               className="flex flex-col gap-2 cursor-pointer"
               onClick={() => openModal(story)}
             >
-              <div className="flex gap-2 items-center">
+              <div className="flex justify-between items-center">
                 <h2 className="text-lg hover:underline font-semibold">
                   {story.headline}
                 </h2>
