@@ -85,7 +85,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
               onClick={() => openModal(story)}
             >
               <h2 className="text-lg hover:underline font-semibold">
-                {story.headline} <span title={trend.label}>{trend.icon}</span>
+                <span title={trend.label}>{trend.icon}</span> {story.headline}
               </h2>
             </li>
           );
