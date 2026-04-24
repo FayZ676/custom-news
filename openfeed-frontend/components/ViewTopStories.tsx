@@ -38,7 +38,7 @@ function getTrendIndicator(velocity: number): TrendIndicator {
   } else if (velocity >= -0.002) {
     return {
       label: "Steady",
-      icon: <Minus className="inline w-4 h-4 text-neutral-400" />,
+      icon: <Minus className="inline w-4 h-4 text-yellow-500" />,
     };
   } else if (velocity >= -0.01) {
     return {
@@ -77,7 +77,6 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
     <section className="flex flex-col gap-4">
       <ol className="flex flex-col gap-4">
         {storiesOrdered.map((story) => {
-          const sourceCount = (story.related_articles_urls as string[]).length;
           const trend = getTrendIndicator(story.velocity);
           return (
             <li
@@ -86,11 +85,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
               onClick={() => openModal(story)}
             >
               <h2 className="text-lg hover:underline font-semibold">
-                {story.headline} &middot;{" "}
-                <span className="text-neutral-500 text-base font-normal">
-                  {sourceCount} source{sourceCount !== 1 ? "s" : ""}
-                </span>{" "}
-                <span title={trend.label}>{trend.icon}</span>
+                {story.headline} <span title={trend.label}>{trend.icon}</span>
               </h2>
             </li>
           );
