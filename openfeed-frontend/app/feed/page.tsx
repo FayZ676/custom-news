@@ -255,7 +255,7 @@ export default async function AllArticlesPage({
   const date = getCurrentDate();
 
   const tab: Tab =
-    rawTab === "trending" || rawTab === "search" ? rawTab : "my-news";
+    rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
 
   return (
     <div className="flex flex-col gap-4 flex-1">
@@ -276,15 +276,15 @@ export default async function AllArticlesPage({
 
       <TabSwitcher />
 
-      {tab === "my-news" && (
-        <Suspense fallback={<ViewFeedSkeleton />}>
-          <ViewMyNewsContent userId={userId} />
-        </Suspense>
-      )}
-
       {tab === "trending" && (
         <Suspense fallback={<ViewTopStoriesSkeleton />}>
           <ViewTrendingContent />
+        </Suspense>
+      )}
+
+      {tab === "my-news" && (
+        <Suspense fallback={<ViewFeedSkeleton />}>
+          <ViewMyNewsContent userId={userId} />
         </Suspense>
       )}
 

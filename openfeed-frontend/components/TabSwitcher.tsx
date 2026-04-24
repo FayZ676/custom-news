@@ -9,18 +9,10 @@ export function TabSwitcher() {
   const searchParams = useSearchParams();
   const rawTab = searchParams.get("tab");
   const tab: Tab =
-    rawTab === "trending" || rawTab === "search" ? rawTab : "my-news";
+    rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
 
   return (
     <div role="tablist" className="tabs tabs-border tabs-lg font-bold gap-4">
-      <Link
-        href="/feed?tab=my-news"
-        role="tab"
-        prefetch={true}
-        className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0`}
-      >
-        My News
-      </Link>
       <Link
         href="/feed?tab=trending"
         role="tab"
@@ -28,6 +20,14 @@ export function TabSwitcher() {
         className={`tab ${tab === "trending" ? "tab-active" : ""} p-0`}
       >
         Trending News
+      </Link>
+      <Link
+        href="/feed?tab=my-news"
+        role="tab"
+        prefetch={true}
+        className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0`}
+      >
+        My News
       </Link>
       <Link
         href="/feed?tab=search"
