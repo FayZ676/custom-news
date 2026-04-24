@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from openfeed.config import settings
 from openfeed.db.client import Client
+from openfeed.db.global_emails import get_latest_email
 from openfeed.db.global_settings import get_global_settings
 from openfeed.db.user_settings import get_all_email_notification_users
 from openfeed.db.user_articles import (
@@ -37,42 +38,63 @@ def notify_users(db: Client) -> None:
         logger.info("No users are in a notification window at this time, skipping.")
         return
 
+    top_stories_email = get_latest_email(db)
     user_ids_emails = _fetch_user_emails(db, users_to_notify)
     articles_by_email = _group_details_by_email(
         get_unread_user_article_details(db, user_ids_emails)
     )
-
     send_batch_template_emails(
-        emails=[
-            TemplateEmailInput(
-                to=email,
-                template_id=DIGEST_TEMPLATE_ALIAS,
-                variables={
-                    "INTERESTS_SUMMARY": (
-                        _build_interests_summary_html(articles_by_email[email])
-                        if email in articles_by_email
-                        else _CAUGHT_UP_HTML
-                    ),
-                    "FEED_URL": settings.frontend_url,
-                },
+        emails=list(
+            map(
+                lambda email: _build_template_email(
+                    email, top_stories_email, articles_by_email
+                ),
+                user_ids_emails.values(),
             )
-            for email in user_ids_emails.values()
-        ],
+        ),
         api_key=settings.resend_api_key,
         from_email=settings.resend_from_email,
     )
+    logger.info("notify_users completed: %d emails sent", len(user_ids_emails))
 
 
-def _get_users_to_notify(db: Client, now_utc: datetime):
+def _build_template_email(
+    email: str,
+    top_stories_email,
+    articles_by_email: dict[str, list[UserArticleDetails]],
+) -> TemplateEmailInput:
+    """Build a single TemplateEmailInput for a given recipient."""
+    return TemplateEmailInput(
+        to=email,
+        template_id=DIGEST_TEMPLATE_ALIAS,
+        variables={
+            **(
+                {"TOP_STORIES_SUMMARY": top_stories_email.email_text}
+                if top_stories_email
+                else {}
+            ),
+            "INTERESTS_SUMMARY": (
+                _build_interests_summary_html(articles_by_email[email])
+                if email in articles_by_email
+                else _CAUGHT_UP_HTML
+            ),
+            "FEED_URL": settings.frontend_url,
+        },
+    )
+
+
+def _get_users_to_notify(db: Client, now_utc: datetime) -> list[PublicUserSettings]:
     global_settings = get_global_settings(db)
     return [
         u
         for u in get_all_email_notification_users(db)
-        if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
+        # if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
     ]
 
 
-def _is_in_notification_window(user, now_utc, notification_hours: list[int]) -> bool:
+def _is_in_notification_window(
+    user, now_utc: datetime, notification_hours: list[int]
+) -> bool:
     local_hour = now_utc.astimezone(ZoneInfo(user.timezone)).hour
     return local_hour in notification_hours
 
@@ -98,19 +120,28 @@ def _group_details_by_email(
     }
 
 
+def _render_interest_row(interest: str, group) -> str:
+    """Render a single interest row as an HTML string."""
+    count = sum(1 for _ in group)
+    article_label = "article" if count == 1 else "articles"
+    return (
+        f'<tr><td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0;">'
+        f'<span style="font-size: 13px; font-weight: 600; color: #1a1a1a;">{interest}</span>'
+        f'<span style="font-size: 13px; color: #888; margin-left: 8px;">{count} new {article_label}</span>'
+        f"</td></tr>"
+    )
+
+
 def _build_interests_summary_html(details: list[UserArticleDetails]) -> str:
     """Build the HTML rows injected into the INTERESTS_SUMMARY template variable."""
-    rows = ""
-    for interest, group in groupby(
+    grouped = groupby(
         sorted(details, key=lambda d: d.interest),
         key=lambda d: d.interest,
-    ):
-        count = sum(1 for _ in group)
-        article_label = "article" if count == 1 else "articles"
-        rows += (
-            f'<tr><td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0;">'
-            f'<span style="font-size: 13px; font-weight: 600; color: #1a1a1a;">{interest}</span>'
-            f'<span style="font-size: 13px; color: #888; margin-left: 8px;">{count} new {article_label}</span>'
-            f"</td></tr>"
-        )
-    return rows
+    )
+    return "".join(_render_interest_row(interest, group) for interest, group in grouped)
+
+
+if __name__ == "__main__":
+    from openfeed.db.client import client
+
+    notify_users(client())

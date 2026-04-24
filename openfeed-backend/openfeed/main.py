@@ -14,9 +14,10 @@ from openfeed.services.ingestion import fetch_articles, delete_old_articles
 
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 db_client: Optional[Client] = None
 
@@ -36,6 +37,7 @@ def get_db() -> Client:
     return db_client
 
 
+# TODO: Each step should log its completion.
 @app.post("/global/articles", status_code=202)
 def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")

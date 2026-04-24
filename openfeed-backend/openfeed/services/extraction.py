@@ -1,4 +1,5 @@
 import uuid
+import logging
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
@@ -17,6 +18,8 @@ from openfeed.db.global_stories import (
     insert_stories,
     update_story,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def top_stories(db: Client):
@@ -56,8 +59,14 @@ def top_stories(db: Client):
         delete_stories_by_ids(db, stale_story_ids)
 
     if active_stories := updated_stories + new_stories:
-        email = _generate_email([s.summary for s in active_stories])
-        insert_email(db, email)
+        insert_email(db, _generate_top_stories_section(active_stories))
+
+    logger.info(
+        "top_stories completed: %d new, %d updated, %d removed",
+        len(new_stories),
+        len(updated_stories),
+        len(stale_story_ids),
+    )
 
 
 def _refresh_story(
@@ -94,6 +103,29 @@ def _generate_story(
     )
 
 
+def _generate_top_stories_section(stories: list[PublicGlobalStories]) -> str:
+    top_five = sorted(stories, key=lambda s: s.score, reverse=True)[:5]
+    return _generate_top_stories_copy([s.summary for s in top_five])
+
+
+def _generate_top_stories_copy(story_texts: list[str]) -> str:
+    class CopyResponse(BaseModel):
+        text: str
+
+    prompt = f"""
+### Top Stories
+{"\n - ".join(story_texts)}
+
+### Instructions
+Write a short newspaper-style digest briefly summarizing the above stories.
+Be concise and direct — no greetings, no sign-offs, no filler.
+Keep the entire output under 1,500 characters."""
+    llm_response = openai_client.generate_response(
+        "gpt-5.4", prompt, CopyResponse, temperature=1.0
+    )
+    return llm_response.text
+
+
 def _generate_story_text(
     articles: list[PublicGlobalArticles],
 ) -> tuple[str, str, float]:
@@ -126,23 +158,6 @@ Distill the above summaries into ONE punchy story brief.
         "gpt-5.4", prompt, TopStoryLLMResponse
     )
     return llm_response.headline, llm_response.summary, llm_response.topic_impact
-
-
-def _generate_email(story_texts: list[str]) -> str:
-    class EmailResponse(BaseModel):
-        email: str
-
-    prompt = f"""
-### Top Stories
-{"\n - ".join(story_texts)}
-
-### Instructions
-Generate an email for our newsletter concisely summarizing the above top stories.
-End with a call to action directing users to visit 'The Latest Times' for more info on the above stories as well as to see additional stories."""
-    llm_response = openai_client.generate_response(
-        "gpt-5.4", prompt, EmailResponse, temperature=1.0
-    )
-    return llm_response.email
 
 
 if __name__ == "__main__":
