@@ -58,7 +58,7 @@ export function ViewSearch({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <SearchbarTooltip />
+        {/* <SearchbarTooltip /> */}
         <SearchBar
           query={query}
           saved={saved}

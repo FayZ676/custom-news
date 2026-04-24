@@ -42,7 +42,6 @@ export default function SearchBar({
   onSearch,
   onQueryChange,
 }: SearchBarProps) {
-  const savedQueryRef = useRef<string | null>(null);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [placeholderVisible, setPlaceholderVisible] = useState(true);
   const [hasSearched, setHasSearched] = useState(!!query);
@@ -66,11 +65,8 @@ export default function SearchBar({
 
   const handleSave = () => {
     if (!query.trim() || saving) return;
-    savedQueryRef.current = query.trim();
     onSave(query.trim());
   };
-
-  const isSaved = saved && savedQueryRef.current === query.trim();
 
   const handleClear = () => {
     setHasSearched(false);
@@ -78,9 +74,26 @@ export default function SearchBar({
     onClear();
   };
 
+  const showButton = !!query;
+  const isAddToNews = hasSearched && !searching;
+  const isSearching = searching;
+  const isAdding = saving;
+
+  const buttonLabel = isAdding
+    ? "Adding..."
+    : isAddToNews
+      ? "Add to My News"
+      : isSearching
+        ? "Searching..."
+        : "Search";
+
+  const buttonDisabled = isSearching || isAdding || !query.trim();
+
+  const handleButtonClick = isAddToNews ? handleSave : handleSearch;
+
   return (
-    <div className="flex flex-col gap-2 items-center w-full">
-      <label className="input input-lg w-full rounded-none border-neutral-300">
+    <div className="flex flex-col sm:flex-row gap-2 items-stretch w-full">
+      <label className="input input-xl md:input-lg flex-1 rounded-none border-neutral-300 w-full">
         <Search size={18} strokeWidth={3} className="text-neutral-400" />
         <div className="relative grow">
           <input
@@ -101,12 +114,12 @@ export default function SearchBar({
               }
             }}
             placeholder=""
-            disabled={searching}
+            disabled={searching || saving}
             className="w-full bg-transparent"
           />
           {!query && (
             <span
-              className={`absolute inset-0 flex items-center pointer-events-none text-base-content/40 transition-opacity duration-300 overflow-hidden whitespace-nowrap ${
+              className={`absolute inset-0 flex items-center pointer-events-none text-base-content/40 transition-opacity duration-300 overflow-hidden whitespace-nowrap [mask-image:linear-gradient(to_right,black_80%,transparent_100%)] ${
                 placeholderVisible ? "opacity-100" : "opacity-0"
               }`}
             >
@@ -118,48 +131,27 @@ export default function SearchBar({
           <button
             type="button"
             onClick={handleClear}
-            disabled={searching}
+            disabled={searching || saving}
             className="cursor-pointer"
           >
             <CircleX size={18} strokeWidth={3} className="opacity-50" />
           </button>
         )}
       </label>
-      {query && (
-        <div className="flex w-full">
-          <button
-            type="button"
-            onClick={handleSearch}
-            disabled={!query.trim() || searching}
-            className="cursor-pointer px-2"
+
+      {showButton && (
+        <button
+          type="button"
+          onClick={handleButtonClick}
+          disabled={buttonDisabled}
+          className="cursor-pointer px-4 py-1 shrink-0 border-2 border-neutral-300 self-stretch flex items-center justify-center"
+        >
+          <span
+            className={`${buttonDisabled ? "text-base-content/50" : "font-extrabold"}`}
           >
-            {searching ? (
-              <span className="text-base-content/50 underline">
-                Searching ...
-              </span>
-            ) : (
-              <span className="font-extrabold underline">Search</span>
-            )}
-          </button>
-          {hasSearched && (
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!query.trim() || saving || isSaved || searching}
-              className="cursor-pointer ml-auto px-2"
-            >
-              {saving ? (
-                <span className="text-base-content/50 underline">
-                  Saving ...
-                </span>
-              ) : isSaved ? (
-                <span className="font-extrabold underline">Query Saved</span>
-              ) : (
-                <span className="font-extrabold underline">Save Query</span>
-              )}
-            </button>
-          )}
-        </div>
+            {buttonLabel}
+          </span>
+        </button>
       )}
     </div>
   );
@@ -167,11 +159,8 @@ export default function SearchBar({
 
 export function SearchbarSkeleton() {
   return (
-    <div className="flex flex-col gap-2">
-      <div className="skeleton h-4 w-96 max-w-full rounded mx-auto" />
-      <div className="flex gap-3 items-center w-full">
-        <div className="skeleton input input-lg w-full rounded-none bg-[unset]!" />
-      </div>
+    <div className="flex gap-2 items-stretch w-full">
+      <div className="skeleton input input-lg flex-1 rounded-none bg-[unset]!" />
     </div>
   );
 }
