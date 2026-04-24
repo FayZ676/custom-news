@@ -1,16 +1,22 @@
 import uuid
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 from pydantic import BaseModel
 
 from openfeed.db.client import Client
 from openfeed.openai_client import openai_client
-from openfeed.db.global_stories import get_stories
 from openfeed.db.global_emails import insert_email
 from openfeed.db.global_articles import get_global_articles
-from openfeed.db.global_stories import delete_stories_by_ids, insert_stories
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
+from openfeed.services.cluster_scoring import score_cluster
 from openfeed.clusterer import cluster_articles, reduce_clusters, deduplicate_clusters
+from openfeed.db.global_stories import (
+    get_stories,
+    delete_stories_by_ids,
+    insert_stories,
+    update_story,
+)
 
 
 def top_stories(db: Client):
@@ -18,26 +24,83 @@ def top_stories(db: Client):
     articles = get_global_articles(db)
     clusters = cluster_articles(articles)
     clusters = reduce_clusters(clusters)
-    new_clusters, matched_story_ids = deduplicate_clusters(db, clusters, stories)
-    stale_story_ids = [s.id for s in stories if s.id not in matched_story_ids]
+    new_clusters, matched_clusters = deduplicate_clusters(db, clusters, stories)
 
-    if stale_story_ids:
-        delete_stories_by_ids(db, stale_story_ids)
+    stories_by_id = {s.id: s for s in stories}
+    stale_story_ids = [s.id for s in stories if s.id not in matched_clusters]
+
+    # Step 1: Add new stories
+    new_stories: list[PublicGlobalStories] = []
     if new_clusters:
         with ThreadPoolExecutor(max_workers=5) as executor:
-            new_stories = list(executor.map(_generate_story, new_clusters))
-
-        stories = [s for s in stories if s.id not in stale_story_ids] + new_stories
-        email = _generate_email([s.summary for s in stories])
-        # TODO: Should we upsert instead of insert?
-        insert_email(db, email)
+            new_stories = list(
+                executor.map(lambda c: _generate_story(c, 0.0), new_clusters)
+            )
         insert_stories(db, new_stories)
 
+    # Step 2: Update existing stories
+    updated_stories: list[PublicGlobalStories] = []
+    if matched_clusters:
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            updated_stories = list(
+                executor.map(
+                    lambda item: _refresh_story(item[1], stories_by_id[item[0]]),
+                    matched_clusters.items(),
+                )
+            )
+        for story in updated_stories:
+            update_story(db, story)
 
-def _generate_story(articles: list[PublicGlobalArticles]) -> PublicGlobalStories:
+    # Step 3: Remove stale stories
+    if stale_story_ids:
+        delete_stories_by_ids(db, stale_story_ids)
+
+    if active_stories := updated_stories + new_stories:
+        email = _generate_email([s.summary for s in active_stories])
+        insert_email(db, email)
+
+
+def _refresh_story(
+    articles: list[PublicGlobalArticles], prev: PublicGlobalStories
+) -> PublicGlobalStories:
+    """Re-score an existing story against its updated cluster, preserving its ID and content."""
+    cluster_score = score_cluster(
+        articles,
+        topic_impact=prev.score / (prev.velocity + 1e-6) if prev.score > 0 else 1.0,
+    )
+    return prev.model_copy(
+        update={
+            "score_prev": prev.score,
+            "score": cluster_score.score,
+            "velocity": cluster_score.velocity,
+        }
+    )
+
+
+def _generate_story(
+    articles: list[PublicGlobalArticles], prev_score: float
+) -> PublicGlobalStories:
+    headline, summary, topic_impact = _generate_story_text(articles)
+    cluster_score = score_cluster(articles, topic_impact)
+    return PublicGlobalStories(
+        id=uuid.uuid4(),
+        headline=headline,
+        summary=summary,
+        related_articles_urls=[article.url for article in articles],
+        score=cluster_score.score,
+        score_prev=prev_score,
+        velocity=cluster_score.velocity,
+        created_at=datetime.now(),
+    )
+
+
+def _generate_story_text(
+    articles: list[PublicGlobalArticles],
+) -> tuple[str, str, float]:
     class TopStoryLLMResponse(BaseModel):
         headline: str
         summary: str
+        topic_impact: float
 
     prompt = f"""You are a veteran newspaper copy editor writing front-page briefs.
 
@@ -49,19 +112,20 @@ Distill the above summaries into ONE punchy story brief.
 
 **headline**: Write it like a tabloid front page — active verbs, no filler, max 10 words. Grab the reader by the collar.
 **summary**: Two sentences, max. Lead with the single most newsworthy fact. Follow with stakes or what happens next. Every word must earn its place.
+**topic_impact**: Rate the real-world significance of this story on a scale from 0.1 to 2.0.
+  - 0.1–0.5 → Low impact: niche industry news, minor corporate deals, soft features (e.g. a tech company acquisition rumor, celebrity gossip)
+  - 0.5–1.0 → Moderate impact: notable business events, legal disputes, policy changes affecting a sector (e.g. an OpenAI lawsuit, a major product recall)
+  - 1.0–1.5 → High impact: national-scale events, significant geopolitical developments, major economic shifts (e.g. a federal election result, a central bank rate change)
+  - 1.5–2.0 → Critical impact: global crises, acts of war, mass casualty events, systemic financial collapse (e.g. a US missile strike, a nuclear threat, a market crash)
 
 ## Rules
 - Write about the NEWS, not about the coverage.
-- No hedging, no passive voice, no editorializing. Hard facts, sharp language."""
+- No hedging, no passive voice, no editorializing. Hard facts, sharp language.
+- Score topic_impact based on real-world consequences, not media hype."""
     llm_response = openai_client.generate_response(
         "gpt-5.4", prompt, TopStoryLLMResponse
     )
-    return PublicGlobalStories(
-        id=uuid.uuid4(),
-        headline=llm_response.headline,
-        summary=llm_response.summary,
-        related_articles_urls=[article.url for article in articles],
-    )
+    return llm_response.headline, llm_response.summary, llm_response.topic_impact
 
 
 def _generate_email(story_texts: list[str]) -> str:

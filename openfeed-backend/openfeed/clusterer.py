@@ -43,8 +43,8 @@ def deduplicate_clusters(
     db: Client,
     clusters: list[list[PublicGlobalArticles]],
     stories: list[PublicGlobalStories],
-) -> tuple[list[list[PublicGlobalArticles]], set[UUID]]:
-    matched_story_ids: set[UUID] = set()
+) -> tuple[list[list[PublicGlobalArticles]], dict[UUID, list[PublicGlobalArticles]]]:
+    matched_clusters: dict[UUID, list[PublicGlobalArticles]] = {}
     new_clusters: list[list[PublicGlobalArticles]] = []
     for cluster in clusters:
         cluster_urls = {article.url for article in cluster}
@@ -60,11 +60,11 @@ def deduplicate_clusters(
         if duplicate_story is None:
             new_clusters.append(cluster)
         else:
-            matched_story_ids.add(duplicate_story.id)
+            matched_clusters[duplicate_story.id] = cluster
             if cluster_urls > set(duplicate_story.related_articles_urls):
                 update_story_urls(db, duplicate_story.id, list(cluster_urls))
 
-    return new_clusters, matched_story_ids
+    return new_clusters, matched_clusters
 
 
 def score_cluster(summaries: list[str]):

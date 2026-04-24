@@ -2,6 +2,13 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronsUp,
+  ChevronsDown,
+} from "lucide-react";
 
 import { Tables } from "@/lib/supabase/supabase.types";
 
@@ -10,6 +17,40 @@ import { SectionArticleSkeleton } from "@/components/SectionArticles";
 
 interface ViewTopStoriesProps {
   stories: Tables<"global_stories">[];
+}
+
+type TrendIndicator = {
+  label: string;
+  icon: React.ReactNode;
+};
+
+function getTrendIndicator(velocity: number): TrendIndicator {
+  if (velocity > 0.01) {
+    return {
+      label: "Rising fast",
+      icon: <ChevronsUp className="inline w-4 h-4 text-green-500" />,
+    };
+  } else if (velocity > 0.002) {
+    return {
+      label: "Rising",
+      icon: <TrendingUp className="inline w-4 h-4 text-green-400" />,
+    };
+  } else if (velocity >= -0.002) {
+    return {
+      label: "Steady",
+      icon: <Minus className="inline w-4 h-4 text-neutral-400" />,
+    };
+  } else if (velocity >= -0.01) {
+    return {
+      label: "Falling",
+      icon: <TrendingDown className="inline w-4 h-4 text-red-400" />,
+    };
+  } else {
+    return {
+      label: "Falling fast",
+      icon: <ChevronsDown className="inline w-4 h-4 text-red-500" />,
+    };
+  }
 }
 
 export function ViewTopStories({ stories }: ViewTopStoriesProps) {
@@ -22,9 +63,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
     dialogRef.current?.showModal();
   }
 
-  const storiesOrdered = [...stories].sort(
-    (a, b) => b.related_articles_urls.length - a.related_articles_urls.length,
-  );
+  const storiesOrdered = [...stories].sort((a, b) => b.score - a.score);
 
   if (storiesOrdered.length === 0) {
     return (
@@ -39,6 +78,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
       <ol className="flex flex-col gap-4">
         {storiesOrdered.map((story) => {
           const sourceCount = (story.related_articles_urls as string[]).length;
+          const trend = getTrendIndicator(story.velocity);
           return (
             <li
               key={story.id}
@@ -49,7 +89,8 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
                 {story.headline} &middot;{" "}
                 <span className="text-neutral-500 text-base font-normal">
                   {sourceCount} source{sourceCount !== 1 ? "s" : ""}
-                </span>
+                </span>{" "}
+                <span title={trend.label}>{trend.icon}</span>
               </h2>
             </li>
           );
