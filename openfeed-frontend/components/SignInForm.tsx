@@ -1,13 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { signIn } from "@/lib/supabase/auth";
 
 export default function SignInForm() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   async function handleSubmit(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? null;
-    await signIn(email, password, timezone);
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await signIn(email, password, timezone);
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -17,20 +30,28 @@ export default function SignInForm() {
         name="email"
         placeholder="Email"
         required
-        className="input input-bordered rounded-none w-full focus:outline-none"
+        disabled={loading}
+        className="input input-bordered rounded-none w-full focus:outline-none disabled:opacity-50"
       />
       <input
         type="password"
         name="password"
         placeholder="Password"
         required
-        className="input input-bordered w-full rounded-none focus:outline-none"
+        disabled={loading}
+        className="input input-bordered w-full rounded-none focus:outline-none disabled:opacity-50"
       />
+      {error && <p className="text-error text-sm text-center">{error}</p>}
       <button
         type="submit"
+        disabled={loading}
         className="btn btn-neutral rounded-none w-full mt-2"
       >
-        Sign in
+        {loading ? (
+          <span className="loading loading-spinner loading-sm" />
+        ) : (
+          "Sign in"
+        )}
       </button>
     </form>
   );
