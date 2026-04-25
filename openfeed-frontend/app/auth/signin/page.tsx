@@ -1,24 +1,26 @@
+// app/auth/signin/page.tsx
+import Image from "next/image";
 import SignInForm from "@/components/SignInForm";
 
 export default function SignInPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-8">
-        <div>
-          <h1 className="text-xl font-semibold">Welcome back</h1>
-          <p className="text-sm text-base-content/50 mt-1">
-            Sign in to your account.
+      <div className="w-full max-w-sm space-y-6">
+        <div className="flex flex-col items-center gap-3">
+          <hr className="border-t w-full" />
+          <Image
+            src="/logo.svg"
+            alt="The Latest Times"
+            width={220}
+            height={60}
+          />
+          <hr className="border-t-2 w-full" />
+          <p className="text-sm italic text-base-content/60 text-center">
+            Sign in to read your personalised newspaper.
           </p>
         </div>
 
         <SignInForm />
-
-        {/* <p className="text-sm text-center text-base-content/50">
-          Don't have an account?{" "}
-          <a href="/auth/signup" className="link link-hover font-medium text-base-content">
-            Sign up
-          </a>
-        </p> */}
       </div>
     </div>
   );

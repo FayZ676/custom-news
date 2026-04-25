@@ -31,6 +31,7 @@ export function Footer({
 }: FooterProps) {
   const router = useRouter();
 
+  const [signingOut, setSigningOut] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackSent, setFeedbackSent] = useState(false);
@@ -111,12 +112,17 @@ export function Footer({
           <span>Sign Out</span>
           <button
             onClick={async () => {
+              setSigningOut(true);
               await handleSignOut();
-              router.refresh();
             }}
+            disabled={signingOut}
             className="cursor-pointer"
           >
-            <LogOutIcon size={18} />
+            {signingOut ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              <LogOutIcon size={18} />
+            )}
           </button>
         </div>
         <span className="flex py-3 italic">{userEmail}</span>

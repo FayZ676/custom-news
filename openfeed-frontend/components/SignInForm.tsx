@@ -17,16 +17,19 @@ export default function SignInForm() {
         name="email"
         placeholder="Email"
         required
-        className="input input-bordered w-full focus:outline-none"
+        className="input input-bordered rounded-none w-full focus:outline-none"
       />
       <input
         type="password"
         name="password"
         placeholder="Password"
         required
-        className="input input-bordered w-full focus:outline-none"
+        className="input input-bordered w-full rounded-none focus:outline-none"
       />
-      <button type="submit" className="btn btn-neutral w-full mt-2">
+      <button
+        type="submit"
+        className="btn btn-neutral rounded-none w-full mt-2"
+      >
         Sign in
       </button>
     </form>
