@@ -109,7 +109,8 @@ alter table "public"."user_interests" enable row level security;
   create table "public"."user_settings" (
     "user_id" uuid not null,
     "email_notification" boolean not null default true,
-    "timezone" text not null default 'UTC'::text
+    "timezone" text not null default 'UTC'::text,
+    "color_theme" text not null default 'cupcake'::text
       );
 
 
