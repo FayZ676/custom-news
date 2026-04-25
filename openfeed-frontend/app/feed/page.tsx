@@ -294,6 +294,8 @@ export default async function AllArticlesPage({
         </Suspense>
       )}
 
+      <div className="min-h-4 flex-1" />
+
       <Suspense fallback={<FooterSkeleton />}>
         <FooterContent userId={userId} email={email} />
       </Suspense>

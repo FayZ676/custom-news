@@ -3,15 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  LogOut,
-  Mail,
-  MessageSquare,
-  MessageSquareCheck,
-  UserRound,
-  LogOutIcon,
-} from "lucide-react";
-
 import { Database } from "@/lib/supabase/supabase.types";
 
 import { Forminit } from "forminit";
@@ -32,19 +23,9 @@ export function Footer({
   const router = useRouter();
 
   const [signingOut, setSigningOut] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackText, setFeedbackText] = useState("");
-  const [feedbackSent, setFeedbackSent] = useState(false);
   const [emailNotification, setEmailNotification] = useState(
     userSettings.email_notification,
   );
-
-  const forminit = new Forminit({ proxyUrl: "/api/forminit" });
-
-  function dismissFeedback() {
-    setFeedbackText("");
-    setFeedbackOpen(false);
-  }
 
   async function handleToggleNotifications() {
     setEmailNotification((prev) => !prev);
@@ -53,79 +34,33 @@ export function Footer({
     } catch {
       setEmailNotification((prev) => !prev); // revert on error
     }
-  }
-
-  async function handleFeedbackKeyDown(
-    e: React.KeyboardEvent<HTMLTextAreaElement>,
-  ) {
-    if (e.key === "Enter" && !e.shiftKey && feedbackText.trim()) {
-      e.preventDefault();
-      const formData = new FormData();
-      formData.append("fi-sender-email", userEmail);
-      formData.append("fi-text-message", feedbackText);
-      setFeedbackText("");
-      setFeedbackOpen(false);
-      setFeedbackSent(true);
-      setTimeout(() => setFeedbackSent(false), 3000);
-      await forminit.submit("12sccwhqsbm", formData);
-    }
-  }
-
-  async function handleNotifications() {
-    await handleToggleNotifications();
     router.refresh();
   }
 
   return (
-    <footer className="mt-auto text-sm">
-      <div>
-        <div className="flex border-neutral-300 border-b py-3 justify-between">
-          <span>Email Notifications</span>
-          <div className="dropdown dropdown-bottom dropdown-end dropdown-hover">
-            <Mail
-              tabIndex={0}
-              role="button"
-              className="cursor-pointer"
-              size={18}
-            />
-            <ul className="dropdown-content menu bg-base-100 rounded-none border z-1 w-52 p-2 shadow-sm not-italic">
-              <li className="rounded-none">
-                <button
-                  onClick={handleNotifications}
-                  className={`rounded-none ${emailNotification ? "font-bold underline" : ""}`}
-                >
-                  On
-                </button>
-              </li>
-              <li className="rounded-none">
-                <button
-                  onClick={handleNotifications}
-                  className={`rounded-none ${!emailNotification ? "font-bold underline" : ""}`}
-                >
-                  Off
-                </button>
-              </li>
-            </ul>
-          </div>
+    <footer className="text-sm bg-accent/15 p-3">
+      <div className="flex flex-col gap-4 divide-y divide-neutral-400">
+        <div>
+          <button
+            onClick={handleToggleNotifications}
+            className="cursor-pointer hover:font-bold hover:underline pb-3"
+          >
+            Email Notifications ({emailNotification ? "On" : "Off"})
+          </button>
         </div>
-        <div className="flex border-neutral-300 border-b py-3 justify-between">
-          <span>Sign Out</span>
+        <div>
           <button
             onClick={async () => {
               setSigningOut(true);
               await handleSignOut();
             }}
             disabled={signingOut}
-            className="cursor-pointer"
+            className="cursor-pointer hover:font-bold hover:underline disabled:opacity-50 pb-3"
           >
-            {signingOut ? (
-              <span className="loading loading-spinner loading-sm" />
-            ) : (
-              <LogOutIcon size={18} />
-            )}
+            {signingOut ? "Signing out…" : "Sign Out"}
           </button>
         </div>
-        <span className="flex py-3 italic">{userEmail}</span>
+        <span className="italic">{userEmail}</span>
       </div>
     </footer>
   );
@@ -135,13 +70,11 @@ export function FooterSkeleton() {
   return (
     <footer className="mt-auto text-sm">
       <div>
-        <div className="flex border-b py-3 justify-between items-center">
-          <div className="skeleton h-4 w-36 rounded" />
-          <div className="skeleton h-4 w-4 rounded" />
+        <div className="flex border-b py-3">
+          <div className="skeleton h-4 w-48 rounded" />
         </div>
-        <div className="flex border-b py-3 justify-between items-center">
+        <div className="flex border-b py-3">
           <div className="skeleton h-4 w-20 rounded" />
-          <div className="skeleton h-4 w-4 rounded" />
         </div>
         <div className="skeleton h-4 w-44 rounded my-3" />
       </div>
