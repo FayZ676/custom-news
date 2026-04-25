@@ -281,18 +281,21 @@ class PublicUserInterestsUpdate(TypedDict):
 
 
 class PublicUserSettings(BaseModel):
+    color_theme: str = Field(alias="color_theme")
     email_notification: bool = Field(alias="email_notification")
     timezone: str = Field(alias="timezone")
     user_id: uuid.UUID = Field(alias="user_id")
 
 
 class PublicUserSettingsInsert(TypedDict):
+    color_theme: NotRequired[Annotated[str, Field(alias="color_theme")]]
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
     user_id: Annotated[uuid.UUID, Field(alias="user_id")]
 
 
 class PublicUserSettingsUpdate(TypedDict):
+    color_theme: NotRequired[Annotated[str, Field(alias="color_theme")]]
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
