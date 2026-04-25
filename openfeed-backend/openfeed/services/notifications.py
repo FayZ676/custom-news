@@ -69,7 +69,11 @@ def _build_template_email(
         template_id=DIGEST_TEMPLATE_ALIAS,
         variables={
             **(
-                {"TOP_STORIES_SUMMARY": top_stories_email.email_text}
+                {
+                    "TOP_STORIES_SUMMARY": _format_top_stories_html(
+                        top_stories_email.email_text
+                    )
+                }
                 if top_stories_email
                 else {}
             ),
@@ -88,7 +92,7 @@ def _get_users_to_notify(db: Client, now_utc: datetime) -> list[PublicUserSettin
     return [
         u
         for u in get_all_email_notification_users(db)
-        if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
+        # if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
     ]
 
 
@@ -139,6 +143,14 @@ def _build_interests_summary_html(details: list[UserArticleDetails]) -> str:
         key=lambda d: d.interest,
     )
     return "".join(_render_interest_row(interest, group) for interest, group in grouped)
+
+
+def _format_top_stories_html(text: str) -> str:
+    paragraphs = [p.strip() for p in text.strip().split("\n\n") if p.strip()]
+    return "".join(
+        f'<tr><td style="padding: 0 0 12px 0; font-size: 14px; line-height: 1.6; color: #1a1a1a;">{p}</td></tr>'
+        for p in paragraphs
+    )
 
 
 if __name__ == "__main__":
