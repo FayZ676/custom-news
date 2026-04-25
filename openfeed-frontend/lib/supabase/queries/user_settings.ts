@@ -41,3 +41,16 @@ export async function updateUserTimezone(
 
   if (error) throw new Error(error.message);
 }
+
+export async function updateUserTheme(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  colorTheme: string,
+) {
+  const { error } = await supabase
+    .from("user_settings")
+    .update({ color_theme: colorTheme })
+    .eq("user_id", userId);
+
+  if (error) throw new Error(error.message);
+}

@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 
 import { SupabaseClient } from "@supabase/supabase-js";
 
@@ -20,10 +19,7 @@ import {
   UserArticleScore,
 } from "@/lib/supabase/queries/user_articles";
 import { updateUserArticles } from "@/lib/supabase/queries/user_articles";
-import {
-  getGlobalArticlesByIds,
-  InterestArticle,
-} from "@/lib/supabase/queries/global_articles";
+import { getGlobalArticlesByIds } from "@/lib/supabase/queries/global_articles";
 import {
   getUserInterestArticles,
   insertUserInterest,
@@ -36,6 +32,7 @@ import {
 import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
 import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
 import { getStories } from "@/lib/supabase/queries/global_stories";
+import { updateUserTheme } from "@/lib/supabase/queries/user_settings";
 
 import { getCurrentDate } from "@/lib/utils";
 
@@ -226,12 +223,21 @@ async function FooterContent({
     );
   }
 
+  async function handleUpdateTheme() {
+    // ← add
+    "use server";
+    const supabase = await createClient();
+    const next = userSettings.color_theme === "cupcake" ? "black" : "cupcake";
+    await updateUserTheme(supabase, userId, next);
+  }
+
   return (
     <Footer
       userEmail={email}
       userSettings={userSettings}
       handleSignOut={signOut}
       handleUpdateNotifications={handleUpdateNotifications}
+      handleUpdateTheme={handleUpdateTheme} // ← add
     />
   );
 }
@@ -254,6 +260,8 @@ export default async function AllArticlesPage({
   const { tab: rawTab, query } = await searchParams;
   const date = getCurrentDate();
 
+  const userSettings = await getUserSettings(supabase, userId);
+
   const tab: Tab =
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
 
@@ -261,7 +269,11 @@ export default async function AllArticlesPage({
     <div className="flex flex-col gap-4 flex-1">
       <div className="flex justify-center">
         <Image
-          src={"logo.svg"}
+          src={
+            userSettings.color_theme === "cupcake"
+              ? "/logo-light.svg"
+              : "/logo-dark.svg"
+          }
           alt="The Latest Times"
           width={300}
           height={300}

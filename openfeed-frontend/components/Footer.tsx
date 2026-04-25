@@ -12,6 +12,7 @@ interface FooterProps {
   userSettings: Database["public"]["Tables"]["user_settings"]["Row"];
   handleSignOut: () => Promise<void>;
   handleUpdateNotifications: () => Promise<void>;
+  handleUpdateTheme: () => Promise<void>;
 }
 
 export function Footer({
@@ -19,6 +20,7 @@ export function Footer({
   userSettings,
   handleSignOut,
   handleUpdateNotifications,
+  handleUpdateTheme,
 }: FooterProps) {
   const router = useRouter();
 
@@ -26,13 +28,24 @@ export function Footer({
   const [emailNotification, setEmailNotification] = useState(
     userSettings.email_notification,
   );
+  const [colorTheme, setColorTheme] = useState(userSettings.color_theme);
 
   async function handleToggleNotifications() {
     setEmailNotification((prev) => !prev);
     try {
       await handleUpdateNotifications();
     } catch {
-      setEmailNotification((prev) => !prev); // revert on error
+      setEmailNotification((prev) => !prev);
+    }
+    router.refresh();
+  }
+
+  async function handleToggleTheme() {
+    setColorTheme((prev) => (prev === "cupcake" ? "black" : "cupcake"));
+    try {
+      await handleUpdateTheme();
+    } catch {
+      setColorTheme((prev) => (prev === "cupcake" ? "black" : "cupcake"));
     }
     router.refresh();
   }
@@ -46,6 +59,14 @@ export function Footer({
             className="cursor-pointer hover:font-bold hover:underline pb-3"
           >
             Email Notifications ({emailNotification ? "On" : "Off"})
+          </button>
+        </div>
+        <div>
+          <button
+            onClick={handleToggleTheme}
+            className="cursor-pointer hover:font-bold hover:underline pb-3"
+          >
+            Theme ({colorTheme === "cupcake" ? "Light" : "Dark"})
           </button>
         </div>
         <div>

@@ -6,6 +6,9 @@ import { Lora } from "next/font/google";
 
 import "./globals.css";
 
+import { createClient } from "@/lib/supabase/server";
+import { getUserSettings } from "@/lib/supabase/queries/user_settings";
+
 const lora = Lora({
   variable: "--font-lora",
   subsets: ["latin"],
@@ -28,13 +31,20 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+
+  const colorTheme = claimsData
+    ? (await getUserSettings(supabase, claimsData.claims.sub)).color_theme
+    : "black";
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={colorTheme}>
       <body
         className={`${lora.className} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
       >
