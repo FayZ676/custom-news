@@ -41,7 +41,7 @@ export default async function RootLayout({
 
   const colorTheme = claimsData
     ? (await getUserSettings(supabase, claimsData.claims.sub)).color_theme
-    : "black";
+    : "cupcake";
 
   return (
     <html lang="en" data-theme={colorTheme}>

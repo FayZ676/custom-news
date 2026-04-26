@@ -9,7 +9,7 @@ export default function SignInPage() {
         <div className="flex flex-col items-center gap-3">
           <hr className="border-t w-full" />
           <Image
-            src="/logo.svg"
+            src="/logo-light.svg"
             alt="The Latest Times"
             width={220}
             height={60}
