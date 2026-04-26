@@ -41,17 +41,23 @@ export function Footer({
   }
 
   async function handleToggleTheme() {
-    setColorTheme((prev) => (prev === "cupcake" ? "black" : "cupcake"));
+    const nextTheme = colorTheme === "cupcake" ? "black" : "cupcake";
+
+    setColorTheme(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+
     try {
       await handleUpdateTheme();
     } catch {
-      setColorTheme((prev) => (prev === "cupcake" ? "black" : "cupcake"));
+      setColorTheme(colorTheme);
+      document.documentElement.dataset.theme = colorTheme;
     }
+
     router.refresh();
   }
 
   return (
-    <footer className="text-sm bg-accent/15 p-3">
+    <footer className="text-sm">
       <div className="flex flex-col gap-4 divide-y divide-neutral-400">
         <div>
           <button
