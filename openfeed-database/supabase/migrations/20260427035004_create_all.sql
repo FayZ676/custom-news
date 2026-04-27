@@ -66,6 +66,19 @@ alter table "public"."global_feeds" enable row level security;
 alter table "public"."global_settings" enable row level security;
 
 
+  create table "public"."global_share_links" (
+    "token" uuid not null default gen_random_uuid(),
+    "content_type" text not null,
+    "content_id" text not null,
+    "created_by" uuid default auth.uid(),
+    "expires_at" timestamp with time zone not null default (now() + '7 days'::interval),
+    "created_at" timestamp with time zone default now()
+      );
+
+
+alter table "public"."global_share_links" enable row level security;
+
+
   create table "public"."global_stories" (
     "id" uuid not null default gen_random_uuid(),
     "headline" text not null,
@@ -136,6 +149,8 @@ CREATE UNIQUE INDEX global_settings_pkey ON public.global_settings USING btree (
 
 CREATE UNIQUE INDEX global_settings_singleton ON public.global_settings USING btree (singleton);
 
+CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING btree (token);
+
 CREATE UNIQUE INDEX global_stories_pkey ON public.global_stories USING btree (id);
 
 CREATE UNIQUE INDEX user_articles_pkey ON public.user_articles USING btree (user_id, interest_id, article_id);
@@ -157,6 +172,8 @@ alter table "public"."global_emails" add constraint "global_emails_pkey" PRIMARY
 alter table "public"."global_feeds" add constraint "global_feeds_pkey" PRIMARY KEY using index "global_feeds_pkey";
 
 alter table "public"."global_settings" add constraint "global_settings_pkey" PRIMARY KEY using index "global_settings_pkey";
+
+alter table "public"."global_share_links" add constraint "global_share_links_pkey" PRIMARY KEY using index "global_share_links_pkey";
 
 alter table "public"."global_stories" add constraint "global_stories_pkey" PRIMARY KEY using index "global_stories_pkey";
 
@@ -187,6 +204,14 @@ alter table "public"."global_settings" add constraint "global_settings_singleton
 alter table "public"."global_settings" add constraint "global_settings_singleton_true" CHECK ((singleton = true)) not valid;
 
 alter table "public"."global_settings" validate constraint "global_settings_singleton_true";
+
+alter table "public"."global_share_links" add constraint "global_share_links_content_type_check" CHECK ((content_type = ANY (ARRAY['article'::text, 'story'::text]))) not valid;
+
+alter table "public"."global_share_links" validate constraint "global_share_links_content_type_check";
+
+alter table "public"."global_share_links" add constraint "global_share_links_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) not valid;
+
+alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
 
 alter table "public"."user_articles" add constraint "user_articles_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
 
@@ -459,6 +484,48 @@ grant truncate on table "public"."global_settings" to "service_role";
 
 grant update on table "public"."global_settings" to "service_role";
 
+grant delete on table "public"."global_share_links" to "anon";
+
+grant insert on table "public"."global_share_links" to "anon";
+
+grant references on table "public"."global_share_links" to "anon";
+
+grant select on table "public"."global_share_links" to "anon";
+
+grant trigger on table "public"."global_share_links" to "anon";
+
+grant truncate on table "public"."global_share_links" to "anon";
+
+grant update on table "public"."global_share_links" to "anon";
+
+grant delete on table "public"."global_share_links" to "authenticated";
+
+grant insert on table "public"."global_share_links" to "authenticated";
+
+grant references on table "public"."global_share_links" to "authenticated";
+
+grant select on table "public"."global_share_links" to "authenticated";
+
+grant trigger on table "public"."global_share_links" to "authenticated";
+
+grant truncate on table "public"."global_share_links" to "authenticated";
+
+grant update on table "public"."global_share_links" to "authenticated";
+
+grant delete on table "public"."global_share_links" to "service_role";
+
+grant insert on table "public"."global_share_links" to "service_role";
+
+grant references on table "public"."global_share_links" to "service_role";
+
+grant select on table "public"."global_share_links" to "service_role";
+
+grant trigger on table "public"."global_share_links" to "service_role";
+
+grant truncate on table "public"."global_share_links" to "service_role";
+
+grant update on table "public"."global_share_links" to "service_role";
+
 grant delete on table "public"."global_stories" to "anon";
 
 grant insert on table "public"."global_stories" to "anon";
@@ -670,6 +737,24 @@ using (true);
   for select
   to anon, authenticated
 using (true);
+
+
+
+  create policy "Authenticated users can create share links"
+  on "public"."global_share_links"
+  as permissive
+  for insert
+  to public
+with check ((auth.uid() IS NOT NULL));
+
+
+
+  create policy "Public can read non-expired share links"
+  on "public"."global_share_links"
+  as permissive
+  for select
+  to public
+using ((expires_at > now()));
 
 
 
