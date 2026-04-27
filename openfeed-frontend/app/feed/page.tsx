@@ -33,6 +33,7 @@ import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles"
 import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
 import { getStories } from "@/lib/supabase/queries/global_stories";
 import { updateUserTheme } from "@/lib/supabase/queries/user_settings";
+import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import { getCurrentDate } from "@/lib/utils";
 
@@ -169,10 +170,25 @@ async function ViewMyNewsContent({ userId }: { userId: string }) {
   );
 }
 
-async function ViewTrendingContent() {
+async function ViewTrendingContent({ userId }: { userId: string }) {
   const supabase = await createClient();
   const stories = await getStories(supabase);
-  return <ViewTopStories stories={stories} />;
+
+  async function handleCreateShareLink(
+    contentType: "article" | "story",
+    contentId: string,
+  ): Promise<string> {
+    "use server";
+    const supabase = await createClient();
+    return await createShareLink(supabase, userId, contentType, contentId);
+  }
+
+  return (
+    <ViewTopStories
+      stories={stories}
+      handleCreateShareLink={handleCreateShareLink}
+    />
+  );
 }
 
 async function ViewSearchContent({
@@ -290,7 +306,7 @@ export default async function AllArticlesPage({
 
       {tab === "trending" && (
         <Suspense fallback={<ViewTopStoriesSkeleton />}>
-          <ViewTrendingContent />
+          <ViewTrendingContent userId={userId} />
         </Suspense>
       )}
 

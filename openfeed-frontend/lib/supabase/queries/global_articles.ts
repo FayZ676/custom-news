@@ -46,3 +46,17 @@ export async function getGlobalArticlesByPage(
   if (error) throw new Error(error.message);
   return data.map((a) => ({ is_read: false, score: 0, global_article: a }));
 }
+
+export async function getGlobalArticleById(
+  supabase: SupabaseClient<Database>,
+  id: string,
+): Promise<Tables<"global_articles"> | null> {
+  const { data, error } = await supabase
+    .from("global_articles")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data;
+}

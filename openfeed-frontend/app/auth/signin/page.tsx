@@ -1,5 +1,6 @@
 // app/auth/signin/page.tsx
 import Image from "next/image";
+import Link from "next/link";
 import SignInForm from "@/components/SignInForm";
 
 export default function SignInPage() {
@@ -8,12 +9,16 @@ export default function SignInPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center gap-3">
           <hr className="border-t w-full" />
-          <Image
-            src="/logo-light.svg"
-            alt="The Latest Times"
-            width={220}
-            height={60}
-          />
+          <Link href="/" aria-label="Go to The Latest Times feed">
+            <Image
+              src="/logo-light.svg"
+              alt="The Latest Times"
+              width={240}
+              height={240}
+              priority
+              style={{ height: "auto" }}
+            />
+          </Link>
           <hr className="border-t-2 w-full" />
           <p className="text-sm italic text-base-content/60 text-center">
             Sign in to read your personalised newspaper.

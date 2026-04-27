@@ -17,6 +17,10 @@ import { SectionArticleSkeleton } from "@/components/SectionArticles";
 
 interface ViewTopStoriesProps {
   stories: Tables<"global_stories">[];
+  handleCreateShareLink: (
+    contentType: "article" | "story",
+    contentId: string,
+  ) => Promise<string>;
 }
 
 type TrendIndicator = {
@@ -53,13 +57,34 @@ function getTrendIndicator(velocity: number): TrendIndicator {
   }
 }
 
-export function ViewTopStories({ stories }: ViewTopStoriesProps) {
+export function ViewTopStories({
+  stories,
+  handleCreateShareLink,
+}: ViewTopStoriesProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedStory, setSelectedStory] =
     useState<Tables<"global_stories"> | null>(null);
+  const [copyState, setCopyState] = useState<"idle" | "loading" | "copied">(
+    "idle",
+  );
+
+  async function handleCopy() {
+    if (!selectedStory) return;
+    setCopyState("loading");
+    try {
+      const token = await handleCreateShareLink("story", selectedStory.id);
+      const url = new URL(`/share/${token}`, window.location.origin).toString();
+      await navigator.clipboard.writeText(url);
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 2000);
+    } catch {
+      setCopyState("idle");
+    }
+  }
 
   function openModal(story: Tables<"global_stories">) {
     setSelectedStory(story);
+    setCopyState("idle");
     dialogRef.current?.showModal();
   }
 
@@ -125,6 +150,17 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
                 )}
               </div>
             )}
+            <button
+              className="underline font-bold ml-auto disabled:opacity-50"
+              onClick={handleCopy}
+              disabled={copyState !== "idle"}
+            >
+              {copyState === "copied"
+                ? "Copied!"
+                : copyState === "loading"
+                  ? "Copying..."
+                  : "Copy"}
+            </button>
           </div>
         )}
       </Modal>
