@@ -15,8 +15,32 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: "The Latest Times",
-  description: "The latest and most relevant news from across with web.",
+  title: "The Latest Times - Your News, Your Interests, Zero Noise",
+  description:
+    "Describe what you care about. Get relevant news automatically ranked and delivered. No algorithmic manipulation. No ads. No noise. Just the news that matters to you.",
+  keywords: [
+    "news aggregator",
+    "personalized news",
+    "news feed",
+    "AI news ranking",
+    "custom news",
+    "relevant news",
+    "news reader",
+  ],
+  authors: [{ name: "The Latest Times" }],
+  openGraph: {
+    title: "The Latest Times - Your News, Your Interests, Zero Noise",
+    description:
+      "Get relevant news automatically ranked by your interests. No ads, no noise, just what matters to you.",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Latest Times - Your News, Your Interests, Zero Noise",
+    description:
+      "Get relevant news automatically ranked by your interests. No ads, no noise, just what matters to you.",
+  },
   icons: [
     {
       rel: "icon",

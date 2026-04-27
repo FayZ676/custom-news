@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { LandingPage } from "@/components/LandingPage";
 
-export default async function Home() {
-  redirect("/feed");
+export default function Home() {
+  return <LandingPage />;
 }
