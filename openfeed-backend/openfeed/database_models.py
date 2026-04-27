@@ -64,28 +64,28 @@ class PublicGlobalArticles(BaseModel):
 
 
 class PublicGlobalArticlesInsert(TypedDict):
-    content: NotRequired[Annotated[str, Field(alias="content")]]
+    content: NotRequired[Annotated[Optional[str], Field(alias="content")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     feed_title: Annotated[str, Field(alias="feed_title")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     published_at: Annotated[datetime.datetime, Field(alias="published_at")]
-    summary: NotRequired[Annotated[str, Field(alias="summary")]]
+    summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
     summary_embeddings: NotRequired[
-        Annotated[list[Any], Field(alias="summary_embeddings")]
+        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
     ]
     title: Annotated[str, Field(alias="title")]
     url: Annotated[str, Field(alias="url")]
 
 
 class PublicGlobalArticlesUpdate(TypedDict):
-    content: NotRequired[Annotated[str, Field(alias="content")]]
+    content: NotRequired[Annotated[Optional[str], Field(alias="content")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     feed_title: NotRequired[Annotated[str, Field(alias="feed_title")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     published_at: NotRequired[Annotated[datetime.datetime, Field(alias="published_at")]]
-    summary: NotRequired[Annotated[str, Field(alias="summary")]]
+    summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
     summary_embeddings: NotRequired[
-        Annotated[list[Any], Field(alias="summary_embeddings")]
+        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
     ]
     title: NotRequired[Annotated[str, Field(alias="title")]]
     url: NotRequired[Annotated[str, Field(alias="url")]]
@@ -144,7 +144,7 @@ class PublicGlobalFeeds(BaseModel):
 
 
 class PublicGlobalFeedsInsert(TypedDict):
-    category_id: NotRequired[Annotated[uuid.UUID, Field(alias="category_id")]]
+    category_id: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="category_id")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     description: Annotated[str, Field(alias="description")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -153,7 +153,7 @@ class PublicGlobalFeedsInsert(TypedDict):
 
 
 class PublicGlobalFeedsUpdate(TypedDict):
-    category_id: NotRequired[Annotated[uuid.UUID, Field(alias="category_id")]]
+    category_id: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="category_id")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     description: NotRequired[Annotated[str, Field(alias="description")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -190,6 +190,37 @@ class PublicGlobalSettingsUpdate(TypedDict):
         Annotated[List[int], Field(alias="notification_hours")]
     ]
     singleton: NotRequired[Annotated[bool, Field(alias="singleton")]]
+
+
+class PublicGlobalShareLinks(BaseModel):
+    content_id: str = Field(alias="content_id")
+    content_type: str = Field(alias="content_type")
+    created_at: Optional[datetime.datetime] = Field(alias="created_at")
+    created_by: Optional[uuid.UUID] = Field(alias="created_by")
+    expires_at: datetime.datetime = Field(alias="expires_at")
+    token: uuid.UUID = Field(alias="token")
+
+
+class PublicGlobalShareLinksInsert(TypedDict):
+    content_id: Annotated[str, Field(alias="content_id")]
+    content_type: Annotated[str, Field(alias="content_type")]
+    created_at: NotRequired[
+        Annotated[Optional[datetime.datetime], Field(alias="created_at")]
+    ]
+    created_by: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="created_by")]]
+    expires_at: NotRequired[Annotated[datetime.datetime, Field(alias="expires_at")]]
+    token: NotRequired[Annotated[uuid.UUID, Field(alias="token")]]
+
+
+class PublicGlobalShareLinksUpdate(TypedDict):
+    content_id: NotRequired[Annotated[str, Field(alias="content_id")]]
+    content_type: NotRequired[Annotated[str, Field(alias="content_type")]]
+    created_at: NotRequired[
+        Annotated[Optional[datetime.datetime], Field(alias="created_at")]
+    ]
+    created_by: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="created_by")]]
+    expires_at: NotRequired[Annotated[datetime.datetime, Field(alias="expires_at")]]
+    token: NotRequired[Annotated[uuid.UUID, Field(alias="token")]]
 
 
 class PublicGlobalStories(BaseModel):
