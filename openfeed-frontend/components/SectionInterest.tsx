@@ -17,6 +17,10 @@ export interface SectionInterestProps {
   deleting: boolean;
   handleDeleteInterest: (interestId: string) => void;
   handleReadArticles: (articleIds: string[], isRead: boolean) => void;
+  handleCreateShareLink: (
+    contentType: "article" | "story",
+    contentId: string,
+  ) => Promise<string>;
 }
 
 export default function SectionInterest({
@@ -24,6 +28,7 @@ export default function SectionInterest({
   deleting,
   handleReadArticles,
   handleDeleteInterest,
+  handleCreateShareLink,
 }: SectionInterestProps) {
   const [showReadArticles, setShowReadArticles] = useState<boolean>(false);
   const [optimisticArticles, setOptimisticArticles] = useOptimistic(
@@ -123,6 +128,7 @@ export default function SectionInterest({
       {unreadArticles.length > 0 ? (
         <SectionArticles
           articles={unreadArticles}
+          handleCreateShareLink={handleCreateShareLink}
           handleReadArticle={handleToggleArticleReadOptimistic}
         />
       ) : (
@@ -137,6 +143,7 @@ export default function SectionInterest({
           </div>
           <SectionArticles
             articles={readArticles}
+            handleCreateShareLink={handleCreateShareLink}
             handleReadArticle={handleToggleArticleReadOptimistic}
           />
         </>

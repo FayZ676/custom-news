@@ -150,6 +150,15 @@ async function ViewMyNewsContent({ userId }: { userId: string }) {
   const supabase = await createClient();
   const interestArticles = await getUserInterestArticles(supabase, userId);
 
+  async function handleCreateShareLink(
+    contentType: "article" | "story",
+    contentId: string,
+  ): Promise<string> {
+    "use server";
+    const supabase = await createClient();
+    return await createShareLink(supabase, userId, contentType, contentId);
+  }
+
   async function handleReadArticles(articleIds: string[], isRead: boolean) {
     "use server";
     const supabase = await createClient();
@@ -165,6 +174,7 @@ async function ViewMyNewsContent({ userId }: { userId: string }) {
   return (
     <ViewFeed
       interestArticles={interestArticles}
+      handleCreateShareLink={handleCreateShareLink}
       handleDeleteInterest={handleDeleteInterest}
       handleReadUserArticles={handleReadArticles}
     />
@@ -205,6 +215,15 @@ async function ViewSearchContent({
     ? await searchGlobalArticles(supabase, query, settings)
     : [];
 
+  async function handleCreateShareLink(
+    contentType: "article" | "story",
+    contentId: string,
+  ): Promise<string> {
+    "use server";
+    const supabase = await createClient();
+    return await createShareLink(supabase, userId, contentType, contentId);
+  }
+
   async function handleSaveUserInterest(query: string) {
     "use server";
     const supabase = await createClient();
@@ -215,6 +234,7 @@ async function ViewSearchContent({
   return (
     <ViewSearch
       queryArticles={queryArticles}
+      handleCreateShareLink={handleCreateShareLink}
       handleSaveUserInterest={handleSaveUserInterest}
     />
   );

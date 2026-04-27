@@ -3,31 +3,48 @@
 import { useRef, useState } from "react";
 
 import { timeAgo, toTitleCase } from "@/lib/utils";
-
 import {
   QueryArticle,
   InterestArticle,
 } from "@/lib/supabase/queries/global_articles";
 
-import Modal from "@/components/Modal";
+import {
+  NewsItemModal,
+  NewsItemModalHandle,
+  NewsItemArticle,
+} from "@/components/NewsItemModal";
 
 interface SectionArticlesProps {
   articles: InterestArticle[] | QueryArticle[];
+  handleCreateShareLink: (
+    contentType: "article" | "story",
+    contentId: string,
+  ) => Promise<string>;
   handleReadArticle?: (articleIds: string[], isRead: boolean) => Promise<void>;
 }
 
 export function SectionArticles({
   articles,
+  handleCreateShareLink,
   handleReadArticle,
 }: SectionArticlesProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const modalRef = useRef<NewsItemModalHandle>(null);
   const [selectedArticle, setSelectedArticle] = useState<
     InterestArticle | QueryArticle | null
   >(null);
 
   function openModal(article: InterestArticle | QueryArticle) {
     setSelectedArticle(article);
-    dialogRef.current?.showModal();
+    const item: NewsItemArticle = {
+      type: "article",
+      id: article.global_article.id,
+      title: article.global_article.title,
+      summary: article.global_article.summary,
+      url: article.global_article.url,
+      feedTitle: article.global_article.feed_title,
+      publishedAt: article.global_article.published_at,
+    };
+    modalRef.current?.open(item);
   }
 
   function closeModal() {
@@ -64,32 +81,11 @@ export function SectionArticles({
         })}
       </ol>
 
-      <Modal ref={dialogRef} onClose={closeModal}>
-        {selectedArticle && (
-          <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-semibold pr-6">
-              {toTitleCase(selectedArticle.global_article.title)}
-            </h3>
-            <p className="text-sm text-neutral-500">
-              {selectedArticle.global_article.feed_title} &middot;{" "}
-              {timeAgo(selectedArticle.global_article.published_at)}
-            </p>
-            {selectedArticle.global_article.summary && (
-              <p className="text-base leading-relaxed">
-                {selectedArticle.global_article.summary}
-              </p>
-            )}
-            <a
-              href={selectedArticle.global_article.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold underline"
-            >
-              Read full article →
-            </a>
-          </div>
-        )}
-      </Modal>
+      <NewsItemModal
+        ref={modalRef}
+        handleCreateShareLink={handleCreateShareLink}
+        onClose={closeModal}
+      />
     </>
   );
 }

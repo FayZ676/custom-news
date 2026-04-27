@@ -1,0 +1,170 @@
+"use client";
+
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import Link from "next/link";
+
+import { timeAgo, toTitleCase } from "@/lib/utils";
+import Modal from "@/components/Modal";
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+export type NewsItemArticle = {
+  type: "article";
+  id: string;
+  title: string;
+  summary?: string | null;
+  url: string;
+  feedTitle?: string | null;
+  publishedAt?: string | null;
+};
+
+export type NewsItemStory = {
+  type: "story";
+  id: string;
+  headline: string;
+  summary?: string | null;
+  articleUrls: string[];
+};
+
+export type NewsItem = NewsItemArticle | NewsItemStory;
+
+export interface NewsItemModalHandle {
+  open: (item: NewsItem) => void;
+}
+
+interface NewsItemModalProps {
+  handleCreateShareLink: (
+    contentType: "article" | "story",
+    contentId: string,
+  ) => Promise<string>;
+  onClose?: () => void;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+async function copyText(text: string): Promise<boolean> {
+  if (!navigator?.clipboard?.writeText) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
+
+export const NewsItemModal = forwardRef<
+  NewsItemModalHandle,
+  NewsItemModalProps
+>(({ handleCreateShareLink, onClose }, ref) => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [isPreparingShare, setIsPreparingShare] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "loading" | "copied">(
+    "idle",
+  );
+
+  async function prepareShareUrl(item: NewsItem) {
+    setIsPreparingShare(true);
+    try {
+      const token = await handleCreateShareLink(item.type, item.id);
+      const url = new URL(`/share/${token}`, window.location.origin).toString();
+      setShareUrl(url);
+    } finally {
+      setIsPreparingShare(false);
+    }
+  }
+
+  async function handleCopy() {
+    if (!shareUrl) return;
+    setCopyState("loading");
+    const ok = await copyText(shareUrl);
+    if (!ok) {
+      setCopyState("idle");
+      return;
+    }
+    setCopyState("copied");
+    setTimeout(() => setCopyState("idle"), 2000);
+  }
+
+  useImperativeHandle(ref, () => ({
+    open(item: NewsItem) {
+      setSelectedItem(item);
+      setCopyState("idle");
+      setShareUrl(null);
+      dialogRef.current?.showModal();
+      void prepareShareUrl(item);
+    },
+  }));
+
+  return (
+    <Modal ref={dialogRef} onClose={onClose}>
+      {selectedItem && (
+        <div className="flex flex-col gap-4">
+          <h3 className="text-xl font-semibold pr-6">
+            {selectedItem.type === "story"
+              ? selectedItem.headline
+              : toTitleCase(selectedItem.title)}
+          </h3>
+
+          {selectedItem.type === "article" &&
+            (selectedItem.feedTitle || selectedItem.publishedAt) && (
+              <p className="text-sm text-neutral-500">
+                {selectedItem.feedTitle}
+                {selectedItem.feedTitle && selectedItem.publishedAt && " · "}
+                {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
+              </p>
+            )}
+
+          {selectedItem.summary && (
+            <p className="text-base leading-relaxed">{selectedItem.summary}</p>
+          )}
+
+          {selectedItem.type === "story" &&
+            selectedItem.articleUrls.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedItem.articleUrls.map((url, i) => (
+                  <Link
+                    key={i}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold underline"
+                  >
+                    Article {i + 1}
+                  </Link>
+                ))}
+              </div>
+            )}
+
+          {selectedItem.type === "article" && (
+            <a
+              href={selectedItem.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold underline"
+            >
+              Read full article →
+            </a>
+          )}
+
+          <button
+            className="underline font-bold ml-auto disabled:opacity-50"
+            onClick={handleCopy}
+            disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
+          >
+            {copyState === "copied"
+              ? "Copied!"
+              : isPreparingShare || copyState === "loading"
+                ? "Preparing..."
+                : "Copy"}
+          </button>
+        </div>
+      )}
+    </Modal>
+  );
+});
+
+NewsItemModal.displayName = "NewsItemModal";

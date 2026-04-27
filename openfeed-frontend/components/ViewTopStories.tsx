@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
-import Link from "next/link";
+import { useRef } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -12,7 +11,11 @@ import {
 
 import { Tables } from "@/lib/supabase/supabase.types";
 
-import Modal from "@/components/Modal";
+import {
+  NewsItemModal,
+  NewsItemModalHandle,
+  NewsItemStory,
+} from "@/components/NewsItemModal";
 import { SectionArticleSkeleton } from "@/components/SectionArticles";
 
 interface ViewTopStoriesProps {
@@ -57,76 +60,21 @@ function getTrendIndicator(velocity: number): TrendIndicator {
   }
 }
 
-function fallbackCopy(text: string): boolean {
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
-
-  const ok = document.execCommand("copy");
-  document.body.removeChild(textarea);
-  return ok;
-}
-
-async function copyText(text: string): Promise<boolean> {
-  if (!navigator?.clipboard?.writeText) return false;
-
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export function ViewTopStories({
   stories,
   handleCreateShareLink,
 }: ViewTopStoriesProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [selectedStory, setSelectedStory] =
-    useState<Tables<"global_stories"> | null>(null);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [isPreparingShare, setIsPreparingShare] = useState(false);
-  const [copyState, setCopyState] = useState<"idle" | "loading" | "copied">(
-    "idle",
-  );
-
-  async function prepareShareUrl(storyId: string) {
-    setIsPreparingShare(true);
-    try {
-      const token = await handleCreateShareLink("story", storyId);
-      const url = new URL(`/share/${token}`, window.location.origin).toString();
-      setShareUrl(url);
-    } finally {
-      setIsPreparingShare(false);
-    }
-  }
-
-  async function handleCopy() {
-    if (!shareUrl) return;
-    setCopyState("loading");
-
-    const ok = await copyText(shareUrl);
-    if (!ok) {
-      setCopyState("idle");
-      return;
-    }
-
-    setCopyState("copied");
-    setTimeout(() => setCopyState("idle"), 2000);
-  }
+  const modalRef = useRef<NewsItemModalHandle>(null);
 
   function openModal(story: Tables<"global_stories">) {
-    setSelectedStory(story);
-    setCopyState("idle");
-    setShareUrl(null);
-    dialogRef.current?.showModal();
-    void prepareShareUrl(story.id);
+    const item: NewsItemStory = {
+      type: "story",
+      id: story.id,
+      headline: story.headline,
+      summary: story.summary,
+      articleUrls: story.related_articles_urls as string[],
+    };
+    modalRef.current?.open(item);
   }
 
   const storiesOrdered = [...stories].sort((a, b) => b.score - a.score);
@@ -161,53 +109,10 @@ export function ViewTopStories({
         })}
       </ol>
 
-      <Modal ref={dialogRef}>
-        {selectedStory && (
-          <div className="flex flex-col gap-4">
-            <h3 className="text-xl font-semibold pr-6">
-              {selectedStory.headline}
-            </h3>
-
-            {selectedStory.summary && (
-              <p className="text-base leading-relaxed">
-                {selectedStory.summary}
-              </p>
-            )}
-
-            {(selectedStory.related_articles_urls as string[]).length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {(selectedStory.related_articles_urls as string[]).map(
-                  (url, i) => (
-                    <Link
-                      key={i}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-bold underline"
-                    >
-                      Article {i + 1}
-                    </Link>
-                  ),
-                )}
-              </div>
-            )}
-
-            <button
-              className="underline font-bold ml-auto disabled:opacity-50"
-              onClick={handleCopy}
-              disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
-            >
-              {copyState === "copied"
-                ? "Copied!"
-                : copyState === "loading"
-                  ? "Copying..."
-                  : isPreparingShare
-                    ? "Preparing..."
-                    : "Copy"}
-            </button>
-          </div>
-        )}
-      </Modal>
+      <NewsItemModal
+        ref={modalRef}
+        handleCreateShareLink={handleCreateShareLink}
+      />
     </section>
   );
 }
