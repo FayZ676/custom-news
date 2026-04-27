@@ -105,7 +105,7 @@ export const NewsItemModal = forwardRef<
   return (
     <Modal ref={dialogRef} onClose={onClose}>
       {selectedItem && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 relative">
           <h3 className="text-xl font-semibold pr-6">
             {selectedItem.type === "story"
               ? selectedItem.headline
@@ -125,23 +125,20 @@ export const NewsItemModal = forwardRef<
             <p className="text-base leading-relaxed">{selectedItem.summary}</p>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {selectedItem.type === "story" &&
-              selectedItem.articleUrls.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedItem.articleUrls.map((url, i) => (
-                    <Link
-                      key={i}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-bold underline"
-                    >
-                      Article {i + 1}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              selectedItem.articleUrls.length > 0 &&
+              selectedItem.articleUrls.map((url, i) => (
+                <Link
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold underline"
+                >
+                  Article {i + 1}
+                </Link>
+              ))}
 
             {selectedItem.type === "article" && (
               <a
@@ -153,24 +150,22 @@ export const NewsItemModal = forwardRef<
                 Read full article →
               </a>
             )}
-
-            <button
-              className="ml-auto disabled:opacity-50 cursor-pointer"
-              onClick={handleCopy}
-              disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
-              aria-label={
-                copyState === "copied"
-                  ? "Copied to clipboard"
-                  : "Copy share link"
-              }
-            >
-              {copyState === "copied" ? (
-                <ClipboardCheck size={18} className="text-success" />
-              ) : (
-                <Copy size={18} />
-              )}
-            </button>
           </div>
+
+          <button
+            className="absolute bottom-0 right-0 disabled:opacity-50 cursor-pointer"
+            onClick={handleCopy}
+            disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
+            aria-label={
+              copyState === "copied" ? "Copied to clipboard" : "Copy share link"
+            }
+          >
+            {copyState === "copied" ? (
+              <ClipboardCheck size={18} className="text-success" />
+            ) : (
+              <Copy size={18} />
+            )}
+          </button>
         </div>
       )}
     </Modal>
