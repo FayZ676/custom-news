@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
@@ -284,18 +285,20 @@ export default async function AllArticlesPage({
   return (
     <div className="flex flex-col gap-4 flex-1">
       <div className="flex justify-center">
-        <Image
-          src={
-            userSettings.color_theme === "cupcake"
-              ? "/logo-light.svg"
-              : "/logo-dark.svg"
-          }
-          alt="The Latest Times"
-          width={300}
-          height={300}
-          loading="eager"
-          style={{ height: "auto" }}
-        />
+        <Link href="/" aria-label="Go to The Latest Times feed">
+          <Image
+            src={
+              userSettings.color_theme === "cupcake"
+                ? "/logo-light.svg"
+                : "/logo-dark.svg"
+            }
+            alt="The Latest Times"
+            width={300}
+            height={300}
+            loading="eager"
+            style={{ height: "auto" }}
+          />
+        </Link>
       </div>
 
       <Suspense fallback={<BannerSkeleton />}>

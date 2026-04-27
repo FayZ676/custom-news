@@ -7,6 +7,7 @@ import { Tables } from "@/lib/supabase/supabase.types";
 import { getShareLinkByToken } from "@/lib/supabase/queries/global_share_links";
 import { getGlobalArticleById } from "@/lib/supabase/queries/global_articles";
 import { getStoryById } from "@/lib/supabase/queries/global_stories";
+import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 const isUuid = (value: string): boolean =>
@@ -108,12 +109,22 @@ export default async function SharePage({
   const shared = await resolveSharedContent(token);
   if (!shared) notFound();
 
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+
+  const colorTheme = claimsData
+    ? (await getUserSettings(supabase, claimsData.claims.sub)).color_theme
+    : "cupcake";
+
+  const logoSrc =
+    colorTheme === "cupcake" ? "/logo-light.svg" : "/logo-dark.svg";
+
   return (
     <main className="flex flex-col gap-6 w-full max-w-2xl mx-auto py-8">
       <div className="flex items-center justify-center">
-        <Link href="/" aria-label="Go to The Latest Times feed">
+        <Link href="/" aria-label="Go to The Latest Times landing page">
           <Image
-            src="/logo-light.svg"
+            src={logoSrc}
             alt="The Latest Times"
             width={240}
             height={240}
@@ -132,7 +143,7 @@ export default async function SharePage({
       </section>
 
       <p className="text-sm text-base-content/60 text-center">
-        <Link href="/feed" className="underline font-semibold">
+        <Link href="/auth/signin" className="underline font-semibold">
           Visit The Latest Times
         </Link>
       </p>
