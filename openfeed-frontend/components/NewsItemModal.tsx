@@ -3,8 +3,11 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Link from "next/link";
 
-import { timeAgo, toTitleCase } from "@/lib/utils";
+import { Copy, ClipboardCheck } from "lucide-react";
+
 import Modal from "@/components/Modal";
+
+import { timeAgo, toTitleCase } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -122,45 +125,52 @@ export const NewsItemModal = forwardRef<
             <p className="text-base leading-relaxed">{selectedItem.summary}</p>
           )}
 
-          {selectedItem.type === "story" &&
-            selectedItem.articleUrls.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedItem.articleUrls.map((url, i) => (
-                  <Link
-                    key={i}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold underline"
-                  >
-                    Article {i + 1}
-                  </Link>
-                ))}
-              </div>
+          <div className="flex gap-2">
+            {selectedItem.type === "story" &&
+              selectedItem.articleUrls.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedItem.articleUrls.map((url, i) => (
+                    <Link
+                      key={i}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold underline"
+                    >
+                      Article {i + 1}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+            {selectedItem.type === "article" && (
+              <a
+                href={selectedItem.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline"
+              >
+                Read full article →
+              </a>
             )}
 
-          {selectedItem.type === "article" && (
-            <a
-              href={selectedItem.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold underline"
+            <button
+              className="ml-auto disabled:opacity-50 cursor-pointer"
+              onClick={handleCopy}
+              disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
+              aria-label={
+                copyState === "copied"
+                  ? "Copied to clipboard"
+                  : "Copy share link"
+              }
             >
-              Read full article →
-            </a>
-          )}
-
-          <button
-            className="underline font-bold ml-auto disabled:opacity-50"
-            onClick={handleCopy}
-            disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
-          >
-            {copyState === "copied"
-              ? "Copied!"
-              : isPreparingShare || copyState === "loading"
-                ? "Preparing..."
-                : "Copy"}
-          </button>
+              {copyState === "copied" ? (
+                <ClipboardCheck size={18} className="text-success" />
+              ) : (
+                <Copy size={18} />
+              )}
+            </button>
+          </div>
         </div>
       )}
     </Modal>
