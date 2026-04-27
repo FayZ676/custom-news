@@ -57,6 +57,32 @@ function getTrendIndicator(velocity: number): TrendIndicator {
   }
 }
 
+function fallbackCopy(text: string): boolean {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  const ok = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  return ok;
+}
+
+async function copyText(text: string): Promise<boolean> {
+  if (!navigator?.clipboard?.writeText) return false;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function ViewTopStories({
   stories,
   handleCreateShareLink,
@@ -64,28 +90,43 @@ export function ViewTopStories({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedStory, setSelectedStory] =
     useState<Tables<"global_stories"> | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [isPreparingShare, setIsPreparingShare] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "loading" | "copied">(
     "idle",
   );
 
-  async function handleCopy() {
-    if (!selectedStory) return;
-    setCopyState("loading");
+  async function prepareShareUrl(storyId: string) {
+    setIsPreparingShare(true);
     try {
-      const token = await handleCreateShareLink("story", selectedStory.id);
+      const token = await handleCreateShareLink("story", storyId);
       const url = new URL(`/share/${token}`, window.location.origin).toString();
-      await navigator.clipboard.writeText(url);
-      setCopyState("copied");
-      setTimeout(() => setCopyState("idle"), 2000);
-    } catch {
-      setCopyState("idle");
+      setShareUrl(url);
+    } finally {
+      setIsPreparingShare(false);
     }
+  }
+
+  async function handleCopy() {
+    if (!shareUrl) return;
+    setCopyState("loading");
+
+    const ok = await copyText(shareUrl);
+    if (!ok) {
+      setCopyState("idle");
+      return;
+    }
+
+    setCopyState("copied");
+    setTimeout(() => setCopyState("idle"), 2000);
   }
 
   function openModal(story: Tables<"global_stories">) {
     setSelectedStory(story);
     setCopyState("idle");
+    setShareUrl(null);
     dialogRef.current?.showModal();
+    void prepareShareUrl(story.id);
   }
 
   const storiesOrdered = [...stories].sort((a, b) => b.score - a.score);
@@ -150,16 +191,19 @@ export function ViewTopStories({
                 )}
               </div>
             )}
+
             <button
               className="underline font-bold ml-auto disabled:opacity-50"
               onClick={handleCopy}
-              disabled={copyState !== "idle"}
+              disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
             >
               {copyState === "copied"
                 ? "Copied!"
                 : copyState === "loading"
                   ? "Copying..."
-                  : "Copy"}
+                  : isPreparingShare
+                    ? "Preparing..."
+                    : "Copy"}
             </button>
           </div>
         )}
@@ -171,9 +215,13 @@ export function ViewTopStories({
 export function ViewTopStoriesSkeleton({ count = 5 }: { count?: number }) {
   return (
     <section className="flex flex-col gap-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <SectionArticleSkeleton key={i} />
-      ))}
+      <ol className="flex flex-col gap-4">
+        {Array.from({ length: count }).map((_, i) => (
+          <li key={i}>
+            <SectionArticleSkeleton />
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
