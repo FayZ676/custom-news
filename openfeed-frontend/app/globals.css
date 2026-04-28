@@ -1,4 +1,4 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-    themes: cupcake --default, black;
+    themes: light --default, black;
 }
