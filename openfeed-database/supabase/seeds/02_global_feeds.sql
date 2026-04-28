@@ -26,7 +26,6 @@ FROM (VALUES
     ('OpenAI Blog', 'https://openai.com/news/rss.xml', 'Research updates, product announcements, and insights from OpenAI.'),
     ('Google DeepMind Blog', 'https://deepmind.google/blog/rss.xml', 'Research and updates from Google DeepMind.'),
     ('Hugging Face Blog', 'https://huggingface.co/blog/feed.xml', 'Open-source ML models, datasets, and community research.'),
-    ('fast.ai Blog', 'https://www.fast.ai/index.xml', 'Accessible deep learning research and education.'),
     ('Last Week in AI', 'https://lastweekin.ai/feed', 'Curated weekly digest of the most important AI news and papers.'),
     ('Microsoft Research Blog', 'https://www.microsoft.com/en-us/research/feed/', 'Research updates, papers, and breakthroughs from Microsoft Research across AI, systems, and more.'),
     ('MIT News – Machine Learning', 'https://news.mit.edu/topic/mitmachine-learning-rss.xml', 'MIT research news focused specifically on machine learning and AI breakthroughs.'),
@@ -36,6 +35,7 @@ FROM (VALUES
     -- =============================================
     ('MarkTechPost', 'https://www.marktechpost.com/feed', 'Byte-sized summaries of machine learning, deep learning, and AI research papers and trends.'),
     ('Ahead of AI', 'https://magazine.sebastianraschka.com/feed', 'In-depth ML research breakdowns and commentary by Sebastian Raschka.'),
+    ('Towards Data Science', 'https://towardsdatascience.com/feed', 'Practical data science, machine learning, and AI tutorials and articles from practitioners.'),
 
     -- =============================================
     -- Security
@@ -58,15 +58,7 @@ FROM (VALUES
     -- Developer / Programming
     -- =============================================
     ('The Pragmatic Engineer', 'https://blog.pragmaticengineer.com/rss/', 'Deep dives on software engineering, engineering culture, and the tech industry.'),
-    ('CSS-Tricks', 'https://css-tricks.com/feed/', 'Front-end web development techniques, tutorials, and news.'),
-    ('Smashing Magazine', 'https://www.smashingmagazine.com/feed/', 'Web design, UX, and front-end development articles.'),
     ('Stack Overflow Blog', 'https://stackoverflow.blog/feed/', 'Developer surveys, industry insights, and engineering posts from Stack Overflow.'),
-    ('Martin Fowler''s Bliki', 'https://martinfowler.com/feed.atom', 'Software architecture, agile practices, and refactoring patterns.'),
-
-    -- =============================================
-    -- Universities & Education
-    -- =============================================
-    ('Stanford', 'https://crfm.stanford.edu/feed', 'General news from Stanford.'),
 
     -- =============================================
     -- Science & Emerging Tech
@@ -79,11 +71,6 @@ FROM (VALUES
     -- =============================================
     ('Benedict Evans', 'https://www.ben-evans.com/benedictevans/rss.xml', 'Strategic analysis of tech industry trends and market shifts.'),
     ('VentureBeat', 'https://venturebeat.com/feed/', 'Enterprise AI, machine learning, and emerging technology news for business and technical leaders.'),
-
-    -- =============================================
-    -- Open Source & Linux
-    -- =============================================
-    ('LWN.net', 'https://lwn.net/headlines/rss', 'In-depth Linux kernel, open-source, and security coverage.'),
 
     -- =============================================
     -- Consumer Tech
