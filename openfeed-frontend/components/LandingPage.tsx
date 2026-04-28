@@ -3,140 +3,79 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Zap, Brain, Filter, ArrowRight } from "lucide-react";
+import { ArrowRight, TrendingUp, Mail } from "lucide-react";
+import { Tables } from "@/lib/supabase/supabase.types";
+import { useTickerScroll } from "@/hooks/useTickerScroll";
 
-const DEMO_QUERIES = [
-  "Latest developments in AI",
-  "Climate policy updates",
-  "Space exploration news",
-  "Cybersecurity threats",
-];
+interface SearchResult {
+  title: string;
+  summary: string | null;
+  feed_title: string;
+  url: string;
+}
 
-const DEMO_RESULTS = {
-  "Latest developments in AI": [
-    {
-      title: "New Language Model Breaks Performance Records",
-      source: "TechCrunch",
-      description:
-        "Researchers unveil breakthrough in natural language processing...",
-    },
-    {
-      title: "AI Safety Conference Announces New Guidelines",
-      source: "The Verge",
-      description:
-        "Industry leaders convene to establish ethical AI practices...",
-    },
-    {
-      title: "Machine Learning Transforms Healthcare Diagnostics",
-      source: "MIT Technology Review",
-      description:
-        "New AI system achieves 95% accuracy in early disease detection...",
-    },
-  ],
-  "Climate policy updates": [
-    {
-      title: "Global Climate Summit Reaches Historic Agreement",
-      source: "Reuters",
-      description: "Nations commit to ambitious emissions reduction targets...",
-    },
-    {
-      title: "Renewable Energy Subsidies Expanded in Major Economies",
-      source: "Bloomberg",
-      description:
-        "New policy framework accelerates clean energy transition...",
-    },
-  ],
-  "Space exploration news": [
-    {
-      title: "Mars Rover Discovers Evidence of Ancient Water",
-      source: "NASA",
-      description:
-        "Latest findings suggest Mars had liquid water for longer than thought...",
-    },
-    {
-      title: "Private Space Company Announces Moon Mission",
-      source: "Space.com",
-      description: "Commercial lunar expedition planned for next year...",
-    },
-  ],
-  "Cybersecurity threats": [
-    {
-      title: "New Vulnerability Affects Millions of Devices",
-      source: "Wired",
-      description:
-        "Security researchers discover critical flaw in popular software...",
-    },
-    {
-      title: "Ransomware Attacks Increase 40% Year-Over-Year",
-      source: "The Guardian",
-      description:
-        "Experts warn of evolving cyber threats targeting businesses...",
-    },
-  ],
-};
+interface LandingPageProps {
+  stories: Tables<"global_stories">[];
+  feeds: Tables<"global_feeds">[];
+}
 
 const resolveLogoSrc = (theme?: string): string =>
   theme === "cupcake" ? "/logo-light.svg" : "/logo-dark.svg";
 
-export function LandingPage() {
-  const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
+export function LandingPage({ stories, feeds }: LandingPageProps) {
   const [logoSrc, setLogoSrc] = useState("/logo-light.svg");
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const { containerRef, innerRef, pause, resume, handleWheel } =
+    useTickerScroll();
 
   useEffect(() => {
     const applyThemeLogo = () =>
       setLogoSrc(resolveLogoSrc(document.documentElement.dataset.theme));
-
     applyThemeLogo();
-
     const observer = new MutationObserver(applyThemeLogo);
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["data-theme"],
     });
-
     return () => observer.disconnect();
   }, []);
 
-  const handleQueryClick = (query: string) => {
-    setSelectedQuery(null);
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
     setIsSearching(true);
-
-    setTimeout(() => {
-      setSelectedQuery(query);
+    setHasSearched(true);
+    setResults([]);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      const json = await res.json();
+      setResults(json.results ?? []);
+    } finally {
       setIsSearching(false);
-    }, 800);
+    }
   };
 
-  const results = selectedQuery
-    ? DEMO_RESULTS[selectedQuery as keyof typeof DEMO_RESULTS] || []
-    : [];
+  const topStories = [...stories].sort((a, b) => b.score - a.score).slice(0, 5);
 
   return (
     <div className="flex flex-col gap-16 pb-16">
-      {/* Hero Section */}
-      <section className="flex flex-col items-center gap-8 pt-8">
-        <div className="flex justify-center">
-          <Image
-            src={logoSrc}
-            alt="The Latest Times"
-            width={320}
-            height={320}
-            priority
-            style={{ height: "auto" }}
-          />
-        </div>
-
-        <h1 className="text-4xl md:text-5xl font-bold text-center max-w-3xl">
-          Your News. Your Interests. Zero Noise.
-        </h1>
-
-        <p className="text-xl md:text-2xl text-center max-w-2xl opacity-80">
-          Describe what you care about. Get relevant news automatically ranked
-          and delivered. That&apos;s it.
+      {/* Hero */}
+      <section className="flex flex-col items-center gap-6 pt-8">
+        <Image
+          src={logoSrc}
+          alt="The Latest Times"
+          width={320}
+          height={320}
+          priority
+          style={{ height: "auto" }}
+        />
+        <p className="text-lg md:text-xl text-center max-w-xl opacity-60 italic tracking-wide">
+          All the news fit to read — curated by you.
         </p>
-
-        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+        {/* <div className="flex flex-col sm:flex-row gap-4 mt-2">
           <Link
             href="/auth/signup"
             className="px-8 py-4 bg-base-content text-base-100 font-bold text-lg hover:opacity-90 transition-opacity text-center"
@@ -149,167 +88,232 @@ export function LandingPage() {
           >
             Sign In
           </Link>
-        </div>
+        </div> */}
       </section>
 
-      {/* Demo Section */}
-      <section className="flex flex-col gap-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-center">
-          See It In Action
-        </h2>
-        <p className="text-lg text-center opacity-80 max-w-2xl mx-auto">
-          Try one of these sample queries to see how The Latest Times finds what
-          matters to you
+      {/* Sources Ticker */}
+      <section className="flex flex-col gap-2">
+        <hr className="border-t-2" />
+        <p className="text-xs text-center opacity-50 uppercase tracking-widest">
+          Tracking {feeds.length}+ sources across Technology, Finance &amp; more
         </p>
-
-        <div className="flex flex-col gap-4 max-w-3xl mx-auto w-full">
-          {/* Demo Query Buttons */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {DEMO_QUERIES.map((query) => (
-              <button
-                key={query}
-                onClick={() => handleQueryClick(query)}
-                className={`px-4 py-3 border-2 text-left font-semibold hover:bg-base-content hover:text-base-100 transition-colors ${
-                  selectedQuery === query
-                    ? "bg-base-content text-base-100"
-                    : "border-base-content"
-                }`}
-              >
-                {query}
-              </button>
+        <div
+          ref={containerRef}
+          className="overflow-hidden whitespace-nowrap text-sm cursor-ew-resize"
+          onMouseEnter={pause}
+          onMouseLeave={resume}
+          onWheel={handleWheel}
+        >
+          <div ref={innerRef} className="inline-flex will-change-transform">
+            {[...feeds, ...feeds].map((feed, i) => (
+              <span key={`${feed.id}-${i}`} className="px-4 opacity-70">
+                {feed.title}
+              </span>
             ))}
           </div>
+        </div>
+        <hr className="border-t-2" />
+      </section>
 
-          {/* Demo Search Results */}
-          {isSearching && (
-            <div className="flex flex-col gap-3 animate-pulse">
-              <div className="h-24 bg-base-300 rounded" />
-              <div className="h-24 bg-base-300 rounded" />
-              <div className="h-24 bg-base-300 rounded" />
-            </div>
-          )}
-
-          {!isSearching && results.length > 0 && (
-            <div className="flex flex-col gap-3">
-              {results.map((result, idx) => (
-                <div
-                  key={idx}
-                  className="border-2 border-base-content p-4 hover:bg-base-200 transition-colors"
-                >
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg mb-1">{result.title}</h3>
-                      <p className="text-sm opacity-70 mb-2">
-                        {result.description}
-                      </p>
-                      <span className="text-xs font-semibold">
-                        {result.source}
-                      </span>
-                    </div>
-                    <ArrowRight className="shrink-0 opacity-50" size={20} />
-                  </div>
+      {/* Trending Stories */}
+      {topStories.length > 0 && (
+        <section className="flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <TrendingUp size={24} />
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Today&apos;s Top Stories
+            </h2>
+          </div>
+          <p className="opacity-70 -mt-2">
+            Automatically identified from thousands of articles across all
+            sources.
+          </p>
+          <ol className="flex flex-col divide-y-2 divide-base-content/20">
+            {topStories.map((story, i) => (
+              <li key={story.id} className="py-4 flex gap-4 items-start">
+                <span className="text-4xl font-black opacity-20 leading-none shrink-0 w-8 text-right">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="font-bold text-lg leading-snug">
+                    {story.headline}
+                  </h3>
+                  {story.summary && (
+                    <p className="text-sm opacity-70 mt-1 line-clamp-2">
+                      {story.summary}
+                    </p>
+                  )}
                 </div>
-              ))}
+              </li>
+            ))}
+          </ol>
+          <p className="text-sm opacity-50 italic text-right">
+            Stories are refreshed hourly. Sign in to see the full feed.
+          </p>
+        </section>
+      )}
+
+      {/* Live Search */}
+      <section className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
+        <div className="text-center">
+          <h2 className="text-3xl md:text-4xl font-bold">Try It Now</h2>
+          <p className="mt-2 opacity-70">
+            Ask about anything. Get real articles, ranked by relevance, right
+            now.
+          </p>
+        </div>
+
+        <form onSubmit={handleSearch} className="flex gap-2">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder='e.g. "AI regulation in Europe"'
+            className="flex-1 px-4 py-3 border-2 border-base-content bg-transparent font-medium focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={isSearching || !query.trim()}
+            className="px-6 py-3 bg-base-content text-base-100 font-bold hover:opacity-90 transition-opacity disabled:opacity-40"
+          >
+            {isSearching ? "Searching…" : "Search"}
+          </button>
+        </form>
+
+        {isSearching && (
+          <div className="flex flex-col gap-3 animate-pulse">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-20 bg-base-300 rounded" />
+            ))}
+          </div>
+        )}
+
+        {!isSearching && results.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {results.map((result, idx) => (
+              <a
+                key={idx}
+                href={result.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-2 border-base-content p-4 hover:bg-base-200 transition-colors"
+              >
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">{result.title}</h3>
+                    {result.summary && (
+                      <p className="text-sm opacity-70 mb-2 line-clamp-2">
+                        {result.summary}
+                      </p>
+                    )}
+                    <span className="text-xs font-semibold opacity-60">
+                      {result.feed_title}
+                    </span>
+                  </div>
+                  <ArrowRight className="shrink-0 opacity-50 mt-1" size={20} />
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {!isSearching && hasSearched && results.length === 0 && (
+          <p className="text-center opacity-60 italic">
+            No results found. Try a different query.
+          </p>
+        )}
+      </section>
+
+      {/* Email Mockup */}
+      <section className="flex flex-col gap-6">
+        <div className="text-center">
+          <Mail size={32} className="mx-auto mb-3 opacity-70" />
+          <h2 className="text-3xl md:text-4xl font-bold">
+            Delivered to Your Inbox
+          </h2>
+          <p className="mt-2 opacity-70 max-w-xl mx-auto">
+            Twice daily — morning and evening — you get a digest of the top
+            stories and the latest from your interests. No app required.
+          </p>
+        </div>
+
+        {/* Email mockup shell */}
+        <div className="max-w-2xl mx-auto w-full border-2 border-base-content">
+          {/* Email header */}
+          <div className="border-b-2 border-base-content px-6 py-4 flex justify-between items-center bg-base-200">
+            <div>
+              <p className="text-xs opacity-50 uppercase tracking-wider">
+                From
+              </p>
+              <p className="font-semibold">
+                The Latest Times &lt;digest@thelatimes.com&gt;
+              </p>
             </div>
-          )}
+            <p className="text-xs opacity-50">Mon, Apr 28 · 7:00 AM</p>
+          </div>
+          {/* Email body */}
+          <div className="px-6 py-6 flex flex-col gap-6">
+            <div>
+              <p className="text-xs uppercase tracking-widest opacity-50 mb-2">
+                Top Stories
+              </p>
+              <div className="flex flex-col gap-3">
+                {[
+                  "Markets rally as Fed signals pause on rate hikes",
+                  "New open-source LLM outperforms GPT-4 on key benchmarks",
+                  "Global leaders reach landmark climate finance deal",
+                ].map((headline, i) => (
+                  <div key={i} className="flex gap-3 items-start">
+                    <span className="font-black opacity-30 text-lg leading-tight shrink-0">
+                      {i + 1}.
+                    </span>
+                    <p className="font-semibold leading-snug">{headline}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <hr className="border-base-content/20" />
+            <div>
+              <p className="text-xs uppercase tracking-widest opacity-50 mb-2">
+                Your Interests
+              </p>
+              <div className="flex flex-col gap-4">
+                {[
+                  {
+                    interest: "AI research",
+                    title:
+                      "Anthropic releases Claude 4 with extended context window",
+                    source: "The Verge",
+                  },
+                  {
+                    interest: "Venture capital",
+                    title:
+                      "Southeast Asian startups attract record VC inflows in Q1",
+                    source: "TechCrunch",
+                  },
+                ].map((item, i) => (
+                  <div key={i}>
+                    <p className="text-xs font-semibold opacity-50 uppercase tracking-wide mb-1">
+                      {item.interest}
+                    </p>
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="text-xs opacity-50 mt-0.5">{item.source}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="border-t-2 border-base-content/20 px-6 py-3 text-xs opacity-40 text-center">
+            The Latest Times · Unsubscribe · Manage preferences
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="flex flex-col gap-8">
-        <h2 className="text-3xl md:text-4xl font-bold text-center">
-          How It Works
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto w-full">
-          <div className="flex flex-col items-center text-center gap-4">
-            <div className="p-4 border-2 border-base-content">
-              <Brain size={48} strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-bold">Describe Your Interests</h3>
-            <p className="opacity-80">
-              Write what you care about in plain language. &quot;AI
-              research&quot;, &quot;climate policy&quot;, &quot;indie
-              games&quot; — whatever matters to you.
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center text-center gap-4">
-            <div className="p-4 border-2 border-base-content">
-              <Filter size={48} strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-bold">Automatic Ranking</h3>
-            <p className="opacity-80">
-              Every article from your subscribed sources is automatically ranked
-              by relevance. The most important news rises to the top.
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center text-center gap-4">
-            <div className="p-4 border-2 border-base-content">
-              <Zap size={48} strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-bold">Stay Updated</h3>
-            <p className="opacity-80">
-              Your feed updates every hour with fresh articles. No manual
-              searching. No endless scrolling. Just relevant news.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="flex flex-col gap-6 bg-base-200 -mx-4 px-4 py-12">
-        <h2 className="text-3xl md:text-4xl font-bold text-center">
-          Why The Latest Times?
-        </h2>
-
-        <div className="max-w-3xl mx-auto w-full space-y-6">
-          <div className="border-l-4 border-base-content pl-6 py-2">
-            <h3 className="text-xl font-bold mb-2">
-              No Algorithmic Manipulation
-            </h3>
-            <p className="opacity-80">
-              You define what&apos;s important. Not an algorithm optimizing for
-              engagement.
-            </p>
-          </div>
-
-          <div className="border-l-4 border-base-content pl-6 py-2">
-            <h3 className="text-xl font-bold mb-2">No Ads. No Noise.</h3>
-            <p className="opacity-80">
-              Just the news that matters to you, ranked by relevance. Nothing
-              else.
-            </p>
-          </div>
-
-          <div className="border-l-4 border-base-content pl-6 py-2">
-            <h3 className="text-xl font-bold mb-2">Your Time Is Valuable</h3>
-            <p className="opacity-80">
-              Stop scrolling through hundreds of articles. Get the most relevant
-              ones first, automatically.
-            </p>
-          </div>
-
-          <div className="border-l-4 border-base-content pl-6 py-2">
-            <h3 className="text-xl font-bold mb-2">Free to Use</h3>
-            <p className="opacity-80">
-              Built for readers who want better news. Open source and free to
-              self-host.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
+      {/* CTA */}
       <section className="flex flex-col items-center gap-6">
         <h2 className="text-3xl md:text-4xl font-bold text-center">
-          Ready to Take Control of Your News?
+          Ready to Read Only What Matters?
         </h2>
-        <p className="text-xl text-center opacity-80 max-w-2xl">
-          Join readers who&apos;ve stopped scrolling and started reading what
-          actually matters.
-        </p>
         <Link
           href="/auth/signup"
           className="px-10 py-5 bg-base-content text-base-100 font-bold text-xl hover:opacity-90 transition-opacity"
@@ -318,7 +322,6 @@ export function LandingPage() {
         </Link>
       </section>
 
-      {/* Footer */}
       <footer className="text-center text-sm opacity-60 border-t pt-8">
         <p>© 2026 The Latest Times. Open source and built for readers.</p>
       </footer>
