@@ -1,8 +1,3 @@
--- Seed data for global_feeds table (Technology category)
--- Covers: General Tech, AI/ML, Engineering Blogs, Developer/Programming,
---         Science & Emerging Tech, Business of Tech, Open Source,
---         Consumer Tech, Research Digests, Independent Journalism, arXiv
-
 INSERT INTO global_feeds (title, url, description, category_id)
 SELECT title, url, description, (SELECT id FROM global_categories WHERE name = 'Technology')
 FROM (VALUES
@@ -19,6 +14,8 @@ FROM (VALUES
     ('The Register', 'https://www.theregister.com/headlines.atom', 'Irreverent but well-sourced enterprise tech and open-source news.'),
     ('IEEE Spectrum', 'https://spectrum.ieee.org/feeds/feed.rss', 'Authoritative technology and engineering news from the IEEE.'),
     ('Stratechery', 'https://stratechery.com/feed/', 'Analysis of technology and media strategy and their impact on society.'),
+    ('The New York Times – Technology', 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml', 'Technology news and analysis from The New York Times.'),
+    ('Bloomberg Technology', 'https://feeds.bloomberg.com/technology/news.rss', 'Technology business news, market analysis, and industry coverage from Bloomberg.'),
 
     -- =============================================
     -- AI / Machine Learning
@@ -84,6 +81,19 @@ FROM (VALUES
     ('404 Media', 'https://www.404media.co/rss', 'Independent tech journalism covering AI, surveillance, online culture, and the internet''s impact on society.'),
     ('Rest of World', 'https://restofworld.org/feed/latest', 'Reporting on how technology is shaping economies and societies outside of Silicon Valley.')
 
+
+) AS feeds(title, url, description)
+ON CONFLICT (url) DO NOTHING;
+
+
+INSERT INTO global_feeds (title, url, description, category_id)
+SELECT title, url, description, (SELECT id FROM global_categories WHERE name = 'Finance')
+FROM (VALUES
+
+    -- =============================================
+    -- General Finance / News Wires
+    -- =============================================
+    ('Reuters – Business & Finance', 'https://ir.thomsonreuters.com/rss/news-releases.xml?items=15', 'Business and financial news releases from Thomson Reuters.')
 
 ) AS feeds(title, url, description)
 ON CONFLICT (url) DO NOTHING;
