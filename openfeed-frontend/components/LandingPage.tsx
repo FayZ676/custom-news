@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowRight, TrendingUp, Mail } from "lucide-react";
 import { Tables } from "@/lib/supabase/supabase.types";
 import { useTickerScroll } from "@/hooks/useTickerScroll";
+import { TickerSources } from "./TickerSources";
 
 interface SearchResult {
   title: string;
@@ -75,55 +76,27 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
         <p className="text-lg md:text-xl text-center max-w-xl opacity-60 italic tracking-wide">
           All the news fit to read — curated by you.
         </p>
-        {/* <div className="flex flex-col sm:flex-row gap-4 mt-2">
-          <Link
-            href="/auth/signup"
-            className="px-8 py-4 bg-base-content text-base-100 font-bold text-lg hover:opacity-90 transition-opacity text-center"
-          >
-            Get Started Free
-          </Link>
-          <Link
-            href="/auth/signin"
-            className="px-8 py-4 border-2 border-base-content font-bold text-lg hover:bg-base-content hover:text-base-100 transition-colors text-center"
-          >
-            Sign In
-          </Link>
-        </div> */}
       </section>
 
       {/* Sources Ticker */}
-      <section className="flex flex-col gap-2">
-        <hr className="border-t-2" />
-        <p className="text-xs text-center opacity-50 uppercase tracking-widest">
-          Tracking {feeds.length}+ sources across Technology, Finance &amp; more
+      <section className="flex flex-col gap-4">
+        <h2 className="text-3xl md:text-4xl font-bold">
+          Dozens of news feeds in your pocket
+        </h2>
+        <p className="opacity-70 -mt-2">
+          Tracking sources across Technology, Finance &amp; more.
         </p>
-        <div
-          ref={containerRef}
-          className="overflow-hidden whitespace-nowrap text-sm cursor-ew-resize"
-          onMouseEnter={pause}
-          onMouseLeave={resume}
-          onWheel={handleWheel}
-        >
-          <div ref={innerRef} className="inline-flex will-change-transform">
-            {[...feeds, ...feeds].map((feed, i) => (
-              <span key={`${feed.id}-${i}`} className="px-4 opacity-70">
-                {feed.title}
-              </span>
-            ))}
-          </div>
-        </div>
+        <hr className="border-t-2" />
+        <TickerSources feeds={feeds} />
         <hr className="border-t-2" />
       </section>
 
       {/* Trending Stories */}
       {topStories.length > 0 && (
         <section className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <TrendingUp size={24} />
-            <h2 className="text-3xl md:text-4xl font-bold">
-              Today&apos;s Top Stories
-            </h2>
-          </div>
+          <h2 className="text-3xl md:text-4xl font-bold">
+            Never miss a breaking news story
+          </h2>
           <p className="opacity-70 -mt-2">
             Automatically identified from thousands of articles across all
             sources.
@@ -154,15 +127,16 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
       )}
 
       {/* Live Search */}
-      <section className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
-        <div className="text-center">
-          <h2 className="text-3xl md:text-4xl font-bold">Try It Now</h2>
+      <section className="flex flex-col gap-6 max-w-3xl w-full">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-bold">
+            Interested in something? Just ask
+          </h2>
           <p className="mt-2 opacity-70">
             Ask about anything. Get real articles, ranked by relevance, right
             now.
           </p>
         </div>
-
         <form onSubmit={handleSearch} className="flex gap-2">
           <input
             type="text"
@@ -226,17 +200,15 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
 
       {/* Email Mockup */}
       <section className="flex flex-col gap-6">
-        <div className="text-center">
-          <Mail size={32} className="mx-auto mb-3 opacity-70" />
+        <div>
           <h2 className="text-3xl md:text-4xl font-bold">
-            Delivered to Your Inbox
+            Updates delivered straight to you
           </h2>
-          <p className="mt-2 opacity-70 max-w-xl mx-auto">
+          <p className="mt-2 opacity-70 max-w-xl">
             Twice daily — morning and evening — you get a digest of the top
             stories and the latest from your interests. No app required.
           </p>
         </div>
-
         {/* Email mockup shell */}
         <div className="max-w-2xl mx-auto w-full border-2 border-base-content">
           {/* Email header */}

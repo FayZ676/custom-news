@@ -6,6 +6,8 @@ import { getEdition, getUserLocation, UserLocation } from "@/lib/utils";
 import { Database } from "@/lib/supabase/supabase.types";
 import { useTickerScroll } from "@/hooks/useTickerScroll";
 
+import { TickerSources } from "./TickerSources";
+
 export interface BannerProps {
   date: string;
   feeds: Database["public"]["Tables"]["global_feeds"]["Row"][];
@@ -43,21 +45,7 @@ export function Banner({ date, feeds }: BannerProps) {
         </span>
       </div>
       <hr className="border-t-2" />
-      <div
-        ref={containerRef}
-        className="overflow-hidden whitespace-nowrap text-sm cursor-ew-resize"
-        onMouseEnter={pause}
-        onMouseLeave={resume}
-        onWheel={handleWheel}
-      >
-        <div ref={innerRef} className="inline-flex will-change-transform">
-          {[...feeds, ...feeds].map((feed, i) => (
-            <a key={`${feed.id}-${i}`} href={feed.url} className="px-2 italic">
-              {feed.title}
-            </a>
-          ))}
-        </div>
-      </div>
+      <TickerSources feeds={feeds} />
       <hr className="border-t" />
     </div>
   );
