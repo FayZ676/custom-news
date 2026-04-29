@@ -15,4 +15,6 @@ def get_articles(url: str, top_n: int = 50) -> list[Article]:
         except Exception as e:
             # TODO: We should get an alert if a feed is broken.
             logger.warning("Failed to parse article: %s\n%s", e, article)
+    if not articles:
+        logger.warning("Feed returned no articles: %s", url)
     return articles
