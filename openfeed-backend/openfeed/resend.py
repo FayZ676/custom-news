@@ -8,6 +8,7 @@ DIGEST_TEMPLATE_ALIAS = "thelatesttimes-digest"
 class TemplateEmailInput(BaseModel):
     to: EmailStr | list[EmailStr]
     template_id: str  # published template ID or alias
+    subject: str | None = None
     variables: dict[str, str | int] = {}
 
 
@@ -26,6 +27,7 @@ def send_batch_template_emails(
         {
             "from": from_email,
             "to": e.to if isinstance(e.to, list) else [e.to],
+            **({"subject": e.subject} if e.subject else {}),
             "template": {
                 "id": e.template_id,
                 **({"variables": e.variables} if e.variables else {}),

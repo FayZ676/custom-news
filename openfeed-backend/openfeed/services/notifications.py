@@ -34,7 +34,7 @@ _CAUGHT_UP_HTML = (
 
 def notify_users(db: Client) -> None:
     """Send notifications to users whose local time is currently a notification hour."""
-    users_to_notify = _get_users_to_notify(db, datetime.now(timezone.utc))
+    users_to_notify = _get_users_to_notify(db, now_utc := datetime.now(timezone.utc))
 
     if not users_to_notify:
         logger.info("No users are in a notification window at this time, skipping.")
@@ -42,6 +42,9 @@ def notify_users(db: Client) -> None:
 
     top_stories_email = get_latest_email(db)
     user_ids_emails = _fetch_user_emails(db, users_to_notify)
+    timezone_by_email = {
+        user_ids_emails[str(u.user_id)]: u.timezone for u in users_to_notify
+    }
     articles_by_email = _group_details_by_email(
         get_unread_user_article_details(db, user_ids_emails)
     )
@@ -49,7 +52,11 @@ def notify_users(db: Client) -> None:
         emails=list(
             map(
                 lambda email: _build_template_email(
-                    email, top_stories_email, articles_by_email
+                    email,
+                    top_stories_email,
+                    articles_by_email,
+                    now_utc,
+                    timezone_by_email[email],
                 ),
                 user_ids_emails.values(),
             )
@@ -64,11 +71,17 @@ def _build_template_email(
     email: str,
     top_stories_email,
     articles_by_email: dict[str, list[UserArticleDetails]],
+    now_utc: datetime,
+    user_timezone: str,
 ) -> TemplateEmailInput:
     """Build a single TemplateEmailInput for a given recipient."""
+    local_date = now_utc.astimezone(ZoneInfo(user_timezone))
+    edition = "Morning News" if local_date.hour < 12 else "Evening News"
+    subject = f"The Latest Times — {edition}, {local_date.strftime('%B %-d')}"
     return TemplateEmailInput(
         to=email,
         template_id=DIGEST_TEMPLATE_ALIAS,
+        subject=subject,
         variables={
             **(
                 {
