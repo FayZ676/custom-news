@@ -105,28 +105,40 @@ def _generate_story(
 
 def _generate_trending_news_email_section(stories: list[PublicGlobalStories]) -> str:
     top_five = sorted(stories, key=lambda s: s.score, reverse=True)[:5]
-    return _generate_trending_news_email_copy([s.summary for s in top_five])
+    story_data = [
+        {"summary": s.summary, "urls": s.related_articles_urls[:3]} for s in top_five
+    ]
+    return _generate_trending_news_email_copy(story_data)
 
 
-def _generate_trending_news_email_copy(story_texts: list[str]) -> str:
+def _generate_trending_news_email_copy(stories: list[dict]) -> str:
     class CopyResponse(BaseModel):
         text: str
 
+    story_blocks = "\n\n".join(
+        f"- Summary: {s['summary']}\n  Sources: {', '.join(s['urls'])}" for s in stories
+    )
+
     prompt = f"""
 ### Top Stories
-{"\n - ".join(story_texts)}
+{story_blocks}
 
 ### Instructions
 Write a short newspaper-style digest summarizing the above stories in **Markdown format**.
 
 Structure your output like this for each story:
+
 ### <Story Headline>
+
 <Two sentence summary. Lead with the key fact. Use **bold** for the most critical detail and *italic* for context or stakes.>
+
+**<u>[Read full article](<url>)</u>**
 
 Rules:
 - Use `###` headings for each story title.
 - Use **bold** for key facts, figures, or names.
 - Use *italic* for stakes, context, or what happens next.
+- After each story body, on its own line, include a Markdown hyperlink to the most relevant provided URL formatted exactly as: **<u>[Read full article](url)</u>**
 - No greetings, no sign-offs, no filler, no horizontal rules.
 - Keep the entire output under 1,500 characters."""
     llm_response = openai_client.generate_response(
