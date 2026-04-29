@@ -3,6 +3,8 @@ from zoneinfo import ZoneInfo
 from itertools import groupby
 from datetime import datetime, timezone
 
+import markdown as md
+
 from openfeed.config import settings
 from openfeed.db.client import Client
 from openfeed.db.global_emails import get_latest_email
@@ -146,11 +148,7 @@ def _build_interests_summary_html(details: list[UserArticleDetails]) -> str:
 
 
 def _format_top_stories_html(text: str) -> str:
-    paragraphs = [p.strip() for p in text.strip().split("\n\n") if p.strip()]
-    return "".join(
-        f'<tr><td style="padding: 0 0 12px 0; font-size: 14px; line-height: 1.6; color: #1a1a1a;">{p}</td></tr>'
-        for p in paragraphs
-    )
+    return md.markdown(text)
 
 
 if __name__ == "__main__":

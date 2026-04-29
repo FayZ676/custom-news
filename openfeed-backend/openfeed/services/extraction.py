@@ -59,7 +59,7 @@ def top_stories(db: Client):
         delete_stories_by_ids(db, stale_story_ids)
 
     if active_stories := updated_stories + new_stories:
-        insert_email(db, _generate_top_stories_section(active_stories))
+        insert_email(db, _generate_trending_news_email_section(active_stories))
 
     logger.info(
         "top_stories completed: %d new, %d updated, %d removed",
@@ -103,12 +103,12 @@ def _generate_story(
     )
 
 
-def _generate_top_stories_section(stories: list[PublicGlobalStories]) -> str:
+def _generate_trending_news_email_section(stories: list[PublicGlobalStories]) -> str:
     top_five = sorted(stories, key=lambda s: s.score, reverse=True)[:5]
-    return _generate_top_stories_copy([s.summary for s in top_five])
+    return _generate_trending_news_email_copy([s.summary for s in top_five])
 
 
-def _generate_top_stories_copy(story_texts: list[str]) -> str:
+def _generate_trending_news_email_copy(story_texts: list[str]) -> str:
     class CopyResponse(BaseModel):
         text: str
 
@@ -117,9 +117,18 @@ def _generate_top_stories_copy(story_texts: list[str]) -> str:
 {"\n - ".join(story_texts)}
 
 ### Instructions
-Write a short newspaper-style digest briefly summarizing the above stories.
-Be concise and direct — no greetings, no sign-offs, no filler.
-Keep the entire output under 1,500 characters."""
+Write a short newspaper-style digest summarizing the above stories in **Markdown format**.
+
+Structure your output like this for each story:
+### <Story Headline>
+<Two sentence summary. Lead with the key fact. Use **bold** for the most critical detail and *italic* for context or stakes.>
+
+Rules:
+- Use `###` headings for each story title.
+- Use **bold** for key facts, figures, or names.
+- Use *italic* for stakes, context, or what happens next.
+- No greetings, no sign-offs, no filler, no horizontal rules.
+- Keep the entire output under 1,500 characters."""
     llm_response = openai_client.generate_response(
         "gpt-5.4", prompt, CopyResponse, temperature=1.0
     )

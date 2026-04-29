@@ -235,6 +235,11 @@ _DIGEST_TEMPLATE_HTML = """\
         color: #bbb;
         text-decoration: underline;
       }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
     </style>
   </head>
   <body>
@@ -252,14 +257,14 @@ _DIGEST_TEMPLATE_HTML = """\
       </div>
 
       <div class="section">
-        <p class="section-label">Trending </p>
+        <p class="section-label">Trending News</p>
       </div>
       <div class="section-body">
-        <p>{{{TOP_STORIES_SUMMARY}}}</p>
+        {{{TOP_STORIES_SUMMARY}}}
       </div>
       <div class="feed-link-row">
         Explore the full feed at
-        <a href="{{{FEED_URL}}}" class="feed-link" rel="noopener noreferrer nofollow" target="_blank"
+        <a href="{{{FEED_URL}}}" class="feed-link" style="color: #1a1a1a; font-weight: 600; text-decoration: underline;" rel="noopener noreferrer nofollow" target="_blank"
           >The Latest Times</a
         >
       </div>
@@ -272,14 +277,14 @@ _DIGEST_TEMPLATE_HTML = """\
       </div>
 
       <div class="cta-row">
-        <a href="{{{FEED_URL}}}" class="cta-button" rel="noopener noreferrer nofollow" target="_blank"
+        <a href="{{{FEED_URL}}}" class="cta-button" style="display: inline-block; background-color: #1a1a1a; color: #ffffff; font-size: 13px; font-weight: 600; padding: 12px 28px; border-radius: 6px; letter-spacing: 0.01em; text-decoration: none; font-family: 'Lora', Georgia, serif;" rel="noopener noreferrer nofollow" target="_blank"
           >Go to The Latest Times →</a
         >
       </div>
 
       <div class="footer">
         Sent by The Latest Times —
-        <a href="{{{FEED_URL}}}" rel="noopener noreferrer nofollow" target="_blank"
+        <a href="{{{FEED_URL}}}" style="color: #bbb; text-decoration: underline;" rel="noopener noreferrer nofollow" target="_blank"
           >To unsubscribe, visit your dashboard settings</a
         >
       </div>
