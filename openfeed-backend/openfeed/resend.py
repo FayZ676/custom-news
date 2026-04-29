@@ -122,104 +122,171 @@ def _resend_headers(api_key: str) -> dict[str, str]:
 
 
 _DIGEST_TEMPLATE_HTML = """\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light" />
-    <meta name="supported-color-schemes" content="light" />
-    <title>Your Latest Times digest</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no" />
+    <link
+      rel="preload"
+      as="image"
+      href="https://uopbwbyktgayhpbvvgvs.supabase.co/storage/v1/object/public/assets/logo.svg"
+    />
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap" rel="stylesheet" />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap');
-        :root { color-scheme: light only; }
-        body,
-        body > table,
-        body > table > tbody > tr > td { background-color: #f5f5f5 !important; }
-        .email-wrapper { background-color: #ffffff !important; }
+      @import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&display=swap');
+
+      :root { color-scheme: light only; }
+
+      body {
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+      }
+
+      .wrapper {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        font-family: 'Lora', Georgia, serif;
+      }
+
+      .header {
+        padding: 28px 32px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        text-align: center;
+      }
+
+      .header img {
+        display: block;
+        margin: 0 auto;
+        height: 28px;
+        width: auto;
+        border: 0;
+        outline: none;
+      }
+
+      .section {
+        padding: 28px 32px 0;
+        border-top: 1px solid #f0f0f0;
+      }
+
+      .section-label {
+        margin: 0;
+        font-size: 11px;
+        font-weight: 700;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .section-body {
+        padding: 12px 32px 16px;
+      }
+
+      .section-body p {
+        margin: 0;
+      }
+
+      .feed-link-row {
+        padding: 0 32px 24px;
+        font-size: 13px;
+        color: #555;
+      }
+
+      .feed-link {
+        color: #1a1a1a;
+        font-weight: 600;
+        text-decoration: underline;
+      }
+
+      .cta-row {
+        padding: 8px 32px 32px;
+        text-align: center;
+      }
+
+      .cta-button {
+        display: inline-block;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 12px 28px;
+        border-radius: 6px;
+        letter-spacing: 0.01em;
+        text-decoration: none;
+        font-family: 'Lora', Georgia, serif;
+      }
+
+      .footer {
+        padding: 16px 32px 28px;
+        border-top: 1px solid #f0f0f0;
+        font-size: 11px;
+        color: #bbb;
+        text-align: center;
+      }
+
+      .footer a {
+        color: #bbb;
+        text-decoration: underline;
+      }
     </style>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Lora', Georgia, serif;">
-  <table width="600" cellpadding="0" cellspacing="0" border="0"
-    class="email-wrapper"
-    style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
-    <tr>
-      <td align="center" style="padding: 32px 16px;">
-        <table width="600" cellpadding="0" cellspacing="0" border="0"
-               style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+  </head>
+  <body>
+    <div style="display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0">
+      Discover the latest news and trending stories today.
+    </div>
+    <div class="wrapper">
+      <div class="header">
+        <img
+          alt="The Latest Times"
+          src="https://uopbwbyktgayhpbvvgvs.supabase.co/storage/v1/object/public/assets/logo.svg"
+          height="28"
+          width="auto"
+        />
+      </div>
 
-          <!-- Header -->
-          <tr>
-            <td style="padding: 28px 32px 20px 32px; border-bottom: 1px solid #f0f0f0;">
-              <img src="https://uopbwbyktgayhpbvvgvs.supabase.co/storage/v1/object/public/assets/logo.svg"
-                   alt="The Latest Times"
-                   height="28"
-                   style="display: block; height: 28px; width: auto; border: 0;" />
-            </td>
-          </tr>
+      <div class="section">
+        <p class="section-label">Trending </p>
+      </div>
+      <div class="section-body">
+        <p>{{{TOP_STORIES_SUMMARY}}}</p>
+      </div>
+      <div class="feed-link-row">
+        Explore the full feed at
+        <a href="{{{FEED_URL}}}" class="feed-link" rel="noopener noreferrer nofollow" target="_blank"
+          >The Latest Times</a
+        >
+      </div>
 
-          <!-- Top stories summary -->
-          <tr>
-            <td style="padding: 28px 32px 16px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                {{{TOP_STORIES_SUMMARY}}}
-              </table>
-            </td>
-          </tr>
+      <div class="section">
+        <p class="section-label">My News</p>
+      </div>
+      <div class="section-body">
+        <p>{{{INTERESTS_SUMMARY}}}</p>
+      </div>
 
-          <!-- Top stories CTA -->
-          <tr>
-            <td style="padding: 0 32px 24px 32px;">
-                <p style="margin: 0; font-size: 13px; color: #555;">
-                Interested in these stories and more? Explore the full feed at
-                <a href="{{{FEED_URL}}}" style="color: #1a1a1a; font-weight: 600; text-decoration: underline;">The Latest Times &rarr;</a>
-                </p>
-            </td>
-          </tr>
+      <div class="cta-row">
+        <a href="{{{FEED_URL}}}" class="cta-button" rel="noopener noreferrer nofollow" target="_blank"
+          >Go to The Latest Times →</a
+        >
+      </div>
 
-          <!-- Personal news section header -->
-          <tr>
-            <td style="padding: 28px 32px 0 32px; border-top: 1px solid #f0f0f0;">
-              <p style="margin: 0; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.08em;">Your Personal News Updates</p>
-            </td>
-          </tr>
-
-          <!-- Interest summary or caught-up message -->
-          <tr>
-            <td style="padding: 12px 32px 16px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                {{{INTERESTS_SUMMARY}}}
-              </table>
-            </td>
-          </tr>
-
-          <!-- CTA -->
-          <tr>
-            <td style="padding: 8px 32px 32px 32px;" align="center">
-              <a href="{{{FEED_URL}}}" style="display: inline-block; background-color: #1a1a1a; color: #ffffff;
-                 text-decoration: none; font-size: 13px; font-weight: 600; padding: 12px 28px;
-                 border-radius: 6px; letter-spacing: 0.01em;">
-                Go to The Latest Times &rarr;
-              </a>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 16px 32px 28px 32px; border-top: 1px solid #f0f0f0;">
-              <p style="margin: 0; font-size: 11px; color: #bbb; text-align: center;">
-                Sent by The Latest Times &mdash; <a href="{{{FEED_URL}}}" style="color: #bbb;">To unsubscribe, visit your dashboard settings</a>
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>"""
+      <div class="footer">
+        Sent by The Latest Times —
+        <a href="{{{FEED_URL}}}" rel="noopener noreferrer nofollow" target="_blank"
+          >To unsubscribe, visit your dashboard settings</a
+        >
+      </div>
+    </div>
+  </body>
+</html>
+"""
 
 
 if __name__ == "__main__":
