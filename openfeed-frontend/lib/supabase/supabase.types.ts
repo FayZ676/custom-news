@@ -41,8 +41,10 @@ export type Database = {
           feed_title: string;
           id: string;
           published_at: string;
+          significance_score: number;
           summary: string | null;
           summary_embeddings: string | null;
+          summary_entities: string[];
           title: string;
           url: string;
         };
@@ -52,8 +54,10 @@ export type Database = {
           feed_title: string;
           id?: string;
           published_at: string;
+          significance_score: number;
           summary?: string | null;
           summary_embeddings?: string | null;
+          summary_entities?: string[];
           title: string;
           url: string;
         };
@@ -63,8 +67,10 @@ export type Database = {
           feed_title?: string;
           id?: string;
           published_at?: string;
+          significance_score?: number;
           summary?: string | null;
           summary_embeddings?: string | null;
+          summary_entities?: string[];
           title?: string;
           url?: string;
         };
