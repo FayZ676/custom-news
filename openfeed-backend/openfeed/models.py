@@ -44,6 +44,7 @@ class ArticleContent(BaseModel):
 class EntitiesResponse(BaseModel):
     summary: str
     entities: list[str]
+    significance_score: float
 
 
 class ArticleMetadata(EntitiesResponse):
@@ -110,6 +111,8 @@ class Article(BaseModel):
             title=self.title,
             summary=metadata.summary,
             summary_embeddings=metadata.summary_embeddings,
+            summary_entities=metadata.entities,
+            significance_score=metadata.significance_score,
             url=self.link,
             id=uuid.uuid4(),
             created_at=datetime.now(),

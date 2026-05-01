@@ -10,6 +10,8 @@ create extension if not exists "vector" with schema "public";
     "url" text not null,
     "summary" text,
     "summary_embeddings" public.vector(512),
+    "summary_entities" text[] not null default '{}'::text[],
+    "significance_score" double precision not null,
     "content" text,
     "published_at" timestamp with time zone not null,
     "created_at" timestamp with time zone not null default now()
