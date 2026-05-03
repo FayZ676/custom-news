@@ -9,15 +9,15 @@ BEGIN
         SELECT *
         FROM (
             VALUES
-                ('faizififita1@gmail.com', 'abc123'),
-                ('aminfifita1@gmail.com', 'abc123'),
-                ('khadem.badiyan@gmail.com', 'abc123'),
-                ('ppendergrass9@gmail.com', 'abc123'),
-                ('darius.miaji@gmail.com', 'abc123')
-        ) AS t(email, password)
+                ('00000000-0000-0000-0000-000000000001'::uuid, 'faizififita1@gmail.com',    'abc123'),
+                ('00000000-0000-0000-0000-000000000002'::uuid, 'aminfifita1@gmail.com',     'abc123'),
+                ('00000000-0000-0000-0000-000000000003'::uuid, 'khadem.badiyan@gmail.com',  'abc123'),
+                ('00000000-0000-0000-0000-000000000004'::uuid, 'ppendergrass9@gmail.com',   'abc123'),
+                ('00000000-0000-0000-0000-000000000005'::uuid, 'darius.miaji@gmail.com',    'abc123')
+        ) AS t(id, email, password)
     LOOP
         IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = user_data.email) THEN
-            new_user_id := gen_random_uuid();
+            new_user_id := user_data.id;
 
         INSERT INTO auth.users (
             id,

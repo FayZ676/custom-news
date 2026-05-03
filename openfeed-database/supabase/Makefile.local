@@ -1,5 +1,19 @@
 include ../.env
 
+PG_CONN = postgresql://postgres:postgres@localhost:54322/postgres
+INTERESTS_SNAPSHOT = /tmp/_user_interests_snapshot.csv
+SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
+
+snapshot:
+	psql "$(PG_CONN)" -c "\copy public.user_interests TO '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+		&& echo "Snapshot saved to /tmp/"
+
+restore_snapshot:
+	psql "$(PG_CONN)" -c "TRUNCATE public.user_interests, public.user_settings CASCADE;" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
+
 fetch_articles:
 	curl -i --location --request POST '$(BACKEND_URL)/global/articles' \
 		--header 'x-api-key: $(BACKEND_API_KEY)' \
@@ -20,4 +34,4 @@ gen_types_ts:
 gen_types_py:
 	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/database_models.py
 
-init: reset deploy gen_types_py gen_types_ts fetch_articles
+init: snapshot reset deploy gen_types_py gen_types_ts restore_snapshot fetch_articles

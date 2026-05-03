@@ -1,5 +1,19 @@
 include ../.env.prod
 
+PG_CONN = postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres
+INTERESTS_SNAPSHOT = /tmp/_user_interests_snapshot.csv
+SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
+
+snapshot:
+	psql "$(PG_CONN)" -c "\copy public.user_interests TO '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+		&& echo "Snapshot saved to /tmp/"
+
+restore_snapshot:
+	psql "$(PG_CONN)" -c "TRUNCATE public.user_interests, public.user_settings CASCADE;" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
+
 fetch_articles:
 	curl -i --location --request POST '$(BACKEND_URL)/global/articles' \
 		--header 'x-api-key: $(BACKEND_API_KEY)' \
@@ -16,7 +30,7 @@ reset:
 seed:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& for f in seeds/shared/*.sql seeds/prod/*.sql; do \
-			psql "postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres" -f $$f; \
+			psql "$(PG_CONN)" -f $$f; \
 		done
 
 deploy:
@@ -29,10 +43,10 @@ deploy:
 			DELETE FROM vault.secrets WHERE name IN ('backend_url', 'backend_api_key'); \
 			SELECT vault.create_secret('$(BACKEND_URL)', 'backend_url'); \
 			SELECT vault.create_secret('$(BACKEND_API_KEY)', 'backend_api_key'); \
-		" | psql "postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres"
+		" | psql "$(PG_CONN)"
 
 update:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-all
 
-init: reset deploy seed fetch_articles
+init: snapshot reset deploy seed restore_snapshot fetch_articles

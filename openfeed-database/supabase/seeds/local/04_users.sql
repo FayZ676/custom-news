@@ -9,11 +9,11 @@ BEGIN
         SELECT *
         FROM (
             VALUES
-                ('faizififita1@gmail.com', 'abc123')
-        ) AS t(email, password)
+                ('00000000-0000-0000-0000-000000000001'::uuid, 'faizififita1@gmail.com', 'abc123')
+        ) AS t(id, email, password)
     LOOP
         IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = user_data.email) THEN
-            new_user_id := gen_random_uuid();
+            new_user_id := user_data.id;
 
         INSERT INTO auth.users (
             id,
