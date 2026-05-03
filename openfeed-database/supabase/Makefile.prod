@@ -15,7 +15,9 @@ reset:
 
 seed:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-seed --yes
+		&& for f in seeds/shared/*.sql seeds/prod/*.sql; do \
+			psql "postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres" -f $$f; \
+		done
 
 deploy:
 	supabase link --project-ref $(PROJECT_ID) \
