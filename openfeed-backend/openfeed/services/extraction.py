@@ -1,6 +1,6 @@
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 
 from pydantic import BaseModel
@@ -33,13 +33,16 @@ def top_stories(db: Client):
 
     stories_by_id = {s.id: s for s in stories}
     stale_story_ids = [s.id for s in stories if s.id not in matched_clusters]
+    window_hours = float(settings.clustering_window_hours)
 
     # Step 1: Add new stories
     new_stories: list[PublicGlobalStories] = []
     if new_clusters:
         with ThreadPoolExecutor(max_workers=5) as executor:
             new_stories = list(
-                executor.map(lambda c: _generate_story(c, 0.0), new_clusters)
+                executor.map(
+                    lambda c: _generate_story(c, 0.0, window_hours), new_clusters
+                )
             )
         insert_stories(db, new_stories)
 
@@ -49,7 +52,9 @@ def top_stories(db: Client):
         with ThreadPoolExecutor(max_workers=5) as executor:
             updated_stories = list(
                 executor.map(
-                    lambda item: _refresh_story(item[1], stories_by_id[item[0]]),
+                    lambda item: _refresh_story(
+                        item[1], stories_by_id[item[0]], window_hours
+                    ),
                     matched_clusters.items(),
                 )
             )
@@ -72,10 +77,12 @@ def top_stories(db: Client):
 
 
 def _refresh_story(
-    articles: list[PublicGlobalArticles], prev: PublicGlobalStories
+    articles: list[PublicGlobalArticles], prev: PublicGlobalStories, window_hours: float
 ) -> PublicGlobalStories:
     """Re-score an existing story against its updated cluster, preserving its ID and content."""
-    cluster_score = score_cluster(articles)
+    cluster_score = score_cluster(
+        articles, now=datetime.now(timezone.utc), window_hours=window_hours
+    )
     return prev.model_copy(
         update={
             "score_prev": prev.score,
@@ -86,10 +93,12 @@ def _refresh_story(
 
 
 def _generate_story(
-    articles: list[PublicGlobalArticles], prev_score: float
+    articles: list[PublicGlobalArticles], prev_score: float, window_hours: float
 ) -> PublicGlobalStories:
     headline, summary = _generate_story_text(articles)
-    cluster_score = score_cluster(articles)
+    cluster_score = score_cluster(
+        articles, now=datetime.now(timezone.utc), window_hours=window_hours
+    )
     return PublicGlobalStories(
         id=uuid.uuid4(),
         headline=headline,
@@ -98,7 +107,7 @@ def _generate_story(
         score=cluster_score.score,
         score_prev=prev_score,
         velocity=cluster_score.velocity,
-        created_at=datetime.now(),
+        created_at=datetime.now(timezone.utc),
     )
 
 
