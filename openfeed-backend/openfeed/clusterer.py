@@ -1,22 +1,180 @@
 import math
-import numpy as np
+from datetime import datetime, timezone
+from itertools import combinations
+from typing import Callable
 from uuid import UUID
+
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
-from sklearn.metrics import pairwise_distances
 
 from openfeed.db.client import Client
 from openfeed.db.global_stories import update_story_urls
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
+from openfeed.utils.bayesian import Belief, Likelihood, update_all
+
+
+# Base rate: fraction of article pairs that describe the same event.
+# Low because articles span many unrelated topics.
+PRIOR: Belief = {  ## TODO: Verify and/or tune these values
+    "same_event": 0.03,
+    "diff_event": 0.97,
+}
+
+
+# ---------------------------------------------------------------------------
+# Feature extractors — pure functions on article fields
+# ---------------------------------------------------------------------------
+
+
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    mag_a = math.sqrt(sum(x * x for x in a))
+    mag_b = math.sqrt(sum(y * y for y in b))
+    if mag_a == 0 or mag_b == 0:
+        return 0.0
+    return dot / (mag_a * mag_b)
+
+
+def _jaccard_similarity(a: frozenset[str], b: frozenset[str]) -> float:
+    if not a and not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
+def _hours_between(a: datetime, b: datetime) -> float:
+    a_utc = a.replace(tzinfo=timezone.utc) if a.tzinfo is None else a
+    b_utc = b.replace(tzinfo=timezone.utc) if b.tzinfo is None else b
+    return abs((a_utc - b_utc).total_seconds()) / 3600
+
+
+def _normalized_entities(article: PublicGlobalArticles) -> frozenset[str]:
+    return frozenset(e.lower().strip() for e in article.summary_entities)
+
+
+# ---------------------------------------------------------------------------
+# Likelihood functions — each answers:
+# "Given this feature value, how likely is same_event vs diff_event?"
+# Buckets are tunable — refine against labeled pairs.
+# ---------------------------------------------------------------------------
+
+
+def _embedding_likelihood(similarity: float) -> Likelihood:
+    if similarity > 0.85:
+        bucket = "high"
+    elif similarity > 0.60:
+        bucket = "mid"
+    else:
+        bucket = "low"
+
+    rates = {
+        "high": {"same_event": 0.90, "diff_event": 0.20},
+        "mid": {"same_event": 0.40, "diff_event": 0.30},
+        "low": {"same_event": 0.05, "diff_event": 0.80},
+    }[bucket]
+
+    return lambda hypothesis: rates[hypothesis]
+
+
+def _entity_likelihood(jaccard: float) -> Likelihood:
+    if jaccard > 0.30:
+        bucket = "high"
+    elif jaccard > 0.10:
+        bucket = "mid"
+    else:
+        bucket = "low"
+
+    rates = {
+        "high": {"same_event": 0.85, "diff_event": 0.10},
+        "mid": {"same_event": 0.50, "diff_event": 0.30},
+        "low": {"same_event": 0.10, "diff_event": 0.70},
+    }[bucket]
+
+    return lambda hypothesis: rates[hypothesis]
+
+
+def _time_likelihood(hours: float) -> Likelihood:
+    if hours < 6:
+        bucket = "close"
+    elif hours < 48:
+        bucket = "mid"
+    else:
+        bucket = "far"
+
+    rates = {
+        "close": {"same_event": 0.80, "diff_event": 0.30},
+        "mid": {"same_event": 0.50, "diff_event": 0.40},
+        "far": {"same_event": 0.20, "diff_event": 0.55},
+    }[bucket]
+
+    return lambda hypothesis: rates[hypothesis]
+
+
+# ---------------------------------------------------------------------------
+# Pair scorer — composes all three signals via sequential Bayesian update
+# ---------------------------------------------------------------------------
+
+
+def score_pair(a: PublicGlobalArticles, b: PublicGlobalArticles) -> float:
+    """
+    Returns P(same_event | embedding, entities, time).
+    Returns 0.0 if either article is missing embeddings.
+    """
+    if not a.summary_embeddings or not b.summary_embeddings:
+        return 0.0
+
+    likelihoods = [
+        _embedding_likelihood(
+            _cosine_similarity(a.summary_embeddings, b.summary_embeddings)
+        ),
+        _entity_likelihood(
+            _jaccard_similarity(_normalized_entities(a), _normalized_entities(b))
+        ),
+        _time_likelihood(_hours_between(a.published_at, b.published_at)),
+    ]
+    return update_all(PRIOR, likelihoods)["same_event"]
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 
 def cluster_articles(
     articles: list[PublicGlobalArticles],
-    threshold: float = 0.3,
+    threshold: float = 0.35,
+    pair_scorer: Callable[
+        [PublicGlobalArticles, PublicGlobalArticles], float
+    ] = score_pair,
 ) -> list[list[PublicGlobalArticles]]:
-    X = np.array([a.summary_embeddings for a in articles], dtype=np.float32)
-    distances = pairwise_distances(X, metric="cosine")
-    adjacency = csr_matrix(distances < threshold)
+    """
+    Clusters articles by same-event probability.
+
+    Articles are expected to already be pre-filtered to the relevant time window
+    (e.g. via get_recent_global_articles). All pairs are scored directly.
+
+    1. Score:      compute P(same_event) for each candidate pair via pair_scorer.
+    2. Graph:      build sparse adjacency from pairs that exceed threshold.
+    3. Components: find connected components via scipy (fast, vectorized).
+    """
+    if len(articles) < 2:
+        return []
+
+    candidates = list(combinations(articles, 2))
+    id_to_idx = {a.id: i for i, a in enumerate(articles)}
+    n = len(articles)
+
+    rows: list[int] = []
+    cols: list[int] = []
+    for a, b in candidates:
+        if pair_scorer(a, b) >= threshold:
+            i, j = id_to_idx[a.id], id_to_idx[b.id]
+            rows.extend([i, j])
+            cols.extend([j, i])
+
+    adjacency = csr_matrix(
+        ([1] * len(rows), (rows, cols)) if rows else ([], ([], [])),
+        shape=(n, n),
+    )
     _n_components, labels = connected_components(adjacency, directed=False)
 
     clusters: dict[int, list[PublicGlobalArticles]] = {}
@@ -27,9 +185,15 @@ def cluster_articles(
 
 
 def reduce_clusters(
-    clusters: list[list[PublicGlobalArticles]], threshold: float = 0.8
+    clusters: list[list[PublicGlobalArticles]], threshold: float = 0.3
 ) -> list[list[PublicGlobalArticles]]:
-    return [cluster for cluster in clusters if score_cluster(cluster) > threshold]
+    # NOTE: threshold is calibrated against mean(significance_score) * log(1 + size).
+    # Tune after reviewing initial results.
+    return [
+        cluster
+        for cluster in clusters
+        if _score_cluster_significance(cluster) > threshold
+    ]
 
 
 def deduplicate_clusters(
@@ -60,7 +224,8 @@ def deduplicate_clusters(
     return new_clusters, matched_clusters
 
 
-def score_cluster(articles: list[PublicGlobalArticles]) -> float:
+def _score_cluster_significance(articles: list[PublicGlobalArticles]) -> float:
+    """Filter helper for reduce_clusters. Not the public scoring interface."""
     scores = [
         a.significance_score for a in articles if a.significance_score is not None
     ]
