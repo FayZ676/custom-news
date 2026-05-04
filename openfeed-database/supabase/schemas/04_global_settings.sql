@@ -2,6 +2,7 @@ create table "global_settings" (
     "id" uuid primary key default gen_random_uuid(),
     "notification_hours" integer[] not null,
     "article_ttl" interval not null,
+    "clustering_window_hours" integer not null default 72,
     "min_similarity_threshold" real not null,
     "max_match_count" integer not null,
     "singleton" boolean not null default true,
