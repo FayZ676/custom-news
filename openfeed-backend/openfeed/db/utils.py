@@ -23,6 +23,7 @@ def paginated_query(
     select: str = "*",
     filters: dict[str, str | bool] | None = None,
     in_filters: dict[str, list[str]] | None = None,
+    gte_filters: dict[str, str] | None = None,
     page_size: int = 1000,
     transform: Callable[[Json], None] | None = None,
 ) -> Iterator[list[Any]]:
@@ -35,6 +36,9 @@ def paginated_query(
         if in_filters:
             for column, values in in_filters.items():
                 query = query.in_(column, values)
+        if gte_filters:
+            for column, value in gte_filters.items():
+                query = query.gte(column, value)
         rows = query.range(page * page_size, (page + 1) * page_size - 1).execute().data
         if transform:
             for row in rows:

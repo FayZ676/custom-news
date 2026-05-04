@@ -38,6 +38,22 @@ def get_global_articles(db: Client) -> list[PublicGlobalArticles]:
     ]
 
 
+def get_recent_global_articles(
+    db: Client, window_hours: int
+) -> list[PublicGlobalArticles]:
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=window_hours)).isoformat()
+    return [
+        PublicGlobalArticles.model_validate(r)
+        for page in paginated_query(
+            db,
+            "global_articles",
+            gte_filters={"published_at": cutoff},
+            transform=decode_embeddings,
+        )
+        for r in page
+    ]
+
+
 def get_global_article_urls(db: Client) -> list[str]:
     return [
         r["url"]
