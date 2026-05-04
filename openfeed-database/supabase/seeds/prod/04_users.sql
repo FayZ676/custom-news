@@ -13,8 +13,8 @@ BEGIN
                 ('00000000-0000-0000-0000-000000000002'::uuid, 'aminfifita1@gmail.com',     'abc123'),
                 ('00000000-0000-0000-0000-000000000003'::uuid, 'khadem.badiyan@gmail.com',  'abc123'),
                 ('00000000-0000-0000-0000-000000000004'::uuid, 'ppendergrass9@gmail.com',   'abc123'),
-                ('00000000-0000-0000-0000-000000000005'::uuid, 'darius.miaji@gmail.com',    'abc123')
-                ('00000000-0000-0000-0000-000000000006'::uuid, 'mitra@mmengan.com',         'abc123')
+                ('00000000-0000-0000-0000-000000000005'::uuid, 'darius.miaji@gmail.com',    'abc123'),
+                ('00000000-0000-0000-0000-000000000006'::uuid, 'mitra@mmengan.com',         'abc123'),
                 ('00000000-0000-0000-0000-000000000007'::uuid, 'alexlhanson@gmail.com',     'abc123')
         ) AS t(id, email, password)
     LOOP
