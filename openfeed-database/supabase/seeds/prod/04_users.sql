@@ -82,4 +82,9 @@ BEGIN
             );
         END IF;
     END LOOP;
+
+    -- Backfill user_settings for any auth users not covered by the trigger
+    INSERT INTO public.user_settings (user_id)
+    SELECT id FROM auth.users
+    ON CONFLICT (user_id) DO NOTHING;
 END $$;

@@ -55,4 +55,7 @@ update:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-all
 
-init: snapshot reset deploy seed restore_snapshot
+backfill_user_settings:
+	psql "$(PG_CONN)" -c "INSERT INTO public.user_settings (user_id) SELECT id FROM auth.users ON CONFLICT (user_id) DO NOTHING;"
+
+init: snapshot reset deploy seed restore_snapshot backfill_user_settings
