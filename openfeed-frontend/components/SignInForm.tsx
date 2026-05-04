@@ -48,7 +48,10 @@ export default function SignInForm() {
         className="btn btn-neutral rounded-none w-full mt-2"
       >
         {loading ? (
-          <span className="loading loading-spinner loading-sm" />
+          <>
+            <span className="loading loading-spinner loading-sm" />
+            Signing in…
+          </>
         ) : (
           "Sign in"
         )}
