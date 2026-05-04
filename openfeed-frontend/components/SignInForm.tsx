@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
+
 import { signIn } from "@/lib/supabase/auth";
 
 export default function SignInForm() {
@@ -17,14 +19,21 @@ export default function SignInForm() {
 
     try {
       await signIn(email, password, timezone);
-    } catch {
+    } catch (error) {
+      if (isRedirectError(error)) throw error;
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
   }
 
   return (
-    <form className="space-y-3" action={handleSubmit}>
+    <form
+      className="space-y-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(new FormData(e.currentTarget));
+      }}
+    >
       <input
         type="email"
         name="email"
