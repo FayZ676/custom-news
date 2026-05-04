@@ -114,8 +114,14 @@ def _get_users_to_notify(db: Client, now_utc: datetime) -> list[PublicUserSettin
 def _is_in_notification_window(
     user, now_utc: datetime, notification_hours: list[int]
 ) -> bool:
-    local_hour = now_utc.astimezone(ZoneInfo(user.timezone)).hour
-    return local_hour in notification_hours
+    try:
+        local_hour = now_utc.astimezone(ZoneInfo(user.timezone)).hour
+        return local_hour in notification_hours
+    except Exception:
+        logger.warning(
+            "Invalid timezone for user %s: %r, skipping.", user.user_id, user.timezone
+        )
+        return False
 
 
 def _fetch_user_emails(db: Client, users: list[PublicUserSettings]) -> dict[str, str]:

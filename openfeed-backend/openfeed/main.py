@@ -38,15 +38,21 @@ def get_db() -> Client:
     return db_client
 
 
-# TODO: Each step should log its completion.
+def _run_with_logging(name: str, fn, *args) -> None:
+    try:
+        fn(*args)
+    except Exception:
+        logger.exception("Background task '%s' failed", name)
+
+
 @app.post("/global/articles", status_code=202)
 def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     db = get_db()
-    background_tasks.add_task(fetch_articles, db)
-    background_tasks.add_task(score_articles, db)
-    background_tasks.add_task(top_stories, db)
-    background_tasks.add_task(notify_users, db)
+    background_tasks.add_task(_run_with_logging, "fetch_articles", fetch_articles, db)
+    background_tasks.add_task(_run_with_logging, "score_articles", score_articles, db)
+    background_tasks.add_task(_run_with_logging, "top_stories", top_stories, db)
+    background_tasks.add_task(_run_with_logging, "notify_users", notify_users, db)
     return Response(status_code=202)
 
 
