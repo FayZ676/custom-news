@@ -121,7 +121,10 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
             ))}
           </ol>
           <p className="text-sm opacity-50 italic text-right">
-            Stories are refreshed hourly. Sign in to see the full feed.
+            Stories are refreshed hourly.{" "}
+            <Link href="/feed" className="underline hover:opacity-80 transition-opacity">
+              View the full feed.
+            </Link>
           </p>
         </section>
       )}
@@ -287,10 +290,10 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
           Ready to Read Only What Matters?
         </h2>
         <Link
-          href="/auth/signup"
+          href="/feed"
           className="px-10 py-5 bg-base-content text-base-100 font-bold text-xl hover:opacity-90 transition-opacity"
         >
-          Get Started Free
+          View Feed
         </Link>
       </section>
 
