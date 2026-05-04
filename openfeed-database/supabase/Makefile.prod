@@ -55,4 +55,4 @@ update:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-all
 
-init: snapshot reset deploy seed restore_snapshot fetch_articles
+init: snapshot reset deploy seed restore_snapshot
