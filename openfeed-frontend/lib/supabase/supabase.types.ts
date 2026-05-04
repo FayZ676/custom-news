@@ -161,6 +161,7 @@ export type Database = {
       global_settings: {
         Row: {
           article_ttl: string;
+          clustering_window_hours: number;
           id: string;
           max_match_count: number;
           min_similarity_threshold: number;
@@ -169,6 +170,7 @@ export type Database = {
         };
         Insert: {
           article_ttl: string;
+          clustering_window_hours?: number;
           id?: string;
           max_match_count: number;
           min_similarity_threshold: number;
@@ -177,6 +179,7 @@ export type Database = {
         };
         Update: {
           article_ttl?: string;
+          clustering_window_hours?: number;
           id?: string;
           max_match_count?: number;
           min_similarity_threshold?: number;

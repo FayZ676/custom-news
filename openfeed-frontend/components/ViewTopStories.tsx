@@ -31,23 +31,25 @@ type TrendIndicator = {
   icon: React.ReactNode;
 };
 
+// Velocity = mean(e^(-λ·age)) - neutral_baseline, where λ = log(2)/36h.
+// Range is approximately [-0.54, +0.46] for a 72h clustering window.
 function getTrendIndicator(velocity: number): TrendIndicator {
-  if (velocity > 0.01) {
+  if (velocity > 0.3) {
     return {
       label: "Rising fast",
       icon: <ChevronsUp className="inline w-4 h-4 text-green-500" />,
     };
-  } else if (velocity > 0.002) {
+  } else if (velocity > 0.1) {
     return {
       label: "Rising",
       icon: <TrendingUp className="inline w-4 h-4 text-green-400" />,
     };
-  } else if (velocity >= -0.002) {
+  } else if (velocity >= -0.1) {
     return {
       label: "Steady",
       icon: <Minus className="inline w-4 h-4 text-yellow-500" />,
     };
-  } else if (velocity >= -0.01) {
+  } else if (velocity >= -0.3) {
     return {
       label: "Falling",
       icon: <TrendingDown className="inline w-4 h-4 text-red-400" />,
