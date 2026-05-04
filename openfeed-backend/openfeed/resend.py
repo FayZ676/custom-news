@@ -2,36 +2,27 @@ import requests
 from pydantic import BaseModel, EmailStr
 
 RESEND_BATCH_LIMIT = 100
-DIGEST_TEMPLATE_ALIAS = "thelatesttimes-digest"
 
 
-class TemplateEmailInput(BaseModel):
+class RawEmailInput(BaseModel):
     to: EmailStr | list[EmailStr]
-    template_id: str  # published template ID or alias
-    subject: str | None = None
-    variables: dict[str, str | int] = {}
+    subject: str
+    html: str
 
 
 class BatchEmailResponse(BaseModel):
     data: list[str]
 
 
-class CreateTemplateResponse(BaseModel):
-    id: str
-
-
-def send_batch_template_emails(
-    emails: list[TemplateEmailInput], api_key: str, from_email: str
+def send_batch_raw_emails(
+    emails: list[RawEmailInput], api_key: str, from_email: str
 ) -> BatchEmailResponse:
     payload = [
         {
             "from": from_email,
             "to": e.to if isinstance(e.to, list) else [e.to],
-            **({"subject": e.subject} if e.subject else {}),
-            "template": {
-                "id": e.template_id,
-                **({"variables": e.variables} if e.variables else {}),
-            },
+            "subject": e.subject,
+            "html": e.html,
         }
         for e in emails
     ]
@@ -52,68 +43,6 @@ def send_batch_template_emails(
         ) from exc
     raw = response.json()
     return BatchEmailResponse(data=[item["id"] for item in raw["data"]])
-
-
-def create_template_digest(api_key: str) -> CreateTemplateResponse:
-    return _create_and_publish_template(
-        name="The Latest Times - Digest",
-        alias=DIGEST_TEMPLATE_ALIAS,
-        subject="Your Latest Times digest",
-        html=_DIGEST_TEMPLATE_HTML,
-        variables=[
-            {"key": "TOP_STORIES_SUMMARY", "type": "string"},
-            {"key": "INTERESTS_SUMMARY", "type": "string"},
-            {"key": "FEED_URL", "type": "string"},
-        ],
-        api_key=api_key,
-    )
-
-
-def _create_and_publish_template(
-    name: str,
-    alias: str,
-    subject: str,
-    html: str,
-    variables: list[dict],
-    api_key: str,
-) -> CreateTemplateResponse:
-    payload = {
-        "name": name,
-        "alias": alias,
-        "subject": subject,
-        "html": html,
-        "variables": variables,
-    }
-    response = requests.post(
-        "https://api.resend.com/templates",
-        headers=_resend_headers(api_key),
-        json=payload,
-        timeout=(10, 30),
-    )
-    try:
-        response.raise_for_status()
-    except requests.HTTPError as exc:
-        raise requests.HTTPError(
-            f"Resend API error {response.status_code}: {response.text}",
-            response=response,
-        ) from exc
-
-    template_id: str = response.json()["id"]
-
-    pub_response = requests.post(
-        f"https://api.resend.com/templates/{template_id}/publish",
-        headers=_resend_headers(api_key),
-        timeout=(10, 30),
-    )
-    try:
-        pub_response.raise_for_status()
-    except requests.HTTPError as exc:
-        raise requests.HTTPError(
-            f"Resend publish error {pub_response.status_code}: {pub_response.text}",
-            response=pub_response,
-        ) from exc
-
-    return CreateTemplateResponse(id=template_id)
 
 
 def _resend_headers(api_key: str) -> dict[str, str]:
@@ -294,9 +223,3 @@ _DIGEST_TEMPLATE_HTML = """\
   </body>
 </html>
 """
-
-
-if __name__ == "__main__":
-    from openfeed.config import settings
-
-    create_template_digest(settings.resend_api_key)

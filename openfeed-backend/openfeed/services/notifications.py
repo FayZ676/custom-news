@@ -15,9 +15,9 @@ from openfeed.db.user_articles import (
     get_unread_user_article_details,
 )
 from openfeed.resend import (
-    TemplateEmailInput,
-    send_batch_template_emails,
-    DIGEST_TEMPLATE_ALIAS,
+    RawEmailInput,
+    send_batch_raw_emails,
+    _DIGEST_TEMPLATE_HTML,
 )
 from openfeed.database_models import PublicUserSettings
 
@@ -48,10 +48,10 @@ def notify_users(db: Client) -> None:
     articles_by_email = _group_details_by_email(
         get_unread_user_article_details(db, user_ids_emails)
     )
-    send_batch_template_emails(
+    send_batch_raw_emails(
         emails=list(
             map(
-                lambda email: _build_template_email(
+                lambda email: _build_raw_email(
                     email,
                     top_stories_email,
                     articles_by_email,
@@ -67,39 +67,33 @@ def notify_users(db: Client) -> None:
     logger.info("notify_users completed: %d emails sent", len(user_ids_emails))
 
 
-def _build_template_email(
+def _build_raw_email(
     email: str,
     top_stories_email,
     articles_by_email: dict[str, list[UserArticleDetails]],
     now_utc: datetime,
     user_timezone: str,
-) -> TemplateEmailInput:
-    """Build a single TemplateEmailInput for a given recipient."""
+) -> RawEmailInput:
+    """Build a single RawEmailInput for a given recipient by rendering HTML locally."""
     local_date = now_utc.astimezone(ZoneInfo(user_timezone))
     edition = "Morning News" if local_date.hour < 12 else "Evening News"
     subject = f"The Latest Times — {edition}, {local_date.strftime('%B %-d')}"
-    return TemplateEmailInput(
-        to=email,
-        template_id=DIGEST_TEMPLATE_ALIAS,
-        subject=subject,
-        variables={
-            **(
-                {
-                    "TOP_STORIES_SUMMARY": _format_top_stories_html(
-                        top_stories_email.email_text
-                    )
-                }
-                if top_stories_email
-                else {}
-            ),
-            "INTERESTS_SUMMARY": (
-                _build_interests_summary_html(articles_by_email[email])
-                if email in articles_by_email
-                else _CAUGHT_UP_HTML
-            ),
-            "FEED_URL": settings.frontend_url,
-        },
+    top_stories_html = (
+        _format_top_stories_html(top_stories_email.email_text)
+        if top_stories_email
+        else ""
     )
+    interests_html = (
+        _build_interests_summary_html(articles_by_email[email])
+        if email in articles_by_email
+        else _CAUGHT_UP_HTML
+    )
+    html = (
+        _DIGEST_TEMPLATE_HTML.replace("{{{TOP_STORIES_SUMMARY}}}", top_stories_html)
+        .replace("{{{INTERESTS_SUMMARY}}}", interests_html)
+        .replace("{{{FEED_URL}}}", settings.frontend_url)
+    )
+    return RawEmailInput(to=email, subject=subject, html=html)
 
 
 def _get_users_to_notify(db: Client, now_utc: datetime) -> list[PublicUserSettings]:
