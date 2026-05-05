@@ -263,6 +263,45 @@ AS $function$
 $function$
 ;
 
+CREATE OR REPLACE FUNCTION public.match_articles_by_entities(query_entities text[], match_count integer, min_jaccard double precision)
+ RETURNS TABLE(id uuid, title text, summary text, content text, jaccard_score double precision)
+ LANGUAGE plpgsql
+AS $function$
+begin
+  return query
+  select
+    ga.id,
+    ga.title,
+    ga.summary,
+    ga.content,
+    (
+      select count(distinct unnest)::float /
+        (
+          array_length(ga.summary_entities, 1) +
+          array_length(query_entities, 1) -
+          count(distinct unnest)
+        )
+      from unnest(ga.summary_entities || query_entities)
+    ) as jaccard_score
+  from global_articles ga
+  where
+    array_length(ga.summary_entities, 1) > 0
+    and array_length(query_entities, 1) > 0
+    and (
+      select count(distinct unnest)::float /
+        (
+          array_length(ga.summary_entities, 1) +
+          array_length(query_entities, 1) -
+          count(distinct unnest)
+        )
+      from unnest(ga.summary_entities || query_entities)
+    ) >= min_jaccard
+  order by jaccard_score desc
+  limit match_count;
+end;
+$function$
+;
+
 CREATE OR REPLACE FUNCTION public.validate_user_settings_timezone()
  RETURNS trigger
  LANGUAGE plpgsql

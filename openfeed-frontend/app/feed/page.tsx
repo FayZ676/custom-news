@@ -30,7 +30,8 @@ import {
   getGlobalSettings,
   GlobalSettings,
 } from "@/lib/supabase/queries/global_settings";
-import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
+import { matchArticlesHybrid } from "@/lib/supabase/queries/match_articles";
+import { extractQueryKeywords } from "@/lib/keywords";
 import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
 import { getStories } from "@/lib/supabase/queries/global_stories";
 import { updateUserTheme } from "@/lib/supabase/queries/user_settings";
@@ -64,9 +65,11 @@ async function searchGlobalArticles(
   settings: GlobalSettings,
 ) {
   const { embeddings } = await embedTexts([query]);
-  const matches = await matchArticlesByEmbedding(
+  const keywords = extractQueryKeywords(query);
+  const matches = await matchArticlesHybrid(
     supabase,
     embeddings[0],
+    keywords,
     settings.max_match_count,
     settings.min_similarity_threshold,
   );
@@ -90,9 +93,11 @@ async function updateUserArticleScores(
   interestEmbeddings: number[],
   settings: GlobalSettings,
 ) {
-  const matches = await matchArticlesByEmbedding(
+  const keywords = extractQueryKeywords(interestQuery);
+  const matches = await matchArticlesHybrid(
     supabase,
     interestEmbeddings,
+    keywords,
     settings.max_match_count,
     settings.min_similarity_threshold,
   );
