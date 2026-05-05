@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { embedTexts } from "@/lib/embeddings";
 import { rerankTexts } from "@/lib/reranker";
-import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
+import { matchArticlesHybrid } from "@/lib/supabase/queries/match_articles";
 import { getGlobalArticlesByIds } from "@/lib/supabase/queries/global_articles";
 import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
+import { extractQueryKeywords } from "@/lib/keywords";
 
 const MAX_LANDING_RESULTS = 5;
 
@@ -19,9 +20,12 @@ export async function GET(req: NextRequest) {
 
   const settings = await getGlobalSettings(supabase);
   const { embeddings } = await embedTexts([query]);
-  const matches = await matchArticlesByEmbedding(
+  const keywords = extractQueryKeywords(query);
+
+  const matches = await matchArticlesHybrid(
     supabase,
     embeddings[0],
+    keywords,
     settings.max_match_count,
     settings.min_similarity_threshold,
   );
