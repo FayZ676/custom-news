@@ -188,7 +188,7 @@ _DIGEST_TEMPLATE_HTML = """\
       </div>
 
       <div class="section">
-        <p class="section-label">Trending News</p>
+        <p class="section-label">Trending Stories</p>
       </div>
       <div class="section-body">
         {{{TOP_STORIES_SUMMARY}}}
@@ -201,7 +201,7 @@ _DIGEST_TEMPLATE_HTML = """\
       </div>
 
       <div class="section">
-        <p class="section-label">My News</p>
+        <p class="section-label">My Articles</p>
       </div>
       <div class="section-body">
         <p>{{{INTERESTS_SUMMARY}}}</p>

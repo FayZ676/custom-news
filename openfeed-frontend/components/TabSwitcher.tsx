@@ -21,7 +21,7 @@ export function TabSwitcher({ unreadCount }: Props = {}) {
         prefetch={true}
         className={`tab ${tab === "trending" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
-        Trending News
+        Trending Stories
       </Link>
       <Link
         href="/feed?tab=my-news"
@@ -30,8 +30,8 @@ export function TabSwitcher({ unreadCount }: Props = {}) {
         className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
         {unreadCount != null && unreadCount > 0
-          ? `My News (${unreadCount > 99 ? "99+" : unreadCount})`
-          : "My News"}
+          ? `My Articles (${unreadCount > 99 ? "99+" : unreadCount})`
+          : "My Articles"}
       </Link>
       <Link
         href="/feed?tab=search"
