@@ -18,6 +18,7 @@ import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import {
   updateUserArticlesRead,
   UserArticleScore,
+  getUnreadArticleCount,
 } from "@/lib/supabase/queries/user_articles";
 import { updateUserArticles } from "@/lib/supabase/queries/user_articles";
 import { getGlobalArticlesByIds } from "@/lib/supabase/queries/global_articles";
@@ -279,6 +280,12 @@ async function FooterContent({
   );
 }
 
+async function TabSwitcherContent({ userId }: { userId: string }) {
+  const supabase = await createClient();
+  const unreadCount = await getUnreadArticleCount(supabase, userId);
+  return <TabSwitcher unreadCount={unreadCount} />;
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -325,7 +332,9 @@ export default async function AllArticlesPage({
         <BannerContent date={date} />
       </Suspense>
 
-      <TabSwitcher />
+      <Suspense fallback={<TabSwitcher />}>
+        <TabSwitcherContent userId={userId} />
+      </Suspense>
 
       {tab === "trending" && (
         <Suspense fallback={<ViewTopStoriesSkeleton />}>

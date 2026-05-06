@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 
 type Tab = "my-news" | "trending" | "search";
 
-export function TabSwitcher() {
+type Props = { unreadCount?: number };
+
+export function TabSwitcher({ unreadCount }: Props = {}) {
   const searchParams = useSearchParams();
   const rawTab = searchParams.get("tab");
   const tab: Tab =
@@ -17,7 +19,7 @@ export function TabSwitcher() {
         href="/feed?tab=trending"
         role="tab"
         prefetch={true}
-        className={`tab ${tab === "trending" ? "tab-active" : ""} p-0`}
+        className={`tab ${tab === "trending" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
         Trending News
       </Link>
@@ -25,15 +27,17 @@ export function TabSwitcher() {
         href="/feed?tab=my-news"
         role="tab"
         prefetch={true}
-        className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0`}
+        className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
-        My News
+        {unreadCount != null && unreadCount > 0
+          ? `My News (${unreadCount > 99 ? "99+" : unreadCount})`
+          : "My News"}
       </Link>
       <Link
         href="/feed?tab=search"
         role="tab"
         prefetch={true}
-        className={`tab ${tab === "search" ? "tab-active" : ""} p-0`}
+        className={`tab ${tab === "search" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
         Search
       </Link>

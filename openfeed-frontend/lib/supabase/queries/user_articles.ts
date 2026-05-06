@@ -48,6 +48,20 @@ export async function updateUserArticlesRead(
   if (error) throw new Error(error.message);
 }
 
+export async function getUnreadArticleCount(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("user_articles")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_read", false);
+
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
 export async function updateUserArticles(
   supabase: SupabaseClient<Database>,
   scores: UserArticleScore[],
