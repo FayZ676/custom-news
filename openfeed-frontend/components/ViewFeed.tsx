@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition, useOptimistic } from "react";
 
 import { InterestArticles } from "@/lib/supabase/queries/global_articles";
+import { useUnreadCount } from "@/components/UnreadCountContext";
 
 import SectionInterest from "@/components/SectionInterest";
 import { SectionArticleSkeleton } from "@/components/SectionArticles";
@@ -28,6 +29,7 @@ export function ViewFeed({
   handleCreateShareLink,
 }: ViewFeedProps) {
   const router = useRouter();
+  const { adjustCount } = useUnreadCount();
 
   const [deleting, startDeleteTransition] = useTransition();
 
@@ -39,6 +41,10 @@ export function ViewFeed({
 
   const handleDelete = (interestId: string) => {
     startDeleteTransition(async () => {
+      const interest = optimisticInterests.find((i) => i.id === interestId);
+      const unreadCount =
+        interest?.articles.filter((a) => !a.is_read).length ?? 0;
+      adjustCount(-unreadCount);
       removeOptimisticInterest(interestId);
       await handleDeleteInterest(interestId);
       router.refresh();

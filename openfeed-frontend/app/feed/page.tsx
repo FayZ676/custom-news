@@ -40,6 +40,7 @@ import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 import { getCurrentDate } from "@/lib/utils";
 
 import { TabSwitcher } from "@/components/TabSwitcher";
+import { UnreadCountProvider } from "@/components/UnreadCountContext";
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
@@ -280,12 +281,6 @@ async function FooterContent({
   );
 }
 
-async function TabSwitcherContent({ userId }: { userId: string }) {
-  const supabase = await createClient();
-  const unreadCount = await getUnreadArticleCount(supabase, userId);
-  return <TabSwitcher unreadCount={unreadCount} />;
-}
-
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -305,6 +300,7 @@ export default async function AllArticlesPage({
   const date = getCurrentDate();
 
   const userSettings = await getUserSettings(supabase, userId);
+  const unreadCount = await getUnreadArticleCount(supabase, userId);
 
   const tab: Tab =
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
@@ -332,27 +328,27 @@ export default async function AllArticlesPage({
         <BannerContent date={date} />
       </Suspense>
 
-      <Suspense fallback={<TabSwitcher />}>
-        <TabSwitcherContent userId={userId} />
-      </Suspense>
+      <UnreadCountProvider initialCount={unreadCount}>
+        <TabSwitcher />
 
-      {tab === "trending" && (
-        <Suspense fallback={<ViewTopStoriesSkeleton />}>
-          <ViewTrendingContent userId={userId} />
-        </Suspense>
-      )}
+        {tab === "trending" && (
+          <Suspense fallback={<ViewTopStoriesSkeleton />}>
+            <ViewTrendingContent userId={userId} />
+          </Suspense>
+        )}
 
-      {tab === "my-news" && (
-        <Suspense fallback={<ViewFeedSkeleton />}>
-          <ViewMyNewsContent userId={userId} />
-        </Suspense>
-      )}
+        {tab === "my-news" && (
+          <Suspense fallback={<ViewFeedSkeleton />}>
+            <ViewMyNewsContent userId={userId} />
+          </Suspense>
+        )}
 
-      {tab === "search" && (
-        <Suspense key={query ?? ""} fallback={<ViewSearchSkeleton />}>
-          <ViewSearchContent userId={userId} query={query} />
-        </Suspense>
-      )}
+        {tab === "search" && (
+          <Suspense key={query ?? ""} fallback={<ViewSearchSkeleton />}>
+            <ViewSearchContent userId={userId} query={query} />
+          </Suspense>
+        )}
+      </UnreadCountProvider>
 
       <div className="min-h-4 flex-1" />
 

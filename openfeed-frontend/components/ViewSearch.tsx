@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { QueryArticle } from "@/lib/supabase/queries/global_articles";
+import { useUnreadCount } from "@/components/UnreadCountContext";
 
 import SearchBar, { SearchbarSkeleton } from "@/components/Searchbar";
 import SearchbarTooltip from "@/components/SearchbarTooltip";
@@ -29,6 +30,7 @@ export function ViewSearch({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const { adjustCount } = useUnreadCount();
   const [saved, setSaved] = useState(false);
   const [query, setQuery] = useState(searchParams.get("query") ?? "");
   const [saving, startSaveTransition] = useTransition();
@@ -42,6 +44,7 @@ export function ViewSearch({
 
   const handleSave = (q: string) => {
     setSaved(false);
+    adjustCount(queryArticles.length);
     startSaveTransition(async () => {
       await handleSaveUserInterest(q);
       setSaved(true);

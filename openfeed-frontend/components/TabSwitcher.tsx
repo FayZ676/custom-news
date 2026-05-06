@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
+import { useUnreadCount } from "@/components/UnreadCountContext";
+
 type Tab = "my-news" | "trending" | "search";
 
-type Props = { unreadCount?: number };
-
-export function TabSwitcher({ unreadCount }: Props = {}) {
+export function TabSwitcher() {
+  const { unreadCount } = useUnreadCount();
   const searchParams = useSearchParams();
   const rawTab = searchParams.get("tab");
   const tab: Tab =
