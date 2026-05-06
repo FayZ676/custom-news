@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -95,6 +97,44 @@ function StoryView({ story }: { story: Tables<"global_stories"> }) {
       )}
     </article>
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}): Promise<Metadata> {
+  const { token } = await params;
+
+  if (!isUuid(token)) return {};
+
+  const shared = await resolveSharedContent(token);
+  if (!shared) return {};
+
+  const title =
+    shared.type === "article"
+      ? toTitleCase(shared.data.title)
+      : shared.data.headline;
+
+  const description =
+    shared.type === "article"
+      ? (shared.data.summary ?? "Shared via The Latest Times")
+      : (shared.data.summary ?? "Shared via The Latest Times");
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
 }
 
 export default async function SharePage({
