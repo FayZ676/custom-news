@@ -222,7 +222,6 @@ export type Database = {
           id: string;
           related_articles_urls: string[];
           score: number;
-          score_prev: number;
           summary: string;
           velocity: number;
         };
@@ -232,7 +231,6 @@ export type Database = {
           id?: string;
           related_articles_urls?: string[];
           score: number;
-          score_prev: number;
           summary: string;
           velocity: number;
         };
@@ -242,7 +240,6 @@ export type Database = {
           id?: string;
           related_articles_urls?: string[];
           score?: number;
-          score_prev?: number;
           summary?: string;
           velocity?: number;
         };
