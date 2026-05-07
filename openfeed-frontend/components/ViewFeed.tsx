@@ -52,13 +52,13 @@ export function ViewFeed({
   };
 
   const handleRead = async (articleIds: string[], isRead: boolean) => {
-    const delta = isRead ? -articleIds.length : articleIds.length;
-    adjustCount(delta);
+    const unreadCountDelta = isRead ? -articleIds.length : articleIds.length;
+    adjustCount(unreadCountDelta);
     try {
       await handleReadUserArticles(articleIds, isRead);
       router.refresh();
     } catch (error) {
-      adjustCount(-delta);
+      adjustCount(-unreadCountDelta);
       throw error;
     }
   };
