@@ -7,7 +7,11 @@ import { useUnreadCount } from "@/components/UnreadCountContext";
 
 type Tab = "my-news" | "trending" | "search";
 
-export function TabSwitcher() {
+interface TabSwitcherProps {
+  trendingCount: number;
+}
+
+export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
   const { unreadCount } = useUnreadCount();
   const searchParams = useSearchParams();
   const rawTab = searchParams.get("tab");
@@ -22,7 +26,7 @@ export function TabSwitcher() {
         prefetch={true}
         className={`tab ${tab === "trending" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
-        Trending Stories
+        Trending Stories ({trendingCount})
       </Link>
       <Link
         href="/feed?tab=my-news"
