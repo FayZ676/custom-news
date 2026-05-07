@@ -21,7 +21,7 @@ export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
   return (
     <div
       role="tablist"
-      className="tabs tabs-border tabs-sm md:tabs-lg font-bold gap-4 text-sm sm:text-base md:text-lg"
+      className="tabs tabs-border tabs-sm sm:tabs-md md:tabs-lg font-bold gap-4"
     >
       <Link
         href="/feed?tab=trending"
