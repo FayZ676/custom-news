@@ -52,9 +52,15 @@ export function ViewFeed({
   };
 
   const handleRead = async (articleIds: string[], isRead: boolean) => {
-    adjustCount(isRead ? -articleIds.length : articleIds.length);
-    await handleReadUserArticles(articleIds, isRead);
-    router.refresh();
+    const delta = isRead ? -articleIds.length : articleIds.length;
+    adjustCount(delta);
+    try {
+      await handleReadUserArticles(articleIds, isRead);
+      router.refresh();
+    } catch (error) {
+      adjustCount(-delta);
+      throw error;
+    }
   };
 
   if (optimisticInterests.length === 0) {
