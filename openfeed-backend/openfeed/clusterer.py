@@ -7,8 +7,6 @@ from uuid import UUID
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import connected_components
 
-from openfeed.db.client import Client
-from openfeed.db.global_stories import update_story_urls
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.utils.bayesian import Belief, Likelihood, update_all
 
@@ -197,7 +195,6 @@ def reduce_clusters(
 
 
 def deduplicate_clusters(
-    db: Client,
     clusters: list[list[PublicGlobalArticles]],
     stories: list[PublicGlobalStories],
 ) -> tuple[list[list[PublicGlobalArticles]], dict[UUID, list[PublicGlobalArticles]]]:
@@ -218,8 +215,6 @@ def deduplicate_clusters(
             new_clusters.append(cluster)
         else:
             matched_clusters[duplicate_story.id] = cluster
-            if cluster_urls > set(duplicate_story.related_articles_urls):
-                update_story_urls(db, duplicate_story.id, list(cluster_urls))
 
     return new_clusters, matched_clusters
 

@@ -242,7 +242,6 @@ class PublicGlobalStories(BaseModel):
     id: uuid.UUID = Field(alias="id")
     related_articles_urls: List[str] = Field(alias="related_articles_urls")
     score: float = Field(alias="score")
-    score_prev: float = Field(alias="score_prev")
     summary: str = Field(alias="summary")
     velocity: float = Field(alias="velocity")
 
@@ -255,7 +254,6 @@ class PublicGlobalStoriesInsert(TypedDict):
         Annotated[List[str], Field(alias="related_articles_urls")]
     ]
     score: Annotated[float, Field(alias="score")]
-    score_prev: Annotated[float, Field(alias="score_prev")]
     summary: Annotated[str, Field(alias="summary")]
     velocity: Annotated[float, Field(alias="velocity")]
 
@@ -268,7 +266,6 @@ class PublicGlobalStoriesUpdate(TypedDict):
         Annotated[List[str], Field(alias="related_articles_urls")]
     ]
     score: NotRequired[Annotated[float, Field(alias="score")]]
-    score_prev: NotRequired[Annotated[float, Field(alias="score_prev")]]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
     velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
 

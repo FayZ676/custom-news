@@ -19,13 +19,18 @@ def get_stories(db: Client) -> list[PublicGlobalStories]:
     ]
 
 
+def delete_all_stories(db: Client):
+    db.table("global_stories").delete().neq(
+        "id", "00000000-0000-0000-0000-000000000000"
+    ).execute()
+
+
 def update_story(db: Client, story: PublicGlobalStories):
     db.table("global_stories").update(
         {
             "headline": story.headline,
             "summary": story.summary,
             "score": story.score,
-            "score_prev": story.score_prev,
             "velocity": story.velocity,
         }
     ).eq("id", str(story.id)).execute()

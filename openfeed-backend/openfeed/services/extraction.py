@@ -2,6 +2,7 @@ import uuid
 import logging
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 from pydantic import BaseModel
 
@@ -15,9 +16,8 @@ from openfeed.services.cluster_scoring import score_cluster
 from openfeed.clusterer import cluster_articles, reduce_clusters, deduplicate_clusters
 from openfeed.db.global_stories import (
     get_stories,
-    delete_stories_by_ids,
+    delete_all_stories,
     insert_stories,
-    update_story,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,63 +29,55 @@ def top_stories(db: Client):
     articles = get_recent_global_articles(db, settings.clustering_window_hours)
     clusters = cluster_articles(articles)
     clusters = reduce_clusters(clusters)
-    new_clusters, matched_clusters = deduplicate_clusters(db, clusters, stories)
+    new_clusters, matched_clusters = deduplicate_clusters(clusters, stories)
 
     stories_by_id = {s.id: s for s in stories}
-    stale_story_ids = [s.id for s in stories if s.id not in matched_clusters]
     window_hours = float(settings.clustering_window_hours)
+    now = datetime.now(timezone.utc)
 
-    # Step 1: Add new stories
-    new_stories: list[PublicGlobalStories] = []
-    if new_clusters:
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            new_stories = list(
-                executor.map(
-                    lambda c: _generate_story(c, 0.0, window_hours), new_clusters
-                )
+    # Generate stories: LLM for new clusters, re-score only for known clusters
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        generated = list(
+            executor.map(
+                partial(_generate_story, window_hours=window_hours, now=now),
+                new_clusters,
             )
-        insert_stories(db, new_stories)
-
-    # Step 2: Update existing stories
-    updated_stories: list[PublicGlobalStories] = []
-    if matched_clusters:
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            updated_stories = list(
-                executor.map(
-                    lambda item: _refresh_story(
-                        item[1], stories_by_id[item[0]], window_hours
-                    ),
-                    matched_clusters.items(),
-                )
+        )
+        rescored = list(
+            executor.map(
+                lambda item: _rescore_story(
+                    item[1], stories_by_id[item[0]], window_hours, now
+                ),
+                matched_clusters.items(),
             )
-        for story in updated_stories:
-            update_story(db, story)
+        )
 
-    # Step 3: Remove stale stories
-    if stale_story_ids:
-        delete_stories_by_ids(db, stale_story_ids)
+    all_stories = generated + rescored
 
-    if active_stories := updated_stories + new_stories:
-        insert_email(db, _generate_trending_news_email_section(active_stories))
+    delete_all_stories(db)
+    insert_stories(db, all_stories)
+
+    if all_stories:
+        insert_email(db, _generate_trending_news_email_section(all_stories))
 
     logger.info(
-        "top_stories completed: %d new, %d updated, %d removed",
-        len(new_stories),
-        len(updated_stories),
-        len(stale_story_ids),
+        "top_stories completed: %d generated, %d rescored",
+        len(generated),
+        len(rescored),
     )
 
 
-def _refresh_story(
-    articles: list[PublicGlobalArticles], prev: PublicGlobalStories, window_hours: float
+def _rescore_story(
+    articles: list[PublicGlobalArticles],
+    prev: PublicGlobalStories,
+    window_hours: float,
+    now: datetime,
 ) -> PublicGlobalStories:
-    """Re-score an existing story against its updated cluster, preserving its ID and content."""
-    cluster_score = score_cluster(
-        articles, now=datetime.now(timezone.utc), window_hours=window_hours
-    )
+    """Re-score a known story against its updated cluster, preserving headline, summary, and ID."""
+    cluster_score = score_cluster(articles, now=now, window_hours=window_hours)
     return prev.model_copy(
         update={
-            "score_prev": prev.score,
+            "related_articles_urls": [a.url for a in articles],
             "score": cluster_score.score,
             "velocity": cluster_score.velocity,
         }
@@ -93,21 +85,20 @@ def _refresh_story(
 
 
 def _generate_story(
-    articles: list[PublicGlobalArticles], prev_score: float, window_hours: float
+    articles: list[PublicGlobalArticles],
+    window_hours: float,
+    now: datetime,
 ) -> PublicGlobalStories:
     headline, summary = _generate_story_text(articles)
-    cluster_score = score_cluster(
-        articles, now=datetime.now(timezone.utc), window_hours=window_hours
-    )
+    cluster_score = score_cluster(articles, now=now, window_hours=window_hours)
     return PublicGlobalStories(
         id=uuid.uuid4(),
         headline=headline,
         summary=summary,
         related_articles_urls=[article.url for article in articles],
         score=cluster_score.score,
-        score_prev=prev_score,
         velocity=cluster_score.velocity,
-        created_at=datetime.now(timezone.utc),
+        created_at=now,
     )
 
 
