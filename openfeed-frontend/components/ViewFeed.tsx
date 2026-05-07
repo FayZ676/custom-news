@@ -52,6 +52,7 @@ export function ViewFeed({
   };
 
   const handleRead = async (articleIds: string[], isRead: boolean) => {
+    adjustCount(isRead ? -articleIds.length : articleIds.length);
     await handleReadUserArticles(articleIds, isRead);
     router.refresh();
   };
