@@ -4,7 +4,6 @@ create table "global_stories" (
     "summary" text not null,
     "related_articles_urls" text[] not null default '{}',
     "score" float not null,
-    "score_prev" float not null,
     "velocity" float not null,
     "created_at" timestamptz not null default now()
 );

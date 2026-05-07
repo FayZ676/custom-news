@@ -88,7 +88,6 @@ alter table "public"."global_share_links" enable row level security;
     "summary" text not null,
     "related_articles_urls" text[] not null default '{}'::text[],
     "score" double precision not null,
-    "score_prev" double precision not null,
     "velocity" double precision not null,
     "created_at" timestamp with time zone not null default now()
       );
