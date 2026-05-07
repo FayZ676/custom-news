@@ -19,7 +19,10 @@ export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
 
   return (
-    <div role="tablist" className="tabs tabs-border tabs-lg font-bold gap-4">
+    <div
+      role="tablist"
+      className="tabs tabs-border tabs-sm sm:tabs-md md:tabs-lg font-bold gap-4"
+    >
       <Link
         href="/feed?tab=trending"
         role="tab"
