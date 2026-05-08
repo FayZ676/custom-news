@@ -21,13 +21,13 @@ export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
   return (
     <div
       role="tablist"
-      className="tabs tabs-border tabs-sm sm:tabs-md md:tabs-lg font-bold gap-4 justify-center"
+      className="tabs tabs-border tabs-md font-bold gap-4 justify-center"
     >
       <Link
         href="/feed?tab=trending"
         role="tab"
         prefetch={true}
-        className={`tab ${tab === "trending" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
+        className={`tab ${tab === "trending" ? "tab-active" : ""} p-0 leading-none text-[clamp(13px,4vw,15px)] min-[400px]:text-lg [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
         Trending Stories ({trendingCount})
       </Link>
@@ -35,7 +35,7 @@ export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
         href="/feed?tab=my-news"
         role="tab"
         prefetch={true}
-        className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
+        className={`tab ${tab === "my-news" ? "tab-active" : ""} p-0 leading-none text-[clamp(13px,4vw,15px)] min-[400px]:text-lg [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
         {unreadCount != null && unreadCount > 0
           ? `My Articles (${unreadCount > 99 ? "99+" : unreadCount})`
@@ -45,7 +45,7 @@ export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
         href="/feed?tab=search"
         role="tab"
         prefetch={true}
-        className={`tab ${tab === "search" ? "tab-active" : ""} p-0 leading-none [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
+        className={`tab ${tab === "search" ? "tab-active" : ""} p-0 leading-none text-[clamp(13px,4vw,15px)] min-[400px]:text-lg [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
         Search
       </Link>
