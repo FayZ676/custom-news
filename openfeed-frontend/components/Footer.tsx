@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Database } from "@/lib/supabase/supabase.types";
 
-import { Forminit } from "forminit";
+import {
+  FeedbackModal,
+  type FeedbackModalHandle,
+} from "@/components/FeedbackModal";
 
 interface FooterProps {
   userEmail: string;
@@ -23,6 +26,8 @@ export function Footer({
   handleUpdateTheme,
 }: FooterProps) {
   const router = useRouter();
+
+  const feedbackModalRef = useRef<FeedbackModalHandle>(null);
 
   const [signingOut, setSigningOut] = useState(false);
   const [emailNotification, setEmailNotification] = useState(
@@ -75,6 +80,16 @@ export function Footer({
             Theme ({colorTheme === "cupcake" ? "Light" : "Dark"})
           </button>
         </div>
+        <div>
+          <button
+            onClick={() => feedbackModalRef.current?.open()}
+            className="cursor-pointer hover:font-bold hover:underline pb-3"
+          >
+            Send Feedback
+          </button>
+        </div>
+
+        <FeedbackModal ref={feedbackModalRef} userEmail={userEmail} />
         <div>
           <button
             onClick={async () => {
