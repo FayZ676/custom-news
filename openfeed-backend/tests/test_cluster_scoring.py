@@ -15,13 +15,13 @@ def _make_article(
         title="Article",
         url=f"https://example.com/{uuid.uuid4()}",
         feed_title="Test Feed",
-        content=None,
         summary="Summary",
         summary_embeddings=None,
         summary_entities=[],
         significance_score=significance_score,
         created_at=published_at,
         published_at=published_at,
+        image_url="",
     )
 
 

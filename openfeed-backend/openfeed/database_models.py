@@ -52,10 +52,10 @@ AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 
 
 class PublicGlobalArticles(BaseModel):
-    content: Optional[str] = Field(alias="content")
     created_at: datetime.datetime = Field(alias="created_at")
     feed_title: str = Field(alias="feed_title")
     id: uuid.UUID = Field(alias="id")
+    image_url: Optional[str] = Field(alias="image_url")
     published_at: datetime.datetime = Field(alias="published_at")
     significance_score: float = Field(alias="significance_score")
     summary: Optional[str] = Field(alias="summary")
@@ -66,10 +66,10 @@ class PublicGlobalArticles(BaseModel):
 
 
 class PublicGlobalArticlesInsert(TypedDict):
-    content: NotRequired[Annotated[Optional[str], Field(alias="content")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     feed_title: Annotated[str, Field(alias="feed_title")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
     published_at: Annotated[datetime.datetime, Field(alias="published_at")]
     significance_score: Annotated[float, Field(alias="significance_score")]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
@@ -82,10 +82,10 @@ class PublicGlobalArticlesInsert(TypedDict):
 
 
 class PublicGlobalArticlesUpdate(TypedDict):
-    content: NotRequired[Annotated[Optional[str], Field(alias="content")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     feed_title: NotRequired[Annotated[str, Field(alias="feed_title")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
     published_at: NotRequired[Annotated[datetime.datetime, Field(alias="published_at")]]
     significance_score: NotRequired[Annotated[float, Field(alias="significance_score")]]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
@@ -240,6 +240,7 @@ class PublicGlobalStories(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
     headline: str = Field(alias="headline")
     id: uuid.UUID = Field(alias="id")
+    image_url: Optional[str] = Field(alias="image_url")
     related_articles_urls: List[str] = Field(alias="related_articles_urls")
     score: float = Field(alias="score")
     summary: str = Field(alias="summary")
@@ -250,6 +251,7 @@ class PublicGlobalStoriesInsert(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     headline: Annotated[str, Field(alias="headline")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
     related_articles_urls: NotRequired[
         Annotated[List[str], Field(alias="related_articles_urls")]
     ]
@@ -262,6 +264,7 @@ class PublicGlobalStoriesUpdate(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     headline: NotRequired[Annotated[str, Field(alias="headline")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
     related_articles_urls: NotRequired[
         Annotated[List[str], Field(alias="related_articles_urls")]
     ]

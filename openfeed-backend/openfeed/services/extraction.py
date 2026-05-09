@@ -91,6 +91,7 @@ def _generate_story(
 ) -> PublicGlobalStories:
     headline, summary = _generate_story_text(articles)
     cluster_score = score_cluster(articles, now=now, window_hours=window_hours)
+    image_url = next((a.image_url for a in articles if a.image_url), None)
     return PublicGlobalStories(
         id=uuid.uuid4(),
         headline=headline,
@@ -98,6 +99,7 @@ def _generate_story(
         related_articles_urls=[article.url for article in articles],
         score=cluster_score.score,
         velocity=cluster_score.velocity,
+        image_url=image_url,
         created_at=now,
     )
 

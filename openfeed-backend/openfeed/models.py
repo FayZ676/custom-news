@@ -27,20 +27,6 @@ def _strip_html(text: str) -> str:
     return stripper.get_text()
 
 
-class ArticleContent(BaseModel):
-    type: str
-    base: str
-    value: str | None
-    language: str | None
-
-    @field_validator("value", mode="before")
-    @classmethod
-    def clean_html_fields(cls, v: str) -> str | None:
-        if v is None:
-            return None
-        return _strip_html(v) or None
-
-
 class EntitiesResponse(BaseModel):
     summary: str
     entities: list[str]
@@ -57,7 +43,9 @@ class Article(BaseModel):
     published: datetime
     summary: str | None = None
     description: str | None = None
-    content: list[ArticleContent] | None = None
+    media_thumbnail: list[dict] | None = None
+    media_content: list[dict] | None = None
+    enclosures: list[dict] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -88,14 +76,24 @@ class Article(BaseModel):
             return None
         return _strip_html(v) or None
 
+    @property
+    def image_url(self) -> str | None:
+        if self.media_thumbnail:
+            return self.media_thumbnail[0].get("url")
+        if self.media_content:
+            return self.media_content[0].get("url")
+        if self.enclosures:
+            enc = self.enclosures[0]
+            if enc.get("type", "").startswith("image/"):
+                return enc.get("url")
+        return None
+
     def __str__(self) -> str:
         parts = [self.title]
         if self.description:
             parts.append(self.description)
         if self.summary:
             parts.append(self.summary)
-        if self.content is not None:
-            parts.extend(item.value for item in self.content if item.value is not None)
         return "\n\n".join(parts)
 
     def to_db_schema(
@@ -104,8 +102,6 @@ class Article(BaseModel):
         metadata: ArticleMetadata,
     ):
         return PublicGlobalArticles(
-            content="\n\n".join([v.value for v in self.content or [] if v.value])
-            or None,
             published_at=self.published,
             feed_title=feed_title,
             title=self.title,
@@ -113,6 +109,7 @@ class Article(BaseModel):
             summary_embeddings=metadata.summary_embeddings,
             summary_entities=metadata.entities,
             significance_score=metadata.significance_score,
+            image_url=self.image_url,
             url=self.link,
             id=uuid.uuid4(),
             created_at=datetime.now(),

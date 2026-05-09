@@ -16,7 +16,6 @@ class MatchArticlesResult(BaseModel):
     article_id: UUID = Field(alias="id")
     title: str = Field(alias="title")
     summary: Optional[str] = Field(alias="summary", default=None)
-    content: Optional[str] = Field(alias="content", default=None)
     similarity_score: float = Field(alias="similarity")
 
     @property
@@ -25,8 +24,6 @@ class MatchArticlesResult(BaseModel):
         parts = [self.title]
         if self.summary:
             parts.append(self.summary)
-        elif self.content:
-            parts.append(self.content)
         return ". ".join(parts)
 
 
