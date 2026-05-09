@@ -20,6 +20,16 @@ restore_snapshot:
 		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
 		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
 
+snapshot_users:
+	psql "$(PG_CONN)" -c "\copy public.user_interests TO '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+		&& echo "User snapshot saved to /tmp/"
+
+restore_snapshot_users:
+	psql "$(PG_CONN)" -c "TRUNCATE public.user_interests, public.user_settings CASCADE;" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
+
 fetch_articles:
 	curl -i --location --request POST '$(BACKEND_URL)/global/articles' \
 		--header 'x-api-key: $(BACKEND_API_KEY)' \
@@ -58,4 +68,4 @@ update:
 backfill_user_settings:
 	psql "$(PG_CONN)" -c "INSERT INTO public.user_settings (user_id) SELECT id FROM auth.users ON CONFLICT (user_id) DO NOTHING;"
 
-init: snapshot reset deploy seed restore_snapshot backfill_user_settings
+init: snapshot_users reset deploy seed restore_snapshot_users backfill_user_settings
