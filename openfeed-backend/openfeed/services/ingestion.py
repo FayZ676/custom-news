@@ -25,7 +25,7 @@ def fetch_articles(db: Client):
     seen_urls = set(get_global_article_urls(db))
     feed_articles = (
         (feed.title, article)
-        for feed in get_global_feeds(db)[0:10]
+        for feed in get_global_feeds(db)
         for article in get_articles(feed.url)
     )
     unique_found_articles: list[tuple[str, Article]] = []
