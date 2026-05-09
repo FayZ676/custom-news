@@ -36,10 +36,10 @@ export type Database = {
     Tables: {
       global_articles: {
         Row: {
-          content: string | null;
           created_at: string;
           feed_title: string;
           id: string;
+          image_url: string | null;
           published_at: string;
           significance_score: number;
           summary: string | null;
@@ -49,10 +49,10 @@ export type Database = {
           url: string;
         };
         Insert: {
-          content?: string | null;
           created_at?: string;
           feed_title: string;
           id?: string;
+          image_url?: string | null;
           published_at: string;
           significance_score: number;
           summary?: string | null;
@@ -62,10 +62,10 @@ export type Database = {
           url: string;
         };
         Update: {
-          content?: string | null;
           created_at?: string;
           feed_title?: string;
           id?: string;
+          image_url?: string | null;
           published_at?: string;
           significance_score?: number;
           summary?: string | null;
@@ -220,6 +220,7 @@ export type Database = {
           created_at: string;
           headline: string;
           id: string;
+          image_url: string | null;
           related_articles_urls: string[];
           score: number;
           summary: string;
@@ -229,6 +230,7 @@ export type Database = {
           created_at?: string;
           headline: string;
           id?: string;
+          image_url?: string | null;
           related_articles_urls?: string[];
           score: number;
           summary: string;
@@ -238,6 +240,7 @@ export type Database = {
           created_at?: string;
           headline?: string;
           id?: string;
+          image_url?: string | null;
           related_articles_urls?: string[];
           score?: number;
           summary?: string;
@@ -344,7 +347,6 @@ export type Database = {
           query_embedding: string;
         };
         Returns: {
-          content: string;
           id: string;
           similarity: number;
           summary: string;

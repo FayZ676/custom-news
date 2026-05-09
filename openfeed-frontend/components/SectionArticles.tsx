@@ -13,6 +13,7 @@ import {
   NewsItemModalHandle,
   NewsItemArticle,
 } from "@/components/NewsItemModal";
+import { NewsItemCard } from "@/components/NewsItemCard";
 
 interface SectionArticlesProps {
   articles: InterestArticle[] | QueryArticle[];
@@ -60,23 +61,19 @@ export function SectionArticles({
 
   return (
     <>
-      <ol className="flex flex-col gap-4">
+      <ol className="flex flex-col gap-3 sm:gap-4">
         {articles.map((article) => {
           const isRead = "is_read" in article && article.is_read;
           return (
-            <li
+            <NewsItemCard
               key={article.global_article.id}
-              className={`flex flex-col gap-2 cursor-pointer ${isRead ? "opacity-50" : ""}`}
+              title={toTitleCase(article.global_article.title)}
+              imageUrl={article.global_article.image_url}
+              summary={article.global_article.summary}
+              meta={`${timeAgo(article.global_article.published_at)} · ${article.global_article.feed_title}`}
+              isRead={isRead}
               onClick={() => openModal(article)}
-            >
-              <h2 className="text-lg hover:underline font-semibold">
-                {toTitleCase(article.global_article.title)} &middot;{" "}
-                <span className="text-neutral-500 text-base font-normal">
-                  {timeAgo(article.global_article.published_at)} &middot;{" "}
-                  {article.global_article.feed_title}
-                </span>
-              </h2>
-            </li>
+            />
           );
         })}
       </ol>
