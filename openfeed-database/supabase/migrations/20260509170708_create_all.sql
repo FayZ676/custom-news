@@ -12,7 +12,7 @@ create extension if not exists "vector" with schema "public";
     "summary_embeddings" public.vector(512),
     "summary_entities" text[] not null default '{}'::text[],
     "significance_score" double precision not null,
-    "content" text,
+    "image_url" text,
     "published_at" timestamp with time zone not null,
     "created_at" timestamp with time zone not null default now()
       );
@@ -89,6 +89,7 @@ alter table "public"."global_share_links" enable row level security;
     "related_articles_urls" text[] not null default '{}'::text[],
     "score" double precision not null,
     "velocity" double precision not null,
+    "image_url" text,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -251,10 +252,10 @@ $function$
 ;
 
 CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, match_count integer, min_similarity double precision)
- RETURNS TABLE(id uuid, title text, summary text, content text, similarity double precision)
+ RETURNS TABLE(id uuid, title text, summary text, similarity double precision)
  LANGUAGE sql
 AS $function$
-  select id, title, summary, content, 1 - (summary_embeddings <=> query_embedding) as similarity
+  select id, title, summary, 1 - (summary_embeddings <=> query_embedding) as similarity
   from global_articles
   where (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
   order by summary_embeddings <=> query_embedding

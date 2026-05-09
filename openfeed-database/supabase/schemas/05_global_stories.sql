@@ -5,6 +5,7 @@ create table "global_stories" (
     "related_articles_urls" text[] not null default '{}',
     "score" float not null,
     "velocity" float not null,
+    "image_url" text,
     "created_at" timestamptz not null default now()
 );
 

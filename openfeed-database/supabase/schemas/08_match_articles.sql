@@ -3,10 +3,10 @@ create or replace function match_articles(
   match_count int,
   min_similarity float
 )
-returns table (id uuid, title text, summary text, content text, similarity float)
+returns table (id uuid, title text, summary text, similarity float)
 language sql
 as $$
-  select id, title, summary, content, 1 - (summary_embeddings <=> query_embedding) as similarity
+  select id, title, summary, 1 - (summary_embeddings <=> query_embedding) as similarity
   from global_articles
   where (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
   order by summary_embeddings <=> query_embedding

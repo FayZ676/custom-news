@@ -9,7 +9,7 @@ create table "global_articles" (
     "summary_embeddings" vector(512),
     "summary_entities" text[] not null default '{}',
     "significance_score" float not null,
-    "content" text,
+    "image_url" text,
     "published_at" timestamptz not null,
     "created_at" timestamptz not null default now()
 );
