@@ -44,6 +44,7 @@ export function SectionArticles({
       url: article.global_article.url,
       feedTitle: article.global_article.feed_title,
       publishedAt: article.global_article.published_at,
+      imageUrl: article.global_article.image_url,
     };
     modalRef.current?.open(item);
   }

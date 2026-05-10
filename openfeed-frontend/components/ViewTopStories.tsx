@@ -33,6 +33,7 @@ export function ViewTopStories({
       headline: story.headline,
       summary: story.summary,
       articleUrls: story.related_articles_urls as string[],
+      imageUrl: story.image_url,
     };
     modalRef.current?.open(item);
   }

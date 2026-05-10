@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Copy, ClipboardCheck } from "lucide-react";
@@ -19,6 +20,7 @@ export type NewsItemArticle = {
   url: string;
   feedTitle?: string | null;
   publishedAt?: string | null;
+  imageUrl?: string | null;
 };
 
 export type NewsItemStory = {
@@ -27,6 +29,7 @@ export type NewsItemStory = {
   headline: string;
   summary?: string | null;
   articleUrls: string[];
+  imageUrl?: string | null;
 };
 
 export type NewsItem = NewsItemArticle | NewsItemStory;
@@ -120,6 +123,17 @@ export const NewsItemModal = forwardRef<
                 {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
               </p>
             )}
+
+          {selectedItem.imageUrl && (
+            <div className="relative w-full aspect-video">
+              <Image
+                src={selectedItem.imageUrl}
+                alt="Article image"
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
 
           {selectedItem.summary && (
             <p className="text-base leading-relaxed">{selectedItem.summary}</p>
