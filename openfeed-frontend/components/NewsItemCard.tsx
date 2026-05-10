@@ -24,11 +24,11 @@ export function NewsItemCard({
 
   return (
     <li
-      className={`grid gap-3 sm:gap-6 cursor-pointer items-start ${imageUrl ? "grid-cols-[4rem_1fr] sm:grid-cols-[10rem_1fr]" : ""} ${isRead ? "opacity-50" : ""}`}
+      className={`grid gap-3 sm:gap-6 cursor-pointer items-start ${imageUrl ? "grid-cols-[1fr_2fr] sm:grid-cols-[1fr_3fr]" : ""} ${isRead ? "opacity-50" : ""}`}
       onClick={onClick}
     >
       {imageUrl && (
-        <div className="relative w-16 h-16 sm:w-40 sm:h-40 shrink-0">
+        <div className="relative aspect-square w-full">
           {!isLoaded && <div className="skeleton absolute inset-0" />}
           <Image
             src={imageUrl}
