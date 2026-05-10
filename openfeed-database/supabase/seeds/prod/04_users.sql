@@ -15,7 +15,8 @@ BEGIN
                 ('00000000-0000-0000-0000-000000000004'::uuid, 'ppendergrass9@gmail.com',   'abc123'),
                 ('00000000-0000-0000-0000-000000000005'::uuid, 'darius.miaji@gmail.com',    'abc123'),
                 ('00000000-0000-0000-0000-000000000006'::uuid, 'mitra@mmengan.com',         'abc123'),
-                ('00000000-0000-0000-0000-000000000007'::uuid, 'alexlhanson@gmail.com',     'abc123')
+                ('00000000-0000-0000-0000-000000000007'::uuid, 'alexlhanson@gmail.com',     'abc123'),
+                ('00000000-0000-0000-0000-000000000008'::uuid, 'yunidude@gmail.com',        'abc123')
         ) AS t(id, email, password)
     LOOP
         IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = user_data.email) THEN
