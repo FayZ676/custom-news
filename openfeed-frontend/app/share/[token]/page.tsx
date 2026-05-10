@@ -121,6 +121,8 @@ export async function generateMetadata({
       ? (shared.data.summary ?? "Shared via The Latest Times")
       : (shared.data.summary ?? "Shared via The Latest Times");
 
+  const imageUrl = shared.data.image_url;
+
   return {
     title,
     description,
@@ -128,11 +130,13 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
+      ...(imageUrl && { images: [{ url: imageUrl }] }),
     },
     twitter: {
-      card: "summary",
+      card: imageUrl ? "summary_large_image" : "summary",
       title,
       description,
+      ...(imageUrl && { images: [imageUrl] }),
     },
   };
 }
