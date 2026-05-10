@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { ImageOff } from "lucide-react";
 
 interface NewsItemCardProps {
   title: string;
@@ -41,7 +42,9 @@ export function NewsItemCard({
             />
           </>
         ) : (
-          <div className="absolute inset-0 bg-neutral-800 rounded-sm" />
+          <div className="absolute inset-0 bg-neutral-800 rounded-sm flex items-center justify-center">
+            <ImageOff className="text-neutral-600" size={24} />
+          </div>
         )}
       </div>
       <div className="flex flex-col gap-1 sm:gap-2">
