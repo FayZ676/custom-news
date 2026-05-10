@@ -10,6 +10,17 @@ export async function getStories(
   return data;
 }
 
+export async function getStoriesCount(
+  supabase: SupabaseClient<Database>,
+): Promise<number> {
+  const { count, error } = await supabase
+    .from("global_stories")
+    .select("*", { count: "exact", head: true });
+
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
 export async function getStoryById(
   supabase: SupabaseClient<Database>,
   id: string,

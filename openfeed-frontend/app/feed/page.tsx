@@ -32,7 +32,10 @@ import {
 } from "@/lib/supabase/queries/global_settings";
 import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
 import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
-import { getStories } from "@/lib/supabase/queries/global_stories";
+import {
+  getStories,
+  getStoriesCount,
+} from "@/lib/supabase/queries/global_stories";
 import { updateUserTheme } from "@/lib/supabase/queries/user_settings";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
@@ -207,13 +210,10 @@ async function ViewMyNewsContent({ userId }: { userId: string }) {
   );
 }
 
-async function ViewTrendingContent({
-  userId,
-  stories,
-}: {
-  userId: string;
-  stories: Awaited<ReturnType<typeof getStories>>;
-}) {
+async function ViewTrendingContent({ userId }: { userId: string }) {
+  const supabase = await createClient();
+  const stories = await getStories(supabase);
+
   async function handleCreateShareLink(
     contentType: "article" | "story",
     contentId: string,
@@ -326,7 +326,7 @@ export default async function AllArticlesPage({
   const { tab: rawTab, query } = await searchParams;
   const date = getCurrentDate();
 
-  const stories = await getStories(supabase);
+  const storiesCount = await getStoriesCount(supabase);
 
   const tab: Tab =
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
@@ -344,11 +344,11 @@ export default async function AllArticlesPage({
       </Suspense>
 
       <UnreadCountProvider initialCount={0}>
-        <TabSwitcher trendingCount={stories.length} />
+        <TabSwitcher trendingCount={storiesCount} />
 
         {tab === "trending" && (
           <Suspense fallback={<ViewTopStoriesSkeleton />}>
-            <ViewTrendingContent userId={userId} stories={stories} />
+            <ViewTrendingContent userId={userId} />
           </Suspense>
         )}
 
