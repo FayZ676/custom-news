@@ -5,6 +5,7 @@ create table "global_settings" (
     "clustering_window_hours" integer not null default 72,
     "min_similarity_threshold" real not null,
     "max_match_count" integer not null,
+    "cluster_significance_threshold" real not null default 0.6,
     "singleton" boolean not null default true,
     constraint "global_settings_singleton" unique ("singleton"),
     constraint "global_settings_singleton_true" check ("singleton" = true)
