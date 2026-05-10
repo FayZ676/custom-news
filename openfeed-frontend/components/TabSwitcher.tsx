@@ -8,7 +8,7 @@ import { useUnreadCount } from "@/components/UnreadCountContext";
 type Tab = "my-news" | "trending" | "search";
 
 interface TabSwitcherProps {
-  trendingCount: number;
+  trendingCount?: number;
 }
 
 export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
@@ -29,7 +29,7 @@ export function TabSwitcher({ trendingCount }: TabSwitcherProps) {
         prefetch={true}
         className={`tab ${tab === "trending" ? "tab-active" : ""} p-0 leading-none text-[clamp(13px,4vw,15px)] min-[400px]:text-lg [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]`}
       >
-        Trending Stories ({trendingCount})
+        Trending Stories{trendingCount ? ` (${trendingCount})` : ""}
       </Link>
       <Link
         href="/feed?tab=my-news"

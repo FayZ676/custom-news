@@ -18,7 +18,6 @@ import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import {
   updateUserArticlesRead,
   UserArticleScore,
-  getUnreadArticleCount,
 } from "@/lib/supabase/queries/user_articles";
 import { updateUserArticles } from "@/lib/supabase/queries/user_articles";
 import { getGlobalArticlesByIds } from "@/lib/supabase/queries/global_articles";
@@ -142,6 +141,31 @@ async function saveUserInterest(
 // Per-section async server components
 // ---------------------------------------------------------------------------
 
+function LogoSkeleton() {
+  return <div className="skeleton h-16 w-75 rounded mx-auto" />;
+}
+
+async function LogoContent({ userId }: { userId: string }) {
+  const supabase = await createClient();
+  const userSettings = await getUserSettings(supabase, userId);
+  return (
+    <Link href="/" aria-label="Go to The Latest Times feed">
+      <Image
+        src={
+          userSettings.color_theme === "cupcake"
+            ? "/logo-light.svg"
+            : "/logo-dark.svg"
+        }
+        alt="The Latest Times"
+        width={300}
+        height={300}
+        loading="eager"
+        style={{ height: "auto" }}
+      />
+    </Link>
+  );
+}
+
 async function BannerContent({ date }: { date: string }) {
   const supabase = await createClient();
   const feeds = await getGlobalFeeds(supabase);
@@ -183,13 +207,10 @@ async function ViewMyNewsContent({ userId }: { userId: string }) {
   );
 }
 
-function ViewTrendingContent({
-  userId,
-  stories,
-}: {
-  userId: string;
-  stories: Awaited<ReturnType<typeof getStories>>;
-}) {
+async function ViewTrendingContent({ userId }: { userId: string }) {
+  const supabase = await createClient();
+  const stories = await getStories(supabase);
+
   async function handleCreateShareLink(
     contentType: "article" | "story",
     contentId: string,
@@ -302,42 +323,27 @@ export default async function AllArticlesPage({
   const { tab: rawTab, query } = await searchParams;
   const date = getCurrentDate();
 
-  const userSettings = await getUserSettings(supabase, userId);
-  const unreadCount = await getUnreadArticleCount(supabase, userId);
-  const stories = await getStories(supabase);
-
   const tab: Tab =
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
 
   return (
     <div className="flex flex-col gap-4 flex-1">
       <div className="flex justify-center">
-        <Link href="/" aria-label="Go to The Latest Times feed">
-          <Image
-            src={
-              userSettings.color_theme === "cupcake"
-                ? "/logo-light.svg"
-                : "/logo-dark.svg"
-            }
-            alt="The Latest Times"
-            width={300}
-            height={300}
-            loading="eager"
-            style={{ height: "auto" }}
-          />
-        </Link>
+        <Suspense fallback={<LogoSkeleton />}>
+          <LogoContent userId={userId} />
+        </Suspense>
       </div>
 
       <Suspense fallback={<BannerSkeleton />}>
         <BannerContent date={date} />
       </Suspense>
 
-      <UnreadCountProvider initialCount={unreadCount}>
-        <TabSwitcher trendingCount={stories.length} />
+      <UnreadCountProvider initialCount={0}>
+        <TabSwitcher />
 
         {tab === "trending" && (
           <Suspense fallback={<ViewTopStoriesSkeleton />}>
-            <ViewTrendingContent userId={userId} stories={stories} />
+            <ViewTrendingContent userId={userId} />
           </Suspense>
         )}
 
