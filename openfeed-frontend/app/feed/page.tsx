@@ -207,10 +207,13 @@ async function ViewMyNewsContent({ userId }: { userId: string }) {
   );
 }
 
-async function ViewTrendingContent({ userId }: { userId: string }) {
-  const supabase = await createClient();
-  const stories = await getStories(supabase);
-
+async function ViewTrendingContent({
+  userId,
+  stories,
+}: {
+  userId: string;
+  stories: Awaited<ReturnType<typeof getStories>>;
+}) {
   async function handleCreateShareLink(
     contentType: "article" | "story",
     contentId: string,
@@ -323,6 +326,8 @@ export default async function AllArticlesPage({
   const { tab: rawTab, query } = await searchParams;
   const date = getCurrentDate();
 
+  const stories = await getStories(supabase);
+
   const tab: Tab =
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
 
@@ -339,11 +344,11 @@ export default async function AllArticlesPage({
       </Suspense>
 
       <UnreadCountProvider initialCount={0}>
-        <TabSwitcher />
+        <TabSwitcher trendingCount={stories.length} />
 
         {tab === "trending" && (
           <Suspense fallback={<ViewTopStoriesSkeleton />}>
-            <ViewTrendingContent userId={userId} />
+            <ViewTrendingContent userId={userId} stories={stories} />
           </Suspense>
         )}
 
