@@ -24,22 +24,26 @@ export function NewsItemCard({
 
   return (
     <li
-      className={`grid gap-3 sm:gap-6 cursor-pointer items-start ${imageUrl ? "grid-cols-[1fr_2fr] sm:grid-cols-[1fr_3fr]" : ""} ${isRead ? "opacity-50" : ""}`}
+      className={`grid grid-cols-[1fr_2fr] sm:grid-cols-[1fr_3fr] gap-3 sm:gap-6 cursor-pointer items-start ${isRead ? "opacity-50" : ""}`}
       onClick={onClick}
     >
-      {imageUrl && (
-        <div className="relative aspect-square w-full">
-          {!isLoaded && <div className="skeleton absolute inset-0" />}
-          <Image
-            src={imageUrl}
-            alt="Thumbnail"
-            fill
-            loading="lazy"
-            className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
-            onLoad={() => setIsLoaded(true)}
-          />
-        </div>
-      )}
+      <div className="relative aspect-square w-full">
+        {imageUrl ? (
+          <>
+            {!isLoaded && <div className="skeleton absolute inset-0" />}
+            <Image
+              src={imageUrl}
+              alt="Thumbnail"
+              fill
+              loading="lazy"
+              className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => setIsLoaded(true)}
+            />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-neutral-800 rounded-sm" />
+        )}
+      </div>
       <div className="flex flex-col gap-1 sm:gap-2">
         <h2 className="text-base sm:text-lg hover:underline font-semibold">
           {title}
