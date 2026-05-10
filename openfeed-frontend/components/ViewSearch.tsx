@@ -7,7 +7,7 @@ import { QueryArticle } from "@/lib/supabase/queries/global_articles";
 import { useUnreadCount } from "@/components/UnreadCountContext";
 
 import SearchBar, { SearchbarSkeleton } from "@/components/Searchbar";
-import SearchbarTooltip from "@/components/SearchbarTooltip";
+import { QuerySuggestions } from "@/components/QuerySuggestions";
 import {
   SectionArticles,
   SectionArticleSkeleton,
@@ -15,6 +15,7 @@ import {
 
 export interface ViewSearchProps {
   queryArticles: QueryArticle[];
+  suggestions: string[];
   handleSaveUserInterest: (query: string) => Promise<string>;
   handleCreateShareLink: (
     contentType: "article" | "story",
@@ -24,6 +25,7 @@ export interface ViewSearchProps {
 
 export function ViewSearch({
   queryArticles,
+  suggestions,
   handleSaveUserInterest,
   handleCreateShareLink,
 }: ViewSearchProps) {
@@ -37,6 +39,7 @@ export function ViewSearch({
   const [isSearching, startSearchTransition] = useTransition();
 
   const handleSearch = (q: string) => {
+    setQuery(q);
     startSearchTransition(() => {
       router.push(`/feed?tab=search&query=${encodeURIComponent(q)}`);
     });
@@ -64,7 +67,7 @@ export function ViewSearch({
   const activeQuery = searchParams.get("query");
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         {/* <SearchbarTooltip /> */}
         <SearchBar
@@ -77,6 +80,7 @@ export function ViewSearch({
           onSearch={handleSearch}
           onQueryChange={setQuery}
         />
+        <QuerySuggestions suggestions={suggestions} onSelect={handleSearch} />
       </div>
 
       {(isSearching || activeQuery) &&
@@ -102,7 +106,7 @@ export function ViewSearch({
 
 export function ViewSearchSkeleton() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8">
       <SearchbarSkeleton />
       <div className="flex flex-col gap-2">
         {Array.from({ length: 3 }).map((_, i) => (

@@ -51,6 +51,7 @@ import {
   ViewTopStoriesSkeleton,
 } from "@/components/ViewTopStories";
 import { ViewSearch, ViewSearchSkeleton } from "@/components/ViewSearch";
+import { generateQuerySuggestions } from "@/lib/suggestions";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -240,9 +241,13 @@ async function ViewSearchContent({
 }) {
   const supabase = await createClient();
   const settings = await getGlobalSettings(supabase);
-  const queryArticles = query
-    ? await searchGlobalArticles(supabase, query, settings)
-    : [];
+
+  const [queryArticles, suggestions] = await Promise.all([
+    query
+      ? searchGlobalArticles(supabase, query, settings)
+      : Promise.resolve([]),
+    query ? generateQuerySuggestions(query) : Promise.resolve([]),
+  ]);
 
   async function handleCreateShareLink(
     contentType: "article" | "story",
@@ -263,6 +268,7 @@ async function ViewSearchContent({
   return (
     <ViewSearch
       queryArticles={queryArticles}
+      suggestions={suggestions}
       handleCreateShareLink={handleCreateShareLink}
       handleSaveUserInterest={handleSaveUserInterest}
     />
