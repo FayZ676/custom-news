@@ -169,6 +169,9 @@ class PublicGlobalFeedsUpdate(TypedDict):
 
 class PublicGlobalSettings(BaseModel):
     article_ttl: str = Field(alias="article_ttl")
+    cluster_significance_threshold: float = Field(
+        alias="cluster_significance_threshold"
+    )
     clustering_window_hours: int = Field(alias="clustering_window_hours")
     id: uuid.UUID = Field(alias="id")
     max_match_count: int = Field(alias="max_match_count")
@@ -179,6 +182,9 @@ class PublicGlobalSettings(BaseModel):
 
 class PublicGlobalSettingsInsert(TypedDict):
     article_ttl: Annotated[str, Field(alias="article_ttl")]
+    cluster_significance_threshold: NotRequired[
+        Annotated[float, Field(alias="cluster_significance_threshold")]
+    ]
     clustering_window_hours: NotRequired[
         Annotated[int, Field(alias="clustering_window_hours")]
     ]
@@ -191,6 +197,9 @@ class PublicGlobalSettingsInsert(TypedDict):
 
 class PublicGlobalSettingsUpdate(TypedDict):
     article_ttl: NotRequired[Annotated[str, Field(alias="article_ttl")]]
+    cluster_significance_threshold: NotRequired[
+        Annotated[float, Field(alias="cluster_significance_threshold")]
+    ]
     clustering_window_hours: NotRequired[
         Annotated[int, Field(alias="clustering_window_hours")]
     ]

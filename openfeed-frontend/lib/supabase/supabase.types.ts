@@ -161,6 +161,7 @@ export type Database = {
       global_settings: {
         Row: {
           article_ttl: string;
+          cluster_significance_threshold: number;
           clustering_window_hours: number;
           id: string;
           max_match_count: number;
@@ -170,6 +171,7 @@ export type Database = {
         };
         Insert: {
           article_ttl: string;
+          cluster_significance_threshold?: number;
           clustering_window_hours?: number;
           id?: string;
           max_match_count: number;
@@ -179,6 +181,7 @@ export type Database = {
         };
         Update: {
           article_ttl?: string;
+          cluster_significance_threshold?: number;
           clustering_window_hours?: number;
           id?: string;
           max_match_count?: number;

@@ -28,7 +28,7 @@ def top_stories(db: Client):
     stories = get_stories(db)
     articles = get_recent_global_articles(db, settings.clustering_window_hours)
     clusters = cluster_articles(articles)
-    clusters = reduce_clusters(clusters)
+    clusters = reduce_clusters(clusters, settings.cluster_significance_threshold)
     new_clusters, matched_clusters = deduplicate_clusters(clusters, stories)
 
     stories_by_id = {s.id: s for s in stories}

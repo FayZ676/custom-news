@@ -182,9 +182,8 @@ def cluster_articles(
     return [arts for arts in clusters.values() if len(arts) >= 2]
 
 
-# TODO: Move this threshold to the global_settings
 def reduce_clusters(
-    clusters: list[list[PublicGlobalArticles]], threshold: float = 0.6
+    clusters: list[list[PublicGlobalArticles]], threshold: float
 ) -> list[list[PublicGlobalArticles]]:
     # NOTE: threshold is calibrated against mean(significance_score) * log(1 + size).
     # Tune after reviewing initial results.
