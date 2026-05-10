@@ -1,11 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { signOut } from "@/lib/supabase/auth";
+import { signOut, getAuthenticatedUser } from "@/lib/supabase/auth";
 
 import { createClient } from "@/lib/supabase/server";
 import { Database } from "@/lib/supabase/supabase.types";
@@ -32,10 +30,7 @@ import {
 } from "@/lib/supabase/queries/global_settings";
 import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
 import { updateUserNotificationSettings } from "@/lib/supabase/queries/user_settings";
-import {
-  getStories,
-  getStoriesCount,
-} from "@/lib/supabase/queries/global_stories";
+import { getStories } from "@/lib/supabase/queries/global_stories";
 import { updateUserTheme } from "@/lib/supabase/queries/user_settings";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
@@ -149,7 +144,8 @@ function LogoSkeleton() {
   return <div className="skeleton h-16 w-75 rounded mx-auto" />;
 }
 
-async function LogoContent({ userId }: { userId: string }) {
+async function LogoContent() {
+  const { userId } = await getAuthenticatedUser();
   const supabase = await createClient();
   const userSettings = await getUserSettings(supabase, userId);
   return (
@@ -176,7 +172,8 @@ async function BannerContent({ date }: { date: string }) {
   return <Banner date={date} feeds={feeds} />;
 }
 
-async function ViewMyNewsContent({ userId }: { userId: string }) {
+async function ViewMyNewsContent() {
+  const { userId } = await getAuthenticatedUser();
   const supabase = await createClient();
   const interestArticles = await getUserInterestArticles(supabase, userId);
 
@@ -211,7 +208,8 @@ async function ViewMyNewsContent({ userId }: { userId: string }) {
   );
 }
 
-async function ViewTrendingContent({ userId }: { userId: string }) {
+async function ViewTrendingContent() {
+  const { userId } = await getAuthenticatedUser();
   const supabase = await createClient();
   const stories = await getStories(supabase);
 
@@ -232,13 +230,8 @@ async function ViewTrendingContent({ userId }: { userId: string }) {
   );
 }
 
-async function ViewSearchContent({
-  userId,
-  query,
-}: {
-  userId: string;
-  query?: string;
-}) {
+async function ViewSearchContent({ query }: { query?: string }) {
+  const { userId } = await getAuthenticatedUser();
   const supabase = await createClient();
   const settings = await getGlobalSettings(supabase);
 
@@ -275,13 +268,8 @@ async function ViewSearchContent({
   );
 }
 
-async function FooterContent({
-  userId,
-  email,
-}: {
-  userId: string;
-  email: string;
-}) {
+async function FooterContent() {
+  const { userId, email } = await getAuthenticatedUser();
   const supabase = await createClient();
   const userSettings = await getUserSettings(supabase, userId);
 
@@ -323,16 +311,8 @@ export default async function AllArticlesPage({
 }: {
   searchParams: Promise<{ tab?: string; query?: string }>;
 }) {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (!claimsData) redirect("/auth/signin");
-
-  const userId = claimsData.claims.sub;
-  const email = claimsData.claims.email ?? "";
   const { tab: rawTab, query } = await searchParams;
   const date = getCurrentDate();
-
-  const storiesCount = await getStoriesCount(supabase);
 
   const tab: Tab =
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
@@ -341,7 +321,7 @@ export default async function AllArticlesPage({
     <div className="flex flex-col gap-4 flex-1">
       <div className="flex justify-center">
         <Suspense fallback={<LogoSkeleton />}>
-          <LogoContent userId={userId} />
+          <LogoContent />
         </Suspense>
       </div>
 
@@ -350,23 +330,23 @@ export default async function AllArticlesPage({
       </Suspense>
 
       <UnreadCountProvider initialCount={0}>
-        <TabSwitcher trendingCount={storiesCount} />
+        <TabSwitcher />
 
         {tab === "trending" && (
           <Suspense fallback={<ViewTopStoriesSkeleton />}>
-            <ViewTrendingContent userId={userId} />
+            <ViewTrendingContent />
           </Suspense>
         )}
 
         {tab === "my-news" && (
           <Suspense fallback={<ViewFeedSkeleton />}>
-            <ViewMyNewsContent userId={userId} />
+            <ViewMyNewsContent />
           </Suspense>
         )}
 
         {tab === "search" && (
           <Suspense key={query ?? ""} fallback={<ViewSearchSkeleton />}>
-            <ViewSearchContent userId={userId} query={query} />
+            <ViewSearchContent query={query} />
           </Suspense>
         )}
       </UnreadCountProvider>
@@ -374,7 +354,7 @@ export default async function AllArticlesPage({
       <div className="min-h-4 flex-1" />
 
       <Suspense fallback={<FooterSkeleton />}>
-        <FooterContent userId={userId} email={email} />
+        <FooterContent />
       </Suspense>
     </div>
   );

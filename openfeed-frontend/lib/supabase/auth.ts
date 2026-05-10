@@ -1,7 +1,24 @@
 "use server";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+/**
+ * Resolves the authenticated user for the current request.
+ * Wrapped in React.cache so multiple server components calling this
+ * within the same render share a single getClaims() call.
+ * Redirects to sign-in if unauthenticated.
+ */
+export const getAuthenticatedUser = cache(async () => {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) redirect("/auth/signin");
+  return {
+    userId: claimsData.claims.sub as string,
+    email: (claimsData.claims.email ?? "") as string,
+  };
+});
 
 export async function signUp(email: string, password: string) {
   const supabase = await createClient();
