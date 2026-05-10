@@ -55,6 +55,17 @@ function ArticleView({ article }: { article: Tables<"global_articles"> }) {
         {article.feed_title} &middot; {timeAgo(article.published_at)}
       </p>
 
+      {article.image_url && (
+        <div className="relative w-full aspect-video overflow-hidden">
+          <Image
+            src={article.image_url}
+            alt={toTitleCase(article.title)}
+            fill
+            className="object-cover"
+          />
+        </div>
+      )}
+
       {article.summary && (
         <p className="text-base leading-relaxed">{article.summary}</p>
       )}
@@ -75,6 +86,17 @@ function StoryView({ story }: { story: Tables<"global_stories"> }) {
   return (
     <article className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">{story.headline}</h1>
+
+      {story.image_url && (
+        <div className="relative w-full aspect-video overflow-hidden">
+          <Image
+            src={story.image_url}
+            alt={story.headline}
+            fill
+            className="object-cover"
+          />
+        </div>
+      )}
 
       {story.summary && (
         <p className="text-base leading-relaxed">{story.summary}</p>
