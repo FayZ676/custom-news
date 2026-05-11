@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { Analytics } from "@vercel/analytics/next";
 
@@ -8,6 +9,7 @@ import "./globals.css";
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserSettings } from "@/lib/supabase/queries/user_settings";
+import { ThemeApplier } from "@/components/ThemeApplier";
 
 const lora = Lora({
   variable: "--font-lora",
@@ -55,26 +57,33 @@ export const metadata: Metadata = {
   ],
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-
-  const colorTheme = claimsData
-    ? (await getUserSettings(supabase, claimsData.claims.sub)).color_theme
-    : "cupcake";
-
   return (
-    <html lang="en" data-theme={colorTheme}>
+    <html lang="en" data-theme="cupcake">
       <body
         className={`${lora.className} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
       >
+        <Suspense>
+          <ThemeLoader />
+        </Suspense>
         {children}
         <Analytics />
       </body>
     </html>
   );
+}
+
+async function ThemeLoader() {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData) return null;
+  const { color_theme } = await getUserSettings(
+    supabase,
+    claimsData.claims.sub,
+  );
+  return <ThemeApplier theme={color_theme} />;
 }

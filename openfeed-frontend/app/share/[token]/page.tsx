@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
@@ -9,7 +10,6 @@ import { Tables } from "@/lib/supabase/supabase.types";
 import { getShareLinkByToken } from "@/lib/supabase/queries/global_share_links";
 import { getGlobalArticleById } from "@/lib/supabase/queries/global_articles";
 import { getStoryById } from "@/lib/supabase/queries/global_stories";
-import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 const isUuid = (value: string): boolean =>
@@ -163,7 +163,19 @@ export async function generateMetadata({
   };
 }
 
-export default async function SharePage({
+export default function SharePage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <SharePageContent params={params} />
+    </Suspense>
+  );
+}
+
+async function SharePageContent({
   params,
 }: {
   params: Promise<{ token: string }>;
@@ -175,15 +187,7 @@ export default async function SharePage({
   const shared = await resolveSharedContent(token);
   if (!shared) notFound();
 
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-
-  const colorTheme = claimsData
-    ? (await getUserSettings(supabase, claimsData.claims.sub)).color_theme
-    : "cupcake";
-
-  const logoSrc =
-    colorTheme === "cupcake" ? "/logo-light.svg" : "/logo-dark.svg";
+  const logoSrc = "/logo-light.svg";
 
   return (
     <main className="flex flex-col gap-6 w-full max-w-2xl mx-auto py-8">
