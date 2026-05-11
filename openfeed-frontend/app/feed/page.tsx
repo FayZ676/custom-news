@@ -167,7 +167,8 @@ async function LogoContent() {
 }
 
 async function BannerContent({ date }: { date: string }) {
-  const feeds = await getGlobalFeeds();
+  const supabase = await createClient();
+  const feeds = await getGlobalFeeds(supabase);
   return <Banner date={date} feeds={feeds} />;
 }
 

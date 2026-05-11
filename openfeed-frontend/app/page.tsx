@@ -16,7 +16,7 @@ async function LandingPageContent() {
   const supabase = await createClient();
   const [stories, feeds] = await Promise.all([
     getStories(supabase),
-    getGlobalFeeds(),
+    getGlobalFeeds(supabase),
   ]);
 
   return <LandingPage stories={stories} feeds={feeds} />;
