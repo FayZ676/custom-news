@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useUnreadCount } from "@/components/UnreadCountContext";
@@ -22,14 +23,21 @@ export function TabSwitcher() {
   const { unreadCount } = useUnreadCount();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [optimisticTab, setOptimisticTab] = useState<Tab | null>(null);
 
   const rawTab = searchParams.get("tab");
-  const activeTab: Tab =
+  const committedTab: Tab =
     rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
+  const activeTab = optimisticTab ?? committedTab;
 
   const handleTabClick = (tab: Tab) => {
     if (tab === activeTab) return;
-    router.push(`/feed?tab=${tab}`);
+    setOptimisticTab(tab);
+    startTransition(() => {
+      router.push(`/feed?tab=${tab}`);
+      setOptimisticTab(null);
+    });
   };
 
   const tabClass = (id: Tab) =>
@@ -46,7 +54,7 @@ export function TabSwitcher() {
   return (
     <div
       role="tablist"
-      className="tabs tabs-border tabs-md font-bold gap-4 justify-center"
+      className={`tabs tabs-border tabs-md font-bold gap-4 justify-center transition-opacity ${isPending ? "opacity-60" : ""}`}
     >
       {tabs.map(({ id, label }) => (
         <button
