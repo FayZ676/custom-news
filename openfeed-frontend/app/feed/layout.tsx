@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Suspense } from "react";
+import { cacheLife } from "next/cache";
 
 import { signOut, getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -48,6 +49,8 @@ async function LogoContent() {
 }
 
 async function BannerContent() {
+  "use cache";
+  cacheLife("hours");
   const supabase = await createClient();
   const date = getCurrentDate();
   const feeds = await getGlobalFeeds(supabase);
