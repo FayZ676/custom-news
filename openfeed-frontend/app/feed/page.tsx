@@ -11,7 +11,7 @@ import { Database } from "@/lib/supabase/supabase.types";
 import { rerankTexts } from "@/lib/reranker";
 import { embedTexts } from "@/lib/embeddings";
 
-import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
+import { getCachedGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
 import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import {
   updateUserArticlesRead,
@@ -167,8 +167,7 @@ async function LogoContent() {
 }
 
 async function BannerContent({ date }: { date: string }) {
-  const supabase = await createClient();
-  const feeds = await getGlobalFeeds(supabase);
+  const feeds = await getCachedGlobalFeeds();
   return <Banner date={date} feeds={feeds} />;
 }
 
