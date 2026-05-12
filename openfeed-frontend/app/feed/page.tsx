@@ -6,12 +6,14 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { signOut, getAuthenticatedUser } from "@/lib/supabase/auth";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
+import { cacheLife } from "next/cache";
 import { Database } from "@/lib/supabase/supabase.types";
 
 import { rerankTexts } from "@/lib/reranker";
 import { embedTexts } from "@/lib/embeddings";
 
-import { getCachedGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
+import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
 import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import {
   updateUserArticlesRead,
@@ -167,7 +169,13 @@ async function LogoContent() {
 }
 
 async function BannerContent({ date }: { date: string }) {
-  const feeds = await getCachedGlobalFeeds();
+  "use cache";
+  cacheLife("days");
+  const supabase = createAnonClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  );
+  const feeds = await getGlobalFeeds(supabase);
   return <Banner date={date} feeds={feeds} />;
 }
 
@@ -324,9 +332,7 @@ export default async function AllArticlesPage({
         </Suspense>
       </div>
 
-      <Suspense fallback={<BannerSkeleton />}>
-        <BannerContent date={date} />
-      </Suspense>
+      <BannerContent date={date} />
 
       <UnreadCountProvider initialCount={0}>
         <TabSwitcher />
