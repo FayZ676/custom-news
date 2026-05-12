@@ -169,12 +169,7 @@ async function LogoContent() {
 }
 
 async function BannerContent({ date }: { date: string }) {
-  "use cache";
-  cacheLife("days");
-  const supabase = createAnonClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  );
+  const supabase = await createClient();
   const feeds = await getGlobalFeeds(supabase);
   return <Banner date={date} feeds={feeds} />;
 }
