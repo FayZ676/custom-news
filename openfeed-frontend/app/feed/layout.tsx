@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { cacheLife } from "next/cache";
 
+import { createAnonClient } from "@/lib/supabase/anon";
 import { signOut, getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
@@ -51,7 +52,7 @@ async function LogoContent() {
 async function BannerContent() {
   "use cache";
   cacheLife("hours");
-  const supabase = await createClient();
+  const supabase = createAnonClient();
   const date = getCurrentDate();
   const feeds = await getGlobalFeeds(supabase);
   return <Banner date={date} feeds={feeds} />;
