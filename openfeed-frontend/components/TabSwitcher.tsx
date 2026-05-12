@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useUnreadCount } from "@/components/UnreadCountContext";
 
@@ -22,20 +22,22 @@ const tabs: { id: Tab; label: (unreadCount: number | null) => string }[] = [
 export function TabSwitcher() {
   const { unreadCount } = useUnreadCount();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [optimisticTab, setOptimisticTab] = useState<Tab | null>(null);
 
-  const rawTab = searchParams.get("tab");
-  const committedTab: Tab =
-    rawTab === "my-news" || rawTab === "search" ? rawTab : "trending";
+  const committedTab: Tab = pathname.endsWith("/my-news")
+    ? "my-news"
+    : pathname.endsWith("/search")
+      ? "search"
+      : "trending";
   const activeTab = optimisticTab ?? committedTab;
 
   const handleTabClick = (tab: Tab) => {
     if (tab === activeTab) return;
     setOptimisticTab(tab);
     startTransition(() => {
-      router.push(`/feed?tab=${tab}`);
+      router.push(`/feed/${tab}`);
       setOptimisticTab(null);
     });
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { QueryArticle } from "@/lib/supabase/queries/global_articles";
@@ -16,6 +16,7 @@ import {
 export interface ViewSearchProps {
   queryArticles: QueryArticle[];
   suggestions: string[];
+  initialQuery?: string;
   handleSaveUserInterest: (query: string) => Promise<string>;
   handleCreateShareLink: (
     contentType: "article" | "story",
@@ -26,22 +27,22 @@ export interface ViewSearchProps {
 export function ViewSearch({
   queryArticles,
   suggestions,
+  initialQuery = "",
   handleSaveUserInterest,
   handleCreateShareLink,
 }: ViewSearchProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const { adjustCount } = useUnreadCount();
   const [saved, setSaved] = useState(false);
-  const [query, setQuery] = useState(searchParams.get("query") ?? "");
+  const [query, setQuery] = useState(initialQuery);
   const [saving, startSaveTransition] = useTransition();
   const [isSearching, startSearchTransition] = useTransition();
 
   const handleSearch = (q: string) => {
     setQuery(q);
     startSearchTransition(() => {
-      router.push(`/feed?tab=search&query=${encodeURIComponent(q)}`);
+      router.push(`/feed/search?query=${encodeURIComponent(q)}`);
     });
   };
 
@@ -53,18 +54,18 @@ export function ViewSearch({
       setSaved(true);
       setQuery("");
       router.refresh();
-      router.push("/feed?tab=search");
+      router.push("/feed/search");
     });
   };
 
   const handleClear = () => {
     startSearchTransition(() => {
       setQuery("");
-      router.push("/feed?tab=search");
+      router.push("/feed/search");
     });
   };
 
-  const activeQuery = searchParams.get("query");
+  const activeQuery = initialQuery;
 
   return (
     <div className="flex flex-col gap-8">
