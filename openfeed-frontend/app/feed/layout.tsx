@@ -8,7 +8,7 @@ import { signOut, getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
 import {
-  fetchCachedUserSettings,
+  getCachedUserSettings,
   updateUserNotificationSettings,
   updateUserTheme,
 } from "@/lib/supabase/queries/user_settings";
@@ -29,7 +29,7 @@ function LogoSkeleton() {
 
 async function LogoContent() {
   const { userId } = await getAuthenticatedUser();
-  const userSettings = await fetchCachedUserSettings(userId);
+  const userSettings = await getCachedUserSettings(userId);
   return (
     <Link href="/" aria-label="Go to The Latest Times feed">
       <Image
@@ -59,7 +59,7 @@ async function BannerContent() {
 
 async function FooterContent() {
   const { userId, email } = await getAuthenticatedUser();
-  const userSettings = await fetchCachedUserSettings(userId);
+  const userSettings = await getCachedUserSettings(userId);
 
   async function handleUpdateNotifications() {
     "use server";

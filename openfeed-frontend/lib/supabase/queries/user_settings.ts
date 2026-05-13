@@ -18,7 +18,7 @@ export async function getUserSettings(
   return rows;
 }
 
-export async function fetchCachedUserSettings(
+export async function getCachedUserSettings(
   userId: string,
 ): Promise<Database["public"]["Tables"]["user_settings"]["Row"]> {
   "use cache";

@@ -8,7 +8,7 @@ import { Lora } from "next/font/google";
 import "./globals.css";
 
 import { createClient } from "@/lib/supabase/server";
-import { fetchCachedUserSettings } from "@/lib/supabase/queries/user_settings";
+import { getCachedUserSettings } from "@/lib/supabase/queries/user_settings";
 import { ThemeApplier } from "@/components/ThemeApplier";
 
 const lora = Lora({
@@ -81,6 +81,6 @@ async function ThemeLoader() {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) return null;
-  const settings = await fetchCachedUserSettings(claimsData.claims.sub);
+  const settings = await getCachedUserSettings(claimsData.claims.sub);
   return <ThemeApplier theme={settings.color_theme} />;
 }
