@@ -10,6 +10,7 @@ import { updateUserArticlesRead } from "@/lib/supabase/queries/user_articles";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
+import { ShareLinkProvider } from "@/components/ShareLinkContext";
 
 async function ViewMyNewsContent() {
   const { userId } = await getAuthenticatedUser();
@@ -38,12 +39,13 @@ async function ViewMyNewsContent() {
   }
 
   return (
-    <ViewFeed
-      interestArticles={interestArticles}
-      handleCreateShareLink={handleCreateShareLink}
-      handleDeleteInterest={handleDeleteInterest}
-      handleReadUserArticles={handleReadArticles}
-    />
+    <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
+      <ViewFeed
+        interestArticles={interestArticles}
+        handleDeleteInterest={handleDeleteInterest}
+        handleReadUserArticles={handleReadArticles}
+      />
+    </ShareLinkProvider>
   );
 }
 

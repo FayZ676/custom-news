@@ -14,21 +14,18 @@ import {
   NewsItemArticle,
 } from "@/components/NewsItemModal";
 import { NewsItemCard } from "@/components/NewsItemCard";
+import { useShareLink } from "@/components/ShareLinkContext";
 
 interface SectionArticlesProps {
   articles: InterestArticle[] | QueryArticle[];
-  handleCreateShareLink: (
-    contentType: "article" | "story",
-    contentId: string,
-  ) => Promise<string>;
   handleReadArticle?: (articleIds: string[], isRead: boolean) => Promise<void>;
 }
 
 export function SectionArticles({
   articles,
-  handleCreateShareLink,
   handleReadArticle,
 }: SectionArticlesProps) {
+  const handleCreateShareLink = useShareLink();
   const modalRef = useRef<NewsItemModalHandle>(null);
   const [selectedArticle, setSelectedArticle] = useState<
     InterestArticle | QueryArticle | null
@@ -79,11 +76,7 @@ export function SectionArticles({
         })}
       </ol>
 
-      <NewsItemModal
-        ref={modalRef}
-        handleCreateShareLink={handleCreateShareLink}
-        onClose={closeModal}
-      />
+      <NewsItemModal ref={modalRef} onClose={closeModal} />
     </>
   );
 }

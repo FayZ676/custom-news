@@ -21,6 +21,7 @@ import {
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import { ViewSearch, ViewSearchSkeleton } from "@/components/ViewSearch";
+import { ShareLinkProvider } from "@/components/ShareLinkContext";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -137,13 +138,14 @@ async function ViewSearchContent({ query }: { query?: string }) {
   }
 
   return (
-    <ViewSearch
-      queryArticles={queryArticles}
-      suggestions={suggestions}
-      initialQuery={query ?? ""}
-      handleCreateShareLink={handleCreateShareLink}
-      handleSaveUserInterest={handleSaveUserInterest}
-    />
+    <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
+      <ViewSearch
+        queryArticles={queryArticles}
+        suggestions={suggestions}
+        initialQuery={query ?? ""}
+        handleSaveUserInterest={handleSaveUserInterest}
+      />
+    </ShareLinkProvider>
   );
 }
 

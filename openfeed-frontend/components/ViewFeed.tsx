@@ -16,17 +16,12 @@ export interface ViewFeedProps {
     articleIds: string[],
     isRead: boolean,
   ) => Promise<void>;
-  handleCreateShareLink: (
-    contentType: "article" | "story",
-    contentId: string,
-  ) => Promise<string>;
 }
 
 export function ViewFeed({
   interestArticles,
   handleDeleteInterest,
   handleReadUserArticles,
-  handleCreateShareLink,
 }: ViewFeedProps) {
   const router = useRouter();
   const { adjustCount } = useUnreadCount();
@@ -87,7 +82,6 @@ export function ViewFeed({
             key={interest.id}
             interest={interest}
             deleting={deleting}
-            handleCreateShareLink={handleCreateShareLink}
             handleDeleteInterest={handleDelete}
             handleReadArticles={handleRead}
           />

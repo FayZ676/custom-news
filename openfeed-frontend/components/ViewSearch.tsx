@@ -18,10 +18,6 @@ export interface ViewSearchProps {
   suggestions: string[];
   initialQuery?: string;
   handleSaveUserInterest: (query: string) => Promise<string>;
-  handleCreateShareLink: (
-    contentType: "article" | "story",
-    contentId: string,
-  ) => Promise<string>;
 }
 
 export function ViewSearch({
@@ -29,7 +25,6 @@ export function ViewSearch({
   suggestions,
   initialQuery = "",
   handleSaveUserInterest,
-  handleCreateShareLink,
 }: ViewSearchProps) {
   const router = useRouter();
 
@@ -92,10 +87,7 @@ export function ViewSearch({
             ))}
           </>
         ) : queryArticles.length > 0 ? (
-          <SectionArticles
-            articles={queryArticles}
-            handleCreateShareLink={handleCreateShareLink}
-          />
+          <SectionArticles articles={queryArticles} />
         ) : (
           <p className="text-sm italic text-neutral-500">
             No articles found matching your query. Try something more specific.
