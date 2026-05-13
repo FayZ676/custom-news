@@ -1,5 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { cacheTag, revalidateTag } from "next/cache";
 import { Database } from "@/lib/supabase/supabase.types";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function getUserSettings(
   supabase: SupabaseClient<Database>,
@@ -16,6 +18,15 @@ export async function getUserSettings(
   return rows;
 }
 
+export async function fetchCachedUserSettings(
+  userId: string,
+): Promise<Database["public"]["Tables"]["user_settings"]["Row"]> {
+  "use cache";
+  cacheTag(`user-settings:${userId}`);
+  const supabase = createServiceRoleClient();
+  return getUserSettings(supabase, userId);
+}
+
 export async function updateUserNotificationSettings(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -27,6 +38,7 @@ export async function updateUserNotificationSettings(
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
+  revalidateTag(`user-settings:${userId}`, { expire: 0 });
 }
 
 export async function updateUserTimezone(
@@ -40,6 +52,7 @@ export async function updateUserTimezone(
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
+  revalidateTag(`user-settings:${userId}`, { expire: 0 });
 }
 
 export async function updateUserTheme(
@@ -53,4 +66,5 @@ export async function updateUserTheme(
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
+  revalidateTag(`user-settings:${userId}`, { expire: 0 });
 }

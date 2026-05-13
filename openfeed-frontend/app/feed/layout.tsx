@@ -7,8 +7,8 @@ import { createAnonClient } from "@/lib/supabase/anon";
 import { signOut, getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
-import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import {
+  fetchCachedUserSettings,
   updateUserNotificationSettings,
   updateUserTheme,
 } from "@/lib/supabase/queries/user_settings";
@@ -29,8 +29,7 @@ function LogoSkeleton() {
 
 async function LogoContent() {
   const { userId } = await getAuthenticatedUser();
-  const supabase = await createClient();
-  const userSettings = await getUserSettings(supabase, userId);
+  const userSettings = await fetchCachedUserSettings(userId);
   return (
     <Link href="/" aria-label="Go to The Latest Times feed">
       <Image
@@ -60,8 +59,7 @@ async function BannerContent() {
 
 async function FooterContent() {
   const { userId, email } = await getAuthenticatedUser();
-  const supabase = await createClient();
-  const userSettings = await getUserSettings(supabase, userId);
+  const userSettings = await fetchCachedUserSettings(userId);
 
   async function handleUpdateNotifications() {
     "use server";

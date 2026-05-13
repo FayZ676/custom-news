@@ -8,7 +8,7 @@ import { Lora } from "next/font/google";
 import "./globals.css";
 
 import { createClient } from "@/lib/supabase/server";
-import { getUserSettings } from "@/lib/supabase/queries/user_settings";
+import { fetchCachedUserSettings } from "@/lib/supabase/queries/user_settings";
 import { ThemeApplier } from "@/components/ThemeApplier";
 
 const lora = Lora({
@@ -63,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="cupcake">
+    <html lang="en" data-theme="cupcake" suppressHydrationWarning>
       <body
         className={`${lora.className} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
       >
@@ -81,9 +81,6 @@ async function ThemeLoader() {
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   if (!claimsData) return null;
-  const { color_theme } = await getUserSettings(
-    supabase,
-    claimsData.claims.sub,
-  );
-  return <ThemeApplier theme={color_theme} />;
+  const settings = await fetchCachedUserSettings(claimsData.claims.sub);
+  return <ThemeApplier theme={settings.color_theme} />;
 }
