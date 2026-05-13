@@ -14,16 +14,9 @@ import { NewsItemCard } from "@/components/NewsItemCard";
 
 interface ViewTopStoriesProps {
   stories: Tables<"global_stories">[];
-  handleCreateShareLink: (
-    contentType: "article" | "story",
-    contentId: string,
-  ) => Promise<string>;
 }
 
-export function ViewTopStories({
-  stories,
-  handleCreateShareLink,
-}: ViewTopStoriesProps) {
+export function ViewTopStories({ stories }: ViewTopStoriesProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
 
   function openModal(story: Tables<"global_stories">) {
@@ -62,10 +55,7 @@ export function ViewTopStories({
         ))}
       </ol>
 
-      <NewsItemModal
-        ref={modalRef}
-        handleCreateShareLink={handleCreateShareLink}
-      />
+      <NewsItemModal ref={modalRef} />
     </section>
   );
 }

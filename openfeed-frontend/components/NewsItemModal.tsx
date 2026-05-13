@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Copy, ClipboardCheck } from "lucide-react";
 
 import Modal from "@/components/Modal";
+import { useShareLink } from "@/components/ShareLinkContext";
 
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
@@ -39,10 +40,6 @@ export interface NewsItemModalHandle {
 }
 
 interface NewsItemModalProps {
-  handleCreateShareLink: (
-    contentType: "article" | "story",
-    contentId: string,
-  ) => Promise<string>;
   onClose?: () => void;
 }
 
@@ -63,7 +60,8 @@ async function copyText(text: string): Promise<boolean> {
 export const NewsItemModal = forwardRef<
   NewsItemModalHandle,
   NewsItemModalProps
->(({ handleCreateShareLink, onClose }, ref) => {
+>(({ onClose }, ref) => {
+  const handleCreateShareLink = useShareLink();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
