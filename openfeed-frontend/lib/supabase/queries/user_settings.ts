@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { cacheTag, revalidateTag } from "next/cache";
+import { cacheTag, cacheLife, revalidateTag } from "next/cache";
 import { Database } from "@/lib/supabase/supabase.types";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -23,6 +23,7 @@ export async function getCachedUserSettings(
 ): Promise<Database["public"]["Tables"]["user_settings"]["Row"]> {
   "use cache";
   cacheTag(`user-settings:${userId}`);
+  cacheLife("days");
   const supabase = createServiceRoleClient();
   return getUserSettings(supabase, userId);
 }

@@ -64,6 +64,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" data-theme="cupcake" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('color-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body
         className={`${lora.className} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
       >
