@@ -13,16 +13,18 @@ import {
 } from "@/components/ViewTopStories";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
 
-async function ViewStoriesContent() {
+async function fetchCachedStories() {
   "use cache";
   cacheLife("hours");
   const supabase = createAnonClient();
-  const stories = await getStories(supabase);
-  return <ViewTopStories stories={stories} />;
+  return await getStories(supabase);
 }
 
 async function ViewTrendingContent() {
-  const { userId } = await getAuthenticatedUser();
+  const [{ userId }, stories] = await Promise.all([
+    getAuthenticatedUser(),
+    fetchCachedStories(),
+  ]);
 
   async function handleCreateShareLink(
     contentType: "article" | "story",
@@ -35,9 +37,7 @@ async function ViewTrendingContent() {
 
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
-      <Suspense fallback={<ViewTopStoriesSkeleton />}>
-        <ViewStoriesContent />
-      </Suspense>
+      <ViewTopStories stories={stories} />
     </ShareLinkProvider>
   );
 }
