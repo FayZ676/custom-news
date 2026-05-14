@@ -69,22 +69,13 @@ export function NewsItemCard({
     );
   }
 
-  if (variant === "compact") {
+  if (variant === "featured") {
     return (
       <li
-        className={`grid grid-cols-[1fr_auto] gap-3 cursor-pointer items-center ${opacityClass}`}
+        className={`grid grid-cols-[1fr_2fr] sm:grid-cols-[1fr_3fr] gap-3 sm:gap-6 cursor-pointer items-start ${opacityClass}`}
         onClick={onClick}
       >
-        <div className="flex flex-col gap-1">
-          <h2 className="text-sm hover:underline leading-snug">{title}</h2>
-          {summary && (
-            <p className="hidden sm:line-clamp-1 text-xs text-neutral-500">
-              {summary}
-            </p>
-          )}
-          {meta && <span className="text-xs text-neutral-500">{meta}</span>}
-        </div>
-        <div className="relative aspect-square w-14 shrink-0">
+        <div className="relative aspect-square w-full">
           {imageUrl ? (
             <>
               {!isLoaded && <div className="skeleton absolute inset-0" />}
@@ -99,21 +90,47 @@ export function NewsItemCard({
             </>
           ) : (
             <div className="absolute inset-0 bg-base-200 rounded-sm flex items-center justify-center">
-              <ImageOff className="text-base-content/30" size={16} />
+              <ImageOff className="text-base-content/30" size={24} />
             </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-1 sm:gap-2">
+          <h2 className="text-base sm:text-lg hover:underline font-semibold">
+            {title}
+            {meta && (
+              <>
+                {" "}
+                &middot;{" "}
+                <span className="text-neutral-500 font-normal">{meta}</span>
+              </>
+            )}
+          </h2>
+          {summary && (
+            <p className="line-clamp-3 text-sm text-neutral-500">{summary}</p>
           )}
         </div>
       </li>
     );
   }
 
-  // featured
+  // compact
   return (
     <li
-      className={`grid grid-cols-[1fr_2fr] sm:grid-cols-[1fr_3fr] gap-3 sm:gap-6 cursor-pointer items-start ${opacityClass}`}
+      className={`grid grid-cols-[1fr_auto] gap-3 cursor-pointer items-center ${opacityClass}`}
       onClick={onClick}
     >
-      <div className="relative aspect-square w-full">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-base sm:text-lg hover:underline font-semibold leading-snug">
+          {title}
+        </h2>
+        {summary && (
+          <p className="hidden sm:line-clamp-1 text-sm text-neutral-500">
+            {summary}
+          </p>
+        )}
+        {meta && <span className="text-sm text-neutral-500">{meta}</span>}
+      </div>
+      <div className="relative aspect-square w-14 shrink-0">
         {imageUrl ? (
           <>
             {!isLoaded && <div className="skeleton absolute inset-0" />}
@@ -128,23 +145,8 @@ export function NewsItemCard({
           </>
         ) : (
           <div className="absolute inset-0 bg-base-200 rounded-sm flex items-center justify-center">
-            <ImageOff className="text-base-content/30" size={24} />
+            <ImageOff className="text-base-content/30" size={16} />
           </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-1 sm:gap-2">
-        <h2 className="text-base sm:text-lg hover:underline font-semibold">
-          {title}
-          {meta && (
-            <>
-              {" "}
-              &middot;{" "}
-              <span className="text-neutral-500 font-normal">{meta}</span>
-            </>
-          )}
-        </h2>
-        {summary && (
-          <p className="line-clamp-3 text-sm text-neutral-500">{summary}</p>
         )}
       </div>
     </li>
