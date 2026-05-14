@@ -95,7 +95,7 @@ def _get_users_to_notify(db: Client, now_utc: datetime) -> list[PublicUserSettin
     return [
         u
         for u in get_all_email_notification_users(db)
-        # if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
+        if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
     ]
 
 
