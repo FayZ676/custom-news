@@ -4,15 +4,30 @@ import { useState, useLayoutEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+const getLogoSrc = (theme: string) =>
+  theme === "cupcake" ? "/logo-light.svg" : "/logo-dark.svg";
+
+const getCurrentTheme = () =>
+  localStorage.getItem("color-theme") ??
+  document.documentElement.dataset.theme ??
+  "cupcake";
+
 export function ThemedLogo() {
   const [src, setSrc] = useState("/logo-light.svg");
 
   useLayoutEffect(() => {
-    const theme =
-      localStorage.getItem("color-theme") ??
-      document.documentElement.dataset.theme ??
-      "cupcake";
-    setSrc(theme === "cupcake" ? "/logo-light.svg" : "/logo-dark.svg");
+    setSrc(getLogoSrc(getCurrentTheme()));
+
+    const observer = new MutationObserver(() => {
+      setSrc(getLogoSrc(getCurrentTheme()));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   return (
