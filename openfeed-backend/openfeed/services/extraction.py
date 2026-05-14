@@ -55,9 +55,9 @@ def top_stories(db: Client):
     all_stories = generated + rescored
 
     delete_all_stories(db)
-    insert_stories(db, all_stories)
 
     if all_stories:
+        insert_stories(db, all_stories)
         insert_email(db, _generate_trending_news_email_section(all_stories))
 
     logger.info(
@@ -106,46 +106,22 @@ def _generate_story(
 
 def _generate_trending_news_email_section(stories: list[PublicGlobalStories]) -> str:
     top_five = sorted(stories, key=lambda s: s.score, reverse=True)[:5]
-    story_data = [
-        {"summary": s.summary, "urls": s.related_articles_urls[:3]} for s in top_five
-    ]
-    return _generate_trending_news_email_copy(story_data)
+    return "".join(_render_story_card(s) for s in top_five)
 
 
-def _generate_trending_news_email_copy(stories: list[dict]) -> str:
-    class CopyResponse(BaseModel):
-        text: str
-
-    story_blocks = "\n\n".join(
-        f"- Summary: {s['summary']}\n  Sources: {', '.join(s['urls'])}" for s in stories
+def _render_story_card(story: PublicGlobalStories) -> str:
+    img_html = (
+        f'<img src="{story.image_url}" alt="" style="display:block;width:100%;height:auto;border-radius:4px;margin:10px 0 12px;" />'
+        if story.image_url
+        else ""
     )
-
-    prompt = f"""
-### Top Stories
-{story_blocks}
-
-### Instructions
-Write a short newspaper-style digest summarizing the above stories in **Markdown format**.
-
-Structure your output like this for each story:
-
-### <Story Headline>
-
-<Two sentence summary. Lead with the key fact. Use **bold** for the most critical detail and *italic* for context or stakes.>
-
-**<u>[Read full article](<url>)</u>**
-
-Rules:
-- Use `###` headings for each story title.
-- Use **bold** for key facts, figures, or names.
-- Use *italic* for stakes, context, or what happens next.
-- After each story body, on its own line, include a Markdown hyperlink to the most relevant provided URL formatted exactly as: **<u>[Read full article](url)</u>**
-- No greetings, no sign-offs, no filler, no horizontal rules.
-- Keep the entire output under 1,500 characters."""
-    llm_response = openai_client.generate_response(
-        "gpt-5.4", prompt, CopyResponse, temperature=1.0
+    return (
+        f'<div style="padding: 20px 0; border-bottom: 1px solid #f0f0f0;">'
+        f'<p style="margin: 0 0 4px; font-size: 17px; font-weight: 700; color: #1a1a1a; line-height: 1.3;">{story.headline}</p>'
+        f"{img_html}"
+        f'<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #444;">{story.summary}</p>'
+        f"</div>"
     )
-    return llm_response.text
 
 
 def _generate_story_text(

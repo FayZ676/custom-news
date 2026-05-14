@@ -3,8 +3,6 @@ from zoneinfo import ZoneInfo
 from itertools import groupby
 from datetime import datetime, timezone
 
-import markdown as md
-
 from openfeed.config import settings
 from openfeed.db.client import Client
 from openfeed.db.global_emails import get_latest_email
@@ -78,11 +76,7 @@ def _build_raw_email(
     local_date = now_utc.astimezone(ZoneInfo(user_timezone))
     edition = "Morning News" if local_date.hour < 12 else "Evening News"
     subject = f"The Latest Times — {edition}, {local_date.strftime('%B %-d')}"
-    top_stories_html = (
-        _format_top_stories_html(top_stories_email.email_text)
-        if top_stories_email
-        else ""
-    )
+    top_stories_html = top_stories_email.email_text if top_stories_email else ""
     interests_html = (
         _build_interests_summary_html(articles_by_email[email])
         if email in articles_by_email
@@ -101,7 +95,7 @@ def _get_users_to_notify(db: Client, now_utc: datetime) -> list[PublicUserSettin
     return [
         u
         for u in get_all_email_notification_users(db)
-        if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
+        # if _is_in_notification_window(u, now_utc, global_settings.notification_hours)
     ]
 
 
@@ -158,10 +152,6 @@ def _build_interests_summary_html(details: list[UserArticleDetails]) -> str:
         key=lambda d: d.interest,
     )
     return "".join(_render_interest_row(interest, group) for interest, group in grouped)
-
-
-def _format_top_stories_html(text: str) -> str:
-    return md.markdown(text)
 
 
 if __name__ == "__main__":
