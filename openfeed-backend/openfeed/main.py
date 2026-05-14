@@ -56,6 +56,14 @@ def global_articles_update(background_tasks: BackgroundTasks):
     return Response(status_code=202)
 
 
+@app.post("/notify", status_code=202)
+def notify(background_tasks: BackgroundTasks):
+    logger.info("POST /notify - accepted, processing in background")
+    db = get_db()
+    background_tasks.add_task(_run_with_logging, "notify_users", notify_users, db)
+    return Response(status_code=202)
+
+
 @app.delete("/global/articles", status_code=202)
 def global_articles_delete():
     logger.info("DELETE /global/articles - deleting old articles")
