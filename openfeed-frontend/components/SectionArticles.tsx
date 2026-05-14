@@ -14,7 +14,6 @@ import {
   NewsItemArticle,
 } from "@/components/NewsItemModal";
 import { NewsItemCard } from "@/components/NewsItemCard";
-import { useShareLink } from "@/components/ShareLinkContext";
 
 interface SectionArticlesProps {
   articles: InterestArticle[] | QueryArticle[];
@@ -25,7 +24,6 @@ export function SectionArticles({
   articles,
   handleReadArticle,
 }: SectionArticlesProps) {
-  const handleCreateShareLink = useShareLink();
   const modalRef = useRef<NewsItemModalHandle>(null);
   const [selectedArticle, setSelectedArticle] = useState<
     InterestArticle | QueryArticle | null
@@ -65,6 +63,7 @@ export function SectionArticles({
           return (
             <NewsItemCard
               key={article.global_article.id}
+              variant="featured"
               title={toTitleCase(article.global_article.title)}
               imageUrl={article.global_article.image_url}
               summary={article.global_article.summary}
