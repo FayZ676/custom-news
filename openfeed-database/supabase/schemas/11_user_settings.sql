@@ -28,16 +28,3 @@ $$ language plpgsql stable;
 create trigger check_user_settings_timezone
     before insert or update of timezone on "user_settings"
     for each row execute function validate_user_settings_timezone();
-
-create or replace function create_user_settings()
-returns trigger as $$
-begin
-    insert into public.user_settings (user_id)
-    values (new.id);
-    return new;
-end;
-$$ language plpgsql security definer;
-
-create trigger on_auth_user_created
-    after insert on auth.users
-    for each row execute function create_user_settings();

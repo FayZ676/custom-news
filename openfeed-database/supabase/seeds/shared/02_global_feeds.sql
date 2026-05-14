@@ -1,5 +1,5 @@
-INSERT INTO global_feeds (title, url, description, category_id)
-SELECT title, url, description, (SELECT id FROM global_categories WHERE name = 'Technology')
+INSERT INTO global_feeds (title, url, description, category_name)
+SELECT title, url, description, 'Technology'
 FROM (VALUES
 
     -- =============================================
@@ -86,8 +86,8 @@ FROM (VALUES
 ON CONFLICT (url) DO NOTHING;
 
 
-INSERT INTO global_feeds (title, url, description, category_id)
-SELECT title, url, description, (SELECT id FROM global_categories WHERE name = 'Finance')
+INSERT INTO global_feeds (title, url, description, category_name)
+SELECT title, url, description, 'Finance'
 FROM (VALUES
 
     -- =============================================

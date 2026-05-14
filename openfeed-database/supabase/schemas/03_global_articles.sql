@@ -11,7 +11,8 @@ create table "global_articles" (
     "significance_score" float not null,
     "image_url" text,
     "published_at" timestamptz not null,
-    "created_at" timestamptz not null default now()
+    "created_at" timestamptz not null default now(),
+    "category_name" text references global_categories(name) on update cascade on delete set null
 );
 
 alter table "global_articles" enable row level security;

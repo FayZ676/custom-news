@@ -14,7 +14,8 @@ create extension if not exists "vector" with schema "public";
     "significance_score" double precision not null,
     "image_url" text,
     "published_at" timestamp with time zone not null,
-    "created_at" timestamp with time zone not null default now()
+    "created_at" timestamp with time zone not null default now(),
+    "category_name" text
       );
 
 
@@ -47,7 +48,7 @@ alter table "public"."global_emails" enable row level security;
     "title" text not null,
     "url" text not null,
     "description" text not null,
-    "category_id" uuid,
+    "category_name" text,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -91,11 +92,24 @@ alter table "public"."global_share_links" enable row level security;
     "score" double precision not null,
     "velocity" double precision not null,
     "image_url" text,
-    "created_at" timestamp with time zone not null default now()
+    "created_at" timestamp with time zone not null default now(),
+    "category_name" text,
+    "tags" text[] not null default '{}'::text[]
       );
 
 
 alter table "public"."global_stories" enable row level security;
+
+
+  create table "public"."global_sub_categories" (
+    "id" uuid not null default extensions.uuid_generate_v4(),
+    "name" text not null,
+    "category_name" text not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."global_sub_categories" enable row level security;
 
 
   create table "public"."user_articles" (
@@ -109,6 +123,16 @@ alter table "public"."global_stories" enable row level security;
 
 
 alter table "public"."user_articles" enable row level security;
+
+
+  create table "public"."user_categories" (
+    "user_id" uuid not null,
+    "category_name" text not null,
+    "position" integer not null
+      );
+
+
+alter table "public"."user_categories" enable row level security;
 
 
   create table "public"."user_interests" (
@@ -132,6 +156,15 @@ alter table "public"."user_interests" enable row level security;
 
 
 alter table "public"."user_settings" enable row level security;
+
+
+  create table "public"."user_sub_categories" (
+    "user_id" uuid not null,
+    "sub_category_name" text not null
+      );
+
+
+alter table "public"."user_sub_categories" enable row level security;
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
@@ -157,15 +190,27 @@ CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING b
 
 CREATE UNIQUE INDEX global_stories_pkey ON public.global_stories USING btree (id);
 
+CREATE UNIQUE INDEX global_sub_categories_name_key ON public.global_sub_categories USING btree (name);
+
+CREATE UNIQUE INDEX global_sub_categories_pkey ON public.global_sub_categories USING btree (id);
+
 CREATE UNIQUE INDEX user_articles_pkey ON public.user_articles USING btree (user_id, interest_id, article_id);
 
 CREATE INDEX user_articles_user_id_interest_id_score_idx ON public.user_articles USING btree (user_id, interest_id, score DESC);
+
+CREATE UNIQUE INDEX user_categories_pkey ON public.user_categories USING btree (user_id, category_name);
+
+CREATE INDEX user_categories_user_id_idx ON public.user_categories USING btree (user_id);
 
 CREATE UNIQUE INDEX user_interests_pkey ON public.user_interests USING btree (id);
 
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
+
+CREATE UNIQUE INDEX user_sub_categories_pkey ON public.user_sub_categories USING btree (user_id, sub_category_name);
+
+CREATE INDEX user_sub_categories_user_id_idx ON public.user_sub_categories USING btree (user_id);
 
 alter table "public"."global_articles" add constraint "global_articles_pkey" PRIMARY KEY using index "global_articles_pkey";
 
@@ -181,11 +226,21 @@ alter table "public"."global_share_links" add constraint "global_share_links_pke
 
 alter table "public"."global_stories" add constraint "global_stories_pkey" PRIMARY KEY using index "global_stories_pkey";
 
+alter table "public"."global_sub_categories" add constraint "global_sub_categories_pkey" PRIMARY KEY using index "global_sub_categories_pkey";
+
 alter table "public"."user_articles" add constraint "user_articles_pkey" PRIMARY KEY using index "user_articles_pkey";
+
+alter table "public"."user_categories" add constraint "user_categories_pkey" PRIMARY KEY using index "user_categories_pkey";
 
 alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
+
+alter table "public"."user_sub_categories" add constraint "user_sub_categories_pkey" PRIMARY KEY using index "user_sub_categories_pkey";
+
+alter table "public"."global_articles" add constraint "global_articles_category_name_fkey" FOREIGN KEY (category_name) REFERENCES public.global_categories(name) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+
+alter table "public"."global_articles" validate constraint "global_articles_category_name_fkey";
 
 alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) ON DELETE CASCADE not valid;
 
@@ -195,9 +250,9 @@ alter table "public"."global_articles" add constraint "global_articles_url_key" 
 
 alter table "public"."global_categories" add constraint "global_categories_name_key" UNIQUE using index "global_categories_name_key";
 
-alter table "public"."global_feeds" add constraint "global_feeds_category_id_fkey" FOREIGN KEY (category_id) REFERENCES public.global_categories(id) not valid;
+alter table "public"."global_feeds" add constraint "global_feeds_category_name_fkey" FOREIGN KEY (category_name) REFERENCES public.global_categories(name) ON UPDATE CASCADE ON DELETE SET NULL not valid;
 
-alter table "public"."global_feeds" validate constraint "global_feeds_category_id_fkey";
+alter table "public"."global_feeds" validate constraint "global_feeds_category_name_fkey";
 
 alter table "public"."global_feeds" add constraint "global_feeds_title_key" UNIQUE using index "global_feeds_title_key";
 
@@ -217,6 +272,16 @@ alter table "public"."global_share_links" add constraint "global_share_links_cre
 
 alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
 
+alter table "public"."global_stories" add constraint "global_stories_category_name_fkey" FOREIGN KEY (category_name) REFERENCES public.global_categories(name) ON UPDATE CASCADE ON DELETE SET NULL not valid;
+
+alter table "public"."global_stories" validate constraint "global_stories_category_name_fkey";
+
+alter table "public"."global_sub_categories" add constraint "global_sub_categories_category_name_fkey" FOREIGN KEY (category_name) REFERENCES public.global_categories(name) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+
+alter table "public"."global_sub_categories" validate constraint "global_sub_categories_category_name_fkey";
+
+alter table "public"."global_sub_categories" add constraint "global_sub_categories_name_key" UNIQUE using index "global_sub_categories_name_key";
+
 alter table "public"."user_articles" add constraint "user_articles_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_articles" validate constraint "user_articles_article_id_fkey";
@@ -229,6 +294,14 @@ alter table "public"."user_articles" add constraint "user_articles_user_id_fkey"
 
 alter table "public"."user_articles" validate constraint "user_articles_user_id_fkey";
 
+alter table "public"."user_categories" add constraint "user_categories_category_name_fkey" FOREIGN KEY (category_name) REFERENCES public.global_categories(name) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+
+alter table "public"."user_categories" validate constraint "user_categories_category_name_fkey";
+
+alter table "public"."user_categories" add constraint "user_categories_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_categories" validate constraint "user_categories_user_id_fkey";
+
 alter table "public"."user_interests" add constraint "user_interests_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_interests" validate constraint "user_interests_user_id_fkey";
@@ -236,6 +309,14 @@ alter table "public"."user_interests" validate constraint "user_interests_user_i
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
+
+alter table "public"."user_sub_categories" add constraint "user_sub_categories_sub_category_name_fkey" FOREIGN KEY (sub_category_name) REFERENCES public.global_sub_categories(name) ON UPDATE CASCADE ON DELETE CASCADE not valid;
+
+alter table "public"."user_sub_categories" validate constraint "user_sub_categories_sub_category_name_fkey";
+
+alter table "public"."user_sub_categories" add constraint "user_sub_categories_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_sub_categories" validate constraint "user_sub_categories_user_id_fkey";
 
 set check_function_bodies = off;
 
@@ -247,6 +328,10 @@ AS $function$
 begin
     insert into public.user_settings (user_id)
     values (new.id);
+
+    insert into public.user_categories (user_id, category_name, position)
+    values (new.id, 'Technology', 1);
+
     return new;
 end;
 $function$
@@ -572,6 +657,48 @@ grant truncate on table "public"."global_stories" to "service_role";
 
 grant update on table "public"."global_stories" to "service_role";
 
+grant delete on table "public"."global_sub_categories" to "anon";
+
+grant insert on table "public"."global_sub_categories" to "anon";
+
+grant references on table "public"."global_sub_categories" to "anon";
+
+grant select on table "public"."global_sub_categories" to "anon";
+
+grant trigger on table "public"."global_sub_categories" to "anon";
+
+grant truncate on table "public"."global_sub_categories" to "anon";
+
+grant update on table "public"."global_sub_categories" to "anon";
+
+grant delete on table "public"."global_sub_categories" to "authenticated";
+
+grant insert on table "public"."global_sub_categories" to "authenticated";
+
+grant references on table "public"."global_sub_categories" to "authenticated";
+
+grant select on table "public"."global_sub_categories" to "authenticated";
+
+grant trigger on table "public"."global_sub_categories" to "authenticated";
+
+grant truncate on table "public"."global_sub_categories" to "authenticated";
+
+grant update on table "public"."global_sub_categories" to "authenticated";
+
+grant delete on table "public"."global_sub_categories" to "service_role";
+
+grant insert on table "public"."global_sub_categories" to "service_role";
+
+grant references on table "public"."global_sub_categories" to "service_role";
+
+grant select on table "public"."global_sub_categories" to "service_role";
+
+grant trigger on table "public"."global_sub_categories" to "service_role";
+
+grant truncate on table "public"."global_sub_categories" to "service_role";
+
+grant update on table "public"."global_sub_categories" to "service_role";
+
 grant delete on table "public"."user_articles" to "anon";
 
 grant insert on table "public"."user_articles" to "anon";
@@ -613,6 +740,48 @@ grant trigger on table "public"."user_articles" to "service_role";
 grant truncate on table "public"."user_articles" to "service_role";
 
 grant update on table "public"."user_articles" to "service_role";
+
+grant delete on table "public"."user_categories" to "anon";
+
+grant insert on table "public"."user_categories" to "anon";
+
+grant references on table "public"."user_categories" to "anon";
+
+grant select on table "public"."user_categories" to "anon";
+
+grant trigger on table "public"."user_categories" to "anon";
+
+grant truncate on table "public"."user_categories" to "anon";
+
+grant update on table "public"."user_categories" to "anon";
+
+grant delete on table "public"."user_categories" to "authenticated";
+
+grant insert on table "public"."user_categories" to "authenticated";
+
+grant references on table "public"."user_categories" to "authenticated";
+
+grant select on table "public"."user_categories" to "authenticated";
+
+grant trigger on table "public"."user_categories" to "authenticated";
+
+grant truncate on table "public"."user_categories" to "authenticated";
+
+grant update on table "public"."user_categories" to "authenticated";
+
+grant delete on table "public"."user_categories" to "service_role";
+
+grant insert on table "public"."user_categories" to "service_role";
+
+grant references on table "public"."user_categories" to "service_role";
+
+grant select on table "public"."user_categories" to "service_role";
+
+grant trigger on table "public"."user_categories" to "service_role";
+
+grant truncate on table "public"."user_categories" to "service_role";
+
+grant update on table "public"."user_categories" to "service_role";
 
 grant delete on table "public"."user_interests" to "anon";
 
@@ -698,6 +867,48 @@ grant truncate on table "public"."user_settings" to "service_role";
 
 grant update on table "public"."user_settings" to "service_role";
 
+grant delete on table "public"."user_sub_categories" to "anon";
+
+grant insert on table "public"."user_sub_categories" to "anon";
+
+grant references on table "public"."user_sub_categories" to "anon";
+
+grant select on table "public"."user_sub_categories" to "anon";
+
+grant trigger on table "public"."user_sub_categories" to "anon";
+
+grant truncate on table "public"."user_sub_categories" to "anon";
+
+grant update on table "public"."user_sub_categories" to "anon";
+
+grant delete on table "public"."user_sub_categories" to "authenticated";
+
+grant insert on table "public"."user_sub_categories" to "authenticated";
+
+grant references on table "public"."user_sub_categories" to "authenticated";
+
+grant select on table "public"."user_sub_categories" to "authenticated";
+
+grant trigger on table "public"."user_sub_categories" to "authenticated";
+
+grant truncate on table "public"."user_sub_categories" to "authenticated";
+
+grant update on table "public"."user_sub_categories" to "authenticated";
+
+grant delete on table "public"."user_sub_categories" to "service_role";
+
+grant insert on table "public"."user_sub_categories" to "service_role";
+
+grant references on table "public"."user_sub_categories" to "service_role";
+
+grant select on table "public"."user_sub_categories" to "service_role";
+
+grant trigger on table "public"."user_sub_categories" to "service_role";
+
+grant truncate on table "public"."user_sub_categories" to "service_role";
+
+grant update on table "public"."user_sub_categories" to "service_role";
+
 
   create policy "global_articles_select_policy"
   on "public"."global_articles"
@@ -771,8 +982,27 @@ using (true);
 
 
 
+  create policy "global_sub_categories_select_policy"
+  on "public"."global_sub_categories"
+  as permissive
+  for select
+  to anon, authenticated
+using (true);
+
+
+
   create policy "Users can manage their own article scores"
   on "public"."user_articles"
+  as permissive
+  for all
+  to public
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
+  create policy "Users manage their own category subscriptions"
+  on "public"."user_categories"
   as permissive
   for all
   to public
@@ -793,6 +1023,16 @@ with check ((auth.uid() = user_id));
 
   create policy "Users can manage their own article scores"
   on "public"."user_settings"
+  as permissive
+  for all
+  to public
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
+  create policy "Users manage their own sub-category subscriptions"
+  on "public"."user_sub_categories"
   as permissive
   for all
   to public

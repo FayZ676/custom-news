@@ -3,7 +3,7 @@ create table "global_feeds" (
     "title" text not null unique,
     "url" text not null unique,
     "description" text not null,
-    "category_id" uuid references global_categories(id),
+    "category_name" text references global_categories(name) on update cascade on delete set null,
     "created_at" timestamptz not null default now()
 );
 

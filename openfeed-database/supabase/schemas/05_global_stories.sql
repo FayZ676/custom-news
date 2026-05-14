@@ -6,7 +6,9 @@ create table "global_stories" (
     "score" float not null,
     "velocity" float not null,
     "image_url" text,
-    "created_at" timestamptz not null default now()
+    "created_at" timestamptz not null default now(),
+    "category_name" text references global_categories(name) on update cascade on delete set null,
+    "tags" text[] not null default '{}'
 );
 
 alter table "global_stories" enable row level security;
