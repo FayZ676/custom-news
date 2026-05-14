@@ -7,20 +7,44 @@ import { useUnreadCount } from "@/components/UnreadCountContext";
 
 type Tab = "my-news" | "trending" | "search";
 
-const tabs: { id: Tab; label: (unreadCount: number | null) => string }[] = [
-  { id: "trending", label: () => "Trending Stories" },
+interface TabSwitcherProps {
+  storiesCount: number;
+}
+
+const makeTabs = (
+  storiesCount: number,
+): { id: Tab; label: (unreadCount: number) => string }[] => [
+  {
+    id: "trending",
+    label: () =>
+      storiesCount > 0
+        ? `Trending Stories (${storiesCount})`
+        : "Trending Stories",
+  },
   {
     id: "my-news",
     label: (count) =>
-      count != null && count > 0
-        ? `My Articles (${count > 99 ? "99+" : count})`
-        : "My Articles",
+      count > 0 ? `My Articles (${count > 99 ? "99+" : count})` : "My Articles",
   },
   { id: "search", label: () => "Search" },
 ];
 
-export function TabSwitcher() {
+export function TabSwitcherSkeleton() {
+  return (
+    <div className="tabs tabs-border tabs-md font-bold gap-4 justify-center">
+      {["Trending Stories", "My Articles", "Search"].map((label) => (
+        <div
+          key={label}
+          className="tab p-0 leading-none text-[clamp(13px,4vw,15px)] min-[400px]:text-lg skeleton rounded-none h-4 w-24 opacity-40"
+        />
+      ))}
+    </div>
+  );
+}
+
+export function TabSwitcher({ storiesCount }: TabSwitcherProps) {
   const { unreadCount } = useUnreadCount();
+  const tabs = makeTabs(storiesCount);
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();

@@ -12,10 +12,13 @@ import {
 } from "@/lib/supabase/queries/user_settings";
 import { getCurrentDate } from "@/lib/utils";
 
+import { getStoriesCount } from "@/lib/supabase/queries/global_stories";
+import { getUnreadArticleCount } from "@/lib/supabase/queries/user_articles";
+
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ThemedLogo } from "@/components/ThemedLogo";
-import { TabSwitcher } from "@/components/TabSwitcher";
+import { TabSwitcher, TabSwitcherSkeleton } from "@/components/TabSwitcher";
 import { UnreadCountProvider } from "@/components/UnreadCountContext";
 
 // ---------------------------------------------------------------------------
@@ -64,6 +67,28 @@ async function FooterContent() {
 }
 
 // ---------------------------------------------------------------------------
+// TabSwitcherContent — fetches tab counts then seeds context + renders TabSwitcher
+// ---------------------------------------------------------------------------
+
+async function TabSwitcherContent({ children }: { children: React.ReactNode }) {
+  const { userId } = await getAuthenticatedUser();
+  const supabase = await createClient();
+  const anonSupabase = createAnonClient();
+
+  const [unreadCount, storiesCount] = await Promise.all([
+    getUnreadArticleCount(supabase, userId),
+    getStoriesCount(anonSupabase),
+  ]);
+
+  return (
+    <UnreadCountProvider initialCount={unreadCount}>
+      <TabSwitcher storiesCount={storiesCount} />
+      {children}
+    </UnreadCountProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Layout
 // ---------------------------------------------------------------------------
 
@@ -82,10 +107,9 @@ export default function FeedLayout({
         <BannerContent />
       </Suspense>
 
-      <UnreadCountProvider initialCount={0}>
-        <TabSwitcher />
-        {children}
-      </UnreadCountProvider>
+      <Suspense fallback={<TabSwitcherSkeleton />}>
+        <TabSwitcherContent>{children}</TabSwitcherContent>
+      </Suspense>
 
       <div className="min-h-4 flex-1" />
 
