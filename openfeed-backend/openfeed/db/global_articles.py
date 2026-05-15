@@ -12,16 +12,15 @@ from openfeed.db.utils import decode_embeddings, paginated_query
 MAX_ARTICLES_PER_INTEREST = 20
 
 
-class MatchArticlesResult(BaseModel):
-    article_id: UUID = Field(alias="id")
-    title: str = Field(alias="title")
+class MatchStoriesResult(BaseModel):
+    story_id: UUID = Field(alias="id")
+    headline: str = Field(alias="headline")
     summary: Optional[str] = Field(alias="summary", default=None)
     similarity_score: float = Field(alias="similarity")
 
     @property
     def document_text(self) -> str:
-        """Build a text representation for reranking."""
-        parts = [self.title]
+        parts = [self.headline]
         if self.summary:
             parts.append(self.summary)
         return ". ".join(parts)
@@ -59,15 +58,15 @@ def get_global_article_urls(db: Client) -> list[str]:
     ]
 
 
-def query_global_articles(
+def query_global_stories(
     db: Client,
     query_embeddings: list[float],
     match_count: int,
     min_similarity: float,
-) -> list[MatchArticlesResult]:
+) -> list[MatchStoriesResult]:
     data = (
         db.rpc(
-            "match_articles",
+            "match_stories",
             {
                 "query_embedding": query_embeddings,
                 "match_count": match_count,
@@ -77,7 +76,7 @@ def query_global_articles(
         .execute()
         .data
     )
-    return [MatchArticlesResult.model_validate(r) for r in data]  # type: ignore
+    return [MatchStoriesResult.model_validate(r) for r in data]  # type: ignore
 
 
 def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):

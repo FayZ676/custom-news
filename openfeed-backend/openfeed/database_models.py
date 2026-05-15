@@ -253,6 +253,7 @@ class PublicGlobalStories(BaseModel):
     related_articles_urls: List[str] = Field(alias="related_articles_urls")
     score: float = Field(alias="score")
     summary: str = Field(alias="summary")
+    summary_embeddings: Optional[list[Any]] = Field(alias="summary_embeddings")
     velocity: float = Field(alias="velocity")
 
 
@@ -266,6 +267,9 @@ class PublicGlobalStoriesInsert(TypedDict):
     ]
     score: Annotated[float, Field(alias="score")]
     summary: Annotated[str, Field(alias="summary")]
+    summary_embeddings: NotRequired[
+        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
+    ]
     velocity: Annotated[float, Field(alias="velocity")]
 
 
@@ -279,34 +283,10 @@ class PublicGlobalStoriesUpdate(TypedDict):
     ]
     score: NotRequired[Annotated[float, Field(alias="score")]]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
+    summary_embeddings: NotRequired[
+        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
+    ]
     velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
-
-
-class PublicUserArticles(BaseModel):
-    article_id: uuid.UUID = Field(alias="article_id")
-    interest_id: uuid.UUID = Field(alias="interest_id")
-    is_read: bool = Field(alias="is_read")
-    score: float = Field(alias="score")
-    updated_at: datetime.datetime = Field(alias="updated_at")
-    user_id: uuid.UUID = Field(alias="user_id")
-
-
-class PublicUserArticlesInsert(TypedDict):
-    article_id: Annotated[uuid.UUID, Field(alias="article_id")]
-    interest_id: Annotated[uuid.UUID, Field(alias="interest_id")]
-    is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
-    score: Annotated[float, Field(alias="score")]
-    updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
-    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
-
-
-class PublicUserArticlesUpdate(TypedDict):
-    article_id: NotRequired[Annotated[uuid.UUID, Field(alias="article_id")]]
-    interest_id: NotRequired[Annotated[uuid.UUID, Field(alias="interest_id")]]
-    is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
-    score: NotRequired[Annotated[float, Field(alias="score")]]
-    updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
-    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
 
 
 class PublicUserInterests(BaseModel):
@@ -351,4 +331,31 @@ class PublicUserSettingsUpdate(TypedDict):
     color_theme: NotRequired[Annotated[str, Field(alias="color_theme")]]
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
+    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
+
+
+class PublicUserStories(BaseModel):
+    interest_id: uuid.UUID = Field(alias="interest_id")
+    is_read: bool = Field(alias="is_read")
+    score: float = Field(alias="score")
+    story_id: uuid.UUID = Field(alias="story_id")
+    updated_at: datetime.datetime = Field(alias="updated_at")
+    user_id: uuid.UUID = Field(alias="user_id")
+
+
+class PublicUserStoriesInsert(TypedDict):
+    interest_id: Annotated[uuid.UUID, Field(alias="interest_id")]
+    is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
+    score: Annotated[float, Field(alias="score")]
+    story_id: Annotated[uuid.UUID, Field(alias="story_id")]
+    updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
+    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
+
+
+class PublicUserStoriesUpdate(TypedDict):
+    interest_id: NotRequired[Annotated[uuid.UUID, Field(alias="interest_id")]]
+    is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
+    score: NotRequired[Annotated[float, Field(alias="score")]]
+    story_id: NotRequired[Annotated[uuid.UUID, Field(alias="story_id")]]
+    updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]

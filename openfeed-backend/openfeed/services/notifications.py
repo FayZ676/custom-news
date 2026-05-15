@@ -8,10 +8,7 @@ from openfeed.db.client import Client
 from openfeed.db.global_emails import get_latest_email
 from openfeed.db.global_settings import get_global_settings
 from openfeed.db.user_settings import get_all_email_notification_users
-from openfeed.db.user_articles import (
-    UserArticleDetails,
-    get_unread_user_article_details,
-)
+from openfeed.db.user_stories import UserStoryDetails, get_unread_user_story_details
 from openfeed.resend import (
     RawEmailInput,
     send_batch_raw_emails,
@@ -44,7 +41,7 @@ def notify_users(db: Client) -> None:
         user_ids_emails[str(u.user_id)]: u.timezone for u in users_to_notify
     }
     articles_by_email = _group_details_by_email(
-        get_unread_user_article_details(db, user_ids_emails)
+        get_unread_user_story_details(db, user_ids_emails)
     )
     send_batch_raw_emails(
         emails=list(
@@ -68,7 +65,7 @@ def notify_users(db: Client) -> None:
 def _build_raw_email(
     email: str,
     top_stories_email,
-    articles_by_email: dict[str, list[UserArticleDetails]],
+    articles_by_email: dict[str, list[UserStoryDetails]],
     now_utc: datetime,
     user_timezone: str,
 ) -> RawEmailInput:
@@ -121,8 +118,8 @@ def _fetch_user_emails(db: Client, users: list[PublicUserSettings]) -> dict[str,
 
 
 def _group_details_by_email(
-    details: list[UserArticleDetails],
-) -> dict[str, list[UserArticleDetails]]:
+    details: list[UserStoryDetails],
+) -> dict[str, list[UserStoryDetails]]:
     """Group article details by recipient email address."""
     return {
         email: list(group)
@@ -136,16 +133,16 @@ def _group_details_by_email(
 def _render_interest_row(interest: str, group) -> str:
     """Render a single interest row as an HTML string."""
     count = sum(1 for _ in group)
-    article_label = "article" if count == 1 else "articles"
+    story_label = "story" if count == 1 else "stories"
     return (
         f'<tr><td style="padding: 14px 0; border-bottom: 1px solid #f0f0f0;">'
         f'<span style="font-size: 13px; font-weight: 600; color: #1a1a1a;">{interest}</span>'
-        f'<span style="font-size: 13px; color: #888; margin-left: 8px;">{count} new {article_label}</span>'
+        f'<span style="font-size: 13px; color: #888; margin-left: 8px;">{count} new {story_label}</span>'
         f"</td></tr>"
     )
 
 
-def _build_interests_summary_html(details: list[UserArticleDetails]) -> str:
+def _build_interests_summary_html(details: list[UserStoryDetails]) -> str:
     """Build the HTML rows injected into the INTERESTS_SUMMARY template variable."""
     grouped = groupby(
         sorted(details, key=lambda d: d.interest),

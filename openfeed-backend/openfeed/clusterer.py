@@ -179,19 +179,7 @@ def cluster_articles(
     for article, label in zip(articles, labels):
         clusters.setdefault(label, []).append(article)
 
-    return [arts for arts in clusters.values() if len(arts) >= 2]
-
-
-def reduce_clusters(
-    clusters: list[list[PublicGlobalArticles]], threshold: float
-) -> list[list[PublicGlobalArticles]]:
-    # NOTE: threshold is calibrated against mean(significance_score) * log(1 + size).
-    # Tune after reviewing initial results.
-    return [
-        cluster
-        for cluster in clusters
-        if _score_cluster_significance(cluster) > threshold
-    ]
+    return list(clusters.values())
 
 
 def deduplicate_clusters(
@@ -217,13 +205,3 @@ def deduplicate_clusters(
             matched_clusters[duplicate_story.id] = cluster
 
     return new_clusters, matched_clusters
-
-
-def _score_cluster_significance(articles: list[PublicGlobalArticles]) -> float:
-    """Filter helper for reduce_clusters. Not the public scoring interface."""
-    scores = [
-        a.significance_score for a in articles if a.significance_score is not None
-    ]
-    if not scores:
-        return 0.0
-    return (sum(scores) / len(scores)) * math.log(1 + len(scores))

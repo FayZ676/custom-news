@@ -9,28 +9,29 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class UserArticleDetails:
+class UserStoryDetails:
     user_id: str
     email: str
-    title: str
+    headline: str
     url: str
     interest: str
     interest_id: str
 
 
-def batch_insert_user_articles(db: Client, scores: list[dict]):
+# TODO: This needs a better name. Its not inserting stories, its upserting scores.
+def batch_insert_user_stories(db: Client, scores: list[dict]):
     if scores:
-        db.table("user_articles").upsert(
+        db.table("user_stories").upsert(
             scores,
-            on_conflict="user_id,interest_id,article_id",
+            on_conflict="user_id,interest_id,story_id",
         ).execute()
 
 
-def get_unread_user_article_details(db: Client, user_ids_emails: dict[str, str]):
+def get_unread_user_story_details(db: Client, user_ids_emails: dict[str, str]):
     pages = paginated_query(
         db=db,
-        table="user_articles",
-        select="user_id, interest_id, is_read, global_articles(title, url), user_interests(query)",
+        table="user_stories",
+        select="user_id, interest_id, is_read, global_stories(headline, related_articles_urls), user_interests(query)",
         filters={
             "is_read": False,
         },
@@ -39,11 +40,11 @@ def get_unread_user_article_details(db: Client, user_ids_emails: dict[str, str])
         },
     )
     return [
-        UserArticleDetails(
+        UserStoryDetails(
             user_id=row["user_id"],
             email=user_ids_emails[str(row["user_id"])],
-            title=row.get("global_articles", {}).get("title", ""),
-            url=row.get("global_articles", {}).get("url", ""),
+            headline=row.get("global_stories", {}).get("headline", ""),
+            url=(row.get("global_stories", {}).get("related_articles_urls") or [""])[0],
             interest=row.get("user_interests", {}).get("query", ""),
             interest_id=row["interest_id"],
         )

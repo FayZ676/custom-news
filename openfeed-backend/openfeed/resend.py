@@ -201,7 +201,7 @@ _DIGEST_TEMPLATE_HTML = """\
       </div>
 
       <div class="section">
-        <p class="section-label">My Articles</p>
+        <p class="section-label">My News</p>
       </div>
       <div class="section-body">
         <p>{{{INTERESTS_SUMMARY}}}</p>

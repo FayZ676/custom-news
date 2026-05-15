@@ -4,16 +4,13 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 
-from pydantic import BaseModel
-
 from openfeed.db.client import Client
-from openfeed.openai_client import openai_client
 from openfeed.db.global_emails import insert_email
 from openfeed.db.global_articles import get_recent_global_articles
 from openfeed.db.global_settings import get_global_settings
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.services.cluster_scoring import score_cluster
-from openfeed.clusterer import cluster_articles, reduce_clusters, deduplicate_clusters
+from openfeed.clusterer import cluster_articles, deduplicate_clusters
 from openfeed.db.global_stories import (
     get_stories,
     delete_all_stories,
@@ -28,7 +25,6 @@ def top_stories(db: Client):
     stories = get_stories(db)
     articles = get_recent_global_articles(db, settings.clustering_window_hours)
     clusters = cluster_articles(articles)
-    clusters = reduce_clusters(clusters, settings.cluster_significance_threshold)
     new_clusters, matched_clusters = deduplicate_clusters(clusters, stories)
 
     stories_by_id = {s.id: s for s in stories}
@@ -73,10 +69,18 @@ def _rescore_story(
     window_hours: float,
     now: datetime,
 ) -> PublicGlobalStories:
-    """Re-score a known story against its updated cluster, preserving headline, summary, and ID."""
+    """Re-score a known story against its updated cluster.
+
+    Picks the most recently published article as the representative so the
+    headline, summary, and embeddings stay current as new articles join.
+    """
     cluster_score = score_cluster(articles, now=now, window_hours=window_hours)
+    representative = max(articles, key=lambda a: a.published_at)
     return prev.model_copy(
         update={
+            "headline": representative.title,
+            "summary": representative.summary or "",
+            "summary_embeddings": representative.summary_embeddings,
             "related_articles_urls": [a.url for a in articles],
             "score": cluster_score.score,
             "velocity": cluster_score.velocity,
@@ -89,13 +93,19 @@ def _generate_story(
     window_hours: float,
     now: datetime,
 ) -> PublicGlobalStories:
-    headline, summary = _generate_story_text(articles)
+    """Generate a new story from a cluster.
+
+    Uses the highest-significance article as the representative — its title,
+    summary, and embeddings become the story. No LLM call needed.
+    """
+    representative = max(articles, key=lambda a: a.significance_score)
     cluster_score = score_cluster(articles, now=now, window_hours=window_hours)
     image_url = next((a.image_url for a in articles if a.image_url), None)
     return PublicGlobalStories(
         id=uuid.uuid4(),
-        headline=headline,
-        summary=summary,
+        headline=representative.title,
+        summary=representative.summary or "",
+        summary_embeddings=representative.summary_embeddings,
         related_articles_urls=[article.url for article in articles],
         score=cluster_score.score,
         velocity=cluster_score.velocity,
@@ -122,33 +132,6 @@ def _render_story_card(story: PublicGlobalStories) -> str:
         f'<p style="margin: 0; font-size: 14px; line-height: 1.6; color: #444;">{story.summary}</p>'
         f"</div>"
     )
-
-
-def _generate_story_text(
-    articles: list[PublicGlobalArticles],
-) -> tuple[str, str]:
-    class TopStoryLLMResponse(BaseModel):
-        headline: str
-        summary: str
-
-    prompt = f"""You are a veteran newspaper copy editor writing front-page briefs.
-
-## Article Summaries
-{"\n".join(article.summary or "" for article in articles)}
-
-## Task
-Distill the above summaries into ONE punchy story brief.
-
-**headline**: Write it like a tabloid front page — active verbs, no filler, max 10 words. Grab the reader by the collar.
-**summary**: Two sentences, max. Lead with the single most newsworthy fact. Follow with stakes or what happens next. Every word must earn its place.
-
-## Rules
-- Write about the NEWS, not about the coverage.
-- No hedging, no passive voice, no editorializing. Hard facts, sharp language."""
-    llm_response = openai_client.generate_response(
-        "gpt-5.4", prompt, TopStoryLLMResponse
-    )
-    return llm_response.headline, llm_response.summary
 
 
 if __name__ == "__main__":
