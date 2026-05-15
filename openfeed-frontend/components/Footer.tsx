@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { Database } from "@/lib/supabase/supabase.types";
+import { Database, Tables } from "@/lib/supabase/supabase.types";
 
 import {
   FeedbackModal,
@@ -12,8 +12,13 @@ import {
   SettingsModal,
   type SettingsModalHandle,
 } from "@/components/SettingsModal";
+import {
+  NewsCategoriesModal,
+  type NewsCategoriesModalHandle,
+} from "@/components/NewsCategoriesModal";
 
 type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
+type SubCategory = Tables<"global_sub_categories">;
 
 interface FooterProps {
   userEmail: string;
@@ -21,6 +26,19 @@ interface FooterProps {
   fetchSettings: () => Promise<UserSettings>;
   handleUpdateNotifications: (newValue: boolean) => Promise<void>;
   handleUpdateTheme: (newTheme: string) => Promise<void>;
+  fetchCategoriesData: () => Promise<{
+    userCategories: Tables<"user_categories">[];
+    allCategories: string[];
+    subCategoriesByCategory: Record<string, SubCategory[]>;
+    subscribedSubCategories: string[];
+  }>;
+  handleSubscribeCategory: (categoryName: string) => Promise<void>;
+  handleUnsubscribeCategory: (categoryName: string) => Promise<void>;
+  handleReorderCategories: (orderedNames: string[]) => Promise<void>;
+  handleSubscribeSubCategory: (subCategoryName: string) => Promise<void>;
+  handleUnsubscribeSubCategory: (subCategoryName: string) => Promise<void>;
+  handleSubscribeAllSubCategories: (categoryName: string) => Promise<void>;
+  handleUnsubscribeAllSubCategories: (categoryName: string) => Promise<void>;
 }
 
 export function Footer({
@@ -29,9 +47,18 @@ export function Footer({
   fetchSettings,
   handleUpdateNotifications,
   handleUpdateTheme,
+  fetchCategoriesData,
+  handleSubscribeCategory,
+  handleUnsubscribeCategory,
+  handleReorderCategories,
+  handleSubscribeSubCategory,
+  handleUnsubscribeSubCategory,
+  handleSubscribeAllSubCategories,
+  handleUnsubscribeAllSubCategories,
 }: FooterProps) {
   const feedbackModalRef = useRef<FeedbackModalHandle>(null);
   const settingsModalRef = useRef<SettingsModalHandle>(null);
+  const newsCategoriesModalRef = useRef<NewsCategoriesModalHandle>(null);
 
   return (
     <footer className="text-sm">
@@ -62,6 +89,21 @@ export function Footer({
         handleUpdateNotifications={handleUpdateNotifications}
         handleUpdateTheme={handleUpdateTheme}
         handleSignOut={handleSignOut}
+        onOpenNewsCategories={() => {
+          settingsModalRef.current?.close();
+          newsCategoriesModalRef.current?.open();
+        }}
+      />
+      <NewsCategoriesModal
+        ref={newsCategoriesModalRef}
+        fetchData={fetchCategoriesData}
+        handleSubscribeCategory={handleSubscribeCategory}
+        handleUnsubscribeCategory={handleUnsubscribeCategory}
+        handleReorderCategories={handleReorderCategories}
+        handleSubscribeSubCategory={handleSubscribeSubCategory}
+        handleUnsubscribeSubCategory={handleUnsubscribeSubCategory}
+        handleSubscribeAllSubCategories={handleSubscribeAllSubCategories}
+        handleUnsubscribeAllSubCategories={handleUnsubscribeAllSubCategories}
       />
     </footer>
   );

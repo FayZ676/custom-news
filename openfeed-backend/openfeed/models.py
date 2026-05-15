@@ -100,6 +100,7 @@ class Article(BaseModel):
         self,
         feed_title: str,
         metadata: ArticleMetadata,
+        category_name: str | None = None,
     ):
         return PublicGlobalArticles(
             published_at=self.published,
@@ -113,4 +114,5 @@ class Article(BaseModel):
             url=self.link,
             id=uuid.uuid4(),
             created_at=datetime.now(),
+            category_name=category_name,
         )

@@ -3,8 +3,22 @@ import { Database, Tables } from "@/lib/supabase/supabase.types";
 
 export async function getStories(
   supabase: SupabaseClient<Database>,
+  subscribedCategories: string[],
+  subscribedSubCategories: string[],
 ): Promise<Tables<"global_stories">[]> {
-  const { data, error } = await supabase.from("global_stories").select("*");
+  // No subscribed categories or subcategories → nothing to show.
+  if (
+    subscribedCategories.length === 0 ||
+    subscribedSubCategories.length === 0
+  ) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("global_stories")
+    .select("*")
+    .in("category_name", subscribedCategories)
+    .or(`tags.ov.{${subscribedSubCategories.join(",")}},tags.eq.{}`);
 
   if (error) throw new Error(error.message);
   return data;

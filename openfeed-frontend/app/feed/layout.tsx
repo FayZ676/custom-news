@@ -14,6 +14,19 @@ import { getCurrentDate } from "@/lib/utils";
 
 import { getStoriesCount } from "@/lib/supabase/queries/global_stories";
 import { getUnreadArticleCount } from "@/lib/supabase/queries/user_articles";
+import {
+  getUserCategories,
+  getAllSubCategoriesForCategory,
+  getUserSubCategoryNames,
+  subscribeToCategory,
+  unsubscribeFromCategory,
+  updateCategoryPositions,
+  subscribeToSubCategory,
+  unsubscribeFromSubCategory,
+  subscribeToAllSubCategoriesForCategory,
+  unsubscribeFromAllSubCategoriesForCategory,
+} from "@/lib/supabase/queries/user_categories";
+import { getGlobalCategories } from "@/lib/supabase/queries/global_categories";
 
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
@@ -55,6 +68,96 @@ async function FooterContent() {
     await updateUserTheme(supabase, userId, newTheme);
   }
 
+  async function fetchCategoriesData() {
+    "use server";
+    const supabase = await createClient();
+    const [userCategories, allCategoryRows, subscribedSubCategories] =
+      await Promise.all([
+        getUserCategories(supabase, userId),
+        getGlobalCategories(supabase),
+        getUserSubCategoryNames(supabase, userId),
+      ]);
+    const allCategories = allCategoryRows.map((c: { name: string }) => c.name);
+    const subCategoriesByCategory: Record<
+      string,
+      Awaited<ReturnType<typeof getAllSubCategoriesForCategory>>
+    > = {};
+    await Promise.all(
+      allCategories.map(async (cat: string) => {
+        subCategoriesByCategory[cat] = await getAllSubCategoriesForCategory(
+          supabase,
+          cat,
+        );
+      }),
+    );
+    return {
+      userCategories,
+      allCategories,
+      subCategoriesByCategory,
+      subscribedSubCategories,
+    };
+  }
+
+  async function handleSubscribeCategory(categoryName: string) {
+    "use server";
+    const supabase = await createClient();
+    await subscribeToCategory(supabase, userId, categoryName);
+    await subscribeToAllSubCategoriesForCategory(
+      supabase,
+      userId,
+      categoryName,
+    );
+  }
+
+  async function handleUnsubscribeCategory(categoryName: string) {
+    "use server";
+    const supabase = await createClient();
+    await unsubscribeFromCategory(supabase, userId, categoryName);
+    await unsubscribeFromAllSubCategoriesForCategory(
+      supabase,
+      userId,
+      categoryName,
+    );
+  }
+
+  async function handleSubscribeAllSubCategories(categoryName: string) {
+    "use server";
+    const supabase = await createClient();
+    await subscribeToAllSubCategoriesForCategory(
+      supabase,
+      userId,
+      categoryName,
+    );
+  }
+
+  async function handleUnsubscribeAllSubCategories(categoryName: string) {
+    "use server";
+    const supabase = await createClient();
+    await unsubscribeFromAllSubCategoriesForCategory(
+      supabase,
+      userId,
+      categoryName,
+    );
+  }
+
+  async function handleReorderCategories(orderedNames: string[]) {
+    "use server";
+    const supabase = await createClient();
+    await updateCategoryPositions(supabase, userId, orderedNames);
+  }
+
+  async function handleSubscribeSubCategory(subCategoryName: string) {
+    "use server";
+    const supabase = await createClient();
+    await subscribeToSubCategory(supabase, userId, subCategoryName);
+  }
+
+  async function handleUnsubscribeSubCategory(subCategoryName: string) {
+    "use server";
+    const supabase = await createClient();
+    await unsubscribeFromSubCategory(supabase, userId, subCategoryName);
+  }
+
   return (
     <Footer
       userEmail={email}
@@ -62,6 +165,14 @@ async function FooterContent() {
       fetchSettings={fetchSettings}
       handleUpdateNotifications={handleUpdateNotifications}
       handleUpdateTheme={handleUpdateTheme}
+      fetchCategoriesData={fetchCategoriesData}
+      handleSubscribeCategory={handleSubscribeCategory}
+      handleUnsubscribeCategory={handleUnsubscribeCategory}
+      handleReorderCategories={handleReorderCategories}
+      handleSubscribeSubCategory={handleSubscribeSubCategory}
+      handleUnsubscribeSubCategory={handleUnsubscribeSubCategory}
+      handleSubscribeAllSubCategories={handleSubscribeAllSubCategories}
+      handleUnsubscribeAllSubCategories={handleUnsubscribeAllSubCategories}
     />
   );
 }

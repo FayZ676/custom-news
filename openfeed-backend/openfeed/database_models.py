@@ -52,6 +52,7 @@ AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 
 
 class PublicGlobalArticles(BaseModel):
+    category_name: Optional[str] = Field(alias="category_name")
     created_at: datetime.datetime = Field(alias="created_at")
     feed_title: str = Field(alias="feed_title")
     id: uuid.UUID = Field(alias="id")
@@ -66,6 +67,7 @@ class PublicGlobalArticles(BaseModel):
 
 
 class PublicGlobalArticlesInsert(TypedDict):
+    category_name: NotRequired[Annotated[Optional[str], Field(alias="category_name")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     feed_title: Annotated[str, Field(alias="feed_title")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -82,6 +84,7 @@ class PublicGlobalArticlesInsert(TypedDict):
 
 
 class PublicGlobalArticlesUpdate(TypedDict):
+    category_name: NotRequired[Annotated[Optional[str], Field(alias="category_name")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     feed_title: NotRequired[Annotated[str, Field(alias="feed_title")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -141,7 +144,7 @@ class PublicGlobalEmailsUpdate(TypedDict):
 
 
 class PublicGlobalFeeds(BaseModel):
-    category_id: Optional[uuid.UUID] = Field(alias="category_id")
+    category_name: Optional[str] = Field(alias="category_name")
     created_at: datetime.datetime = Field(alias="created_at")
     description: str = Field(alias="description")
     id: uuid.UUID = Field(alias="id")
@@ -150,7 +153,7 @@ class PublicGlobalFeeds(BaseModel):
 
 
 class PublicGlobalFeedsInsert(TypedDict):
-    category_id: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="category_id")]]
+    category_name: NotRequired[Annotated[Optional[str], Field(alias="category_name")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     description: Annotated[str, Field(alias="description")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -159,7 +162,7 @@ class PublicGlobalFeedsInsert(TypedDict):
 
 
 class PublicGlobalFeedsUpdate(TypedDict):
-    category_id: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="category_id")]]
+    category_name: NotRequired[Annotated[Optional[str], Field(alias="category_name")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     description: NotRequired[Annotated[str, Field(alias="description")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -246,6 +249,7 @@ class PublicGlobalShareLinksUpdate(TypedDict):
 
 
 class PublicGlobalStories(BaseModel):
+    category_name: Optional[str] = Field(alias="category_name")
     created_at: datetime.datetime = Field(alias="created_at")
     headline: str = Field(alias="headline")
     id: uuid.UUID = Field(alias="id")
@@ -253,10 +257,12 @@ class PublicGlobalStories(BaseModel):
     related_articles_urls: List[str] = Field(alias="related_articles_urls")
     score: float = Field(alias="score")
     summary: str = Field(alias="summary")
+    tags: List[str] = Field(alias="tags")
     velocity: float = Field(alias="velocity")
 
 
 class PublicGlobalStoriesInsert(TypedDict):
+    category_name: NotRequired[Annotated[Optional[str], Field(alias="category_name")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     headline: Annotated[str, Field(alias="headline")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -266,10 +272,12 @@ class PublicGlobalStoriesInsert(TypedDict):
     ]
     score: Annotated[float, Field(alias="score")]
     summary: Annotated[str, Field(alias="summary")]
+    tags: NotRequired[Annotated[List[str], Field(alias="tags")]]
     velocity: Annotated[float, Field(alias="velocity")]
 
 
 class PublicGlobalStoriesUpdate(TypedDict):
+    category_name: NotRequired[Annotated[Optional[str], Field(alias="category_name")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     headline: NotRequired[Annotated[str, Field(alias="headline")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -279,7 +287,29 @@ class PublicGlobalStoriesUpdate(TypedDict):
     ]
     score: NotRequired[Annotated[float, Field(alias="score")]]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
+    tags: NotRequired[Annotated[List[str], Field(alias="tags")]]
     velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
+
+
+class PublicGlobalSubCategories(BaseModel):
+    category_name: str = Field(alias="category_name")
+    created_at: datetime.datetime = Field(alias="created_at")
+    id: uuid.UUID = Field(alias="id")
+    name: str = Field(alias="name")
+
+
+class PublicGlobalSubCategoriesInsert(TypedDict):
+    category_name: Annotated[str, Field(alias="category_name")]
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    name: Annotated[str, Field(alias="name")]
+
+
+class PublicGlobalSubCategoriesUpdate(TypedDict):
+    category_name: NotRequired[Annotated[str, Field(alias="category_name")]]
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    name: NotRequired[Annotated[str, Field(alias="name")]]
 
 
 class PublicUserArticles(BaseModel):
@@ -306,6 +336,24 @@ class PublicUserArticlesUpdate(TypedDict):
     is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
     score: NotRequired[Annotated[float, Field(alias="score")]]
     updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
+    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
+
+
+class PublicUserCategories(BaseModel):
+    category_name: str = Field(alias="category_name")
+    position: int = Field(alias="position")
+    user_id: uuid.UUID = Field(alias="user_id")
+
+
+class PublicUserCategoriesInsert(TypedDict):
+    category_name: Annotated[str, Field(alias="category_name")]
+    position: Annotated[int, Field(alias="position")]
+    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
+
+
+class PublicUserCategoriesUpdate(TypedDict):
+    category_name: NotRequired[Annotated[str, Field(alias="category_name")]]
+    position: NotRequired[Annotated[int, Field(alias="position")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
 
 
@@ -351,4 +399,19 @@ class PublicUserSettingsUpdate(TypedDict):
     color_theme: NotRequired[Annotated[str, Field(alias="color_theme")]]
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
+    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
+
+
+class PublicUserSubCategories(BaseModel):
+    sub_category_name: str = Field(alias="sub_category_name")
+    user_id: uuid.UUID = Field(alias="user_id")
+
+
+class PublicUserSubCategoriesInsert(TypedDict):
+    sub_category_name: Annotated[str, Field(alias="sub_category_name")]
+    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
+
+
+class PublicUserSubCategoriesUpdate(TypedDict):
+    sub_category_name: NotRequired[Annotated[str, Field(alias="sub_category_name")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]

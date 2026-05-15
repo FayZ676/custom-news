@@ -8,6 +8,12 @@ begin
     insert into public.user_categories (user_id, category_name, position)
     values (new.id, 'Technology', 1);
 
+    insert into public.user_sub_categories (user_id, sub_category_name)
+    select new.id, gsc.name
+    from public.global_sub_categories gsc
+    where gsc.category_name = 'Technology'
+    on conflict do nothing;
+
     return new;
 end;
 $$ language plpgsql security definer;

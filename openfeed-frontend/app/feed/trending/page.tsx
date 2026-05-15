@@ -1,10 +1,12 @@
 import { Suspense } from "react";
-import { cacheLife } from "next/cache";
 
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { createAnonClient } from "@/lib/supabase/anon";
 import { getStories } from "@/lib/supabase/queries/global_stories";
+import {
+  getUserCategories,
+  getUserSubCategoryNames,
+} from "@/lib/supabase/queries/user_categories";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import {
@@ -13,17 +15,22 @@ import {
 } from "@/components/ViewTopStories";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
 
-async function fetchCachedStories() {
-  "use cache";
-  cacheLife("hours");
-  const supabase = createAnonClient();
-  return await getStories(supabase);
-}
-
 async function ViewTrendingContent() {
-  const [{ userId }, stories] = await Promise.all([
-    getAuthenticatedUser(),
-    fetchCachedStories(),
+  const { userId } = await getAuthenticatedUser();
+  const supabase = await createClient();
+
+  const userCategories = await getUserCategories(supabase, userId);
+  const subscribedCategoryNames = userCategories
+    .sort((a, b) => a.position - b.position)
+    .map((c) => c.category_name);
+
+  const subscribedSubCategoryNames = await getUserSubCategoryNames(
+    supabase,
+    userId,
+  );
+
+  const [stories] = await Promise.all([
+    getStories(supabase, subscribedCategoryNames, subscribedSubCategoryNames),
   ]);
 
   async function handleCreateShareLink(
@@ -37,7 +44,10 @@ async function ViewTrendingContent() {
 
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
-      <ViewTopStories stories={stories} />
+      <ViewTopStories
+        stories={stories}
+        categoryOrder={subscribedCategoryNames}
+      />
     </ShareLinkProvider>
   );
 }

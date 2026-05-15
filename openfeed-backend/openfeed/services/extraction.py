@@ -1,5 +1,6 @@
 import uuid
 import logging
+from itertools import chain, groupby
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -11,60 +12,117 @@ from openfeed.openai_client import openai_client
 from openfeed.db.global_emails import insert_email
 from openfeed.db.global_articles import get_recent_global_articles
 from openfeed.db.global_settings import get_global_settings
+from openfeed.db.global_sub_categories import get_sub_categories_by_category
+from openfeed.db.global_stories import (
+    get_stories,
+    delete_stories_by_category,
+    insert_stories,
+)
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.services.cluster_scoring import score_cluster
 from openfeed.clusterer import cluster_articles, reduce_clusters, deduplicate_clusters
-from openfeed.db.global_stories import (
-    get_stories,
-    delete_all_stories,
-    insert_stories,
-)
 
 logger = logging.getLogger(__name__)
 
 
 def top_stories(db: Client):
     settings = get_global_settings(db)
-    stories = get_stories(db)
-    articles = get_recent_global_articles(db, settings.clustering_window_hours)
-    clusters = cluster_articles(articles)
-    clusters = reduce_clusters(clusters, settings.cluster_significance_threshold)
-    new_clusters, matched_clusters = deduplicate_clusters(clusters, stories)
-
-    stories_by_id = {s.id: s for s in stories}
+    existing_stories = get_stories(db)
+    all_articles = get_recent_global_articles(db, settings.clustering_window_hours)
     window_hours = float(settings.clustering_window_hours)
     now = datetime.now(timezone.utc)
 
-    # Generate stories: LLM for new clusters, re-score only for known clusters
+    categorized = sorted(
+        (a for a in all_articles if a.category_name),
+        key=lambda a: a.category_name,  # type: ignore[arg-type]
+    )
+
+    stories_by_category = {
+        category_name: _process_category(
+            category_name=category_name,
+            category_articles=list(articles),
+            existing_stories=existing_stories,
+            settings=settings,
+            window_hours=window_hours,
+            now=now,
+            db=db,
+        )
+        for category_name, articles in groupby(
+            categorized, key=lambda a: a.category_name
+        )
+    }
+
+    for category_name, stories in stories_by_category.items():
+        delete_stories_by_category(db, category_name)
+        if stories:
+            insert_stories(db, stories)
+
+    all_new_stories = list(chain.from_iterable(stories_by_category.values()))
+    if all_new_stories:
+        insert_email(db, _generate_trending_news_email_section(all_new_stories))
+
+
+def _process_category(
+    category_name: str,
+    category_articles: list[PublicGlobalArticles],
+    existing_stories: list[PublicGlobalStories],
+    settings,
+    window_hours: float,
+    now: datetime,
+    db: Client,
+) -> list[PublicGlobalStories]:
+    category_existing = [
+        s for s in existing_stories if s.category_name == category_name
+    ]
+    valid_tags = [sc.name for sc in get_sub_categories_by_category(db, category_name)]
+    stories_by_id = {s.id: s for s in category_existing}
+
+    clusters = cluster_articles(category_articles)
+    clusters = reduce_clusters(clusters, settings.cluster_significance_threshold)
+    new_clusters, matched_clusters = deduplicate_clusters(clusters, category_existing)
+
     with ThreadPoolExecutor(max_workers=5) as executor:
         generated = list(
             executor.map(
-                partial(_generate_story, window_hours=window_hours, now=now),
+                partial(
+                    _generate_story,
+                    window_hours=window_hours,
+                    now=now,
+                    category_name=category_name,
+                    valid_tags=valid_tags,
+                ),
                 new_clusters,
             )
         )
         rescored = list(
             executor.map(
-                lambda item: _rescore_story(
-                    item[1], stories_by_id[item[0]], window_hours, now
+                partial(
+                    _rescore_matched_cluster,
+                    stories_by_id=stories_by_id,
+                    window_hours=window_hours,
+                    now=now,
                 ),
                 matched_clusters.items(),
             )
         )
 
-    all_stories = generated + rescored
-
-    delete_all_stories(db)
-
-    if all_stories:
-        insert_stories(db, all_stories)
-        insert_email(db, _generate_trending_news_email_section(all_stories))
-
     logger.info(
-        "top_stories completed: %d generated, %d rescored",
+        "top_stories [%s]: %d generated, %d rescored",
+        category_name,
         len(generated),
         len(rescored),
     )
+    return generated + rescored
+
+
+def _rescore_matched_cluster(
+    item: tuple,
+    stories_by_id: dict,
+    window_hours: float,
+    now: datetime,
+) -> PublicGlobalStories:
+    story_id, articles = item
+    return _rescore_story(articles, stories_by_id[story_id], window_hours, now)
 
 
 def _rescore_story(
@@ -88,8 +146,10 @@ def _generate_story(
     articles: list[PublicGlobalArticles],
     window_hours: float,
     now: datetime,
+    category_name: str,
+    valid_tags: list[str] | None = None,
 ) -> PublicGlobalStories:
-    headline, summary = _generate_story_text(articles)
+    headline, summary, tags = _generate_story_text(articles, valid_tags=valid_tags)
     cluster_score = score_cluster(articles, now=now, window_hours=window_hours)
     image_url = next((a.image_url for a in articles if a.image_url), None)
     return PublicGlobalStories(
@@ -101,6 +161,8 @@ def _generate_story(
         velocity=cluster_score.velocity,
         image_url=image_url,
         created_at=now,
+        category_name=category_name,
+        tags=tags,
     )
 
 
@@ -126,10 +188,18 @@ def _render_story_card(story: PublicGlobalStories) -> str:
 
 def _generate_story_text(
     articles: list[PublicGlobalArticles],
-) -> tuple[str, str]:
+    valid_tags: list[str] | None = None,
+) -> tuple[str, str, list[str]]:
     class TopStoryLLMResponse(BaseModel):
         headline: str
         summary: str
+        tags: list[str]
+
+    tags_instruction = (
+        f"**tags**: Choose zero or more of the following sub-category tags that apply to this story: {valid_tags}. Return only tags from this list."
+        if valid_tags
+        else "**tags**: Return an empty list."
+    )
 
     prompt = f"""You are a veteran newspaper copy editor writing front-page briefs.
 
@@ -141,6 +211,7 @@ Distill the above summaries into ONE punchy story brief.
 
 **headline**: Write it like a tabloid front page — active verbs, no filler, max 10 words. Grab the reader by the collar.
 **summary**: Two sentences, max. Lead with the single most newsworthy fact. Follow with stakes or what happens next. Every word must earn its place.
+{tags_instruction}
 
 ## Rules
 - Write about the NEWS, not about the coverage.
@@ -148,7 +219,7 @@ Distill the above summaries into ONE punchy story brief.
     llm_response = openai_client.generate_response(
         "gpt-5.4", prompt, TopStoryLLMResponse
     )
-    return llm_response.headline, llm_response.summary
+    return llm_response.headline, llm_response.summary, llm_response.tags
 
 
 if __name__ == "__main__":

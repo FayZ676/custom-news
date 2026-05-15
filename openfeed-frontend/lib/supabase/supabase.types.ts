@@ -36,6 +36,7 @@ export type Database = {
     Tables: {
       global_articles: {
         Row: {
+          category_name: string | null;
           created_at: string;
           feed_title: string;
           id: string;
@@ -49,6 +50,7 @@ export type Database = {
           url: string;
         };
         Insert: {
+          category_name?: string | null;
           created_at?: string;
           feed_title: string;
           id?: string;
@@ -62,6 +64,7 @@ export type Database = {
           url: string;
         };
         Update: {
+          category_name?: string | null;
           created_at?: string;
           feed_title?: string;
           id?: string;
@@ -75,6 +78,13 @@ export type Database = {
           url?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "global_articles_category_name_fkey";
+            columns: ["category_name"];
+            isOneToOne: false;
+            referencedRelation: "global_categories";
+            referencedColumns: ["name"];
+          },
           {
             foreignKeyName: "global_articles_feed_title_fkey";
             columns: ["feed_title"];
@@ -125,7 +135,7 @@ export type Database = {
       };
       global_feeds: {
         Row: {
-          category_id: string | null;
+          category_name: string | null;
           created_at: string;
           description: string;
           id: string;
@@ -133,7 +143,7 @@ export type Database = {
           url: string;
         };
         Insert: {
-          category_id?: string | null;
+          category_name?: string | null;
           created_at?: string;
           description: string;
           id?: string;
@@ -141,7 +151,7 @@ export type Database = {
           url: string;
         };
         Update: {
-          category_id?: string | null;
+          category_name?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
@@ -150,11 +160,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "global_feeds_category_id_fkey";
-            columns: ["category_id"];
+            foreignKeyName: "global_feeds_category_name_fkey";
+            columns: ["category_name"];
             isOneToOne: false;
             referencedRelation: "global_categories";
-            referencedColumns: ["id"];
+            referencedColumns: ["name"];
           },
         ];
       };
@@ -220,6 +230,7 @@ export type Database = {
       };
       global_stories: {
         Row: {
+          category_name: string | null;
           created_at: string;
           headline: string;
           id: string;
@@ -227,9 +238,11 @@ export type Database = {
           related_articles_urls: string[];
           score: number;
           summary: string;
+          tags: string[];
           velocity: number;
         };
         Insert: {
+          category_name?: string | null;
           created_at?: string;
           headline: string;
           id?: string;
@@ -237,9 +250,11 @@ export type Database = {
           related_articles_urls?: string[];
           score: number;
           summary: string;
+          tags?: string[];
           velocity: number;
         };
         Update: {
+          category_name?: string | null;
           created_at?: string;
           headline?: string;
           id?: string;
@@ -247,9 +262,47 @@ export type Database = {
           related_articles_urls?: string[];
           score?: number;
           summary?: string;
+          tags?: string[];
           velocity?: number;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "global_stories_category_name_fkey";
+            columns: ["category_name"];
+            isOneToOne: false;
+            referencedRelation: "global_categories";
+            referencedColumns: ["name"];
+          },
+        ];
+      };
+      global_sub_categories: {
+        Row: {
+          category_name: string;
+          created_at: string;
+          id: string;
+          name: string;
+        };
+        Insert: {
+          category_name: string;
+          created_at?: string;
+          id?: string;
+          name: string;
+        };
+        Update: {
+          category_name?: string;
+          created_at?: string;
+          id?: string;
+          name?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "global_sub_categories_category_name_fkey";
+            columns: ["category_name"];
+            isOneToOne: false;
+            referencedRelation: "global_categories";
+            referencedColumns: ["name"];
+          },
+        ];
       };
       user_articles: {
         Row: {
@@ -290,6 +343,32 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "user_interests";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_categories: {
+        Row: {
+          category_name: string;
+          position: number;
+          user_id: string;
+        };
+        Insert: {
+          category_name: string;
+          position: number;
+          user_id: string;
+        };
+        Update: {
+          category_name?: string;
+          position?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_categories_category_name_fkey";
+            columns: ["category_name"];
+            isOneToOne: false;
+            referencedRelation: "global_categories";
+            referencedColumns: ["name"];
           },
         ];
       };
@@ -337,6 +416,29 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      user_sub_categories: {
+        Row: {
+          sub_category_name: string;
+          user_id: string;
+        };
+        Insert: {
+          sub_category_name: string;
+          user_id: string;
+        };
+        Update: {
+          sub_category_name?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_sub_categories_sub_category_name_fkey";
+            columns: ["sub_category_name"];
+            isOneToOne: false;
+            referencedRelation: "global_sub_categories";
+            referencedColumns: ["name"];
+          },
+        ];
       };
     };
     Views: {

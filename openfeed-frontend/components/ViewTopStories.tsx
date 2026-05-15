@@ -17,9 +17,13 @@ const FEATURED_THRESHOLD = 0.6;
 
 interface ViewTopStoriesProps {
   stories: Tables<"global_stories">[];
+  categoryOrder?: string[];
 }
 
-export function ViewTopStories({ stories }: ViewTopStoriesProps) {
+export function ViewTopStories({
+  stories,
+  categoryOrder = [],
+}: ViewTopStoriesProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
 
   function openModal(story: Tables<"global_stories">) {
@@ -34,7 +38,17 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
     modalRef.current?.open(item);
   }
 
-  const storiesOrdered = [...stories].sort((a, b) => b.score - a.score);
+  const categoryIndex = (story: Tables<"global_stories">) => {
+    if (!story.category_name) return categoryOrder.length;
+    const idx = categoryOrder.indexOf(story.category_name);
+    return idx === -1 ? categoryOrder.length : idx;
+  };
+
+  const storiesOrdered = [...stories].sort((a, b) => {
+    const catDiff = categoryIndex(a) - categoryIndex(b);
+    if (catDiff !== 0) return catDiff;
+    return b.score - a.score;
+  });
 
   if (storiesOrdered.length === 0) {
     return (

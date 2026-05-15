@@ -25,6 +25,10 @@ def delete_all_stories(db: Client):
     ).execute()
 
 
+def delete_stories_by_category(db: Client, category_name: str):
+    db.table("global_stories").delete().eq("category_name", category_name).execute()
+
+
 def update_story(db: Client, story: PublicGlobalStories):
     db.table("global_stories").update(
         {

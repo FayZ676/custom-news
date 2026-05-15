@@ -27,6 +27,9 @@ export function NewsItemCard({
 }: NewsItemCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const safeImageUrl =
+    imageUrl && imageUrl.startsWith("https://") ? imageUrl : null;
+
   const opacityClass = isRead ? "opacity-50" : "";
 
   if (variant === "hero") {
@@ -36,11 +39,11 @@ export function NewsItemCard({
         onClick={onClick}
       >
         <div className="relative aspect-video w-full">
-          {imageUrl ? (
+          {safeImageUrl ? (
             <>
               {!isLoaded && <div className="skeleton absolute inset-0" />}
               <Image
-                src={imageUrl}
+                src={safeImageUrl!}
                 alt="Thumbnail"
                 fill
                 loading="lazy"
@@ -76,11 +79,11 @@ export function NewsItemCard({
         onClick={onClick}
       >
         <div className="relative aspect-square w-full">
-          {imageUrl ? (
+          {safeImageUrl ? (
             <>
               {!isLoaded && <div className="skeleton absolute inset-0" />}
               <Image
-                src={imageUrl}
+                src={safeImageUrl!}
                 alt="Thumbnail"
                 fill
                 loading="lazy"
@@ -131,11 +134,11 @@ export function NewsItemCard({
         {meta && <span className="text-sm text-neutral-500">{meta}</span>}
       </div>
       <div className="relative aspect-square w-14 shrink-0">
-        {imageUrl ? (
+        {safeImageUrl ? (
           <>
             {!isLoaded && <div className="skeleton absolute inset-0" />}
             <Image
-              src={imageUrl}
+              src={safeImageUrl!}
               alt="Thumbnail"
               fill
               loading="lazy"

@@ -11,6 +11,7 @@ type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
 
 export interface SettingsModalHandle {
   open: () => void;
+  close: () => void;
 }
 
 interface SettingsModalProps {
@@ -18,6 +19,7 @@ interface SettingsModalProps {
   handleUpdateNotifications: (newValue: boolean) => Promise<void>;
   handleUpdateTheme: (newTheme: string) => Promise<void>;
   handleSignOut: () => Promise<void>;
+  onOpenNewsCategories: () => void;
 }
 
 export const SettingsModal = forwardRef<
@@ -30,6 +32,7 @@ export const SettingsModal = forwardRef<
       handleUpdateNotifications,
       handleUpdateTheme,
       handleSignOut,
+      onOpenNewsCategories,
     },
     ref,
   ) => {
@@ -54,6 +57,9 @@ export const SettingsModal = forwardRef<
         } catch {
           setStatus("error");
         }
+      },
+      close() {
+        dialogRef.current?.close();
       },
     }));
 
@@ -118,6 +124,14 @@ export const SettingsModal = forwardRef<
                   className="cursor-pointer hover:font-bold hover:underline pb-3"
                 >
                   Theme ({colorTheme === "cupcake" ? "Light" : "Dark"})
+                </button>
+              </div>
+              <div>
+                <button
+                  onClick={onOpenNewsCategories}
+                  className="cursor-pointer hover:font-bold hover:underline pb-3"
+                >
+                  News Categories
                 </button>
               </div>
               <div>
