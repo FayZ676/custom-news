@@ -1,6 +1,15 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
+export interface InterestArticle {
+  is_read: boolean;
+  global_article: Tables<"global_articles">;
+}
+
+export interface QueryArticle {
+  global_article: Tables<"global_articles">;
+}
+
 export async function getStories(
   supabase: SupabaseClient<Database>,
 ): Promise<Tables<"global_stories">[]> {
@@ -10,12 +19,14 @@ export async function getStories(
   return data;
 }
 
-export async function getStoriesCount(
+export async function getSignificantStoriesCount(
   supabase: SupabaseClient<Database>,
+  threshold: number,
 ): Promise<number> {
   const { count, error } = await supabase
     .from("global_stories")
-    .select("*", { count: "exact", head: true });
+    .select("*", { count: "exact", head: true })
+    .gte("score", threshold);
 
   if (error) throw new Error(error.message);
   return count ?? 0;
@@ -30,6 +41,19 @@ export async function getStoryById(
     .select("*")
     .eq("id", id)
     .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function getStoriesByIds(
+  supabase: SupabaseClient<Database>,
+  ids: string[],
+): Promise<Tables<"global_stories">[]> {
+  const { data, error } = await supabase
+    .from("global_stories")
+    .select("*")
+    .in("id", ids);
 
   if (error) throw new Error(error.message);
   return data;

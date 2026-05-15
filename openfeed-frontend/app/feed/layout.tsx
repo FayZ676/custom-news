@@ -12,8 +12,9 @@ import {
 } from "@/lib/supabase/queries/user_settings";
 import { getCurrentDate } from "@/lib/utils";
 
-import { getStoriesCount } from "@/lib/supabase/queries/global_stories";
-import { getUnreadArticleCount } from "@/lib/supabase/queries/user_articles";
+import { getSignificantStoriesCount } from "@/lib/supabase/queries/global_stories";
+import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
+import { getUnreadStoryCount } from "@/lib/supabase/queries/user_stories";
 
 import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
@@ -75,10 +76,14 @@ async function TabSwitcherContent({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const anonSupabase = createAnonClient();
 
-  const [unreadCount, storiesCount] = await Promise.all([
-    getUnreadArticleCount(supabase, userId),
-    getStoriesCount(anonSupabase),
+  const [unreadCount, settings] = await Promise.all([
+    getUnreadStoryCount(supabase, userId),
+    getGlobalSettings(anonSupabase),
   ]);
+  const storiesCount = await getSignificantStoriesCount(
+    anonSupabase,
+    settings.cluster_significance_threshold,
+  );
 
   return (
     <UnreadCountProvider initialCount={unreadCount}>

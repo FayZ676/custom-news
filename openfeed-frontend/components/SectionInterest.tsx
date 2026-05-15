@@ -5,61 +5,59 @@ import { startTransition, useOptimistic, useState } from "react";
 import { EllipsisVertical } from "lucide-react";
 
 import { toTitleCase } from "@/lib/utils";
-import {
-  InterestArticle,
-  InterestArticles,
-} from "@/lib/supabase/queries/global_articles";
+import { InterestStory } from "@/lib/supabase/queries/user_stories";
+import { InterestStories } from "@/lib/supabase/queries/user_interests";
+import { Tables } from "@/lib/supabase/supabase.types";
 
-import { SectionArticles } from "@/components/SectionArticles";
+import { ViewTopStories } from "@/components/ViewTopStories";
 
 export interface SectionInterestProps {
-  interest: InterestArticles;
+  interest: InterestStories;
   deleting: boolean;
   handleDeleteInterest: (interestId: string) => void;
-  handleReadArticles: (articleIds: string[], isRead: boolean) => void;
+  handleReadStories: (storyIds: string[], isRead: boolean) => void;
 }
 
 export default function SectionInterest({
   interest,
   deleting,
-  handleReadArticles,
+  handleReadStories,
   handleDeleteInterest,
 }: SectionInterestProps) {
-  const [showReadArticles, setShowReadArticles] = useState<boolean>(false);
-  const [optimisticArticles, setOptimisticArticles] = useOptimistic(
-    interest.articles,
+  const [showReadStories, setShowReadStories] = useState<boolean>(false);
+  const [optimisticStories, setOptimisticStories] = useOptimistic(
+    interest.stories,
     (
-      current: InterestArticle[],
+      current: InterestStory[],
       { ids, isRead }: { ids: string[]; isRead: boolean },
     ) =>
-      current.map((article) =>
-        ids.includes(article.global_article.id)
-          ? { ...article, is_read: isRead }
-          : article,
+      current.map((s) =>
+        ids.includes(s.global_story.id) ? { ...s, is_read: isRead } : s,
       ),
   );
 
-  const unreadArticles = optimisticArticles.filter(
-    (article) => !article.is_read,
-  );
-  const readArticles = optimisticArticles.filter((article) => article.is_read);
+  const unreadStories = optimisticStories.filter((s) => !s.is_read);
+  const readStories = optimisticStories.filter((s) => s.is_read);
 
-  const handleToggleArticleReadOptimistic = async (
-    articleIds: string[],
+  const toStoryRows = (items: InterestStory[]) =>
+    items.map((s) => s.global_story);
+
+  const handleToggleReadOptimistic = async (
+    storyIds: string[],
     isRead: boolean,
   ) => {
     startTransition(() => {
-      setOptimisticArticles({ ids: articleIds, isRead });
+      setOptimisticStories({ ids: storyIds, isRead });
     });
-    await handleReadArticles(articleIds, isRead);
+    await handleReadStories(storyIds, isRead);
   };
 
   const handleMarkAllAsRead = async () => {
-    const unreadIds = unreadArticles.map((a) => a.global_article.id);
+    const unreadIds = unreadStories.map((s) => s.global_story.id);
     startTransition(() => {
-      setOptimisticArticles({ ids: unreadIds, isRead: true });
+      setOptimisticStories({ ids: unreadIds, isRead: true });
     });
-    await handleReadArticles(unreadIds, true);
+    await handleReadStories(unreadIds, true);
   };
 
   return (
@@ -81,11 +79,11 @@ export default function SectionInterest({
                   (
                     e.currentTarget.closest("details") as HTMLDetailsElement
                   ).open = false;
-                  setShowReadArticles(!showReadArticles);
+                  setShowReadStories(!showReadStories);
                 }}
                 className="rounded-none"
               >
-                {showReadArticles ? "Hide" : "Show"} Read Articles
+                {showReadStories ? "Hide" : "Show"} Read Stories
               </button>
             </li>
             <li>
@@ -120,25 +118,22 @@ export default function SectionInterest({
           </ul>
         </details>
       </div>
-      {unreadArticles.length > 0 ? (
-        <SectionArticles
-          articles={unreadArticles}
-          handleReadArticle={handleToggleArticleReadOptimistic}
+      {unreadStories.length > 0 ? (
+        <ViewTopStories
+          stories={toStoryRows(unreadStories)}
+          onStoryRead={(id) => handleToggleReadOptimistic([id], true)}
         />
       ) : (
         <p className="italic">All caught up</p>
       )}
-      {showReadArticles && (
+      {showReadStories && (
         <>
           <div className="flex items-center gap-2">
             <hr className="flex-1" />
-            <span className="text-sm italic">Read Articles</span>
+            <span className="text-sm italic">Read Stories</span>
             <hr className="flex-1" />
           </div>
-          <SectionArticles
-            articles={readArticles}
-            handleReadArticle={handleToggleArticleReadOptimistic}
-          />
+          <ViewTopStories stories={toStoryRows(readStories)} />
         </>
       )}
     </div>

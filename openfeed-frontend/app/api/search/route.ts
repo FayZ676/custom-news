@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { embedTexts } from "@/lib/embeddings";
 import { rerankTexts } from "@/lib/reranker";
-import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
-import { getGlobalArticlesByIds } from "@/lib/supabase/queries/global_articles";
+import { matchStoriesByEmbedding } from "@/lib/supabase/queries/match_stories";
+import { getStoriesByIds } from "@/lib/supabase/queries/global_stories";
 import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
 
 const MAX_LANDING_RESULTS = 5;
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
   const settings = await getGlobalSettings(supabase);
   const { embeddings } = await embedTexts([query]);
-  const matches = await matchArticlesByEmbedding(
+  const matches = await matchStoriesByEmbedding(
     supabase,
     embeddings[0],
     settings.max_match_count,
@@ -28,20 +28,20 @@ export async function GET(req: NextRequest) {
 
   if (matches.length === 0) return NextResponse.json({ results: [] });
 
-  const articles = await getGlobalArticlesByIds(
+  const stories = await getStoriesByIds(
     supabase,
     matches.map((m) => m.id),
   );
   const reranked = await rerankTexts(
     query,
-    articles.map((a) => a.global_article.title),
+    stories.map((s) => s.headline),
   );
 
   const results = reranked.slice(0, MAX_LANDING_RESULTS).map((r) => ({
-    title: articles[r.index].global_article.title,
-    summary: articles[r.index].global_article.summary,
-    feed_title: articles[r.index].global_article.feed_title,
-    url: articles[r.index].global_article.url,
+    title: stories[r.index].headline,
+    summary: stories[r.index].summary,
+    feed_title: null,
+    url: stories[r.index].related_articles_urls[0] ?? null,
   }));
 
   return NextResponse.json({ results });

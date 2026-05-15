@@ -17,14 +17,12 @@ const makeTabs = (
   {
     id: "trending",
     label: () =>
-      storiesCount > 0
-        ? `Trending Stories (${storiesCount})`
-        : "Trending Stories",
+      storiesCount > 0 ? `Trending News (${storiesCount})` : "Trending News",
   },
   {
     id: "my-news",
     label: (count) =>
-      count > 0 ? `My Articles (${count > 99 ? "99+" : count})` : "My Articles",
+      count > 0 ? `My News (${count > 99 ? "99+" : count})` : "My News",
   },
   { id: "search", label: () => "Search" },
 ];
@@ -32,7 +30,7 @@ const makeTabs = (
 export function TabSwitcherSkeleton() {
   return (
     <div className="tabs tabs-border tabs-md font-bold gap-4 justify-center">
-      {["Trending Stories", "My Articles", "Search"].map((label) => (
+      {["Trending News", "My News", "Search"].map((label) => (
         <div
           key={label}
           className="tab p-0 leading-none text-[clamp(13px,4vw,15px)] min-[400px]:text-lg skeleton rounded-none h-4 w-24 opacity-40"

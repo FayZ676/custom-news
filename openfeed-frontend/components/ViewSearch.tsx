@@ -3,25 +3,23 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { QueryArticle } from "@/lib/supabase/queries/global_articles";
+import { Tables } from "@/lib/supabase/supabase.types";
 import { useUnreadCount } from "@/components/UnreadCountContext";
 
 import SearchBar, { SearchbarSkeleton } from "@/components/Searchbar";
 import { QuerySuggestions } from "@/components/QuerySuggestions";
-import {
-  SectionArticles,
-  SectionArticleSkeleton,
-} from "@/components/SectionArticles";
+import { SectionArticleSkeleton } from "@/components/SectionArticles";
+import { ViewTopStories } from "@/components/ViewTopStories";
 
 export interface ViewSearchProps {
-  queryArticles: QueryArticle[];
+  queryStories: Tables<"global_stories">[];
   suggestions: string[];
   initialQuery?: string;
   handleSaveUserInterest: (query: string) => Promise<string>;
 }
 
 export function ViewSearch({
-  queryArticles,
+  queryStories,
   suggestions,
   initialQuery = "",
   handleSaveUserInterest,
@@ -43,7 +41,7 @@ export function ViewSearch({
 
   const handleSave = (q: string) => {
     setSaved(false);
-    adjustCount(queryArticles.length);
+    adjustCount(queryStories.length);
     startSaveTransition(async () => {
       await handleSaveUserInterest(q);
       setSaved(true);
@@ -86,11 +84,11 @@ export function ViewSearch({
               <SectionArticleSkeleton key={i} />
             ))}
           </>
-        ) : queryArticles.length > 0 ? (
-          <SectionArticles articles={queryArticles} />
+        ) : queryStories.length > 0 ? (
+          <ViewTopStories stories={queryStories} />
         ) : (
           <p className="text-sm italic text-neutral-500">
-            No articles found matching your query. Try something more specific.
+            No stories found matching your query. Try something more specific.
           </p>
         ))}
     </div>

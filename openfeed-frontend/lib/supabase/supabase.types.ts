@@ -227,6 +227,7 @@ export type Database = {
           related_articles_urls: string[];
           score: number;
           summary: string;
+          summary_embeddings: string | null;
           velocity: number;
         };
         Insert: {
@@ -237,6 +238,7 @@ export type Database = {
           related_articles_urls?: string[];
           score: number;
           summary: string;
+          summary_embeddings?: string | null;
           velocity: number;
         };
         Update: {
@@ -247,51 +249,10 @@ export type Database = {
           related_articles_urls?: string[];
           score?: number;
           summary?: string;
+          summary_embeddings?: string | null;
           velocity?: number;
         };
         Relationships: [];
-      };
-      user_articles: {
-        Row: {
-          article_id: string;
-          interest_id: string;
-          is_read: boolean;
-          score: number;
-          updated_at: string;
-          user_id: string;
-        };
-        Insert: {
-          article_id: string;
-          interest_id: string;
-          is_read?: boolean;
-          score: number;
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          article_id?: string;
-          interest_id?: string;
-          is_read?: boolean;
-          score?: number;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_articles_article_id_fkey";
-            columns: ["article_id"];
-            isOneToOne: false;
-            referencedRelation: "global_articles";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "user_articles_interest_id_fkey";
-            columns: ["interest_id"];
-            isOneToOne: false;
-            referencedRelation: "user_interests";
-            referencedColumns: ["id"];
-          },
-        ];
       };
       user_interests: {
         Row: {
@@ -338,22 +299,64 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_stories: {
+        Row: {
+          interest_id: string;
+          is_read: boolean;
+          score: number;
+          story_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          interest_id: string;
+          is_read?: boolean;
+          score: number;
+          story_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          interest_id?: string;
+          is_read?: boolean;
+          score?: number;
+          story_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_stories_interest_id_fkey";
+            columns: ["interest_id"];
+            isOneToOne: false;
+            referencedRelation: "user_interests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_stories_story_id_fkey";
+            columns: ["story_id"];
+            isOneToOne: false;
+            referencedRelation: "global_stories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      match_articles: {
+      match_stories: {
         Args: {
           match_count: number;
           min_similarity: number;
           query_embedding: string;
         };
         Returns: {
+          headline: string;
           id: string;
           similarity: number;
           summary: string;
-          title: string;
         }[];
       };
     };

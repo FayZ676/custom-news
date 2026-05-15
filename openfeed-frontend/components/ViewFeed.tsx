@@ -3,25 +3,22 @@
 import { useRouter } from "next/navigation";
 import { useTransition, useOptimistic } from "react";
 
-import { InterestArticles } from "@/lib/supabase/queries/global_articles";
+import { InterestStories } from "@/lib/supabase/queries/user_interests";
 import { useUnreadCount } from "@/components/UnreadCountContext";
 
 import SectionInterest from "@/components/SectionInterest";
 import { SectionArticleSkeleton } from "@/components/SectionArticles";
 
 export interface ViewFeedProps {
-  interestArticles: InterestArticles[];
+  interestStories: InterestStories[];
   handleDeleteInterest: (interestId: string) => Promise<void>;
-  handleReadUserArticles: (
-    articleIds: string[],
-    isRead: boolean,
-  ) => Promise<void>;
+  handleReadUserStories: (storyIds: string[], isRead: boolean) => Promise<void>;
 }
 
 export function ViewFeed({
-  interestArticles,
+  interestStories,
   handleDeleteInterest,
-  handleReadUserArticles,
+  handleReadUserStories,
 }: ViewFeedProps) {
   const router = useRouter();
   const { adjustCount } = useUnreadCount();
@@ -29,8 +26,8 @@ export function ViewFeed({
   const [deleting, startDeleteTransition] = useTransition();
 
   const [optimisticInterests, removeOptimisticInterest] = useOptimistic(
-    interestArticles,
-    (current: InterestArticles[], deletedId: string) =>
+    interestStories,
+    (current: InterestStories[], deletedId: string) =>
       current.filter((interest) => interest.id !== deletedId),
   );
 
@@ -38,7 +35,7 @@ export function ViewFeed({
     startDeleteTransition(async () => {
       const interest = optimisticInterests.find((i) => i.id === interestId);
       const unreadCount =
-        interest?.articles.filter((a) => !a.is_read).length ?? 0;
+        interest?.stories.filter((s) => !s.is_read).length ?? 0;
       adjustCount(-unreadCount);
       removeOptimisticInterest(interestId);
       await handleDeleteInterest(interestId);
@@ -46,11 +43,11 @@ export function ViewFeed({
     });
   };
 
-  const handleRead = async (articleIds: string[], isRead: boolean) => {
-    const unreadCountDelta = isRead ? -articleIds.length : articleIds.length;
+  const handleRead = async (storyIds: string[], isRead: boolean) => {
+    const unreadCountDelta = isRead ? -storyIds.length : storyIds.length;
     adjustCount(unreadCountDelta);
     try {
-      await handleReadUserArticles(articleIds, isRead);
+      await handleReadUserStories(storyIds, isRead);
       router.refresh();
     } catch (error) {
       adjustCount(-unreadCountDelta);
@@ -73,8 +70,8 @@ export function ViewFeed({
       {optimisticInterests
         .slice()
         .sort((a, b) => {
-          const aHasUnread = a.articles.some((article) => !article.is_read);
-          const bHasUnread = b.articles.some((article) => !article.is_read);
+          const aHasUnread = a.stories.some((s) => !s.is_read);
+          const bHasUnread = b.stories.some((s) => !s.is_read);
           return Number(bHasUnread) - Number(aHasUnread);
         })
         .map((interest) => (
@@ -83,7 +80,7 @@ export function ViewFeed({
             interest={interest}
             deleting={deleting}
             handleDeleteInterest={handleDelete}
-            handleReadArticles={handleRead}
+            handleReadStories={handleRead}
           />
         ))}
     </div>

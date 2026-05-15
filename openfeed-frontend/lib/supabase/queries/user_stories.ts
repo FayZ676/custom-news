@@ -1,59 +1,63 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Tables, Database } from "@/lib/supabase/supabase.types";
+import { Database, Tables } from "@/lib/supabase/supabase.types";
 
-import { InterestArticle } from "@/lib/supabase/queries/global_articles";
+export interface InterestStory {
+  is_read: boolean;
+  score: number;
+  global_story: Tables<"global_stories">;
+}
 
-export interface UserArticleScore {
+export interface UserStoryScore {
   user_id: string;
   interest_id: string;
-  article_id: string;
+  story_id: string;
   score: number;
 }
 
-export async function getUserArticlesForInterest(
+export async function getUserStoriesForInterest(
   supabase: SupabaseClient<Database>,
   userId: string,
   interestId: string,
-): Promise<InterestArticle[]> {
-  const { data: rows, error: uaError } = await supabase
-    .from("user_articles")
-    .select("is_read, score, global_articles(*)")
+): Promise<InterestStory[]> {
+  const { data: rows, error } = await supabase
+    .from("user_stories")
+    .select("is_read, score, global_stories(*)")
     .eq("user_id", userId)
     .eq("interest_id", interestId);
 
-  if (uaError) throw new Error(uaError.message);
+  if (error) throw new Error(error.message);
   if (!rows || rows.length === 0) return [];
 
   return rows
     .map((r) => ({
       is_read: r.is_read,
       score: r.score,
-      global_article: r.global_articles as Tables<"global_articles">,
+      global_story: r.global_stories as Tables<"global_stories">,
     }))
     .sort((a, b) => b.score - a.score);
 }
 
-export async function updateUserArticlesRead(
+export async function updateUserStoriesRead(
   supabase: SupabaseClient<Database>,
   userId: string,
-  articleIds: string[],
+  storyIds: string[],
   isRead: boolean,
 ) {
   const { error } = await supabase
-    .from("user_articles")
+    .from("user_stories")
     .update({ is_read: isRead })
     .eq("user_id", userId)
-    .in("article_id", articleIds);
+    .in("story_id", storyIds);
 
   if (error) throw new Error(error.message);
 }
 
-export async function getUnreadArticleCount(
+export async function getUnreadStoryCount(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<number> {
   const { count, error } = await supabase
-    .from("user_articles")
+    .from("user_stories")
     .select("*", { count: "exact", head: true })
     .eq("user_id", userId)
     .eq("is_read", false);
@@ -62,12 +66,12 @@ export async function getUnreadArticleCount(
   return count ?? 0;
 }
 
-export async function updateUserArticles(
+export async function updateUserStories(
   supabase: SupabaseClient<Database>,
-  scores: UserArticleScore[],
+  scores: UserStoryScore[],
 ) {
-  const { error } = await supabase.from("user_articles").upsert(scores, {
-    onConflict: "user_id,interest_id,article_id",
+  const { error } = await supabase.from("user_stories").upsert(scores, {
+    onConflict: "user_id,interest_id,story_id",
   });
 
   if (error) throw new Error(error.message);

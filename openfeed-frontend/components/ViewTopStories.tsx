@@ -17,10 +17,12 @@ const FEATURED_THRESHOLD = 0.6;
 
 interface ViewTopStoriesProps {
   stories: Tables<"global_stories">[];
+  onStoryRead?: (storyId: string) => void;
 }
 
-export function ViewTopStories({ stories }: ViewTopStoriesProps) {
+export function ViewTopStories({ stories, onStoryRead }: ViewTopStoriesProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
+  const pendingReadId = useRef<string | null>(null);
 
   function openModal(story: Tables<"global_stories">) {
     const item: NewsItemStory = {
@@ -31,7 +33,15 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
       articleUrls: story.related_articles_urls as string[],
       imageUrl: story.image_url,
     };
+    pendingReadId.current = story.id;
     modalRef.current?.open(item);
+  }
+
+  function handleModalClose() {
+    if (pendingReadId.current) {
+      onStoryRead?.(pendingReadId.current);
+      pendingReadId.current = null;
+    }
   }
 
   const storiesOrdered = [...stories].sort((a, b) => b.score - a.score);
@@ -39,7 +49,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
   if (storiesOrdered.length === 0) {
     return (
       <p className="text-sm italic text-neutral-500">
-        No trending stories available right now.
+        No trending news available right now.
       </p>
     );
   }
@@ -109,7 +119,7 @@ export function ViewTopStories({ stories }: ViewTopStoriesProps) {
         </>
       )}
 
-      <NewsItemModal ref={modalRef} />
+      <NewsItemModal ref={modalRef} onClose={handleModalClose} />
     </section>
   );
 }

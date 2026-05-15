@@ -6,7 +6,7 @@ import { timeAgo, toTitleCase } from "@/lib/utils";
 import {
   QueryArticle,
   InterestArticle,
-} from "@/lib/supabase/queries/global_articles";
+} from "@/lib/supabase/queries/global_stories";
 
 import {
   NewsItemModal,

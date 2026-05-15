@@ -82,7 +82,7 @@ export default function SearchBar({
   const buttonLabel = isAdding
     ? "Adding..."
     : isAddToNews
-      ? "Add to My Articles"
+      ? "Add to My News"
       : isSearching
         ? "Searching..."
         : "Search";

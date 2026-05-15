@@ -8,79 +8,23 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Tables } from "@/lib/supabase/supabase.types";
 import { getShareLinkByToken } from "@/lib/supabase/queries/global_share_links";
-import { getGlobalArticleById } from "@/lib/supabase/queries/global_articles";
 import { getStoryById } from "@/lib/supabase/queries/global_stories";
-import { timeAgo, toTitleCase } from "@/lib/utils";
 
 const isUuid = (value: string): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
   );
 
-type SharedContent =
-  | { type: "article"; data: Tables<"global_articles"> }
-  | { type: "story"; data: Tables<"global_stories"> };
-
-const resolveSharedContent = async (
+const resolveSharedStory = async (
   token: string,
-): Promise<SharedContent | null> => {
+): Promise<Tables<"global_stories"> | null> => {
   const supabase = await createClient();
   const shareLink = await getShareLinkByToken(supabase, token);
 
-  if (!shareLink) return null;
+  if (!shareLink || shareLink.content_type !== "story") return null;
 
-  if (shareLink.content_type === "article") {
-    const article = await getGlobalArticleById(supabase, shareLink.content_id);
-    return article ? { type: "article", data: article } : null;
-  }
-
-  if (shareLink.content_type === "story") {
-    const story = await getStoryById(supabase, shareLink.content_id);
-    return story ? { type: "story", data: story } : null;
-  }
-
-  return null;
+  return getStoryById(supabase, shareLink.content_id);
 };
-
-function ArticleView({ article }: { article: Tables<"global_articles"> }) {
-  return (
-    <article className="flex flex-col gap-4">
-      <p className="text-sm uppercase tracking-wide text-base-content/60">
-        Shared article
-      </p>
-
-      <h1 className="text-2xl font-semibold">{toTitleCase(article.title)}</h1>
-
-      <p className="text-sm text-base-content/70">
-        {article.feed_title} &middot; {timeAgo(article.published_at)}
-      </p>
-
-      {article.image_url && (
-        <div className="relative w-full aspect-video overflow-hidden">
-          <Image
-            src={article.image_url}
-            alt={toTitleCase(article.title)}
-            fill
-            className="object-cover"
-          />
-        </div>
-      )}
-
-      {article.summary && (
-        <p className="text-base leading-relaxed">{article.summary}</p>
-      )}
-
-      <a
-        href={article.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-bold underline"
-      >
-        Read full article →
-      </a>
-    </article>
-  );
-}
 
 function StoryView({ story }: { story: Tables<"global_stories"> }) {
   return (
@@ -130,20 +74,12 @@ export async function generateMetadata({
 
   if (!isUuid(token)) return {};
 
-  const shared = await resolveSharedContent(token);
-  if (!shared) return {};
+  const story = await resolveSharedStory(token);
+  if (!story) return {};
 
-  const title =
-    shared.type === "article"
-      ? toTitleCase(shared.data.title)
-      : shared.data.headline;
-
-  const description =
-    shared.type === "article"
-      ? (shared.data.summary ?? "Shared via The Latest Times")
-      : (shared.data.summary ?? "Shared via The Latest Times");
-
-  const imageUrl = shared.data.image_url;
+  const title = story.headline;
+  const description = story.summary ?? "Shared via The Latest Times";
+  const imageUrl = story.image_url;
 
   return {
     title,
@@ -184,8 +120,8 @@ async function SharePageContent({
 
   if (!isUuid(token)) notFound();
 
-  const shared = await resolveSharedContent(token);
-  if (!shared) notFound();
+  const story = await resolveSharedStory(token);
+  if (!story) notFound();
 
   const logoSrc = "/logo-light.svg";
 
@@ -205,11 +141,7 @@ async function SharePageContent({
       </div>
 
       <section className="border border-base-300 p-5">
-        {shared.type === "article" ? (
-          <ArticleView article={shared.data} />
-        ) : (
-          <StoryView story={shared.data} />
-        )}
+        <StoryView story={story} />
       </section>
 
       <p className="text-sm text-base-content/60 text-center">

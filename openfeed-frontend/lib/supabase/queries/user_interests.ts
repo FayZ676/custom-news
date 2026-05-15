@@ -2,7 +2,13 @@ import { embedTexts } from "@/lib/embeddings";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
-import { InterestArticle, InterestArticles } from "./global_articles";
+import { InterestStory } from "./user_stories";
+
+export interface InterestStories {
+  id: string;
+  query: string;
+  stories: InterestStory[];
+}
 
 export async function insertUserInterest(
   supabase: SupabaseClient,
@@ -40,13 +46,13 @@ export async function deleteUserInterest(
   if (error) throw new Error(error.message);
 }
 
-export async function getUserInterestArticles(
+export async function getUserInterestStories(
   supabase: SupabaseClient<Database>,
   userId: string,
-): Promise<InterestArticles[]> {
+): Promise<InterestStories[]> {
   const { data: rows, error } = await supabase
     .from("user_interests")
-    .select("id, query, user_articles(is_read, score, global_articles(*))")
+    .select("id, query, user_stories(is_read, score, global_stories(*))")
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
@@ -54,12 +60,12 @@ export async function getUserInterestArticles(
   return (rows ?? []).map((r) => ({
     id: r.id,
     query: r.query,
-    articles: (r.user_articles as any[])
-      .map((ua) => ({
-        is_read: ua.is_read,
-        score: ua.score,
-        global_article: ua.global_articles as Tables<"global_articles">,
+    stories: (r.user_stories as any[])
+      .map((us) => ({
+        is_read: us.is_read,
+        score: us.score,
+        global_story: us.global_stories as Tables<"global_stories">,
       }))
-      .sort((a: InterestArticle, b: InterestArticle) => b.score - a.score),
+      .sort((a: InterestStory, b: InterestStory) => b.score - a.score),
   }));
 }

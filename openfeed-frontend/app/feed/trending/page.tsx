@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { getStories } from "@/lib/supabase/queries/global_stories";
+import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import {
@@ -13,18 +14,26 @@ import {
 } from "@/components/ViewTopStories";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
 
-async function fetchCachedStories() {
+async function fetchCachedStoriesAndSettings() {
   "use cache";
   cacheLife("hours");
   const supabase = createAnonClient();
-  return await getStories(supabase);
+  const [stories, settings] = await Promise.all([
+    getStories(supabase),
+    getGlobalSettings(supabase),
+  ]);
+  return { stories, settings };
 }
 
 async function ViewTrendingContent() {
-  const [{ userId }, stories] = await Promise.all([
+  const [{ userId }, { stories, settings }] = await Promise.all([
     getAuthenticatedUser(),
-    fetchCachedStories(),
+    fetchCachedStoriesAndSettings(),
   ]);
+
+  const trendingStories = stories.filter(
+    (s) => s.score >= settings.cluster_significance_threshold,
+  );
 
   async function handleCreateShareLink(
     contentType: "article" | "story",
@@ -37,7 +46,7 @@ async function ViewTrendingContent() {
 
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
-      <ViewTopStories stories={stories} />
+      <ViewTopStories stories={trendingStories} />
     </ShareLinkProvider>
   );
 }

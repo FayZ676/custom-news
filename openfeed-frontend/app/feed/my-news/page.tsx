@@ -3,10 +3,10 @@ import { Suspense } from "react";
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import {
-  getUserInterestArticles,
+  getUserInterestStories,
   deleteUserInterest,
 } from "@/lib/supabase/queries/user_interests";
-import { updateUserArticlesRead } from "@/lib/supabase/queries/user_articles";
+import { updateUserStoriesRead } from "@/lib/supabase/queries/user_stories";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
@@ -15,7 +15,7 @@ import { ShareLinkProvider } from "@/components/ShareLinkContext";
 async function ViewMyNewsContent() {
   const { userId } = await getAuthenticatedUser();
   const supabase = await createClient();
-  const interestArticles = await getUserInterestArticles(supabase, userId);
+  const interestStories = await getUserInterestStories(supabase, userId);
 
   async function handleCreateShareLink(
     contentType: "article" | "story",
@@ -26,10 +26,10 @@ async function ViewMyNewsContent() {
     return await createShareLink(supabase, userId, contentType, contentId);
   }
 
-  async function handleReadArticles(articleIds: string[], isRead: boolean) {
+  async function handleReadStories(storyIds: string[], isRead: boolean) {
     "use server";
     const supabase = await createClient();
-    await updateUserArticlesRead(supabase, userId, articleIds, isRead);
+    await updateUserStoriesRead(supabase, userId, storyIds, isRead);
   }
 
   async function handleDeleteInterest(interestId: string) {
@@ -41,9 +41,9 @@ async function ViewMyNewsContent() {
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
       <ViewFeed
-        interestArticles={interestArticles}
+        interestStories={interestStories}
         handleDeleteInterest={handleDeleteInterest}
-        handleReadUserArticles={handleReadArticles}
+        handleReadUserStories={handleReadStories}
       />
     </ShareLinkProvider>
   );

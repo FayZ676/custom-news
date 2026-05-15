@@ -3,7 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { Database } from "@/lib/supabase/supabase.types";
+import { Database, Tables } from "@/lib/supabase/supabase.types";
 import { embedTexts } from "@/lib/embeddings";
 import { rerankTexts } from "@/lib/reranker";
 import { generateQuerySuggestions } from "@/lib/suggestions";
@@ -11,13 +11,13 @@ import {
   getGlobalSettings,
   GlobalSettings,
 } from "@/lib/supabase/queries/global_settings";
-import { matchArticlesByEmbedding } from "@/lib/supabase/queries/match_articles";
-import { getGlobalArticlesByIds } from "@/lib/supabase/queries/global_articles";
+import { matchStoriesByEmbedding } from "@/lib/supabase/queries/match_stories";
+import { getStoriesByIds } from "@/lib/supabase/queries/global_stories";
 import { insertUserInterest } from "@/lib/supabase/queries/user_interests";
 import {
-  updateUserArticles,
-  UserArticleScore,
-} from "@/lib/supabase/queries/user_articles";
+  updateUserStories,
+  UserStoryScore,
+} from "@/lib/supabase/queries/user_stories";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import { ViewSearch, ViewSearchSkeleton } from "@/components/ViewSearch";
@@ -27,31 +27,31 @@ import { ShareLinkProvider } from "@/components/ShareLinkContext";
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function searchGlobalArticles(
+async function searchGlobalStories(
   supabase: SupabaseClient<Database>,
   query: string,
   settings: GlobalSettings,
-) {
+): Promise<Tables<"global_stories">[]> {
   const { embeddings } = await embedTexts([query]);
-  const matches = await matchArticlesByEmbedding(
+  const matches = await matchStoriesByEmbedding(
     supabase,
     embeddings[0],
     settings.max_match_count,
     settings.min_similarity_threshold,
   );
   if (matches.length === 0) return [];
-  const articles = await getGlobalArticlesByIds(
+  const stories = await getStoriesByIds(
     supabase,
     matches.map((m) => m.id),
   );
   const reranked = await rerankTexts(
     query,
-    articles.map((a) => a.global_article.title),
+    stories.map((s) => s.headline),
   );
-  return reranked.map((r) => articles[r.index]);
+  return reranked.map((r) => stories[r.index]);
 }
 
-async function updateUserArticleScores(
+async function updateUserStoryScores(
   supabase: SupabaseClient<Database>,
   userId: string,
   interestId: string,
@@ -59,7 +59,7 @@ async function updateUserArticleScores(
   interestEmbeddings: number[],
   settings: GlobalSettings,
 ) {
-  const matches = await matchArticlesByEmbedding(
+  const matches = await matchStoriesByEmbedding(
     supabase,
     interestEmbeddings,
     settings.max_match_count,
@@ -67,24 +67,24 @@ async function updateUserArticleScores(
   );
   if (matches.length === 0) return;
 
-  const articles = await getGlobalArticlesByIds(
+  const stories = await getStoriesByIds(
     supabase,
     matches.map((m) => m.id),
   );
 
   const reranked = await rerankTexts(
     interestQuery,
-    articles.map((a) => a.global_article.title),
+    stories.map((s) => s.headline),
   );
 
-  const scores: UserArticleScore[] = reranked.map((r) => ({
+  const scores: UserStoryScore[] = reranked.map((r) => ({
     user_id: userId,
     interest_id: interestId,
-    article_id: articles[r.index].global_article.id,
+    story_id: stories[r.index].id,
     score: r.relevance_score,
   }));
 
-  await updateUserArticles(supabase, scores);
+  await updateUserStories(supabase, scores);
 }
 
 async function saveUserInterest(
@@ -94,7 +94,7 @@ async function saveUserInterest(
   settings: GlobalSettings,
 ) {
   const response = await insertUserInterest(supabase, userId, query);
-  await updateUserArticleScores(
+  await updateUserStoryScores(
     supabase,
     userId,
     response.interestId,
@@ -114,9 +114,9 @@ async function ViewSearchContent({ query }: { query?: string }) {
   const supabase = await createClient();
   const settings = await getGlobalSettings(supabase);
 
-  const [queryArticles, suggestions] = await Promise.all([
+  const [queryStories, suggestions] = await Promise.all([
     query
-      ? searchGlobalArticles(supabase, query, settings)
+      ? searchGlobalStories(supabase, query, settings)
       : Promise.resolve([]),
     query ? generateQuerySuggestions(query) : Promise.resolve([]),
   ]);
@@ -140,7 +140,7 @@ async function ViewSearchContent({ query }: { query?: string }) {
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
       <ViewSearch
-        queryArticles={queryArticles}
+        queryStories={queryStories}
         suggestions={suggestions}
         initialQuery={query ?? ""}
         handleSaveUserInterest={handleSaveUserInterest}
