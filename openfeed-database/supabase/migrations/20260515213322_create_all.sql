@@ -87,6 +87,7 @@ alter table "public"."global_share_links" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "headline" text not null,
     "summary" text not null,
+    "summary_embeddings" public.vector(512),
     "related_articles_urls" text[] not null default '{}'::text[],
     "score" double precision not null,
     "velocity" double precision not null,
@@ -96,19 +97,6 @@ alter table "public"."global_share_links" enable row level security;
 
 
 alter table "public"."global_stories" enable row level security;
-
-
-  create table "public"."user_articles" (
-    "user_id" uuid not null,
-    "interest_id" uuid not null,
-    "article_id" uuid not null,
-    "score" double precision not null,
-    "updated_at" timestamp with time zone not null default now(),
-    "is_read" boolean not null default false
-      );
-
-
-alter table "public"."user_articles" enable row level security;
 
 
   create table "public"."user_interests" (
@@ -132,6 +120,19 @@ alter table "public"."user_interests" enable row level security;
 
 
 alter table "public"."user_settings" enable row level security;
+
+
+  create table "public"."user_stories" (
+    "user_id" uuid not null,
+    "interest_id" uuid not null,
+    "story_id" uuid not null,
+    "score" double precision not null,
+    "updated_at" timestamp with time zone not null default now(),
+    "is_read" boolean not null default false
+      );
+
+
+alter table "public"."user_stories" enable row level security;
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
@@ -157,15 +158,15 @@ CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING b
 
 CREATE UNIQUE INDEX global_stories_pkey ON public.global_stories USING btree (id);
 
-CREATE UNIQUE INDEX user_articles_pkey ON public.user_articles USING btree (user_id, interest_id, article_id);
-
-CREATE INDEX user_articles_user_id_interest_id_score_idx ON public.user_articles USING btree (user_id, interest_id, score DESC);
-
 CREATE UNIQUE INDEX user_interests_pkey ON public.user_interests USING btree (id);
 
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
+
+CREATE UNIQUE INDEX user_stories_pkey ON public.user_stories USING btree (user_id, interest_id, story_id);
+
+CREATE INDEX user_stories_user_id_interest_id_score_idx ON public.user_stories USING btree (user_id, interest_id, score DESC);
 
 alter table "public"."global_articles" add constraint "global_articles_pkey" PRIMARY KEY using index "global_articles_pkey";
 
@@ -181,11 +182,11 @@ alter table "public"."global_share_links" add constraint "global_share_links_pke
 
 alter table "public"."global_stories" add constraint "global_stories_pkey" PRIMARY KEY using index "global_stories_pkey";
 
-alter table "public"."user_articles" add constraint "user_articles_pkey" PRIMARY KEY using index "user_articles_pkey";
-
 alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
+
+alter table "public"."user_stories" add constraint "user_stories_pkey" PRIMARY KEY using index "user_stories_pkey";
 
 alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) ON DELETE CASCADE not valid;
 
@@ -217,18 +218,6 @@ alter table "public"."global_share_links" add constraint "global_share_links_cre
 
 alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
 
-alter table "public"."user_articles" add constraint "user_articles_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_articles" validate constraint "user_articles_article_id_fkey";
-
-alter table "public"."user_articles" add constraint "user_articles_interest_id_fkey" FOREIGN KEY (interest_id) REFERENCES public.user_interests(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_articles" validate constraint "user_articles_interest_id_fkey";
-
-alter table "public"."user_articles" add constraint "user_articles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_articles" validate constraint "user_articles_user_id_fkey";
-
 alter table "public"."user_interests" add constraint "user_interests_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_interests" validate constraint "user_interests_user_id_fkey";
@@ -236,6 +225,18 @@ alter table "public"."user_interests" validate constraint "user_interests_user_i
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
+
+alter table "public"."user_stories" add constraint "user_stories_interest_id_fkey" FOREIGN KEY (interest_id) REFERENCES public.user_interests(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_stories" validate constraint "user_stories_interest_id_fkey";
+
+alter table "public"."user_stories" add constraint "user_stories_story_id_fkey" FOREIGN KEY (story_id) REFERENCES public.global_stories(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_stories" validate constraint "user_stories_story_id_fkey";
+
+alter table "public"."user_stories" add constraint "user_stories_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_stories" validate constraint "user_stories_user_id_fkey";
 
 set check_function_bodies = off;
 
@@ -259,6 +260,19 @@ AS $function$
   select id, title, summary, 1 - (summary_embeddings <=> query_embedding) as similarity
   from global_articles
   where (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
+  order by summary_embeddings <=> query_embedding
+  limit match_count;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.match_stories(query_embedding public.vector, match_count integer, min_similarity double precision)
+ RETURNS TABLE(id uuid, headline text, summary text, similarity double precision)
+ LANGUAGE sql
+AS $function$
+  select id, headline, summary, 1 - (summary_embeddings <=> query_embedding) as similarity
+  from global_stories
+  where summary_embeddings is not null
+    and (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
   order by summary_embeddings <=> query_embedding
   limit match_count;
 $function$
@@ -572,48 +586,6 @@ grant truncate on table "public"."global_stories" to "service_role";
 
 grant update on table "public"."global_stories" to "service_role";
 
-grant delete on table "public"."user_articles" to "anon";
-
-grant insert on table "public"."user_articles" to "anon";
-
-grant references on table "public"."user_articles" to "anon";
-
-grant select on table "public"."user_articles" to "anon";
-
-grant trigger on table "public"."user_articles" to "anon";
-
-grant truncate on table "public"."user_articles" to "anon";
-
-grant update on table "public"."user_articles" to "anon";
-
-grant delete on table "public"."user_articles" to "authenticated";
-
-grant insert on table "public"."user_articles" to "authenticated";
-
-grant references on table "public"."user_articles" to "authenticated";
-
-grant select on table "public"."user_articles" to "authenticated";
-
-grant trigger on table "public"."user_articles" to "authenticated";
-
-grant truncate on table "public"."user_articles" to "authenticated";
-
-grant update on table "public"."user_articles" to "authenticated";
-
-grant delete on table "public"."user_articles" to "service_role";
-
-grant insert on table "public"."user_articles" to "service_role";
-
-grant references on table "public"."user_articles" to "service_role";
-
-grant select on table "public"."user_articles" to "service_role";
-
-grant trigger on table "public"."user_articles" to "service_role";
-
-grant truncate on table "public"."user_articles" to "service_role";
-
-grant update on table "public"."user_articles" to "service_role";
-
 grant delete on table "public"."user_interests" to "anon";
 
 grant insert on table "public"."user_interests" to "anon";
@@ -698,6 +670,48 @@ grant truncate on table "public"."user_settings" to "service_role";
 
 grant update on table "public"."user_settings" to "service_role";
 
+grant delete on table "public"."user_stories" to "anon";
+
+grant insert on table "public"."user_stories" to "anon";
+
+grant references on table "public"."user_stories" to "anon";
+
+grant select on table "public"."user_stories" to "anon";
+
+grant trigger on table "public"."user_stories" to "anon";
+
+grant truncate on table "public"."user_stories" to "anon";
+
+grant update on table "public"."user_stories" to "anon";
+
+grant delete on table "public"."user_stories" to "authenticated";
+
+grant insert on table "public"."user_stories" to "authenticated";
+
+grant references on table "public"."user_stories" to "authenticated";
+
+grant select on table "public"."user_stories" to "authenticated";
+
+grant trigger on table "public"."user_stories" to "authenticated";
+
+grant truncate on table "public"."user_stories" to "authenticated";
+
+grant update on table "public"."user_stories" to "authenticated";
+
+grant delete on table "public"."user_stories" to "service_role";
+
+grant insert on table "public"."user_stories" to "service_role";
+
+grant references on table "public"."user_stories" to "service_role";
+
+grant select on table "public"."user_stories" to "service_role";
+
+grant trigger on table "public"."user_stories" to "service_role";
+
+grant truncate on table "public"."user_stories" to "service_role";
+
+grant update on table "public"."user_stories" to "service_role";
+
 
   create policy "global_articles_select_policy"
   on "public"."global_articles"
@@ -771,16 +785,6 @@ using (true);
 
 
 
-  create policy "Users can manage their own article scores"
-  on "public"."user_articles"
-  as permissive
-  for all
-  to public
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
-
-
-
   create policy "Users manage their own interests"
   on "public"."user_interests"
   as permissive
@@ -793,6 +797,16 @@ with check ((auth.uid() = user_id));
 
   create policy "Users can manage their own article scores"
   on "public"."user_settings"
+  as permissive
+  for all
+  to public
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
+  create policy "Users can manage their own story scores"
+  on "public"."user_stories"
   as permissive
   for all
   to public
