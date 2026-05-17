@@ -3,6 +3,16 @@ drop extension if exists "pg_cron";
 create extension if not exists "vector" with schema "public";
 
 
+  create table "public"."global_article_topics" (
+    "article_id" uuid not null,
+    "medtop_id" text not null,
+    "pass" smallint not null
+      );
+
+
+alter table "public"."global_article_topics" enable row level security;
+
+
   create table "public"."global_articles" (
     "id" uuid not null default gen_random_uuid(),
     "feed_title" text not null,
@@ -21,17 +31,6 @@ create extension if not exists "vector" with schema "public";
 alter table "public"."global_articles" enable row level security;
 
 
-  create table "public"."global_categories" (
-    "id" uuid not null default extensions.uuid_generate_v4(),
-    "name" text not null,
-    "interest_suggestions" jsonb not null default '[]'::jsonb,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."global_categories" enable row level security;
-
-
   create table "public"."global_emails" (
     "id" uuid not null default gen_random_uuid(),
     "email_text" text not null,
@@ -47,7 +46,6 @@ alter table "public"."global_emails" enable row level security;
     "title" text not null,
     "url" text not null,
     "description" text not null,
-    "category_id" uuid,
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -99,16 +97,13 @@ alter table "public"."global_share_links" enable row level security;
 alter table "public"."global_stories" enable row level security;
 
 
-  create table "public"."user_interests" (
-    "id" uuid not null default gen_random_uuid(),
-    "user_id" uuid not null,
-    "query" text not null,
-    "embeddings" public.vector(512) not null,
-    "created_at" timestamp with time zone not null default now()
+  create table "public"."global_story_topics" (
+    "story_id" uuid not null,
+    "medtop_id" text not null
       );
 
 
-alter table "public"."user_interests" enable row level security;
+alter table "public"."global_story_topics" enable row level security;
 
 
   create table "public"."user_settings" (
@@ -122,25 +117,31 @@ alter table "public"."user_interests" enable row level security;
 alter table "public"."user_settings" enable row level security;
 
 
-  create table "public"."user_stories" (
+  create table "public"."user_stories_hidden" (
     "user_id" uuid not null,
-    "interest_id" uuid not null,
     "story_id" uuid not null,
-    "score" double precision not null,
-    "updated_at" timestamp with time zone not null default now(),
-    "is_read" boolean not null default false
+    "created_at" timestamp with time zone not null default now()
       );
 
 
-alter table "public"."user_stories" enable row level security;
+alter table "public"."user_stories_hidden" enable row level security;
+
+
+  create table "public"."user_topic_preferences" (
+    "user_id" uuid not null,
+    "medtop_id" text not null,
+    "preference" text not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."user_topic_preferences" enable row level security;
+
+CREATE UNIQUE INDEX global_article_topics_pkey ON public.global_article_topics USING btree (article_id, medtop_id);
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
 CREATE UNIQUE INDEX global_articles_url_key ON public.global_articles USING btree (url);
-
-CREATE UNIQUE INDEX global_categories_name_key ON public.global_categories USING btree (name);
-
-CREATE UNIQUE INDEX global_categories_pkey ON public.global_categories USING btree (id);
 
 CREATE UNIQUE INDEX global_emails_pkey ON public.global_emails USING btree (id);
 
@@ -158,19 +159,19 @@ CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING b
 
 CREATE UNIQUE INDEX global_stories_pkey ON public.global_stories USING btree (id);
 
-CREATE UNIQUE INDEX user_interests_pkey ON public.user_interests USING btree (id);
+CREATE UNIQUE INDEX global_story_topics_pkey ON public.global_story_topics USING btree (story_id, medtop_id);
 
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
 
-CREATE UNIQUE INDEX user_stories_pkey ON public.user_stories USING btree (user_id, interest_id, story_id);
+CREATE UNIQUE INDEX user_stories_hidden_pkey ON public.user_stories_hidden USING btree (user_id, story_id);
 
-CREATE INDEX user_stories_user_id_interest_id_score_idx ON public.user_stories USING btree (user_id, interest_id, score DESC);
+CREATE UNIQUE INDEX user_topic_preferences_pkey ON public.user_topic_preferences USING btree (user_id, medtop_id);
+
+alter table "public"."global_article_topics" add constraint "global_article_topics_pkey" PRIMARY KEY using index "global_article_topics_pkey";
 
 alter table "public"."global_articles" add constraint "global_articles_pkey" PRIMARY KEY using index "global_articles_pkey";
-
-alter table "public"."global_categories" add constraint "global_categories_pkey" PRIMARY KEY using index "global_categories_pkey";
 
 alter table "public"."global_emails" add constraint "global_emails_pkey" PRIMARY KEY using index "global_emails_pkey";
 
@@ -182,23 +183,27 @@ alter table "public"."global_share_links" add constraint "global_share_links_pke
 
 alter table "public"."global_stories" add constraint "global_stories_pkey" PRIMARY KEY using index "global_stories_pkey";
 
-alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
+alter table "public"."global_story_topics" add constraint "global_story_topics_pkey" PRIMARY KEY using index "global_story_topics_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
 
-alter table "public"."user_stories" add constraint "user_stories_pkey" PRIMARY KEY using index "user_stories_pkey";
+alter table "public"."user_stories_hidden" add constraint "user_stories_hidden_pkey" PRIMARY KEY using index "user_stories_hidden_pkey";
+
+alter table "public"."user_topic_preferences" add constraint "user_topic_preferences_pkey" PRIMARY KEY using index "user_topic_preferences_pkey";
+
+alter table "public"."global_article_topics" add constraint "global_article_topics_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
+
+alter table "public"."global_article_topics" validate constraint "global_article_topics_article_id_fkey";
+
+alter table "public"."global_article_topics" add constraint "global_article_topics_pass_check" CHECK ((pass = ANY (ARRAY[1, 2]))) not valid;
+
+alter table "public"."global_article_topics" validate constraint "global_article_topics_pass_check";
 
 alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) ON DELETE CASCADE not valid;
 
 alter table "public"."global_articles" validate constraint "global_articles_feed_title_fkey";
 
 alter table "public"."global_articles" add constraint "global_articles_url_key" UNIQUE using index "global_articles_url_key";
-
-alter table "public"."global_categories" add constraint "global_categories_name_key" UNIQUE using index "global_categories_name_key";
-
-alter table "public"."global_feeds" add constraint "global_feeds_category_id_fkey" FOREIGN KEY (category_id) REFERENCES public.global_categories(id) not valid;
-
-alter table "public"."global_feeds" validate constraint "global_feeds_category_id_fkey";
 
 alter table "public"."global_feeds" add constraint "global_feeds_title_key" UNIQUE using index "global_feeds_title_key";
 
@@ -218,25 +223,29 @@ alter table "public"."global_share_links" add constraint "global_share_links_cre
 
 alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
 
-alter table "public"."user_interests" add constraint "user_interests_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+alter table "public"."global_story_topics" add constraint "global_story_topics_story_id_fkey" FOREIGN KEY (story_id) REFERENCES public.global_stories(id) ON DELETE CASCADE not valid;
 
-alter table "public"."user_interests" validate constraint "user_interests_user_id_fkey";
+alter table "public"."global_story_topics" validate constraint "global_story_topics_story_id_fkey";
 
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
 
-alter table "public"."user_stories" add constraint "user_stories_interest_id_fkey" FOREIGN KEY (interest_id) REFERENCES public.user_interests(id) ON DELETE CASCADE not valid;
+alter table "public"."user_stories_hidden" add constraint "user_stories_hidden_story_id_fkey" FOREIGN KEY (story_id) REFERENCES public.global_stories(id) ON DELETE CASCADE not valid;
 
-alter table "public"."user_stories" validate constraint "user_stories_interest_id_fkey";
+alter table "public"."user_stories_hidden" validate constraint "user_stories_hidden_story_id_fkey";
 
-alter table "public"."user_stories" add constraint "user_stories_story_id_fkey" FOREIGN KEY (story_id) REFERENCES public.global_stories(id) ON DELETE CASCADE not valid;
+alter table "public"."user_stories_hidden" add constraint "user_stories_hidden_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
-alter table "public"."user_stories" validate constraint "user_stories_story_id_fkey";
+alter table "public"."user_stories_hidden" validate constraint "user_stories_hidden_user_id_fkey";
 
-alter table "public"."user_stories" add constraint "user_stories_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+alter table "public"."user_topic_preferences" add constraint "user_topic_preferences_preference_check" CHECK ((preference = ANY (ARRAY['liked'::text, 'disliked'::text]))) not valid;
 
-alter table "public"."user_stories" validate constraint "user_stories_user_id_fkey";
+alter table "public"."user_topic_preferences" validate constraint "user_topic_preferences_preference_check";
+
+alter table "public"."user_topic_preferences" add constraint "user_topic_preferences_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_topic_preferences" validate constraint "user_topic_preferences_user_id_fkey";
 
 set check_function_bodies = off;
 
@@ -250,18 +259,6 @@ begin
     values (new.id);
     return new;
 end;
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.match_articles(query_embedding public.vector, match_count integer, min_similarity double precision)
- RETURNS TABLE(id uuid, title text, summary text, similarity double precision)
- LANGUAGE sql
-AS $function$
-  select id, title, summary, 1 - (summary_embeddings <=> query_embedding) as similarity
-  from global_articles
-  where (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
-  order by summary_embeddings <=> query_embedding
-  limit match_count;
 $function$
 ;
 
@@ -291,6 +288,48 @@ begin
 end;
 $function$
 ;
+
+grant delete on table "public"."global_article_topics" to "anon";
+
+grant insert on table "public"."global_article_topics" to "anon";
+
+grant references on table "public"."global_article_topics" to "anon";
+
+grant select on table "public"."global_article_topics" to "anon";
+
+grant trigger on table "public"."global_article_topics" to "anon";
+
+grant truncate on table "public"."global_article_topics" to "anon";
+
+grant update on table "public"."global_article_topics" to "anon";
+
+grant delete on table "public"."global_article_topics" to "authenticated";
+
+grant insert on table "public"."global_article_topics" to "authenticated";
+
+grant references on table "public"."global_article_topics" to "authenticated";
+
+grant select on table "public"."global_article_topics" to "authenticated";
+
+grant trigger on table "public"."global_article_topics" to "authenticated";
+
+grant truncate on table "public"."global_article_topics" to "authenticated";
+
+grant update on table "public"."global_article_topics" to "authenticated";
+
+grant delete on table "public"."global_article_topics" to "service_role";
+
+grant insert on table "public"."global_article_topics" to "service_role";
+
+grant references on table "public"."global_article_topics" to "service_role";
+
+grant select on table "public"."global_article_topics" to "service_role";
+
+grant trigger on table "public"."global_article_topics" to "service_role";
+
+grant truncate on table "public"."global_article_topics" to "service_role";
+
+grant update on table "public"."global_article_topics" to "service_role";
 
 grant delete on table "public"."global_articles" to "anon";
 
@@ -333,48 +372,6 @@ grant trigger on table "public"."global_articles" to "service_role";
 grant truncate on table "public"."global_articles" to "service_role";
 
 grant update on table "public"."global_articles" to "service_role";
-
-grant delete on table "public"."global_categories" to "anon";
-
-grant insert on table "public"."global_categories" to "anon";
-
-grant references on table "public"."global_categories" to "anon";
-
-grant select on table "public"."global_categories" to "anon";
-
-grant trigger on table "public"."global_categories" to "anon";
-
-grant truncate on table "public"."global_categories" to "anon";
-
-grant update on table "public"."global_categories" to "anon";
-
-grant delete on table "public"."global_categories" to "authenticated";
-
-grant insert on table "public"."global_categories" to "authenticated";
-
-grant references on table "public"."global_categories" to "authenticated";
-
-grant select on table "public"."global_categories" to "authenticated";
-
-grant trigger on table "public"."global_categories" to "authenticated";
-
-grant truncate on table "public"."global_categories" to "authenticated";
-
-grant update on table "public"."global_categories" to "authenticated";
-
-grant delete on table "public"."global_categories" to "service_role";
-
-grant insert on table "public"."global_categories" to "service_role";
-
-grant references on table "public"."global_categories" to "service_role";
-
-grant select on table "public"."global_categories" to "service_role";
-
-grant trigger on table "public"."global_categories" to "service_role";
-
-grant truncate on table "public"."global_categories" to "service_role";
-
-grant update on table "public"."global_categories" to "service_role";
 
 grant delete on table "public"."global_emails" to "anon";
 
@@ -586,47 +583,47 @@ grant truncate on table "public"."global_stories" to "service_role";
 
 grant update on table "public"."global_stories" to "service_role";
 
-grant delete on table "public"."user_interests" to "anon";
+grant delete on table "public"."global_story_topics" to "anon";
 
-grant insert on table "public"."user_interests" to "anon";
+grant insert on table "public"."global_story_topics" to "anon";
 
-grant references on table "public"."user_interests" to "anon";
+grant references on table "public"."global_story_topics" to "anon";
 
-grant select on table "public"."user_interests" to "anon";
+grant select on table "public"."global_story_topics" to "anon";
 
-grant trigger on table "public"."user_interests" to "anon";
+grant trigger on table "public"."global_story_topics" to "anon";
 
-grant truncate on table "public"."user_interests" to "anon";
+grant truncate on table "public"."global_story_topics" to "anon";
 
-grant update on table "public"."user_interests" to "anon";
+grant update on table "public"."global_story_topics" to "anon";
 
-grant delete on table "public"."user_interests" to "authenticated";
+grant delete on table "public"."global_story_topics" to "authenticated";
 
-grant insert on table "public"."user_interests" to "authenticated";
+grant insert on table "public"."global_story_topics" to "authenticated";
 
-grant references on table "public"."user_interests" to "authenticated";
+grant references on table "public"."global_story_topics" to "authenticated";
 
-grant select on table "public"."user_interests" to "authenticated";
+grant select on table "public"."global_story_topics" to "authenticated";
 
-grant trigger on table "public"."user_interests" to "authenticated";
+grant trigger on table "public"."global_story_topics" to "authenticated";
 
-grant truncate on table "public"."user_interests" to "authenticated";
+grant truncate on table "public"."global_story_topics" to "authenticated";
 
-grant update on table "public"."user_interests" to "authenticated";
+grant update on table "public"."global_story_topics" to "authenticated";
 
-grant delete on table "public"."user_interests" to "service_role";
+grant delete on table "public"."global_story_topics" to "service_role";
 
-grant insert on table "public"."user_interests" to "service_role";
+grant insert on table "public"."global_story_topics" to "service_role";
 
-grant references on table "public"."user_interests" to "service_role";
+grant references on table "public"."global_story_topics" to "service_role";
 
-grant select on table "public"."user_interests" to "service_role";
+grant select on table "public"."global_story_topics" to "service_role";
 
-grant trigger on table "public"."user_interests" to "service_role";
+grant trigger on table "public"."global_story_topics" to "service_role";
 
-grant truncate on table "public"."user_interests" to "service_role";
+grant truncate on table "public"."global_story_topics" to "service_role";
 
-grant update on table "public"."user_interests" to "service_role";
+grant update on table "public"."global_story_topics" to "service_role";
 
 grant delete on table "public"."user_settings" to "anon";
 
@@ -670,51 +667,93 @@ grant truncate on table "public"."user_settings" to "service_role";
 
 grant update on table "public"."user_settings" to "service_role";
 
-grant delete on table "public"."user_stories" to "anon";
+grant delete on table "public"."user_stories_hidden" to "anon";
 
-grant insert on table "public"."user_stories" to "anon";
+grant insert on table "public"."user_stories_hidden" to "anon";
 
-grant references on table "public"."user_stories" to "anon";
+grant references on table "public"."user_stories_hidden" to "anon";
 
-grant select on table "public"."user_stories" to "anon";
+grant select on table "public"."user_stories_hidden" to "anon";
 
-grant trigger on table "public"."user_stories" to "anon";
+grant trigger on table "public"."user_stories_hidden" to "anon";
 
-grant truncate on table "public"."user_stories" to "anon";
+grant truncate on table "public"."user_stories_hidden" to "anon";
 
-grant update on table "public"."user_stories" to "anon";
+grant update on table "public"."user_stories_hidden" to "anon";
 
-grant delete on table "public"."user_stories" to "authenticated";
+grant delete on table "public"."user_stories_hidden" to "authenticated";
 
-grant insert on table "public"."user_stories" to "authenticated";
+grant insert on table "public"."user_stories_hidden" to "authenticated";
 
-grant references on table "public"."user_stories" to "authenticated";
+grant references on table "public"."user_stories_hidden" to "authenticated";
 
-grant select on table "public"."user_stories" to "authenticated";
+grant select on table "public"."user_stories_hidden" to "authenticated";
 
-grant trigger on table "public"."user_stories" to "authenticated";
+grant trigger on table "public"."user_stories_hidden" to "authenticated";
 
-grant truncate on table "public"."user_stories" to "authenticated";
+grant truncate on table "public"."user_stories_hidden" to "authenticated";
 
-grant update on table "public"."user_stories" to "authenticated";
+grant update on table "public"."user_stories_hidden" to "authenticated";
 
-grant delete on table "public"."user_stories" to "service_role";
+grant delete on table "public"."user_stories_hidden" to "service_role";
 
-grant insert on table "public"."user_stories" to "service_role";
+grant insert on table "public"."user_stories_hidden" to "service_role";
 
-grant references on table "public"."user_stories" to "service_role";
+grant references on table "public"."user_stories_hidden" to "service_role";
 
-grant select on table "public"."user_stories" to "service_role";
+grant select on table "public"."user_stories_hidden" to "service_role";
 
-grant trigger on table "public"."user_stories" to "service_role";
+grant trigger on table "public"."user_stories_hidden" to "service_role";
 
-grant truncate on table "public"."user_stories" to "service_role";
+grant truncate on table "public"."user_stories_hidden" to "service_role";
 
-grant update on table "public"."user_stories" to "service_role";
+grant update on table "public"."user_stories_hidden" to "service_role";
+
+grant delete on table "public"."user_topic_preferences" to "anon";
+
+grant insert on table "public"."user_topic_preferences" to "anon";
+
+grant references on table "public"."user_topic_preferences" to "anon";
+
+grant select on table "public"."user_topic_preferences" to "anon";
+
+grant trigger on table "public"."user_topic_preferences" to "anon";
+
+grant truncate on table "public"."user_topic_preferences" to "anon";
+
+grant update on table "public"."user_topic_preferences" to "anon";
+
+grant delete on table "public"."user_topic_preferences" to "authenticated";
+
+grant insert on table "public"."user_topic_preferences" to "authenticated";
+
+grant references on table "public"."user_topic_preferences" to "authenticated";
+
+grant select on table "public"."user_topic_preferences" to "authenticated";
+
+grant trigger on table "public"."user_topic_preferences" to "authenticated";
+
+grant truncate on table "public"."user_topic_preferences" to "authenticated";
+
+grant update on table "public"."user_topic_preferences" to "authenticated";
+
+grant delete on table "public"."user_topic_preferences" to "service_role";
+
+grant insert on table "public"."user_topic_preferences" to "service_role";
+
+grant references on table "public"."user_topic_preferences" to "service_role";
+
+grant select on table "public"."user_topic_preferences" to "service_role";
+
+grant trigger on table "public"."user_topic_preferences" to "service_role";
+
+grant truncate on table "public"."user_topic_preferences" to "service_role";
+
+grant update on table "public"."user_topic_preferences" to "service_role";
 
 
-  create policy "global_articles_select_policy"
-  on "public"."global_articles"
+  create policy "global_article_topics_select_policy"
+  on "public"."global_article_topics"
   as permissive
   for select
   to anon, authenticated
@@ -722,8 +761,8 @@ using (true);
 
 
 
-  create policy "global_categories_select_policy"
-  on "public"."global_categories"
+  create policy "global_articles_select_policy"
+  on "public"."global_articles"
   as permissive
   for select
   to anon, authenticated
@@ -785,13 +824,12 @@ using (true);
 
 
 
-  create policy "Users manage their own interests"
-  on "public"."user_interests"
+  create policy "global_story_topics_select_policy"
+  on "public"."global_story_topics"
   as permissive
-  for all
-  to public
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
+  for select
+  to anon, authenticated
+using (true);
 
 
 
@@ -805,8 +843,18 @@ with check ((auth.uid() = user_id));
 
 
 
-  create policy "Users can manage their own story scores"
-  on "public"."user_stories"
+  create policy "Users manage their own hidden stories"
+  on "public"."user_stories_hidden"
+  as permissive
+  for all
+  to public
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
+  create policy "Users manage their own topic preferences"
+  on "public"."user_topic_preferences"
   as permissive
   for all
   to public
