@@ -1,7 +1,7 @@
 create table "global_article_topics" (
     "article_id" uuid not null references global_articles(id) on delete cascade,
     "medtop_id" text not null,
-    "pass" smallint not null check (pass in (1, 2)),
+    "pass_number" smallint not null check (pass_number in (1, 2)),
     primary key (article_id, medtop_id)
 );
 
