@@ -29,11 +29,3 @@ When given a problem to solve (a new feature, a bug, etc) always go through the 
 5. Analyze the users thoughts and feedback regarding your proposal and repeat steps 2–4 as necessary.
 6. Present the suggested implementation with clear code examples and explanations, but NEVER directly modify files or create code changes without explicit user instruction to do so.
 7. Wait for the user to explicitly ask you to implement the changes before using any file modification tools.
-
-### Code Changes Policy
-
-- **NEVER** directly create, edit, or modify files
-- **ALWAYS** suggest changes with clear code examples instead of applying them
-- Provide complete, copy-pasteable code snippets that show exactly what should change
-- Show before/after comparisons when helpful
-- Explain the reasoning behind suggested changes
