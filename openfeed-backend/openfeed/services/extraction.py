@@ -16,6 +16,8 @@ from openfeed.db.global_stories import (
     delete_all_stories,
     insert_stories,
 )
+from openfeed.db.global_article_topics import get_article_topics_for_articles
+from openfeed.db.global_story_topics import insert_story_topics
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +51,19 @@ def top_stories(db: Client):
         )
 
     all_stories = generated + rescored
+    story_articles: dict = {
+        story.id: articles
+        for story, articles in [
+            *zip(generated, new_clusters),
+            *zip(rescored, matched_clusters.values()),
+        ]
+    }
 
     delete_all_stories(db)
 
     if all_stories:
         insert_stories(db, all_stories)
+        _aggregate_and_insert_story_topics(db, story_articles, all_stories)
         insert_email(db, _generate_trending_news_email_section(all_stories))
 
     logger.info(
@@ -112,6 +122,32 @@ def _generate_story(
         image_url=image_url,
         created_at=now,
     )
+
+
+def _aggregate_and_insert_story_topics(
+    db: Client,
+    story_articles: dict,
+    all_stories: list[PublicGlobalStories],
+) -> None:
+    """Aggregate article-level IPTC topics into story-level topics and insert them.
+
+    Fetches all article topics in a single batch query, then aggregates per story
+    by taking the union of all constituent article topics.
+    """
+    all_article_ids = [
+        article.id for articles in story_articles.values() for article in articles
+    ]
+    article_topics = get_article_topics_for_articles(db, all_article_ids)
+
+    story_topic_map = {
+        story.id: {
+            medtop_id
+            for article in story_articles[story.id]
+            for medtop_id in article_topics.get(article.id, set())
+        }
+        for story in all_stories
+    }
+    insert_story_topics(db, story_topic_map)
 
 
 def _generate_trending_news_email_section(stories: list[PublicGlobalStories]) -> str:

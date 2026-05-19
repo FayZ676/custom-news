@@ -7,7 +7,6 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.auth import verify_api_key
 from openfeed.db.client import Client, client
-from openfeed.services.scoring import score_articles
 from openfeed.services.extraction import top_stories
 from openfeed.services.notifications import notify_users
 from openfeed.services.ingestion import fetch_articles, delete_old_articles
@@ -45,12 +44,12 @@ def _run_with_logging(name: str, fn, *args) -> None:
         logger.exception("Background task '%s' failed", name)
 
 
+# TODO: Break this up into separate endpoints.
 @app.post("/global/articles", status_code=202)
 def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     db = get_db()
     background_tasks.add_task(_run_with_logging, "fetch_articles", fetch_articles, db)
-    background_tasks.add_task(_run_with_logging, "score_articles", score_articles, db)
     background_tasks.add_task(_run_with_logging, "top_stories", top_stories, db)
     background_tasks.add_task(_run_with_logging, "notify_users", notify_users, db)
     return Response(status_code=202)
