@@ -5,8 +5,7 @@ create extension if not exists "vector" with schema "public";
 
   create table "public"."global_article_topics" (
     "article_id" uuid not null,
-    "medtop_id" text not null,
-    "pass_number" smallint not null
+    "medtop_id" text not null
       );
 
 
@@ -194,10 +193,6 @@ alter table "public"."user_topic_preferences" add constraint "user_topic_prefere
 alter table "public"."global_article_topics" add constraint "global_article_topics_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
 
 alter table "public"."global_article_topics" validate constraint "global_article_topics_article_id_fkey";
-
-alter table "public"."global_article_topics" add constraint "global_article_topics_pass_number_check" CHECK ((pass_number = ANY (ARRAY[1, 2]))) not valid;
-
-alter table "public"."global_article_topics" validate constraint "global_article_topics_pass_number_check";
 
 alter table "public"."global_articles" add constraint "global_articles_feed_title_fkey" FOREIGN KEY (feed_title) REFERENCES public.global_feeds(title) ON DELETE CASCADE not valid;
 

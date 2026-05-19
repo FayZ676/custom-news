@@ -17,7 +17,6 @@ def insert_article_topics(
         {
             "article_id": str(article_id),
             "medtop_id": t.medtop_id,
-            "pass_number": t.pass_number,
         }
         for t in topics
     ]

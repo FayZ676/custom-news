@@ -51,6 +51,21 @@ AuthOauthResponseType: TypeAlias = Literal["code"]
 AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 
 
+class PublicGlobalArticleTopics(BaseModel):
+    article_id: uuid.UUID = Field(alias="article_id")
+    medtop_id: str = Field(alias="medtop_id")
+
+
+class PublicGlobalArticleTopicsInsert(TypedDict):
+    article_id: Annotated[uuid.UUID, Field(alias="article_id")]
+    medtop_id: Annotated[str, Field(alias="medtop_id")]
+
+
+class PublicGlobalArticleTopicsUpdate(TypedDict):
+    article_id: NotRequired[Annotated[uuid.UUID, Field(alias="article_id")]]
+    medtop_id: NotRequired[Annotated[str, Field(alias="medtop_id")]]
+
+
 class PublicGlobalArticles(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
     feed_title: str = Field(alias="feed_title")
@@ -97,31 +112,6 @@ class PublicGlobalArticlesUpdate(TypedDict):
     url: NotRequired[Annotated[str, Field(alias="url")]]
 
 
-class PublicGlobalCategories(BaseModel):
-    created_at: datetime.datetime = Field(alias="created_at")
-    id: uuid.UUID = Field(alias="id")
-    interest_suggestions: Json[Any] = Field(alias="interest_suggestions")
-    name: str = Field(alias="name")
-
-
-class PublicGlobalCategoriesInsert(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    interest_suggestions: NotRequired[
-        Annotated[Json[Any], Field(alias="interest_suggestions")]
-    ]
-    name: Annotated[str, Field(alias="name")]
-
-
-class PublicGlobalCategoriesUpdate(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    interest_suggestions: NotRequired[
-        Annotated[Json[Any], Field(alias="interest_suggestions")]
-    ]
-    name: NotRequired[Annotated[str, Field(alias="name")]]
-
-
 class PublicGlobalEmails(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
     email_text: str = Field(alias="email_text")
@@ -141,7 +131,6 @@ class PublicGlobalEmailsUpdate(TypedDict):
 
 
 class PublicGlobalFeeds(BaseModel):
-    category_id: Optional[uuid.UUID] = Field(alias="category_id")
     created_at: datetime.datetime = Field(alias="created_at")
     description: str = Field(alias="description")
     id: uuid.UUID = Field(alias="id")
@@ -150,7 +139,6 @@ class PublicGlobalFeeds(BaseModel):
 
 
 class PublicGlobalFeedsInsert(TypedDict):
-    category_id: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="category_id")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     description: Annotated[str, Field(alias="description")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -159,7 +147,6 @@ class PublicGlobalFeedsInsert(TypedDict):
 
 
 class PublicGlobalFeedsUpdate(TypedDict):
-    category_id: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="category_id")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     description: NotRequired[Annotated[str, Field(alias="description")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
@@ -289,28 +276,19 @@ class PublicGlobalStoriesUpdate(TypedDict):
     velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
 
 
-class PublicUserInterests(BaseModel):
-    created_at: datetime.datetime = Field(alias="created_at")
-    embeddings: list[Any] = Field(alias="embeddings")
-    id: uuid.UUID = Field(alias="id")
-    query: str = Field(alias="query")
-    user_id: uuid.UUID = Field(alias="user_id")
+class PublicGlobalStoryTopics(BaseModel):
+    medtop_id: str = Field(alias="medtop_id")
+    story_id: uuid.UUID = Field(alias="story_id")
 
 
-class PublicUserInterestsInsert(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    embeddings: Annotated[list[Any], Field(alias="embeddings")]
-    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    query: Annotated[str, Field(alias="query")]
-    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
+class PublicGlobalStoryTopicsInsert(TypedDict):
+    medtop_id: Annotated[str, Field(alias="medtop_id")]
+    story_id: Annotated[uuid.UUID, Field(alias="story_id")]
 
 
-class PublicUserInterestsUpdate(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    embeddings: NotRequired[Annotated[list[Any], Field(alias="embeddings")]]
-    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    query: NotRequired[Annotated[str, Field(alias="query")]]
-    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
+class PublicGlobalStoryTopicsUpdate(TypedDict):
+    medtop_id: NotRequired[Annotated[str, Field(alias="medtop_id")]]
+    story_id: NotRequired[Annotated[uuid.UUID, Field(alias="story_id")]]
 
 
 class PublicUserSettings(BaseModel):
@@ -334,28 +312,40 @@ class PublicUserSettingsUpdate(TypedDict):
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
 
 
-class PublicUserStories(BaseModel):
-    interest_id: uuid.UUID = Field(alias="interest_id")
-    is_read: bool = Field(alias="is_read")
-    score: float = Field(alias="score")
+class PublicUserStoriesHidden(BaseModel):
+    created_at: datetime.datetime = Field(alias="created_at")
     story_id: uuid.UUID = Field(alias="story_id")
-    updated_at: datetime.datetime = Field(alias="updated_at")
     user_id: uuid.UUID = Field(alias="user_id")
 
 
-class PublicUserStoriesInsert(TypedDict):
-    interest_id: Annotated[uuid.UUID, Field(alias="interest_id")]
-    is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
-    score: Annotated[float, Field(alias="score")]
+class PublicUserStoriesHiddenInsert(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     story_id: Annotated[uuid.UUID, Field(alias="story_id")]
-    updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
     user_id: Annotated[uuid.UUID, Field(alias="user_id")]
 
 
-class PublicUserStoriesUpdate(TypedDict):
-    interest_id: NotRequired[Annotated[uuid.UUID, Field(alias="interest_id")]]
-    is_read: NotRequired[Annotated[bool, Field(alias="is_read")]]
-    score: NotRequired[Annotated[float, Field(alias="score")]]
+class PublicUserStoriesHiddenUpdate(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     story_id: NotRequired[Annotated[uuid.UUID, Field(alias="story_id")]]
-    updated_at: NotRequired[Annotated[datetime.datetime, Field(alias="updated_at")]]
+    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
+
+
+class PublicUserTopicPreferences(BaseModel):
+    created_at: datetime.datetime = Field(alias="created_at")
+    medtop_id: str = Field(alias="medtop_id")
+    preference: str = Field(alias="preference")
+    user_id: uuid.UUID = Field(alias="user_id")
+
+
+class PublicUserTopicPreferencesInsert(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    medtop_id: Annotated[str, Field(alias="medtop_id")]
+    preference: Annotated[str, Field(alias="preference")]
+    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
+
+
+class PublicUserTopicPreferencesUpdate(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    medtop_id: NotRequired[Annotated[str, Field(alias="medtop_id")]]
+    preference: NotRequired[Annotated[str, Field(alias="preference")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]

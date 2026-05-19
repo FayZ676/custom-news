@@ -60,7 +60,6 @@ class _Pass2Response(BaseModel):
 @dataclass(frozen=True)
 class ClassifiedTopic:
     medtop_id: str
-    pass_number: int  # 1 or 2
 
 
 def _run_pass1(
@@ -99,7 +98,7 @@ def _run_pass2(
             top_id,
         )
         return None
-    return ClassifiedTopic(medtop_id=result.medtop_id, pass_number=2)
+    return ClassifiedTopic(medtop_id=result.medtop_id)
 
 
 def classify_article(
@@ -119,7 +118,7 @@ def classify_article(
     if not top_ids:
         return []
 
-    pass1_topics = [ClassifiedTopic(medtop_id=mid, pass_number=1) for mid in top_ids]
+    pass1_topics = [ClassifiedTopic(medtop_id=mid) for mid in top_ids]
     pass2_topics = [
         topic
         for top_id in top_ids

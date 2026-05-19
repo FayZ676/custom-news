@@ -97,8 +97,8 @@ def test_classifier(taxonomy, classified, title):
     fixture, topics = classified[title]
     root_ids = set(get_root_ids(taxonomy))
 
-    pass1_ids = {t.medtop_id for t in topics if t.pass_number == 1}
-    pass2_topics = [t for t in topics if t.pass_number == 2]
+    pass1_ids = {t.medtop_id for t in topics if t.medtop_id in root_ids}
+    pass2_topics = [t for t in topics if t.medtop_id not in root_ids]
 
     assert all(
         mid in root_ids for mid in pass1_ids
