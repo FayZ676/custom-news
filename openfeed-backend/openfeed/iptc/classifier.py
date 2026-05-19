@@ -126,4 +126,8 @@ def classify_article(
         if (topic := _run_pass2(text, top_id, taxonomy, client)) is not None
     ]
 
-    return pass1_topics + pass2_topics
+    merged: dict[str, ClassifiedTopic] = {t.medtop_id: t for t in pass1_topics}
+    for t in pass2_topics:
+        merged[t.medtop_id] = t
+
+    return list(merged.values())

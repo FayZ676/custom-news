@@ -90,8 +90,6 @@ class Article(BaseModel):
 
     def __str__(self) -> str:
         parts = [self.title]
-        if self.description:
-            parts.append(self.description)
         if self.summary:
             parts.append(self.summary)
         return "\n\n".join(parts)
@@ -100,7 +98,7 @@ class Article(BaseModel):
         self,
         feed_title: str,
         metadata: ArticleMetadata,
-    ):
+    ) -> PublicGlobalArticles:
         return PublicGlobalArticles(
             published_at=self.published,
             feed_title=feed_title,

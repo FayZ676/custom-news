@@ -1,19 +1,25 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone, timedelta
 
 import pytimeparse
 
-from openfeed.db.client import Client
+from openfeed.db.client import Client, client
 from openfeed.db.global_articles import (
     insert_global_articles,
     get_global_article_urls,
     delete_global_articles,
 )
+from openfeed.db.global_article_topics import insert_article_topics
 from openfeed.models import Article
 from openfeed.ingestion import get_articles
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.preprocess import extract_article_metadata
 from openfeed.db.global_settings import get_global_settings
+from openfeed.iptc import taxonomy
+from openfeed.iptc.classifier import classify_article
+from openfeed.openai_client import openai_client
+from openfeed.database_models import PublicGlobalArticles
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +44,7 @@ def fetch_articles(db: Client):
     article_metadata = extract_article_metadata(
         [str(article) for _, article in unique_found_articles]
     )
-    articles = [
+    articles: list[PublicGlobalArticles] = [
         article.to_db_schema(feed_title, metadata)
         for (feed_title, article), metadata in zip(
             unique_found_articles, article_metadata
@@ -47,10 +53,32 @@ def fetch_articles(db: Client):
 
     if articles:
         insert_global_articles(db, articles)
+        _classify_and_insert_topics(articles)
 
     logger.info("Fetched and inserted %d new articles", len(articles))
 
     return articles
+
+
+def _classify_and_insert_topics(articles: list[PublicGlobalArticles]) -> None:
+    def _process(article: PublicGlobalArticles) -> None:
+        thread_db = client()
+        text = "\n\n".join(filter(None, [article.title, article.summary]))
+        topics = classify_article(text, taxonomy, openai_client)
+        insert_article_topics(thread_db, article.id, topics)
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {executor.submit(_process, article): article for article in articles}
+        for future in as_completed(futures):
+            article = futures[future]
+            try:
+                future.result()
+            except Exception:
+                logger.exception(
+                    "Classification failed for article %s (%r) — skipping topics",
+                    article.id,
+                    article.title,
+                )
 
 
 def delete_old_articles(db: Client):
@@ -65,3 +93,12 @@ def _parse_ttl(article_ttl: str) -> timedelta:
     if seconds is None:
         raise ValueError(f"Unable to parse TTL string: {article_ttl!r}")
     return timedelta(seconds=seconds)
+
+
+if __name__ == "__main__":
+    from openfeed.db.client import client
+    from openfeed.db.global_articles import get_global_articles
+
+    db = client()
+    articles = get_global_articles(db)
+    _classify_and_insert_topics(articles)

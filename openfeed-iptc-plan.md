@@ -3,6 +3,25 @@
 
 ---
 
+## Progress
+
+| #   | Task                                                                                                                    | Status |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1   | `openfeed/iptc/` subpackage — `taxonomy.py`, `classifier.py`, `scorer.py`, `__init__.py`                                | ✅ Done |
+| 2   | Tests — `test_iptc_taxonomy.py`, `test_iptc_classifier.py`, `test_iptc_scorer.py`                                       | ✅ Done |
+| 3   | Database schemas — `global_article_topics`, `global_story_topics`, `user_topic_preferences`, `user_stories_hidden`      | ✅ Done |
+| 4   | Schema cleanup — removed `global_categories`, `category_id` from `global_feeds`, updated seeds and `database_models.py` | ✅ Done |
+| 5   | Wire `classify_article` into `services/ingestion.py` (`fetch_articles`) and insert into `global_article_topics`         | ⬜ Todo |
+| 6   | Aggregate `global_article_topics` → `global_story_topics` in `services/ingestion.py` (`top_stories`)                    | ⬜ Todo |
+| 7   | Add DB query helpers — `insert_article_topics`, `insert_story_topics`, `get_story_topics`, `get_user_preferences`       | ⬜ Todo |
+| 8   | `POST /preferences/onboarding` and `POST /preferences/confirm` endpoints                                                | ⬜ Todo |
+| 9   | `POST /preferences/update` endpoint (settings re-onboarding)                                                            | ⬜ Todo |
+| 10  | `POST /stories/hide` endpoint                                                                                           | ⬜ Todo |
+| 11  | `GET /feed` endpoint — fetch stories + topics, score with `scorer.py`, return ranked list                               | ⬜ Todo |
+| 12  | Frontend — replace `user_interests` / `user_stories` UI with new onboarding + single feed                               | ⬜ Todo |
+
+---
+
 ## 1. Overview
 
 This document describes the full design for two interconnected systems:
@@ -19,7 +38,7 @@ This design **retires** the following existing systems:
 - `user_stories` table — pre-computed per-user scored feed is replaced by a live `GET /feed` endpoint
 - `score_articles` background task — the pgvector ANN search + cross-encoder reranking pipeline is no longer needed
 - The "My News" / "Trending News" tab split — there is now a single personalised feed per user
-
+- `global_categories` table and all associated code — manual feed grouping and `interest_suggestions` for onboarding are superseded by IPTC classification. Cascades to: `category_id` column on `global_feeds`; `lib/supabase/queries/global_categories.ts` and its call site in the frontend feed page; `GlobalCategory` model and `category_id` fields in `database_models.py`; seeds `seeds/shared/01_global_categories.sql` and `category_id` columns in `seeds/shared/02_global_feeds.sql`
 ---
 
 ## 2. The IPTC Media Topics Taxonomy
@@ -107,11 +126,13 @@ Every ingested article is classified using a **two-pass LLM pipeline**. Multi-la
 
 If Pass 1 returns two top-level topics, Pass 2 runs twice — once per branch — yielding two fine-grained tags.
 
+The prompts will end up getting quite large since we are populating them with the taxonomy. To save tokens, we should split them up into the parts that don't change and cache those, and then separately query with the text that we want to classify.
+
 ### Output
-All tags (both pass levels) are written to `article_topics`:
+All tags (both pass levels) are written to `global_article_topics`:
 
 ```
-article_topics
+global_article_topics
   article_id  — fk → global_articles
   medtop_id   — e.g. "medtop:20000588"
   pass        — 1 or 2
@@ -135,12 +156,12 @@ Pass 1 uses only the 17 root lines. Pass 2 uses only the relevant subtree.
 
 Stories are clusters of articles. Each story inherits a combined set of IPTC topic tags from its constituent articles.
 
-`global_stories` is **fully rebuilt on every pipeline cycle** — `delete_all_stories` wipes the table and stories are re-generated from the current article clusters. Since `story_topics` uses `on delete cascade`, story-level IPTC tags are also wiped and rebuilt each cycle. Article-level tags in `article_topics` persist alongside their articles and are re-read during each aggregation pass.
+`global_stories` is **fully rebuilt on every pipeline cycle** — `delete_all_stories` wipes the table and stories are re-generated from the current article clusters. Since `global_story_topics` uses `on delete cascade`, story-level IPTC tags are also wiped and rebuilt each cycle. Article-level tags in `global_article_topics` persist alongside their articles and are re-read during each aggregation pass.
 
-When stories are inserted, the backend aggregates all `article_topics` rows for each story's constituent articles and writes deduplicated tags to `story_topics`:
+When stories are inserted, the backend aggregates all `global_article_topics` rows for each story's constituent articles and writes deduplicated tags to `global_story_topics`:
 
 ```
-story_topics
+global_story_topics
   story_id    — fk → global_stories, on delete cascade
   medtop_id   — aggregated from constituent articles
 ```
@@ -199,7 +220,7 @@ Thumbs-down and settings changes do **not** trigger a re-fetch. They write to th
 
 ### How `GET /feed` works
 The endpoint:
-1. Fetches all current `global_stories` with their `story_topics` tags, excluding any in `user_stories_hidden` for the requesting user
+1. Fetches all current `global_stories` with their `global_story_topics` tags, excluding any in `user_stories_hidden` for the requesting user
 2. Fetches the user's full `user_topic_preferences` profile
 3. Scores each story in Python using the in-memory taxonomy
 4. Returns stories sorted by `final_score` descending, top N
@@ -263,7 +284,7 @@ When a story is deleted from `global_stories`, its row in `user_stories_hidden` 
 
 ```sql
 -- Article-level topic tags (from classification pipeline)
-create table article_topics (
+create table global_article_topics (
   article_id  uuid references global_articles(id) on delete cascade,
   medtop_id   text not null,
   pass        smallint not null check (pass in (1, 2)),
@@ -271,7 +292,7 @@ create table article_topics (
 );
 
 -- Story-level topic tags (aggregated from articles, rebuilt each pipeline cycle)
-create table story_topics (
+create table global_story_topics (
   story_id    uuid references global_stories(id) on delete cascade,
   medtop_id   text not null,
   primary key (story_id, medtop_id)
@@ -303,6 +324,10 @@ drop table user_interests;
 
 -- Removed: pre-computed per-user scored feed
 drop table user_stories;
+
+-- Removed: manual feed categorisation (superseded by IPTC classification)
+alter table global_feeds drop column category_id;
+drop table global_categories;
 ```
 
 ---
@@ -319,7 +344,7 @@ drop table user_stories;
 
 The existing `POST /global/articles` pipeline chain becomes:
 ```
-fetch_articles (+ IPTC classification) → score_articles (removed) → top_stories (+ story_topics aggregation) → notify_users
+fetch_articles (+ IPTC classification) → score_articles (removed) → top_stories (+ global_story_topics aggregation) → notify_users
 ```
 
 ---
