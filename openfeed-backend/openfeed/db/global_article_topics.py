@@ -1,6 +1,15 @@
+from itertools import islice
 from uuid import UUID
 
 from openfeed.db.client import Client
+
+_CHUNK_SIZE = 100
+
+
+def _chunked(iterable, size):
+    it = iter(iterable)
+    while chunk := list(islice(it, size)):
+        yield chunk
 
 
 def insert_article_topics(
@@ -33,14 +42,15 @@ def get_article_topics_for_articles(
     if not article_ids:
         return {}
 
-    response = (
-        db.table("global_article_topics")
-        .select("article_id, medtop_id")
-        .in_("article_id", [str(aid) for aid in article_ids])
-        .execute()
-    )
     result: dict[UUID, set[str]] = {}
-    for row in response.data:
-        aid = UUID(row["article_id"])
-        result.setdefault(aid, set()).add(row["medtop_id"])
+    for chunk in _chunked(article_ids, _CHUNK_SIZE):
+        response = (
+            db.table("global_article_topics")
+            .select("article_id, medtop_id")
+            .in_("article_id", [str(aid) for aid in chunk])
+            .execute()
+        )
+        for row in response.data:
+            aid = UUID(row["article_id"])
+            result.setdefault(aid, set()).add(row["medtop_id"])
     return result

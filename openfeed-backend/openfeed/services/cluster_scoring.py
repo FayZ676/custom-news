@@ -8,6 +8,16 @@ from openfeed.database_models import PublicGlobalArticles
 # Half-life as a fraction of the clustering window (50% → same decay shape regardless of window size)
 _HALF_LIFE_FRACTION: float = 0.5
 
+# Maximum fraction of the remaining headroom (1 - mean_sig) that full coverage
+# can add. Significance is always the floor — coverage can only push the score
+# upward toward 1.0, never drag it down.
+_COVERAGE_WEIGHT: float = 0.2
+
+# Article count at which the coverage bonus is considered saturated (scores ≥ this
+# count are treated as equivalent). Prevents a flood of low-quality articles from
+# inflating the score beyond what a genuinely well-covered story deserves.
+_COVERAGE_MAX_ARTICLES: int = 20
+
 
 class ClusterScore(BaseModel):
     score: float
@@ -20,23 +30,12 @@ def score_cluster(
     window_hours: float,
 ) -> ClusterScore:
     """
-    Cluster significance = mean(significance_score) * log(1 + size)
-
-    - mean(significance_score): quality signal per article, assigned at ingestion.
-    - log(1 + size):            coverage signal — how many sources picked this up?
+    Score  = mean_sig + (1 - mean_sig) × w_c × normalised_coverage  → [0, 1]
+    Significance is the floor; coverage can only push the score upward.
 
     Velocity = mean(decay_weight) - neutral_baseline
-
-    Each article is weighted by e^(-λ * age_hours), where λ = log(2) / half_life.
-    The half-life is half the clustering window, so the decay shape is consistent
-    regardless of the configured window size.
-
-    Subtracting the neutral baseline (expected mean weight for articles spread
-    uniformly over the window) centres the signal at zero:
-
-      > 0  articles front-loaded toward now  → story is breaking / rising
-      ≈ 0  articles uniformly spread         → story is steady
-      < 0  articles back-loaded toward window edge → story is fading
+    Positive when articles are front-loaded toward now (breaking/rising),
+    negative when back-loaded toward the window edge (fading).
     """
     if not articles:
         return ClusterScore(score=0.0, velocity=0.0)
@@ -44,7 +43,14 @@ def score_cluster(
     scores = [
         a.significance_score for a in articles if a.significance_score is not None
     ]
-    score = (sum(scores) / len(scores)) * math.log(1 + len(scores)) if scores else 0.0
+    if scores:
+        mean_sig = sum(scores) / len(scores)
+        normalised_coverage = math.log(1 + len(scores)) / math.log(
+            1 + _COVERAGE_MAX_ARTICLES
+        )
+        score = mean_sig + (1 - mean_sig) * _COVERAGE_WEIGHT * normalised_coverage
+    else:
+        score = 0.0
 
     decay = math.log(2) / (window_hours * _HALF_LIFE_FRACTION)
     neutral_baseline = (1 - math.exp(-decay * window_hours)) / (decay * window_hours)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from openfeed.db.client import Client
-from openfeed.db.utils import paginated_query
+from openfeed.db.utils import decode_embeddings, paginated_query
 from openfeed.database_models import PublicGlobalStories
 
 
@@ -21,7 +21,7 @@ def insert_stories(db: Client, stories: list[PublicGlobalStories]):
 def get_stories(db: Client) -> list[PublicGlobalStories]:
     return [
         PublicGlobalStories.model_validate(r)
-        for page in paginated_query(db, "global_stories")
+        for page in paginated_query(db, "global_stories", transform=decode_embeddings)
         for r in page
     ]
 

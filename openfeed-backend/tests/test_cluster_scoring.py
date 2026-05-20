@@ -37,18 +37,8 @@ def _make_articles(
 _WINDOW_HOURS = 72.0
 
 
-def test__score_cluster_larger_cluster_scores_higher():
-    now = datetime.datetime.now(timezone.utc)
-    small = _make_articles(2, now)
-    large = _make_articles(10, now)
-
-    assert (
-        score_cluster(large, now, _WINDOW_HOURS).score
-        > score_cluster(small, now, _WINDOW_HOURS).score
-    )
-
-
 def test__score_cluster_higher_significance_scores_higher():
+    """Higher per-article significance should score higher, all else equal."""
     now = datetime.datetime.now(timezone.utc)
     high = _make_articles(5, now, significance_score=0.9)
     low = _make_articles(5, now, significance_score=0.2)
@@ -57,6 +47,40 @@ def test__score_cluster_higher_significance_scores_higher():
         score_cluster(high, now, _WINDOW_HOURS).score
         > score_cluster(low, now, _WINDOW_HOURS).score
     )
+
+
+def test__score_cluster_score_bounded_between_zero_and_one():
+    """Score must always sit in [0, 1] regardless of cluster size or significance."""
+    now = datetime.datetime.now(timezone.utc)
+    for n in [1, 5, 20, 100]:
+        for sig in [0.0, 0.5, 1.0]:
+            result = score_cluster(_make_articles(n, now, sig), now, _WINDOW_HOURS)
+            assert (
+                0.0 <= result.score <= 1.0
+            ), f"score {result.score} out of bounds for n={n}, sig={sig}"
+
+
+def test__score_cluster_high_significance_single_article_beats_low_significance_flood():
+    """A highly significant breaking story with one source should outrank a
+    mediocre story that happened to get picked up by many outlets.
+    """
+    now = datetime.datetime.now(timezone.utc)
+    important = _make_articles(1, now, significance_score=0.8)
+    noise = _make_articles(20, now, significance_score=0.3)
+
+    assert (
+        score_cluster(important, now, _WINDOW_HOURS).score
+        > score_cluster(noise, now, _WINDOW_HOURS).score
+    )
+
+
+def test__score_cluster_coverage_never_lowers_score():
+    """Adding more articles to a cluster should never decrease its score."""
+    now = datetime.datetime.now(timezone.utc)
+    for sig in [0.0, 0.5, 1.0]:
+        one = score_cluster(_make_articles(1, now, sig), now, _WINDOW_HOURS).score
+        many = score_cluster(_make_articles(10, now, sig), now, _WINDOW_HOURS).score
+        assert many >= one, f"score dropped from {one} to {many} for sig={sig}"
 
 
 def test__score_cluster_empty_articles_returns_zero():
@@ -81,14 +105,3 @@ def test__score_cluster_fading_story_has_negative_velocity():
     articles = _make_articles(5, now - timedelta(hours=71))
 
     assert score_cluster(articles, now, _WINDOW_HOURS).velocity < 0.0
-
-
-def test__score_cluster_velocity_breaking_greater_than_fading():
-    now = datetime.datetime.now(timezone.utc)
-    breaking = _make_articles(5, now)
-    fading = _make_articles(5, now - timedelta(hours=71))
-
-    assert (
-        score_cluster(breaking, now, _WINDOW_HOURS).velocity
-        > score_cluster(fading, now, _WINDOW_HOURS).velocity
-    )
