@@ -1,22 +1,30 @@
-from datetime import datetime, timezone
+import re
+from uuid import UUID
 from itertools import combinations
 from typing import Callable
-from uuid import UUID
+from datetime import datetime, timezone
 
-from scipy.sparse import csr_matrix
-from scipy.sparse.csgraph import connected_components
+import nltk
+from nltk.corpus import stopwords as _nltk_stopwords
+
 
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.utils.bayesian import Belief, Likelihood, update_all
 from openfeed.utils.math import cosine_similarity as _cosine_similarity
 
 
+nltk.download("stopwords", quiet=True)
+
+
 # Base rate: fraction of article pairs that describe the same event.
 # Low because articles span many unrelated topics.
 PRIOR: Belief = {  ## TODO: Verify and/or tune these values
-    "same_event": 0.03,
-    "diff_event": 0.97,
+    "same_event": 0.30,
+    "diff_event": 0.70,
 }
+
+
+_STOPWORDS: frozenset[str] = frozenset(_nltk_stopwords.words("english"))
 
 
 # ---------------------------------------------------------------------------
@@ -38,6 +46,24 @@ def _hours_between(a: datetime, b: datetime) -> float:
 
 def _normalized_entities(article: PublicGlobalArticles) -> frozenset[str]:
     return frozenset(e.lower().strip() for e in article.summary_entities)
+
+
+def _keyword_tokens(article: PublicGlobalArticles) -> frozenset[str]:
+    """Lowercase word tokens from title + summary, stopwords removed."""
+    text = " ".join(filter(None, [article.title, article.summary]))
+    tokens = re.findall(r"[a-z]{3,}", text.lower())
+    return frozenset(t for t in tokens if t not in _STOPWORDS)
+
+
+def _overlap_coefficient(a: frozenset[str], b: frozenset[str]) -> float:
+    """Overlap coefficient: |A∩B| / min(|A|, |B|).
+
+    Preferred over Jaccard for short-vs-long text pairs because it doesn't
+    penalise a short headline that is a topical subset of a longer article.
+    """
+    if not a or not b:
+        return 0.0
+    return len(a & b) / min(len(a), len(b))
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +107,23 @@ def _entity_likelihood(jaccard: float) -> Likelihood:
     return lambda hypothesis: rates[hypothesis]
 
 
+def _keyword_likelihood(overlap: float) -> Likelihood:
+    if overlap > 0.40:
+        bucket = "high"
+    elif overlap > 0.15:
+        bucket = "mid"
+    else:
+        bucket = "low"
+
+    rates = {
+        "high": {"same_event": 0.80, "diff_event": 0.15},
+        "mid": {"same_event": 0.45, "diff_event": 0.30},
+        "low": {"same_event": 0.10, "diff_event": 0.65},
+    }[bucket]
+
+    return lambda hypothesis: rates[hypothesis]
+
+
 def _time_likelihood(hours: float) -> Likelihood:
     if hours < 6:
         bucket = "close"
@@ -115,11 +158,22 @@ def score_pair(a: PublicGlobalArticles, b: PublicGlobalArticles) -> float:
         _embedding_likelihood(
             _cosine_similarity(a.summary_embeddings, b.summary_embeddings)
         ),
-        _entity_likelihood(
-            _jaccard_similarity(_normalized_entities(a), _normalized_entities(b))
+        _keyword_likelihood(
+            _overlap_coefficient(_keyword_tokens(a), _keyword_tokens(b))
         ),
         _time_likelihood(_hours_between(a.published_at, b.published_at)),
     ]
+
+    entities_a = _normalized_entities(a)
+    entities_b = _normalized_entities(b)
+
+    # Only apply entity signal when both articles have extracted entities.
+    # Absence of entity data is missing information, not evidence against a match.
+    if entities_a and entities_b:
+        likelihoods.append(
+            _entity_likelihood(_jaccard_similarity(entities_a, entities_b))
+        )
+
     return update_all(PRIOR, likelihoods)["same_event"]
 
 
@@ -130,7 +184,7 @@ def score_pair(a: PublicGlobalArticles, b: PublicGlobalArticles) -> float:
 
 def cluster_articles(
     articles: list[PublicGlobalArticles],
-    threshold: float = 0.35,
+    threshold: float = 0.30,
     pair_scorer: Callable[
         [PublicGlobalArticles, PublicGlobalArticles], float
     ] = score_pair,
@@ -148,29 +202,36 @@ def cluster_articles(
     if len(articles) < 2:
         return []
 
-    candidates = list(combinations(articles, 2))
-    id_to_idx = {a.id: i for i, a in enumerate(articles)}
-    n = len(articles)
+    # Pre-compute all pair scores once.
+    scores: dict[tuple[UUID, UUID], float] = {}
+    for a, b in combinations(articles, 2):
+        s = pair_scorer(a, b)
+        scores[(a.id, b.id)] = s
+        scores[(b.id, a.id)] = s
 
-    rows: list[int] = []
-    cols: list[int] = []
-    for a, b in candidates:
-        if pair_scorer(a, b) >= threshold:
-            i, j = id_to_idx[a.id], id_to_idx[b.id]
-            rows.extend([i, j])
-            cols.extend([j, i])
+    def _all_pairs_exceed_threshold(
+        candidate: PublicGlobalArticles,
+        cluster: list[PublicGlobalArticles],
+    ) -> bool:
+        """Complete-linkage check: candidate must score >= threshold against
+        every existing member of the cluster, not just one."""
+        return all(
+            scores.get((candidate.id, member.id), 0.0) >= threshold
+            for member in cluster
+        )
 
-    adjacency = csr_matrix(
-        ([1] * len(rows), (rows, cols)) if rows else ([], ([], [])),
-        shape=(n, n),
-    )
-    _n_components, labels = connected_components(adjacency, directed=False)
+    clusters: list[list[PublicGlobalArticles]] = []
+    for article in articles:
+        merged = False
+        for cluster in clusters:
+            if _all_pairs_exceed_threshold(article, cluster):
+                cluster.append(article)
+                merged = True
+                break
+        if not merged:
+            clusters.append([article])
 
-    clusters: dict[int, list[PublicGlobalArticles]] = {}
-    for article, label in zip(articles, labels):
-        clusters.setdefault(label, []).append(article)
-
-    return list(clusters.values())
+    return clusters
 
 
 def deduplicate_clusters(
