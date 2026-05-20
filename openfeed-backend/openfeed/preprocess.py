@@ -11,14 +11,11 @@ def extract_article_metadata(
         prompt = f"""Your task is to extract the key named entities, write a summary, and score the newsworthiness of this article.
 
 Steps:
-1. Identify the core subject or story in one sentence.
-2. Extract only the specific named entities central to that story — including but not limited to named people, organizations, products, technologies, places, or events.
-3. Prefer the most specific entity over its parent when it IS the story. Extract "GitHub Copilot" not "Microsoft". Extract "GPT-Rosalind" not "OpenAI" (unless OpenAI itself is the story).
-4. For roundup or list-style articles (security bulletins, weekly digests, "best of" lists, release changelogs), do NOT extract every item in the list. Instead extract only the subject of the roundup itself — e.g. for a security update bulletin covering many Linux packages, extract the distributions ("Debian", "Ubuntu", "Red Hat") but not the individual packages.
-5. Limit yourself to the 3–7 most central entities. If you find yourself extracting more than 7, you are likely including peripheral or list items — revisit and trim.
-6. Return an empty list if no specific named entities are present.
-7. Write a 1 sentence summary focused on the specific event, development, or situation at the core of the article. Use precise, concrete language — name the key entities, describe what happened or changed, and avoid filler phrases. Do NOT use meta-framing like "The article discusses" or "This piece covers" — write the summary directly. This summary should maximally distinguish the article's topic from other articles on related subjects.
-8. Score the article's newsworthiness and societal importance on a scale from 0.0 to 1.0 based on:
+1. Extract only **proper noun** named entities central to the story — named people, organizations, products, technologies, places, or named events. Each entity must be 1–3 words. Do NOT extract descriptive phrases, categories, statistics, or generic business terms (e.g. do NOT extract "AI chip industry", "sales forecast", "8,000 job cuts" — these are descriptions, not entities). Return an empty list if no proper noun entities are present.
+2. Always use the canonical short-form name for well-known entities, regardless of how the article refers to them. Use "Meta" not "Meta Platforms Inc." or "Facebook". Use "Nvidia" not "Nvidia Corp." or "NVDA". Use "Google" not "Alphabet" (unless the story is specifically about Alphabet). Use full names for people: "Elon Musk" not "Musk". Prefer the most specific entity over its parent when it IS the story — extract "GitHub Copilot" not "Microsoft".
+3. Limit yourself to the 3–7 most central entities. For roundup or list-style articles (security bulletins, weekly digests, "best of" lists), extract only the subject of the roundup — not every item within it.
+4. Write a 1 sentence summary focused on the specific event, development, or situation at the core of the article. Name the key entities, describe what happened or changed, and avoid filler phrases. Do NOT use meta-framing like "The article discusses" or "This piece covers". This summary should maximally distinguish the article's topic from other articles on related subjects.
+5. Score the article's newsworthiness and societal importance on a scale from 0.0 to 1.0 based on:
    - **Broad impact**: Does this affect a large number of people or industries?
    - **Significance**: Is this a major development, breakthrough, or decision with lasting consequences?
    - **Novelty**: Is this genuinely new and noteworthy, not routine or recurring?
