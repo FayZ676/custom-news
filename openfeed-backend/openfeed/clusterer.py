@@ -1,4 +1,3 @@
-import math
 from datetime import datetime, timezone
 from itertools import combinations
 from typing import Callable
@@ -9,6 +8,7 @@ from scipy.sparse.csgraph import connected_components
 
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.utils.bayesian import Belief, Likelihood, update_all
+from openfeed.utils.math import cosine_similarity as _cosine_similarity
 
 
 # Base rate: fraction of article pairs that describe the same event.
@@ -22,15 +22,6 @@ PRIOR: Belief = {  ## TODO: Verify and/or tune these values
 # ---------------------------------------------------------------------------
 # Feature extractors — pure functions on article fields
 # ---------------------------------------------------------------------------
-
-
-def _cosine_similarity(a: list[float], b: list[float]) -> float:
-    dot = sum(x * y for x, y in zip(a, b))
-    mag_a = math.sqrt(sum(x * x for x in a))
-    mag_b = math.sqrt(sum(y * y for y in b))
-    if mag_a == 0 or mag_b == 0:
-        return 0.0
-    return dot / (mag_a * mag_b)
 
 
 def _jaccard_similarity(a: frozenset[str], b: frozenset[str]) -> float:

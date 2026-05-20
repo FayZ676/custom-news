@@ -1,13 +1,12 @@
 from uuid import UUID
 
 from openfeed.db.client import Client
-from openfeed.iptc.classifier import ClassifiedTopic
 
 
 def insert_article_topics(
     db: Client,
     article_id: UUID,
-    topics: list[ClassifiedTopic],
+    topics: list[str],
 ) -> None:
     """Insert classified IPTC topics for a single article into global_article_topics."""
     if not topics:
@@ -16,7 +15,7 @@ def insert_article_topics(
     rows = [
         {
             "article_id": str(article_id),
-            "medtop_id": t.medtop_id,
+            "medtop_id": t,
         }
         for t in topics
     ]

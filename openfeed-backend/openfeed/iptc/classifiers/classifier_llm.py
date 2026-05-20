@@ -1,5 +1,6 @@
+"""LLM-based IPTC classifier (two-pass GPT pipeline)."""
+
 import logging
-from dataclasses import dataclass
 
 from pydantic import BaseModel, field_validator
 
@@ -57,11 +58,6 @@ class _Pass2Response(BaseModel):
     medtop_id: str
 
 
-@dataclass(frozen=True)
-class ClassifiedTopic:
-    medtop_id: str
-
-
 def _run_pass1(
     text: str,
     taxonomy: Taxonomy,
@@ -84,7 +80,7 @@ def _run_pass2(
     top_id: str,
     taxonomy: Taxonomy,
     client: OpenAIClient,
-) -> ClassifiedTopic | None:
+) -> str | None:
     """Call Pass 2 for one branch: return the most specific topic, or None."""
     prompt = _PASS2_PROMPT.format(
         tree=render_prompt_tree(get_subtree(top_id, taxonomy), taxonomy),
@@ -98,35 +94,34 @@ def _run_pass2(
             top_id,
         )
         return None
-    return ClassifiedTopic(medtop_id=result.medtop_id)
+    return result.medtop_id
 
 
-def classify_article(
+def classify_article_llm(
     text: str,
     taxonomy: Taxonomy,
     client: OpenAIClient,
-) -> list[ClassifiedTopic]:
+) -> list[str]:
     """Classify an article using a two-pass LLM pipeline.
 
     Pass 1 (gpt-5.4-nano): identifies all applicable top-level IPTC categories.
     Pass 2 (gpt-5.4):      for each top-level result, finds the most specific
                            matching term within that branch.
 
-    Returns a flat list of ClassifiedTopic tagged with their pass number.
+    Returns a flat list of ClassifiedTopic, one per admitted branch.
     """
     top_ids = _run_pass1(text, taxonomy, client)
     if not top_ids:
         return []
 
-    pass1_topics = [ClassifiedTopic(medtop_id=mid) for mid in top_ids]
     pass2_topics = [
-        topic
+        t
         for top_id in top_ids
-        if (topic := _run_pass2(text, top_id, taxonomy, client)) is not None
+        if (t := _run_pass2(text, top_id, taxonomy, client)) is not None
     ]
 
-    merged: dict[str, ClassifiedTopic] = {t.medtop_id: t for t in pass1_topics}
+    merged: dict[str, str] = {mid: mid for mid in top_ids}
     for t in pass2_topics:
-        merged[t.medtop_id] = t
+        merged[t] = t
 
     return list(merged.values())

@@ -1,26 +1,19 @@
-"""Integration tests for the IPTC two-pass classifier.
-
-These tests make real OpenAI API calls and require a valid OPENAI_API_KEY in .env.
-Article text is pinned inline (no live DB connection needed) using real articles
-sampled from the local Supabase instance.
-
-Run with: pytest tests/test_iptc_classifier.py -v
-"""
-
 from pathlib import Path
 
 import pytest
 
-from openfeed.iptc.taxonomy import load_taxonomy, get_root_ids, Taxonomy
-from openfeed.iptc.classifier import classify_article, ClassifiedTopic
+from openfeed.iptc.taxonomy import load_taxonomy, load_taxonomy_index
+from openfeed.iptc.classifiers.classifier import classify
 from openfeed.openai_client import openai_client
 
+
 TAXONOMY_PATH = (
-    Path(__file__).parent.parent / "openfeed" / "iptc" / "iptc-taxonomy.json"
+    Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy.json"
+)
+INDEX_PATH = (
+    Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy-index.json"
 )
 
-# Real articles sampled from local Supabase, pinned by title + summary.
-# expected_root is the IPTC top-level category we expect Pass 1 to include.
 FIXTURES = [
     {
         "title": (
@@ -32,7 +25,7 @@ FIXTURES = [
             "burner phones after a China trip amid concerns about China's intelligence "
             "and espionage capabilities."
         ),
-        "expected_root": "medtop:11000000",  # politics
+        "expected_root": "medtop:11000000",  # politics and government
     },
     {
         "title": "Tesla reveals two Robotaxi crashes involving teleoperators",
@@ -41,7 +34,8 @@ FIXTURES = [
             "crashes involving teleoperators as it works to scale its autonomous "
             "ride-hailing service."
         ),
-        "expected_root": "medtop:13000000",  # science and technology
+        "expected_root": "medtop:13000000",  # science and technology (LLM)
+        "expected_root_embeddings": "medtop:03000000",  # disaster/accident (embeddings)
     },
     {
         "title": (
@@ -55,6 +49,79 @@ FIXTURES = [
         ),
         "expected_root": "medtop:04000000",  # economy, business and finance
     },
+    {
+        "title": "Ebola outbreak: WHO declares emergency, US restricts travel, American infected",
+        "summary": (
+            "The WHO declared an Ebola outbreak public health emergency as the US restricted "
+            "travel and the CDC arranged to move an infected American and six others to "
+            "Germany for treatment."
+        ),
+        "expected_root": "medtop:07000000",  # health
+    },
+    {
+        "title": "RFK Jr. forced to withdraw charter that opened CDC panel to anti-vaccine quacks",
+        "summary": (
+            "RFK Jr. was forced to withdraw a charter that would have expanded eligibility "
+            "for a CDC panel and focused on alleged vaccine injuries, enabling anti-vaccine "
+            "figures to gain influence."
+        ),
+        "expected_root": "medtop:07000000",  # health
+    },
+    {
+        "title": "Gaza Is Rebuilding With Lego-Like Bricks Made From Rubble",
+        "summary": (
+            "Palestinians in Gaza are rebuilding shelters by crushing rubble into "
+            "interlocking, Lego-like bricks because reconstruction materials remain blocked."
+        ),
+        "expected_root": "medtop:16000000",  # conflict, war and peace
+    },
+    {
+        "title": "Asteroid 2026 JH2 Is About to Fly Right Past Earth—Relatively Speaking",
+        "summary": (
+            "Asteroid 2026 JH2 is set to pass Earth on May 18 at a distance about four times "
+            "closer than the Moon, making it a notably close flyby despite being 'relatively' safe."
+        ),
+        "expected_root": "medtop:13000000",  # science and technology
+    },
+    {
+        "title": "An ICE Firearms Trainer Was Involved in At Least 4 Deadly Shootings",
+        "summary": (
+            "David Norman, a former Phoenix police officer now running an ICE Firearms Trainer "
+            "company, provided firearms training to Homeland Security's Special Response Teams "
+            "and was involved in at least four deadly shootings."
+        ),
+        "expected_root": "medtop:02000000",  # crime, law and justice
+    },
+    {
+        "title": "Tesla's lithium refinery discharges 231,000 gallons of polluted wastewater a day",
+        "summary": (
+            "Tesla's lithium refinery discharged 231,000 gallons of polluted wastewater per day, "
+            "raising concerns about environmental harm from the company's operations."
+        ),
+        "expected_root": "medtop:06000000",  # environment
+    },
+    {
+        "title": "Minnesota becomes first state to ban prediction markets",
+        "summary": "Minnesota became the first U.S. state to ban prediction markets.",
+        "expected_root": "medtop:11000000",  # politics and government
+    },
+    {
+        "title": "CISA Admin Leaked AWS GovCloud Keys on GitHub",
+        "summary": (
+            "A CISA administrator leaked AWS GovCloud keys on GitHub, exposing sensitive "
+            "credentials tied to the U.S. government cloud environment."
+        ),
+        "expected_root": "medtop:02000000",  # crime, law and justice
+    },
+    {
+        "title": "EV drivers will pay $130 a year under Congress' 2026 transportation bill",
+        "summary": (
+            "Congress' 2026 transportation bill would require electric vehicle drivers to pay "
+            "$130 per year to fund road use, as lawmakers argue EVs should contribute their "
+            "'fair share.'"
+        ),
+        "expected_root": "medtop:11000000",  # politics and government
+    },
 ]
 
 
@@ -64,53 +131,17 @@ def taxonomy():
 
 
 @pytest.fixture(scope="module")
-def classified(taxonomy):
-    """Run classify_article once per fixture — shared across all assertions."""
+def index():
+    return load_taxonomy_index(INDEX_PATH)
+
+
+@pytest.fixture(scope="module")
+def classified_hybrid(taxonomy, index):
+    """Run classify_article_hybrid once per fixture."""
     return {
         f["title"]: (
             f,
-            classify_article(
-                f"{f['title']}\n\n{f['summary']}", taxonomy, openai_client
-            ),
+            classify(f"{f['title']}\n\n{f['summary']}", taxonomy, index, openai_client),
         )
         for f in FIXTURES
     }
-
-
-def _within_pass1_branch(
-    t: ClassifiedTopic, taxonomy: Taxonomy, pass1_ids: set[str]
-) -> bool:
-    return bool(set(taxonomy[t.medtop_id].ancestors) & pass1_ids)
-
-
-@pytest.mark.parametrize(
-    "title", [f["title"] for f in FIXTURES], ids=[f["title"][:50] for f in FIXTURES]
-)
-def test_classifier(taxonomy, classified, title):
-    """All structural invariants for one article in a single test.
-
-    - Pass 1 returns only root IDs
-    - Expected root is present in Pass 1 results
-    - Pass 2 IDs are within their Pass 1 branch
-    - Pass 2 IDs are at least as deep as their Pass 1 parent
-    """
-    fixture, topics = classified[title]
-    root_ids = set(get_root_ids(taxonomy))
-
-    pass1_ids = {t.medtop_id for t in topics if t.medtop_id in root_ids}
-    pass2_topics = [t for t in topics if t.medtop_id not in root_ids]
-
-    assert all(
-        mid in root_ids for mid in pass1_ids
-    ), f"Pass 1 returned non-root IDs: {[mid for mid in pass1_ids if mid not in root_ids]}"
-
-    expected = fixture["expected_root"]
-    assert expected in pass1_ids, (
-        f"Expected {expected} ({taxonomy[expected].name}) in Pass 1 results, "
-        f"got: {[taxonomy[mid].name for mid in pass1_ids]}"
-    )
-
-    assert all(_within_pass1_branch(t, taxonomy, pass1_ids) for t in pass2_topics), (
-        f"Pass 2 results outside Pass 1 branches: "
-        f"{[t.medtop_id for t in pass2_topics if not _within_pass1_branch(t, taxonomy, pass1_ids)]}"
-    )

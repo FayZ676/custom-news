@@ -16,10 +16,15 @@ from openfeed.ingestion import get_articles
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.preprocess import extract_article_metadata
 from openfeed.db.global_settings import get_global_settings
-from openfeed.iptc import taxonomy
-from openfeed.iptc.classifier import classify_article
+from openfeed.iptc.classifiers.classifier import classify
+from openfeed.iptc.taxonomy import load_taxonomy, load_taxonomy_index
 from openfeed.openai_client import openai_client
 from openfeed.database_models import PublicGlobalArticles
+from pathlib import Path
+
+
+taxonomy = load_taxonomy(Path(__file__).parent.parent / "iptc" / "taxonomy.json")
+taxonomy_index = load_taxonomy_index()
 
 
 logger = logging.getLogger(__name__)
@@ -64,7 +69,7 @@ def _classify_and_insert_topics(articles: list[PublicGlobalArticles]) -> None:
     def _process(article: PublicGlobalArticles) -> None:
         thread_db = client()
         text = "\n\n".join(filter(None, [article.title, article.summary]))
-        topics = classify_article(text, taxonomy, openai_client)
+        topics = classify(text, taxonomy, taxonomy_index, openai_client)
         insert_article_topics(thread_db, article.id, topics)
 
     with ThreadPoolExecutor(max_workers=10) as executor:

@@ -7,9 +7,7 @@ from openfeed.iptc.taxonomy import (
     render_prompt_tree,
 )
 
-TAXONOMY_PATH = (
-    Path(__file__).parent.parent / "openfeed" / "iptc" / "iptc-taxonomy.json"
-)
+TAXONOMY_PATH = Path(__file__).parent.parent / "openfeed" / "iptc" / "taxonomy.json"
 
 
 def test_root_nodes_have_no_parent():

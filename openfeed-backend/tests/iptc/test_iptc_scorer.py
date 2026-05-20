@@ -3,9 +3,7 @@ from pathlib import Path
 from openfeed.iptc.taxonomy import load_taxonomy
 from openfeed.iptc.scorer import score_story
 
-TAXONOMY_PATH = (
-    Path(__file__).parent.parent / "openfeed" / "iptc" / "iptc-taxonomy.json"
-)
+TAXONOMY_PATH = Path(__file__).parent.parent / "openfeed" / "iptc" / "taxonomy.json"
 
 
 def _taxonomy():
