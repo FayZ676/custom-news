@@ -1,5 +1,5 @@
-import { ViewTopStoriesSkeleton } from "@/components/ViewTopStories";
+import { ViewFeedSkeleton } from "@/components/ViewFeed";
 
 export default function FeedLoading() {
-  return <ViewTopStoriesSkeleton />;
+  return <ViewFeedSkeleton />;
 }

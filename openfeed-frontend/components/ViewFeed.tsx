@@ -1,98 +1,139 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition, useOptimistic } from "react";
+import { useRef } from "react";
 
-import { InterestStories } from "@/lib/supabase/queries/user_interests";
-import { useUnreadCount } from "@/components/UnreadCountContext";
+import { Tables } from "@/lib/supabase/supabase.types";
 
-import SectionInterest from "@/components/SectionInterest";
+import {
+  NewsItemModal,
+  NewsItemModalHandle,
+  NewsItemStory,
+} from "@/components/NewsItemModal";
 import { SectionArticleSkeleton } from "@/components/SectionArticles";
+import { NewsItemCard } from "@/components/NewsItemCard";
 
-export interface ViewFeedProps {
-  interestStories: InterestStories[];
-  handleDeleteInterest: (interestId: string) => Promise<void>;
-  handleReadUserStories: (storyIds: string[], isRead: boolean) => Promise<void>;
+const HERO_THRESHOLD = 0.9;
+const FEATURED_THRESHOLD = 0.6;
+
+interface ViewFeedProps {
+  stories: Tables<"global_stories">[];
+  onStoryRead?: (storyId: string) => void;
 }
 
-export function ViewFeed({
-  interestStories,
-  handleDeleteInterest,
-  handleReadUserStories,
-}: ViewFeedProps) {
-  const router = useRouter();
-  const { adjustCount } = useUnreadCount();
+export function ViewFeed({ stories, onStoryRead }: ViewFeedProps) {
+  const modalRef = useRef<NewsItemModalHandle>(null);
+  const pendingReadId = useRef<string | null>(null);
 
-  const [deleting, startDeleteTransition] = useTransition();
+  function openModal(story: Tables<"global_stories">) {
+    const item: NewsItemStory = {
+      type: "story",
+      id: story.id,
+      headline: story.headline,
+      summary: story.summary,
+      articleUrls: story.related_articles_urls as string[],
+      imageUrl: story.image_url,
+    };
+    pendingReadId.current = story.id;
+    modalRef.current?.open(item);
+  }
 
-  const [optimisticInterests, removeOptimisticInterest] = useOptimistic(
-    interestStories,
-    (current: InterestStories[], deletedId: string) =>
-      current.filter((interest) => interest.id !== deletedId),
-  );
-
-  const handleDelete = (interestId: string) => {
-    startDeleteTransition(async () => {
-      const interest = optimisticInterests.find((i) => i.id === interestId);
-      const unreadCount =
-        interest?.stories.filter((s) => !s.is_read).length ?? 0;
-      adjustCount(-unreadCount);
-      removeOptimisticInterest(interestId);
-      await handleDeleteInterest(interestId);
-      router.refresh();
-    });
-  };
-
-  const handleRead = async (storyIds: string[], isRead: boolean) => {
-    const unreadCountDelta = isRead ? -storyIds.length : storyIds.length;
-    adjustCount(unreadCountDelta);
-    try {
-      await handleReadUserStories(storyIds, isRead);
-      router.refresh();
-    } catch (error) {
-      adjustCount(-unreadCountDelta);
-      throw error;
+  function handleModalClose() {
+    if (pendingReadId.current) {
+      onStoryRead?.(pendingReadId.current);
+      pendingReadId.current = null;
     }
-  };
+  }
 
-  if (optimisticInterests.length === 0) {
+  const storiesOrdered = [...stories].sort((a, b) => b.score - a.score);
+
+  if (storiesOrdered.length === 0) {
     return (
       <p className="text-sm italic text-neutral-500">
-        No interests yet. Use the{" "}
-        <span className="font-semibold not-italic">Search</span> tab to find
-        topics and save them to your news feed.
+        No stories available right now.
       </p>
     );
   }
 
+  const heroStories = storiesOrdered.filter((s) => s.score >= HERO_THRESHOLD);
+  const featuredStories = storiesOrdered.filter(
+    (s) => s.score >= FEATURED_THRESHOLD && s.score < HERO_THRESHOLD,
+  );
+  const compactStories = storiesOrdered.filter(
+    (s) => s.score < FEATURED_THRESHOLD,
+  );
+
   return (
-    <div className="flex flex-col gap-6">
-      {optimisticInterests
-        .slice()
-        .sort((a, b) => {
-          const aHasUnread = a.stories.some((s) => !s.is_read);
-          const bHasUnread = b.stories.some((s) => !s.is_read);
-          return Number(bHasUnread) - Number(aHasUnread);
-        })
-        .map((interest) => (
-          <SectionInterest
-            key={interest.id}
-            interest={interest}
-            deleting={deleting}
-            handleDeleteInterest={handleDelete}
-            handleReadStories={handleRead}
-          />
-        ))}
-    </div>
+    <section className="flex flex-col">
+      {heroStories.length > 0 && (
+        <ol className="flex flex-col gap-6 pb-6">
+          {heroStories.map((story) => (
+            <NewsItemCard
+              key={story.id}
+              variant="hero"
+              title={story.headline}
+              imageUrl={story.image_url}
+              summary={story.summary}
+              onClick={() => openModal(story)}
+            />
+          ))}
+        </ol>
+      )}
+
+      {featuredStories.length > 0 && (
+        <>
+          {heroStories.length > 0 && (
+            <hr className="border-t border-neutral-700 mb-6" />
+          )}
+          <ol className="flex flex-col gap-4 pb-6">
+            {featuredStories.map((story) => (
+              <NewsItemCard
+                key={story.id}
+                variant="featured"
+                title={story.headline}
+                imageUrl={story.image_url}
+                summary={story.summary}
+                onClick={() => openModal(story)}
+              />
+            ))}
+          </ol>
+        </>
+      )}
+
+      {compactStories.length > 0 && (
+        <>
+          {(heroStories.length > 0 || featuredStories.length > 0) && (
+            <hr className="border-t border-neutral-700 mb-4" />
+          )}
+          <ol className="flex flex-col gap-2">
+            {compactStories.map((story) => (
+              <NewsItemCard
+                key={story.id}
+                variant="compact"
+                title={story.headline}
+                imageUrl={story.image_url}
+                summary={story.summary}
+                onClick={() => openModal(story)}
+              />
+            ))}
+          </ol>
+        </>
+      )}
+
+      <NewsItemModal ref={modalRef} onClose={handleModalClose} />
+    </section>
   );
 }
 
-export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
+export function ViewFeedSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="flex flex-col gap-6">
-      {Array.from({ length: count }).map((_, i) => (
-        <SectionArticleSkeleton key={i} />
-      ))}
-    </div>
+    <section className="flex flex-col gap-4">
+      <ol className="flex flex-col gap-4">
+        {Array.from({ length: count }).map((_, i) => (
+          <li key={i}>
+            <SectionArticleSkeleton />
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
