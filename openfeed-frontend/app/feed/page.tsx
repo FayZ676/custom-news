@@ -1,35 +1,31 @@
 import { Suspense } from "react";
-import { cacheLife } from "next/cache";
 
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { createAnonClient } from "@/lib/supabase/anon";
-import { getStories } from "@/lib/supabase/queries/global_stories";
+import { getStoriesWithTopics } from "@/lib/supabase/queries/global_stories";
 import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
+import { getHiddenStoryIds } from "@/lib/supabase/queries/user_stories_hidden";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
 
-async function fetchCachedStoriesAndSettings() {
-  "use cache";
-  cacheLife("hours");
-  const supabase = createAnonClient();
-  const [stories, settings] = await Promise.all([
-    getStories(supabase),
-    getGlobalSettings(supabase),
-  ]);
-  return { stories, settings };
-}
-
 async function ViewFeedContent() {
-  const [{ userId }, { stories, settings }] = await Promise.all([
-    getAuthenticatedUser(),
-    fetchCachedStoriesAndSettings(),
+  const supabase = await createClient();
+  const { userId } = await getAuthenticatedUser();
+
+  const [stories, settings, hiddenStoryIds] = await Promise.all([
+    getStoriesWithTopics(supabase),
+    getGlobalSettings(supabase),
+    userId
+      ? getHiddenStoryIds(supabase, userId)
+      : Promise.resolve(new Set<string>()),
   ]);
 
   const feedStories = stories.filter(
-    (s) => s.score >= settings.cluster_significance_threshold,
+    (s) =>
+      s.score >= settings.cluster_significance_threshold &&
+      !hiddenStoryIds.has(s.id),
   );
 
   async function handleCreateShareLink(
@@ -43,7 +39,7 @@ async function ViewFeedContent() {
 
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
-      <ViewFeed stories={feedStories} />
+      <ViewFeed stories={feedStories} userId={userId} />
     </ShareLinkProvider>
   );
 }

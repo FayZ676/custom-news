@@ -1,8 +1,14 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
-import { Tables } from "@/lib/supabase/supabase.types";
+import { createClient } from "@/lib/supabase/client";
+import { StoryWithTopics } from "@/lib/supabase/queries/global_stories";
+import { hideStory } from "@/lib/supabase/queries/user_stories_hidden";
+import {
+  addDislikedTopics,
+  addLikedTopics,
+} from "@/lib/supabase/queries/user_topic_preferences";
 
 import {
   NewsItemModal,
@@ -16,15 +22,17 @@ const HERO_THRESHOLD = 0.9;
 const FEATURED_THRESHOLD = 0.6;
 
 interface ViewFeedProps {
-  stories: Tables<"global_stories">[];
+  stories: StoryWithTopics[];
+  userId?: string;
   onStoryRead?: (storyId: string) => void;
 }
 
-export function ViewFeed({ stories, onStoryRead }: ViewFeedProps) {
+export function ViewFeed({ stories, userId, onStoryRead }: ViewFeedProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
   const pendingReadId = useRef<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
-  function openModal(story: Tables<"global_stories">) {
+  function openModal(story: StoryWithTopics) {
     const item: NewsItemStory = {
       type: "story",
       id: story.id,
@@ -34,7 +42,10 @@ export function ViewFeed({ stories, onStoryRead }: ViewFeedProps) {
       imageUrl: story.image_url,
     };
     pendingReadId.current = story.id;
-    modalRef.current?.open(item);
+    modalRef.current?.open(item, {
+      onLike: userId ? () => handleLike(story) : undefined,
+      onDislike: userId ? () => handleDislike(story) : undefined,
+    });
   }
 
   function handleModalClose() {
@@ -44,7 +55,26 @@ export function ViewFeed({ stories, onStoryRead }: ViewFeedProps) {
     }
   }
 
-  const storiesOrdered = [...stories].sort((a, b) => b.score - a.score);
+  function handleDislike(story: StoryWithTopics) {
+    // Optimistically hide immediately
+    setHiddenIds((prev) => new Set(prev).add(story.id));
+
+    if (!userId) return;
+
+    // Fire-and-forget writes to Supabase
+    const supabase = createClient();
+    hideStory(supabase, userId, story.id).catch(console.error);
+    addDislikedTopics(supabase, userId, story.medtop_ids).catch(console.error);
+  }
+
+  function handleLike(story: StoryWithTopics) {
+    if (!userId) return;
+    const supabase = createClient();
+    addLikedTopics(supabase, userId, story.medtop_ids).catch(console.error);
+  }
+
+  const visibleStories = stories.filter((s) => !hiddenIds.has(s.id));
+  const storiesOrdered = [...visibleStories].sort((a, b) => b.score - a.score);
 
   if (storiesOrdered.length === 0) {
     return (

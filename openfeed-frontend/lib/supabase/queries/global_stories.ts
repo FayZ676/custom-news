@@ -1,6 +1,27 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
+export interface StoryWithTopics extends Tables<"global_stories"> {
+  medtop_ids: string[];
+}
+
+export async function getStoriesWithTopics(
+  supabase: SupabaseClient<Database>,
+): Promise<StoryWithTopics[]> {
+  const { data, error } = await (supabase as any)
+    .from("global_stories")
+    .select("*, global_story_topics(medtop_id)");
+
+  if (error) throw new Error(error.message);
+
+  return (data as any[]).map(({ global_story_topics, ...story }) => ({
+    ...story,
+    medtop_ids: (global_story_topics as { medtop_id: string }[]).map(
+      (t) => t.medtop_id,
+    ),
+  }));
+}
+
 export interface InterestArticle {
   is_read: boolean;
   global_article: Tables<"global_articles">;
