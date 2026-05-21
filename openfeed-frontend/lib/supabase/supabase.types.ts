@@ -34,6 +34,29 @@ export type Database = {
   };
   public: {
     Tables: {
+      global_article_topics: {
+        Row: {
+          article_id: string;
+          medtop_id: string;
+        };
+        Insert: {
+          article_id: string;
+          medtop_id: string;
+        };
+        Update: {
+          article_id?: string;
+          medtop_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "global_article_topics_article_id_fkey";
+            columns: ["article_id"];
+            isOneToOne: false;
+            referencedRelation: "global_articles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       global_articles: {
         Row: {
           created_at: string;
@@ -84,27 +107,6 @@ export type Database = {
           },
         ];
       };
-      global_categories: {
-        Row: {
-          created_at: string;
-          id: string;
-          interest_suggestions: Json;
-          name: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          interest_suggestions?: Json;
-          name: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          interest_suggestions?: Json;
-          name?: string;
-        };
-        Relationships: [];
-      };
       global_emails: {
         Row: {
           created_at: string;
@@ -125,7 +127,6 @@ export type Database = {
       };
       global_feeds: {
         Row: {
-          category_id: string | null;
           created_at: string;
           description: string;
           id: string;
@@ -133,7 +134,6 @@ export type Database = {
           url: string;
         };
         Insert: {
-          category_id?: string | null;
           created_at?: string;
           description: string;
           id?: string;
@@ -141,22 +141,13 @@ export type Database = {
           url: string;
         };
         Update: {
-          category_id?: string | null;
           created_at?: string;
           description?: string;
           id?: string;
           title?: string;
           url?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "global_feeds_category_id_fkey";
-            columns: ["category_id"];
-            isOneToOne: false;
-            referencedRelation: "global_categories";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       global_settings: {
         Row: {
@@ -254,29 +245,28 @@ export type Database = {
         };
         Relationships: [];
       };
-      user_interests: {
+      global_story_topics: {
         Row: {
-          created_at: string;
-          embeddings: string;
-          id: string;
-          query: string;
-          user_id: string;
+          medtop_id: string;
+          story_id: string;
         };
         Insert: {
-          created_at?: string;
-          embeddings: string;
-          id?: string;
-          query: string;
-          user_id: string;
+          medtop_id: string;
+          story_id: string;
         };
         Update: {
-          created_at?: string;
-          embeddings?: string;
-          id?: string;
-          query?: string;
-          user_id?: string;
+          medtop_id?: string;
+          story_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "global_story_topics_story_id_fkey";
+            columns: ["story_id"];
+            isOneToOne: false;
+            referencedRelation: "global_stories";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       user_settings: {
         Row: {
@@ -299,47 +289,52 @@ export type Database = {
         };
         Relationships: [];
       };
-      user_stories: {
+      user_stories_hidden: {
         Row: {
-          interest_id: string;
-          is_read: boolean;
-          score: number;
+          created_at: string;
           story_id: string;
-          updated_at: string;
           user_id: string;
         };
         Insert: {
-          interest_id: string;
-          is_read?: boolean;
-          score: number;
+          created_at?: string;
           story_id: string;
-          updated_at?: string;
           user_id: string;
         };
         Update: {
-          interest_id?: string;
-          is_read?: boolean;
-          score?: number;
+          created_at?: string;
           story_id?: string;
-          updated_at?: string;
           user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "user_stories_interest_id_fkey";
-            columns: ["interest_id"];
-            isOneToOne: false;
-            referencedRelation: "user_interests";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "user_stories_story_id_fkey";
+            foreignKeyName: "user_stories_hidden_story_id_fkey";
             columns: ["story_id"];
             isOneToOne: false;
             referencedRelation: "global_stories";
             referencedColumns: ["id"];
           },
         ];
+      };
+      user_topic_preferences: {
+        Row: {
+          created_at: string;
+          medtop_id: string;
+          preference: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          medtop_id: string;
+          preference: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          medtop_id?: string;
+          preference?: string;
+          user_id?: string;
+        };
+        Relationships: [];
       };
     };
     Views: {
