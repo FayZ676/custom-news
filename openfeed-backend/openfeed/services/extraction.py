@@ -176,20 +176,6 @@ def _render_story_card(story: PublicGlobalStories) -> str:
     )
 
 
-# Half-life as a fraction of the clustering window (50% → same decay shape regardless of window size)
-_HALF_LIFE_FRACTION: float = 0.5
-
-# Maximum fraction of the remaining headroom (1 - mean_sig) that full coverage
-# can add. Significance is always the floor — coverage can only push the score
-# upward toward 1.0, never drag it down.
-_COVERAGE_WEIGHT: float = 0.2
-
-# Article count at which the coverage bonus is considered saturated (scores ≥ this
-# count are treated as equivalent). Prevents a flood of low-quality articles from
-# inflating the score beyond what a genuinely well-covered story deserves.
-_COVERAGE_MAX_ARTICLES: int = 20
-
-
 class StorySignificance(BaseModel):
     score: float
     velocity: float
@@ -199,6 +185,9 @@ def compute_significance_score(
     articles: list[PublicGlobalArticles],
     now: datetime,
     window_hours: float,
+    half_life: float = 0.5,
+    cov_weight: float = 0.2,
+    cov_max_articles: int = 20,
 ) -> StorySignificance:
     """
     Score  = mean_sig + (1 - mean_sig) × w_c × normalised_coverage  → [0, 1]
@@ -216,14 +205,12 @@ def compute_significance_score(
     ]
     if scores:
         mean_sig = sum(scores) / len(scores)
-        normalised_coverage = math.log(1 + len(scores)) / math.log(
-            1 + _COVERAGE_MAX_ARTICLES
-        )
-        score = mean_sig + (1 - mean_sig) * _COVERAGE_WEIGHT * normalised_coverage
+        normalised_coverage = math.log(1 + len(scores)) / math.log(1 + cov_max_articles)
+        score = mean_sig + (1 - mean_sig) * cov_weight * normalised_coverage
     else:
         score = 0.0
 
-    decay = math.log(2) / (window_hours * _HALF_LIFE_FRACTION)
+    decay = math.log(2) / (window_hours * half_life)
     neutral_baseline = (1 - math.exp(-decay * window_hours)) / (decay * window_hours)
 
     def age_hours(article: PublicGlobalArticles) -> float:
