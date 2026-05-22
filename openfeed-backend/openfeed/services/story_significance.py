@@ -19,16 +19,16 @@ _COVERAGE_WEIGHT: float = 0.2
 _COVERAGE_MAX_ARTICLES: int = 20
 
 
-class ClusterScore(BaseModel):
+class StorySignificance(BaseModel):
     score: float
     velocity: float
 
 
-def score_cluster(
+def compute_story_significance(
     articles: list[PublicGlobalArticles],
     now: datetime.datetime,
     window_hours: float,
-) -> ClusterScore:
+) -> StorySignificance:
     """
     Score  = mean_sig + (1 - mean_sig) × w_c × normalised_coverage  → [0, 1]
     Significance is the floor; coverage can only push the score upward.
@@ -38,7 +38,7 @@ def score_cluster(
     negative when back-loaded toward the window edge (fading).
     """
     if not articles:
-        return ClusterScore(score=0.0, velocity=0.0)
+        return StorySignificance(score=0.0, velocity=0.0)
 
     scores = [
         a.significance_score for a in articles if a.significance_score is not None
@@ -62,4 +62,4 @@ def score_cluster(
     weights = [math.exp(-decay * age_hours(a)) for a in articles]
     velocity = (sum(weights) / len(weights)) - neutral_baseline
 
-    return ClusterScore(score=score, velocity=velocity)
+    return StorySignificance(score=score, velocity=velocity)

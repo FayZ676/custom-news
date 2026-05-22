@@ -2,7 +2,7 @@ import uuid
 import datetime
 from datetime import timezone, timedelta
 
-from openfeed.services.cluster_scoring import score_cluster
+from openfeed.services.story_significance import compute_story_significance
 from openfeed.database_models import PublicGlobalArticles
 
 
@@ -37,30 +37,32 @@ def _make_articles(
 _WINDOW_HOURS = 72.0
 
 
-def test__score_cluster_higher_significance_scores_higher():
+def test__compute_story_significance_higher_significance_scores_higher():
     """Higher per-article significance should score higher, all else equal."""
     now = datetime.datetime.now(timezone.utc)
     high = _make_articles(5, now, significance_score=0.9)
     low = _make_articles(5, now, significance_score=0.2)
 
     assert (
-        score_cluster(high, now, _WINDOW_HOURS).score
-        > score_cluster(low, now, _WINDOW_HOURS).score
+        compute_story_significance(high, now, _WINDOW_HOURS).score
+        > compute_story_significance(low, now, _WINDOW_HOURS).score
     )
 
 
-def test__score_cluster_score_bounded_between_zero_and_one():
+def test__compute_story_significance_score_bounded_between_zero_and_one():
     """Score must always sit in [0, 1] regardless of cluster size or significance."""
     now = datetime.datetime.now(timezone.utc)
     for n in [1, 5, 20, 100]:
         for sig in [0.0, 0.5, 1.0]:
-            result = score_cluster(_make_articles(n, now, sig), now, _WINDOW_HOURS)
+            result = compute_story_significance(
+                _make_articles(n, now, sig), now, _WINDOW_HOURS
+            )
             assert (
                 0.0 <= result.score <= 1.0
             ), f"score {result.score} out of bounds for n={n}, sig={sig}"
 
 
-def test__score_cluster_high_significance_single_article_beats_low_significance_flood():
+def test__compute_story_significance_high_significance_single_article_beats_low_significance_flood():
     """A highly significant breaking story with one source should outrank a
     mediocre story that happened to get picked up by many outlets.
     """
@@ -69,39 +71,43 @@ def test__score_cluster_high_significance_single_article_beats_low_significance_
     noise = _make_articles(20, now, significance_score=0.3)
 
     assert (
-        score_cluster(important, now, _WINDOW_HOURS).score
-        > score_cluster(noise, now, _WINDOW_HOURS).score
+        compute_story_significance(important, now, _WINDOW_HOURS).score
+        > compute_story_significance(noise, now, _WINDOW_HOURS).score
     )
 
 
-def test__score_cluster_coverage_never_lowers_score():
+def test__compute_story_significance_coverage_never_lowers_score():
     """Adding more articles to a cluster should never decrease its score."""
     now = datetime.datetime.now(timezone.utc)
     for sig in [0.0, 0.5, 1.0]:
-        one = score_cluster(_make_articles(1, now, sig), now, _WINDOW_HOURS).score
-        many = score_cluster(_make_articles(10, now, sig), now, _WINDOW_HOURS).score
+        one = compute_story_significance(
+            _make_articles(1, now, sig), now, _WINDOW_HOURS
+        ).score
+        many = compute_story_significance(
+            _make_articles(10, now, sig), now, _WINDOW_HOURS
+        ).score
         assert many >= one, f"score dropped from {one} to {many} for sig={sig}"
 
 
-def test__score_cluster_empty_articles_returns_zero():
+def test__compute_story_significance_empty_articles_returns_zero():
     now = datetime.datetime.now(timezone.utc)
-    result = score_cluster([], now, _WINDOW_HOURS)
+    result = compute_story_significance([], now, _WINDOW_HOURS)
 
     assert result.score == 0.0
     assert result.velocity == 0.0
 
 
-def test__score_cluster_breaking_story_has_positive_velocity():
+def test__compute_story_significance_breaking_story_has_positive_velocity():
     """All articles just published → velocity well above neutral baseline."""
     now = datetime.datetime.now(timezone.utc)
     articles = _make_articles(5, now)
 
-    assert score_cluster(articles, now, _WINDOW_HOURS).velocity > 0.0
+    assert compute_story_significance(articles, now, _WINDOW_HOURS).velocity > 0.0
 
 
-def test__score_cluster_fading_story_has_negative_velocity():
+def test__compute_story_significance_fading_story_has_negative_velocity():
     """All articles near the end of the 72h window → velocity below neutral baseline."""
     now = datetime.datetime.now(timezone.utc)
     articles = _make_articles(5, now - timedelta(hours=71))
 
-    assert score_cluster(articles, now, _WINDOW_HOURS).velocity < 0.0
+    assert compute_story_significance(articles, now, _WINDOW_HOURS).velocity < 0.0
