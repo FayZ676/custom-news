@@ -24,7 +24,7 @@ class StorySignificance(BaseModel):
     velocity: float
 
 
-def compute_story_significance(
+def compute_significance_score(
     articles: list[PublicGlobalArticles],
     now: datetime.datetime,
     window_hours: float,

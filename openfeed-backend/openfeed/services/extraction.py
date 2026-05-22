@@ -9,7 +9,7 @@ from openfeed.db.global_emails import insert_email
 from openfeed.db.global_articles import get_recent_global_articles
 from openfeed.db.global_settings import get_global_settings
 from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
-from openfeed.services.story_significance import compute_story_significance
+from openfeed.services.significance_scoring import compute_significance_score
 from openfeed.clusterer import cluster_articles, deduplicate_clusters
 from openfeed.db.global_stories import (
     get_stories,
@@ -84,7 +84,7 @@ def _rescore_story(
     Picks the most recently published article as the representative so the
     headline, summary, and embeddings stay current as new articles join.
     """
-    cluster_score = compute_story_significance(
+    cluster_score = compute_significance_score(
         articles, now=now, window_hours=window_hours
     )
     representative = max(articles, key=lambda a: a.published_at)
@@ -111,7 +111,7 @@ def _generate_story(
     summary, and embeddings become the story. No LLM call needed.
     """
     representative = max(articles, key=lambda a: a.significance_score)
-    cluster_score = compute_story_significance(
+    cluster_score = compute_significance_score(
         articles, now=now, window_hours=window_hours
     )
     image_url = next((a.image_url for a in articles if a.image_url), None)
