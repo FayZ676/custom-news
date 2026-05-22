@@ -12,7 +12,8 @@ from openfeed.db.global_articles import (
     delete_global_articles,
 )
 from openfeed.db.global_article_topics import insert_article_topics
-from openfeed.models import Article, ArticleMetadata, EntitiesResponse
+from openfeed.models import Article, ArticleMetadata, SummaryResponse
+from openfeed.ner import extract_entities
 from openfeed.feed_parser import get_articles
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.global_settings import get_global_settings
@@ -30,13 +31,8 @@ logger = logging.getLogger(__name__)
 
 def fetch_articles(db: Client):
     global_settings = get_global_settings(db)
-
     seen_urls = set(get_global_article_urls(db))
-    feed_articles = (
-        (feed.title, article)
-        for feed in get_global_feeds(db)
-        for article in get_articles(feed.url)
-    )
+    feed_articles = _fetch_feed_articles(get_global_feeds(db))
     unique_found_articles: list[tuple[str, Article]] = []
     cutoff = datetime.now(timezone.utc) - _parse_ttl(global_settings.article_ttl)
     for feed_title, article in feed_articles:
@@ -61,6 +57,16 @@ def fetch_articles(db: Client):
     logger.info("Fetched and inserted %d new articles", len(articles))
 
     return articles
+
+
+def _fetch_feed_articles(feeds) -> list[tuple[str, Article]]:
+    def _fetch_feed(feed) -> list[tuple[str, Article]]:
+        return [(feed.title, article) for article in get_articles(feed.url)]
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        results = executor.map(_fetch_feed, feeds)
+
+    return [pair for feed_result in results for pair in feed_result]
 
 
 def _classify_and_insert_topics(articles: list[PublicGlobalArticles]) -> None:
@@ -107,44 +113,47 @@ def extract_article_metadata(
     articles: list[str],
 ) -> list[ArticleMetadata]:
     def process(text: str) -> ArticleMetadata:
-        prompt = f"""Your task is to extract the key named entities, write a summary, and score the newsworthiness of this article.
+        prompt = f"""Your task is to write a summary and score the newsworthiness of this article.
 
 Steps:
-1. Extract only **proper noun** named entities central to the story — named people, organizations, products, technologies, places, or named events. Each entity must be 1–3 words. Do NOT extract descriptive phrases, categories, statistics, or generic business terms (e.g. do NOT extract "AI chip industry", "sales forecast", "8,000 job cuts" — these are descriptions, not entities). Return an empty list if no proper noun entities are present.
-2. Always use the canonical short-form name for well-known entities, regardless of how the article refers to them. Use "Meta" not "Meta Platforms Inc." or "Facebook". Use "Nvidia" not "Nvidia Corp." or "NVDA". Use "Google" not "Alphabet" (unless the story is specifically about Alphabet). Use full names for people: "Elon Musk" not "Musk". Prefer the most specific entity over its parent when it IS the story — extract "GitHub Copilot" not "Microsoft".
-3. Limit yourself to the 3–7 most central entities. For roundup or list-style articles (security bulletins, weekly digests, "best of" lists), extract only the subject of the roundup — not every item within it.
-4. Write a 1 sentence summary focused on the specific event, development, or situation at the core of the article. Name the key entities, describe what happened or changed, and avoid filler phrases. Do NOT use meta-framing like "The article discusses" or "This piece covers". This summary should maximally distinguish the article's topic from other articles on related subjects.
-5. Score the article's newsworthiness and societal importance on a scale from 0.0 to 1.0 based on:
+1. Write a 1 sentence summary focused on the specific event, development, or situation at the core of the article. Name the key entities, describe what happened or changed, and avoid filler phrases. Do NOT use meta-framing like "The article discusses" or "This piece covers". This summary should maximally distinguish the article's topic from other articles on related subjects.
+   - Always use the canonical short-form name for well-known entities. Use "Meta" not "Meta Platforms Inc." or "Facebook". Use "Nvidia" not "Nvidia Corp." or "NVDA". Use "Google" not "Alphabet" (unless the story is specifically about Alphabet). Use full names for people: "Elon Musk" not "Musk". Prefer the most specific entity over its parent when it IS the story — write "GitHub Copilot" not "Microsoft".
+2. Score the article's newsworthiness and societal importance on a scale from 0.0 to 1.0 based on:
    - **Broad impact**: Does this affect a large number of people or industries?
    - **Significance**: Is this a major development, breakthrough, or decision with lasting consequences?
    - **Novelty**: Is this genuinely new and noteworthy, not routine or recurring?
    - **Stakes**: Are there real-world consequences (security, finance, health, policy, etc.)?
 
-   Score guide:
-   - 0.8–1.0: Events with immediate, broad societal impact affecting tens of millions of people.
-     Examples: major geopolitical events, widespread cyberattacks on critical infrastructure (e.g. Log4Shell, SolarWinds),
-     landmark court rulings or policy decisions with sweeping effects, significant scientific breakthroughs with immediate
-     real-world consequences (e.g. a new approved vaccine, a fusion energy milestone).
-   - 0.5–0.8: Meaningful developments affecting a large but specific industry or user base (millions of people).
-     Examples: a major product launch from a market-leading company with broad consumer impact, a CVE in widely-used
-     infrastructure software (e.g. OpenSSL, Linux kernel, nginx), a significant regulatory action against a large tech company,
-     a notable acquisition or merger with industry-wide consequences.
-   - 0.3–0.5: Noteworthy but narrow in scope — affects a specialized or professional audience (thousands to low millions).
-     Examples: a CVE in niche or mid-tier software (e.g. cPanel, a specific CMS), a meaningful open-source library release
-     with clear production use, a startup funding round with genuine industry relevance, a notable research paper without
-     immediate application.
-   - 0.0–0.3: Low-impact, routine, or promotional content.
-     Examples: vendor case studies and DevOps blog posts, hardware reviews, product deals, opinion pieces, "how-to" tutorials,
-     minor software version bumps, niche ML/infra optimizations targeting a narrow specialist audience (e.g. a new attention
-     kernel for a specific GPU architecture), lifestyle or productivity tips.
+Score guide (apply these criteria to ANY domain — do not weight tech stories above equivalent events in health, politics, economics, or society):
+- 0.8–1.0: Events with immediate, broad societal impact affecting tens of millions of people.
+    Examples: armed conflicts or ceasefires with mass civilian impact, major disease outbreaks or pandemics, large-scale
+    natural disasters (earthquakes, floods, wildfires), landmark court rulings or legislation with sweeping effects on
+    civil rights or public policy, significant geopolitical shifts (sanctions, treaties, elections in major democracies),
+    major economic shocks (bank collapses, currency crises, recessions), significant scientific breakthroughs with
+    immediate real-world consequences (e.g. a newly approved vaccine, a fusion energy milestone), critical infrastructure
+    cyberattacks with widespread societal disruption (e.g. SolarWinds).
+- 0.5–0.8: Meaningful developments affecting a large but specific industry, region, or user base (millions of people).
+    Examples: major climate or environmental policy decisions, a significant regulatory action against a large company
+    with broad consumer impact, a large-scale data breach exposing millions of users, a major public health development
+    (drug approval, outbreak containment), a large-scale labor dispute or strike, a major product launch with genuine
+    mass-market consequences, a notable acquisition or merger with industry-wide effects, a CVE in critical widely-used
+    infrastructure (e.g. OpenSSL, Linux kernel).
+- 0.3–0.5: Noteworthy but narrow in scope — affects a specialized or professional audience (thousands to low millions).
+    Examples: a notable research paper with plausible near-term application, a meaningful open-source library release
+    with clear production use, a startup funding round with genuine industry relevance, a CVE in niche or mid-tier
+    software (e.g. cPanel, a specific CMS), a regional policy change with localized impact.
+- 0.0–0.3: Low-impact, routine, or promotional content.
+    Examples: vendor case studies and DevOps blog posts, hardware reviews, product deals, opinion pieces, "how-to"
+    tutorials, minor software version bumps, niche ML/infra optimizations targeting a narrow specialist audience,
+    lifestyle or productivity tips.
 
 Article text:
 {text}"""
         response = openai_client.generate_response(
-            "gpt-5.4-nano", prompt, EntitiesResponse
+            "gpt-5.4-nano", prompt, SummaryResponse
         )
         return ArticleMetadata(
-            entities=response.entities,
+            entities=extract_entities(response.summary),
             summary=response.summary,
             summary_embeddings=openai_client.embed([response.summary]).embeddings[0],
             significance_score=response.significance_score,

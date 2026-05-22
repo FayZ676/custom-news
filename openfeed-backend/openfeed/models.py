@@ -27,13 +27,13 @@ def _strip_html(text: str) -> str:
     return stripper.get_text()
 
 
-class EntitiesResponse(BaseModel):
+class SummaryResponse(BaseModel):
     summary: str
-    entities: list[str]
     significance_score: float
 
 
-class ArticleMetadata(EntitiesResponse):
+class ArticleMetadata(SummaryResponse):
+    entities: list[str]
     summary_embeddings: list[float]
 
 
