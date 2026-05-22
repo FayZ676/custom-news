@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Copy, ClipboardCheck, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Copy, ClipboardCheck, ThumbsUp, ThumbsDown, Info } from "lucide-react";
 
 import Modal from "@/components/Modal";
 import { useShareLink } from "@/components/ShareLinkContext";
@@ -36,6 +36,7 @@ export type NewsItemStory = {
   summary?: string | null;
   articleUrls: string[];
   imageUrl?: string | null;
+  topicNames?: string[];
 };
 
 export type NewsItem = NewsItemArticle | NewsItemStory;
@@ -75,6 +76,7 @@ export const NewsItemModal = forwardRef<
   const [copyState, setCopyState] = useState<"idle" | "loading" | "copied">(
     "idle",
   );
+  const [showTopics, setShowTopics] = useState(false);
 
   async function prepareShareUrl(item: NewsItem) {
     setIsPreparingShare(true);
@@ -105,6 +107,7 @@ export const NewsItemModal = forwardRef<
       setItemActions(actions);
       setCopyState("idle");
       setShareUrl(null);
+      setShowTopics(false);
       dialogRef.current?.showModal();
       void prepareShareUrl(item);
     },
@@ -195,23 +198,58 @@ export const NewsItemModal = forwardRef<
               )}
             </div>
 
-            <button
-              className="p-1.5 disabled:opacity-50 cursor-pointer text-base-content/60 hover:text-base-content transition-colors"
-              onClick={handleCopy}
-              disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
-              aria-label={
-                copyState === "copied"
-                  ? "Copied to clipboard"
-                  : "Copy share link"
-              }
-            >
-              {copyState === "copied" ? (
-                <ClipboardCheck size={18} className="text-success" />
-              ) : (
-                <Copy size={18} />
-              )}
-            </button>
+            <div className="flex items-center gap-1">
+              {selectedItem.type === "story" &&
+                selectedItem.topicNames &&
+                selectedItem.topicNames.length > 0 && (
+                  <button
+                    onClick={() => setShowTopics((v) => !v)}
+                    title="Show topics"
+                    className={`p-1.5 cursor-pointer transition-colors ${
+                      showTopics
+                        ? "text-base-content"
+                        : "text-base-content/60 hover:text-base-content"
+                    }`}
+                    aria-label="Show topics"
+                  >
+                    <Info size={18} />
+                  </button>
+                )}
+
+              <button
+                className="p-1.5 disabled:opacity-50 cursor-pointer text-base-content/60 hover:text-base-content transition-colors"
+                onClick={handleCopy}
+                disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
+                aria-label={
+                  copyState === "copied"
+                    ? "Copied to clipboard"
+                    : "Copy share link"
+                }
+              >
+                {copyState === "copied" ? (
+                  <ClipboardCheck size={18} className="text-success" />
+                ) : (
+                  <Copy size={18} />
+                )}
+              </button>
+            </div>
           </div>
+
+          {showTopics &&
+            selectedItem.type === "story" &&
+            selectedItem.topicNames &&
+            selectedItem.topicNames.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {selectedItem.topicNames.map((name) => (
+                  <span
+                    key={name}
+                    className="px-2 py-0.5 rounded-full text-xs bg-base-200 text-base-content/70"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            )}
         </div>
       )}
     </Modal>

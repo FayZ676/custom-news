@@ -8,6 +8,7 @@ import { hideStory } from "@/lib/supabase/queries/user_stories_hidden";
 import {
   addDislikedTopics,
   addLikedTopics,
+  MedtopTopic,
 } from "@/lib/supabase/queries/user_topic_preferences";
 
 import {
@@ -40,6 +41,7 @@ export function ViewFeed({ stories, userId, onStoryRead }: ViewFeedProps) {
       summary: story.summary,
       articleUrls: story.related_articles_urls as string[],
       imageUrl: story.image_url,
+      topicNames: story.medtop_names,
     };
     pendingReadId.current = story.id;
     modalRef.current?.open(item, {
@@ -63,14 +65,22 @@ export function ViewFeed({ stories, userId, onStoryRead }: ViewFeedProps) {
 
     // Fire-and-forget writes to Supabase
     const supabase = createClient();
+    const topics: MedtopTopic[] = story.medtop_ids.map((id, i) => ({
+      id,
+      name: story.medtop_names[i] ?? id,
+    }));
     hideStory(supabase, userId, story.id).catch(console.error);
-    addDislikedTopics(supabase, userId, story.medtop_ids).catch(console.error);
+    addDislikedTopics(supabase, userId, topics).catch(console.error);
   }
 
   function handleLike(story: StoryWithTopics) {
     if (!userId) return;
     const supabase = createClient();
-    addLikedTopics(supabase, userId, story.medtop_ids).catch(console.error);
+    const topics: MedtopTopic[] = story.medtop_ids.map((id, i) => ({
+      id,
+      name: story.medtop_names[i] ?? id,
+    }));
+    addLikedTopics(supabase, userId, topics).catch(console.error);
   }
 
   const visibleStories = stories.filter((s) => !hiddenIds.has(s.id));

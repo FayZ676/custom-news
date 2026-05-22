@@ -2,16 +2,22 @@ import { SupabaseClient } from "@supabase/supabase-js";
 
 import { Database } from "@/lib/supabase/supabase.types";
 
+export interface MedtopTopic {
+  id: string;
+  name: string;
+}
+
 export async function addDislikedTopics(
   supabase: SupabaseClient<Database>,
   userId: string,
-  medtopIds: string[],
+  topics: MedtopTopic[],
 ): Promise<void> {
-  if (medtopIds.length === 0) return;
+  if (topics.length === 0) return;
 
-  const rows = medtopIds.map((medtop_id) => ({
+  const rows = topics.map(({ id, name }) => ({
     user_id: userId,
-    medtop_id,
+    medtop_id: id,
+    medtop_name: name,
     preference: "disliked",
   }));
 
@@ -26,13 +32,14 @@ export async function addDislikedTopics(
 export async function addLikedTopics(
   supabase: SupabaseClient<Database>,
   userId: string,
-  medtopIds: string[],
+  topics: MedtopTopic[],
 ): Promise<void> {
-  if (medtopIds.length === 0) return;
+  if (topics.length === 0) return;
 
-  const rows = medtopIds.map((medtop_id) => ({
+  const rows = topics.map(({ id, name }) => ({
     user_id: userId,
-    medtop_id,
+    medtop_id: id,
+    medtop_name: name,
     preference: "liked",
   }));
 

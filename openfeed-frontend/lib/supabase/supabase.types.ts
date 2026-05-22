@@ -38,14 +38,17 @@ export type Database = {
         Row: {
           article_id: string;
           medtop_id: string;
+          medtop_name: string;
         };
         Insert: {
           article_id: string;
           medtop_id: string;
+          medtop_name: string;
         };
         Update: {
           article_id?: string;
           medtop_id?: string;
+          medtop_name?: string;
         };
         Relationships: [
           {
@@ -248,14 +251,17 @@ export type Database = {
       global_story_topics: {
         Row: {
           medtop_id: string;
+          medtop_name: string;
           story_id: string;
         };
         Insert: {
           medtop_id: string;
+          medtop_name: string;
           story_id: string;
         };
         Update: {
           medtop_id?: string;
+          medtop_name?: string;
           story_id?: string;
         };
         Relationships: [
@@ -319,18 +325,21 @@ export type Database = {
         Row: {
           created_at: string;
           medtop_id: string;
+          medtop_name: string;
           preference: string;
           user_id: string;
         };
         Insert: {
           created_at?: string;
           medtop_id: string;
+          medtop_name: string;
           preference: string;
           user_id: string;
         };
         Update: {
           created_at?: string;
           medtop_id?: string;
+          medtop_name?: string;
           preference?: string;
           user_id?: string;
         };
