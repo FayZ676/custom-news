@@ -86,7 +86,7 @@ def _run_pass2(
         tree=render_prompt_tree(get_subtree(top_id, taxonomy), taxonomy),
         text=text,
     )
-    result = client.generate_response("gpt-5.4", prompt, _Pass2Response)
+    result = client.generate_response("gpt-5.4-nano", prompt, _Pass2Response)
     if result.medtop_id not in taxonomy:
         logger.warning(
             "Pass 2 returned unknown medtop_id %r for top-level %r",
@@ -105,7 +105,7 @@ def classify_article_llm(
     """Classify an article using a two-pass LLM pipeline.
 
     Pass 1 (gpt-5.4-nano): identifies all applicable top-level IPTC categories.
-    Pass 2 (gpt-5.4):      for each top-level result, finds the most specific
+    Pass 2 (gpt-5.4-nano):      for each top-level result, finds the most specific
                            matching term within that branch.
 
     Returns a flat list of ClassifiedTopic, one per admitted branch.
