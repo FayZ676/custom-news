@@ -67,6 +67,7 @@ def get_stories_with_topics(
     excluded = excluded_story_ids or set()
     result = []
     for row in response.data:
+        decode_embeddings(row)
         story_id = UUID(row["id"])
         if story_id in excluded:
             continue
