@@ -22,7 +22,6 @@ from openfeed.openai_client import openai_client
 from openfeed.database_models import PublicGlobalArticles
 from pathlib import Path
 
-
 taxonomy = load_taxonomy(Path(__file__).parent.parent / "iptc" / "taxonomy.json")
 taxonomy_index = load_taxonomy_index()
 
@@ -69,7 +68,12 @@ def _classify_and_insert_topics(articles: list[PublicGlobalArticles]) -> None:
     def _process(article: PublicGlobalArticles) -> None:
         thread_db = client()
         text = "\n\n".join(filter(None, [article.title, article.summary]))
-        topics = classify(text, taxonomy, taxonomy_index, openai_client)
+        medtop_ids = classify(text, taxonomy, taxonomy_index, openai_client)
+        topics = [
+            {"id": mid, "name": taxonomy[mid].name}
+            for mid in medtop_ids
+            if mid in taxonomy
+        ]
         insert_article_topics(thread_db, article.id, topics)
 
     with ThreadPoolExecutor(max_workers=10) as executor:

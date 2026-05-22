@@ -10,6 +10,7 @@ from openfeed.database_models import PublicGlobalStories
 class StoryWithTopics:
     story: PublicGlobalStories
     topic_ids: list[str]
+    topic_names: list[str]
 
 
 def insert_stories(db: Client, stories: list[PublicGlobalStories]):
@@ -62,7 +63,9 @@ def get_stories_with_topics(
         excluded_story_ids: optional set of story UUIDs to exclude (e.g. hidden stories).
     """
     response = (
-        db.table("global_stories").select("*, global_story_topics(medtop_id)").execute()
+        db.table("global_stories")
+        .select("*, global_story_topics(medtop_id, medtop_name)")
+        .execute()
     )
     excluded = excluded_story_ids or set()
     result = []
@@ -71,7 +74,11 @@ def get_stories_with_topics(
         story_id = UUID(row["id"])
         if story_id in excluded:
             continue
-        topic_ids = [t["medtop_id"] for t in (row.get("global_story_topics") or [])]
+        raw_topics = row.get("global_story_topics") or []
+        topic_ids = [t["medtop_id"] for t in raw_topics]
+        topic_names = [t["medtop_name"] for t in raw_topics]
         story = PublicGlobalStories.model_validate(row)
-        result.append(StoryWithTopics(story=story, topic_ids=topic_ids))
+        result.append(
+            StoryWithTopics(story=story, topic_ids=topic_ids, topic_names=topic_names)
+        )
     return result

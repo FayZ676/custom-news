@@ -145,9 +145,9 @@ def _aggregate_and_insert_story_topics(
 
     story_topic_map = {
         story.id: {
-            medtop_id
+            topic
             for article in story_articles[story.id]
-            for medtop_id in article_topics.get(article.id, set())
+            for topic in article_topics.get(article.id, set())
         }
         for story in all_stories
     }
