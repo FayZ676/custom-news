@@ -2,7 +2,7 @@ import uuid
 import datetime
 from datetime import timezone, timedelta
 
-from openfeed.services.significance_scoring import compute_significance_score
+from openfeed.services.extraction import compute_significance_score
 from openfeed.database_models import PublicGlobalArticles
 
 
