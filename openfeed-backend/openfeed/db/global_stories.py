@@ -33,27 +33,6 @@ def delete_all_stories(db: Client):
     ).execute()
 
 
-def update_story(db: Client, story: PublicGlobalStories):
-    db.table("global_stories").update(
-        {
-            "headline": story.headline,
-            "summary": story.summary,
-            "score": story.score,
-            "velocity": story.velocity,
-        }
-    ).eq("id", str(story.id)).execute()
-
-
-def update_story_urls(db: Client, story_id: UUID, urls: list[str]):
-    db.table("global_stories").update({"related_articles_urls": urls}).eq(
-        "id", str(story_id)
-    ).execute()
-
-
-def delete_stories_by_ids(db: Client, story_ids: list[UUID]):
-    db.table("global_stories").delete().in_("id", [str(i) for i in story_ids]).execute()
-
-
 def get_stories_with_topics(
     db: Client, excluded_story_ids: set[UUID] | None = None
 ) -> list[StoryWithTopics]:

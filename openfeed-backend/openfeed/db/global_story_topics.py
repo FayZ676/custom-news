@@ -19,9 +19,3 @@ def insert_story_topics(
     ]
     if rows:
         db.table("global_story_topics").insert(rows).execute()
-
-
-def get_active_medtop_ids(db: Client) -> set[str]:
-    """Return all distinct medtop_ids currently present in global_story_topics."""
-    response = db.table("global_story_topics").select("medtop_id").execute()
-    return {row["medtop_id"] for row in response.data}
