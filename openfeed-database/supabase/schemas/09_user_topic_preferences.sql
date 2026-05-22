@@ -1,6 +1,7 @@
 create table "user_topic_preferences" (
     "user_id" uuid not null references auth.users(id) on delete cascade,
     "medtop_id" text not null,
+    "medtop_name" text not null,
     "preference" text not null check (preference in ('liked', 'disliked')),
     "created_at" timestamptz not null default now(),
     primary key (user_id, medtop_id)

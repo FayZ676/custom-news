@@ -5,7 +5,8 @@ create extension if not exists "vector" with schema "public";
 
   create table "public"."global_article_topics" (
     "article_id" uuid not null,
-    "medtop_id" text not null
+    "medtop_id" text not null,
+    "medtop_name" text not null
       );
 
 
@@ -98,7 +99,8 @@ alter table "public"."global_stories" enable row level security;
 
   create table "public"."global_story_topics" (
     "story_id" uuid not null,
-    "medtop_id" text not null
+    "medtop_id" text not null,
+    "medtop_name" text not null
       );
 
 
@@ -129,6 +131,7 @@ alter table "public"."user_stories_hidden" enable row level security;
   create table "public"."user_topic_preferences" (
     "user_id" uuid not null,
     "medtop_id" text not null,
+    "medtop_name" text not null,
     "preference" text not null,
     "created_at" timestamp with time zone not null default now()
       );
