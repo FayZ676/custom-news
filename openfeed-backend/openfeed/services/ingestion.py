@@ -13,7 +13,7 @@ from openfeed.db.global_articles import (
 )
 from openfeed.db.global_article_topics import insert_article_topics
 from openfeed.models import Article, ArticleMetadata, EntitiesResponse
-from openfeed.ingestion import get_articles
+from openfeed.feed_parser import get_articles
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.global_settings import get_global_settings
 from openfeed.iptc.classifiers.classifier import classify
