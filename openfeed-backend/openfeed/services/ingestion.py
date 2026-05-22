@@ -124,7 +124,7 @@ Steps:
    - **Novelty**: Is this genuinely new and noteworthy, not routine or recurring?
    - **Stakes**: Are there real-world consequences (security, finance, health, policy, etc.)?
 
-Score guide (apply these criteria to ANY domain — do not weight tech stories above equivalent events in health, politics, economics, or society):
+Score guide (apply these criteria to ANY domain):
 - 0.8–1.0: Events with immediate, broad societal impact affecting tens of millions of people.
     Examples: armed conflicts or ceasefires with mass civilian impact, major disease outbreaks or pandemics, large-scale
     natural disasters (earthquakes, floods, wildfires), landmark court rulings or legislation with sweeping effects on
