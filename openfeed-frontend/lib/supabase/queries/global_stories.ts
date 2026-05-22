@@ -3,6 +3,7 @@ import { Database, Tables } from "@/lib/supabase/supabase.types";
 
 export interface StoryWithTopics extends Tables<"global_stories"> {
   medtop_ids: string[];
+  final_score?: number;
 }
 
 export async function getStoriesWithTopics(

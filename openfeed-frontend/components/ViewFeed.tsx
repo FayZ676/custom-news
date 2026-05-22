@@ -74,7 +74,9 @@ export function ViewFeed({ stories, userId, onStoryRead }: ViewFeedProps) {
   }
 
   const visibleStories = stories.filter((s) => !hiddenIds.has(s.id));
-  const storiesOrdered = [...visibleStories].sort((a, b) => b.score - a.score);
+  const storiesOrdered = [...visibleStories].sort(
+    (a, b) => (b.final_score ?? b.score) - (a.final_score ?? a.score),
+  );
 
   if (storiesOrdered.length === 0) {
     return (
