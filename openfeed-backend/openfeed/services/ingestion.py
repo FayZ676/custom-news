@@ -6,11 +6,7 @@ from datetime import datetime, timezone, timedelta
 import pytimeparse
 
 from openfeed.db.client import Client, client
-from openfeed.db.global_articles import (
-    insert_global_articles,
-    get_global_article_urls,
-    delete_global_articles,
-)
+from openfeed.db.global_articles import insert_global_articles, get_global_article_urls
 from openfeed.db.global_article_topics import insert_article_topics
 from openfeed.models import Article, ArticleMetadata, SummaryResponse
 from openfeed.ner import extract_entities
@@ -95,13 +91,6 @@ def _classify_and_insert_topics(articles: list[PublicGlobalArticles]) -> None:
                 )
 
 
-def delete_old_articles(db: Client):
-    global_settings = get_global_settings(db)
-    ttl = _parse_ttl(global_settings.article_ttl)
-    delete_global_articles(db, ttl)
-    logger.info("Deleted articles older than %s", global_settings.article_ttl)
-
-
 def _parse_ttl(article_ttl: str) -> timedelta:
     seconds = pytimeparse.parse(article_ttl)
     if seconds is None:
@@ -113,9 +102,15 @@ def extract_article_metadata(
     articles: list[str],
 ) -> list[ArticleMetadata]:
     def process(text: str) -> ArticleMetadata:
-        prompt = f"""Your task is to write a summary and score the newsworthiness of this article.
+        prompt = f"""
+## Who You Are
 
-Steps:
+You are a senior news editor at a general-interest daily newspaper with a global readership. Your job is to do two things for each submitted article: write a tight one-sentence summary as it would appear in a  news digest, and assign a significance score that determines whether the story makes the front page, a section, or the cutting room floor. Your readers are ordinary people — not engineers, not investors, not specialists. Write and score based on how much this story would matter to the average person's life, safety, rights, or understanding of the world.
+
+## What You Do
+
+For the article below, do the following:
+
 1. Write a 1 sentence summary focused on the specific event, development, or situation at the core of the article. Name the key entities, describe what happened or changed, and avoid filler phrases. Do NOT use meta-framing like "The article discusses" or "This piece covers". This summary should maximally distinguish the article's topic from other articles on related subjects.
    - Always use the canonical short-form name for well-known entities. Use "Meta" not "Meta Platforms Inc." or "Facebook". Use "Nvidia" not "Nvidia Corp." or "NVDA". Use "Google" not "Alphabet" (unless the story is specifically about Alphabet). Use full names for people: "Elon Musk" not "Musk". Prefer the most specific entity over its parent when it IS the story — write "GitHub Copilot" not "Microsoft".
 2. Score the article's newsworthiness and societal importance on a scale from 0.0 to 1.0 based on:
@@ -123,8 +118,12 @@ Steps:
    - **Significance**: Is this a major development, breakthrough, or decision with lasting consequences?
    - **Novelty**: Is this genuinely new and noteworthy, not routine or recurring?
    - **Stakes**: Are there real-world consequences (security, finance, health, policy, etc.)?
+   - **Calibration**: Use the full range. A score of 0.5 or above should be reserved for stories that would genuinely appear in a major newspaper. Most articles will score below 0.5. Do not cluster scores around a middle value — discriminate clearly between tiers. Technical sophistication or security severity alone does not equal broad societal importance.
 
-Score guide (apply these criteria to ANY domain):
+### Score Guide
+
+Apply these criteria to ANY domain
+
 - 0.8–1.0: Events with immediate, broad societal impact affecting tens of millions of people.
     Examples: armed conflicts or ceasefires with mass civilian impact, major disease outbreaks or pandemics, large-scale
     natural disasters (earthquakes, floods, wildfires), landmark court rulings or legislation with sweeping effects on
@@ -147,7 +146,8 @@ Score guide (apply these criteria to ANY domain):
     tutorials, minor software version bumps, niche ML/infra optimizations targeting a narrow specialist audience,
     lifestyle or productivity tips.
 
-Article text:
+## Article Text
+
 {text}"""
         response = openai_client.generate_response(
             "gpt-5.4-nano", prompt, SummaryResponse
