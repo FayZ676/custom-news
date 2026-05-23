@@ -6,7 +6,11 @@ from datetime import datetime, timezone, timedelta
 import pytimeparse
 
 from openfeed.db.client import Client, client
-from openfeed.db.global_articles import insert_global_articles, get_global_article_urls
+from openfeed.db.global_articles import (
+    insert_global_articles,
+    get_global_article_urls,
+    delete_global_articles,
+)
 from openfeed.db.global_article_topics import insert_article_topics
 from openfeed.models import Article, ArticleMetadata, SummaryResponse
 from openfeed.ner import extract_entities
@@ -89,6 +93,13 @@ def _classify_and_insert_topics(articles: list[PublicGlobalArticles]) -> None:
                     article.id,
                     article.title,
                 )
+
+
+def delete_old_articles(db: Client):
+    global_settings = get_global_settings(db)
+    ttl = _parse_ttl(global_settings.article_ttl)
+    delete_global_articles(db, ttl)
+    logger.info("Deleted articles older than %s", global_settings.article_ttl)
 
 
 def _parse_ttl(article_ttl: str) -> timedelta:
