@@ -24,29 +24,6 @@ class _ClassifyResponse(BaseModel):
         return [mid for mid in ids if mid.startswith("medtop:")]
 
 
-_CLASSIFY_SYSTEM_PROMPT = """\
-You are a news classifier using the IPTC Media Topics taxonomy.
-
-Given an article, return the qcodes of the most specific IPTC topics that apply.
-For each relevant branch of the taxonomy, choose the deepest term that accurately
-describes the article's focus — do not over-generalise. Most articles belong to
-one branch; some legitimately span two or three. Only include a topic if the
-article substantially covers it.
-
-Return the qcodes as a list in the medtop_ids field.
-
-Full IPTC Media Topics taxonomy (qcode — name — definition):
-{tree}
-"""
-
-
-def _build_system_prompt(taxonomy: Taxonomy) -> str:
-    all_ids = sorted(taxonomy.keys())
-    return _CLASSIFY_SYSTEM_PROMPT.format(
-        tree=render_prompt_tree(all_ids, taxonomy),
-    )
-
-
 class ArticleClassifier:
     def __init__(self) -> None:
         self._taxonomy = load_taxonomy(
@@ -99,3 +76,26 @@ class ArticleClassifier:
                     )
 
         return results
+
+
+_CLASSIFY_SYSTEM_PROMPT = """\
+You are a news classifier using the IPTC Media Topics taxonomy.
+
+Given an article, return the qcodes of the most specific IPTC topics that apply.
+For each relevant branch of the taxonomy, choose the deepest term that accurately
+describes the article's focus — do not over-generalise. Most articles belong to
+one branch; some legitimately span two or three. Only include a topic if the
+article substantially covers it.
+
+Return the qcodes as a list in the medtop_ids field.
+
+Full IPTC Media Topics taxonomy (qcode — name — definition):
+{tree}
+"""
+
+
+def _build_system_prompt(taxonomy: Taxonomy) -> str:
+    all_ids = sorted(taxonomy.keys())
+    return _CLASSIFY_SYSTEM_PROMPT.format(
+        tree=render_prompt_tree(all_ids, taxonomy),
+    )
