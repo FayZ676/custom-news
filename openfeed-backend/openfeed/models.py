@@ -7,6 +7,7 @@ from email.utils import parsedate_to_datetime
 from pydantic import BaseModel, field_validator, model_validator
 
 from openfeed.database_models import PublicGlobalArticles
+from openfeed.services.ingestion.enricher import ArticleMetadata
 
 
 class _HTMLStripper(HTMLParser):
@@ -25,16 +26,6 @@ def _strip_html(text: str) -> str:
     stripper = _HTMLStripper()
     stripper.feed(text)
     return stripper.get_text()
-
-
-class SummaryResponse(BaseModel):
-    summary: str
-    significance_score: float
-
-
-class ArticleMetadata(SummaryResponse):
-    entities: list[str]
-    summary_embeddings: list[float]
 
 
 class Article(BaseModel):

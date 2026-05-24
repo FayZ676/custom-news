@@ -1,9 +1,21 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor
 
-from openfeed.models import ArticleMetadata, SummaryResponse
+from pydantic import BaseModel
+
 from openfeed.ner import extract_entities
 from openfeed.openai_client import OpenAIClient, Message
+
+
+class SummaryResponse(BaseModel):
+    summary: str | None
+    significance_score: float
+
+
+class ArticleMetadata(SummaryResponse):
+    entities: list[str]
+    summary_embeddings: list[float] | None
+
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +35,15 @@ class ArticleEnricher:
                 [Message(role="user", content=text)],
                 SummaryResponse,
             )
+            summary = response.summary
             return ArticleMetadata(
-                entities=extract_entities(response.summary),
-                summary=response.summary,
-                summary_embeddings=self._embeddings_client.embed(
-                    [response.summary]
-                ).embeddings[0],
+                entities=extract_entities(summary) if summary else [],
+                summary=summary,
+                summary_embeddings=(
+                    self._embeddings_client.embed([summary]).embeddings[0]
+                    if summary
+                    else None
+                ),
                 significance_score=response.significance_score,
             )
 
