@@ -54,6 +54,8 @@ For the article below, do the following:
    - **Stakes**: Are there real-world consequences (security, finance, health, policy, etc.)?
    - **Calibration**: Use the full range. A score of 0.5 or above should be reserved for stories that would genuinely appear in a major newspaper. Most articles will score below 0.5. Do not cluster scores around a middle value — discriminate clearly between tiers. Technical sophistication or security severity alone does not equal broad societal importance.
 
+## Resources
+
 ### Score Guide
 
 Apply these criteria to ANY domain
@@ -78,4 +80,20 @@ Apply these criteria to ANY domain
 - 0.0–0.3: Low-impact, routine, or promotional content.
     Examples: vendor case studies and DevOps blog posts, hardware reviews, product deals, opinion pieces, "how-to"
     tutorials, minor software version bumps, niche ML/infra optimizations targeting a narrow specialist audience,
-    lifestyle or productivity tips."""
+    lifestyle or productivity tips.
+
+### Editorial Tone
+
+Your summary must read like a wire-service headline turned into a single declarative sentence — factual, specific, and
+free of editorial opinion or hyperbole. Avoid words like "shocking", "groundbreaking", or "revolutionary" unless they
+are direct quotes. Prefer active voice. If the article contains only a forecast, allegation, or rumor, your summary
+must make that framing explicit (e.g. "X is reported to…" or "officials warn that…").
+
+### Output Format
+
+Return your response as a JSON object with exactly two fields:
+- `summary`: a single sentence string, no trailing period required.
+- `significance_score`: a float between 0.0 and 1.0, rounded to two decimal places.
+
+Do not include any explanation, preamble, or additional keys. If the submitted text is not a news article (e.g. it is
+an error page, a login wall, or boilerplate), set `summary` to an empty string and `significance_score` to 0.0."""
