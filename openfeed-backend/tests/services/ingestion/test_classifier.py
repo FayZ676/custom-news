@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from openfeed.iptc.taxonomy import load_taxonomy, load_taxonomy_index
-from openfeed.iptc.classifiers.classifier import classify
+from openfeed.services.ingestion.classifier import _classify
 from openfeed.openai_client import OpenAIClient
 
 TAXONOMY_PATH = (
@@ -142,7 +142,9 @@ def classified_hybrid(taxonomy, index):
     return {
         f["title"]: (
             f,
-            classify(f"{f['title']}\n\n{f['summary']}", taxonomy, index, openai_client),
+            _classify(
+                f"{f['title']}\n\n{f['summary']}", taxonomy, index, openai_client
+            ),
         )
         for f in FIXTURES
     }
