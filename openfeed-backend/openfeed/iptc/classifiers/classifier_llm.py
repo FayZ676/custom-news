@@ -10,7 +10,7 @@ from openfeed.iptc.taxonomy import (
     get_subtree,
     render_prompt_tree,
 )
-from openfeed.openai_client import OpenAIClient
+from openfeed.openai_client import OpenAIClient, Message
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,9 @@ def _run_pass1(
         tree=render_prompt_tree(get_root_ids(taxonomy), taxonomy),
         text=text,
     )
-    result = client.generate_response("gpt-5.4-nano", prompt, _Pass1Response)
+    result = client.generate_response(
+        [Message(role="user", content=prompt)], _Pass1Response
+    )
     valid = [mid for mid in result.top_level_ids if mid in taxonomy]
     if not valid:
         logger.warning("Pass 1 returned no valid top-level IDs for text: %.80s", text)
@@ -86,7 +88,9 @@ def _run_pass2(
         tree=render_prompt_tree(get_subtree(top_id, taxonomy), taxonomy),
         text=text,
     )
-    result = client.generate_response("gpt-5.4-nano", prompt, _Pass2Response)
+    result = client.generate_response(
+        [Message(role="user", content=prompt)], _Pass2Response
+    )
     if result.medtop_id not in taxonomy:
         logger.warning(
             "Pass 2 returned unknown medtop_id %r for top-level %r",

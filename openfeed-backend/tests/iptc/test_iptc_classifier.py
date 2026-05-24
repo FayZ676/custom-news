@@ -4,8 +4,7 @@ import pytest
 
 from openfeed.iptc.taxonomy import load_taxonomy, load_taxonomy_index
 from openfeed.iptc.classifiers.classifier import classify
-from openfeed.openai_client import openai_client
-
+from openfeed.openai_client import OpenAIClient
 
 TAXONOMY_PATH = (
     Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy.json"
@@ -13,6 +12,8 @@ TAXONOMY_PATH = (
 INDEX_PATH = (
     Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy-index.json"
 )
+
+openai_client = OpenAIClient()
 
 FIXTURES = [
     {
