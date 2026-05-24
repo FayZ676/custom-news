@@ -2,20 +2,49 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from pydantic import BaseModel, field_validator
+
 from openfeed.database_models import PublicGlobalArticles
-from openfeed.iptc.classifiers.classifier_embeddings import (
-    classify_article_embeddings_full,
-)
-from openfeed.iptc.classifiers.classifier_llm import classify_article_llm
 from openfeed.iptc.taxonomy import (
     Taxonomy,
-    TaxonomyIndex,
     load_taxonomy,
-    load_taxonomy_index,
+    render_prompt_tree,
 )
-from openfeed.openai_client import OpenAIClient
+from openfeed.openai_client import OpenAIClient, Message
 
 logger = logging.getLogger(__name__)
+
+
+class _ClassifyResponse(BaseModel):
+    medtop_ids: list[str]
+
+    @field_validator("medtop_ids")
+    @classmethod
+    def _only_valid_qcodes(cls, ids: list[str]) -> list[str]:
+        return [mid for mid in ids if mid.startswith("medtop:")]
+
+
+_CLASSIFY_SYSTEM_PROMPT = """\
+You are a news classifier using the IPTC Media Topics taxonomy.
+
+Given an article, return the qcodes of the most specific IPTC topics that apply.
+For each relevant branch of the taxonomy, choose the deepest term that accurately
+describes the article's focus — do not over-generalise. Most articles belong to
+one branch; some legitimately span two or three. Only include a topic if the
+article substantially covers it.
+
+Return the qcodes as a list in the medtop_ids field.
+
+Full IPTC Media Topics taxonomy (qcode — name — definition):
+{tree}
+"""
+
+
+def _build_system_prompt(taxonomy: Taxonomy) -> str:
+    all_ids = sorted(taxonomy.keys())
+    return _CLASSIFY_SYSTEM_PROMPT.format(
+        tree=render_prompt_tree(all_ids, taxonomy),
+    )
 
 
 class ArticleClassifier:
@@ -23,10 +52,13 @@ class ArticleClassifier:
         self._taxonomy = load_taxonomy(
             Path(__file__).parent.parent.parent / "iptc" / "taxonomy.json"
         )
-        self._taxonomy_index = load_taxonomy_index()
         self._client = OpenAIClient(
             model="gpt-5.4-nano",
             prompt_cache_key="iptc-classify-v1",
+            instructions=Message(
+                role="system",
+                content=_build_system_prompt(self._taxonomy),
+            ),
         )
 
     def classify_articles(
@@ -37,13 +69,17 @@ class ArticleClassifier:
             article: PublicGlobalArticles,
         ) -> tuple[PublicGlobalArticles, list[dict]]:
             text = "\n\n".join(filter(None, [article.title, article.summary]))
-            medtop_ids = _classify(
-                text, self._taxonomy, self._taxonomy_index, self._client
+            result = self._client.generate_response(
+                [Message(role="user", content=text)],
+                _ClassifyResponse,
             )
+            medtop_ids = [mid for mid in result.medtop_ids if mid in self._taxonomy]
+            if not medtop_ids:
+                logger.warning(
+                    "Classifier returned no valid topics for article %s", article.id
+                )
             topics = [
-                {"id": mid, "name": self._taxonomy[mid].name}
-                for mid in medtop_ids
-                if mid in self._taxonomy
+                {"id": mid, "name": self._taxonomy[mid].name} for mid in medtop_ids
             ]
             return article, topics
 
@@ -58,42 +94,8 @@ class ArticleClassifier:
                     results.append(future.result())
                 except Exception:
                     logger.exception(
-                        "Classification failed for article %s (%r) — skipping topics",
+                        "Classification failed for article %s — skipping topics",
                         article.id,
-                        article.title,
                     )
 
         return results
-
-
-def _classify(
-    text: str,
-    taxonomy: Taxonomy,
-    index: TaxonomyIndex,
-    client: OpenAIClient,
-    # Tuned from 12 real-world fixtures across diverse IPTC categories.
-    # Low top_score  → embedding has no confident signal (implied/abstract language).
-    # High num_roots → embedding result is scattered across unrelated branches (noisy).
-    # In practice these two conditions catch complementary failure modes:
-    #   - score < 0.30 catches low-signal articles (Air Force One, Asteroid)
-    #   - roots > 3   catches scattered articles (Gaza, CISA, EV tax, ICE Firearms)
-    confidence_score_threshold: float = 0.30,
-    confidence_roots_threshold: int = 3,
-) -> list[str]:
-    """Classify an article using embeddings, falling back to the LLM when unsure.
-
-    Fast path (embeddings): one cheap embed call, deterministic, ~10x cheaper.
-    Slow path (LLM):        full two-pass GPT pipeline, triggered when the
-                            embedding result is low-confidence.
-    """
-    result = classify_article_embeddings_full(text, taxonomy, index, client)
-
-    low_confidence = (
-        result.top_score < confidence_score_threshold
-        or result.num_roots > confidence_roots_threshold
-    )
-
-    if low_confidence:
-        return classify_article_llm(text, taxonomy, client)
-
-    return result.topics

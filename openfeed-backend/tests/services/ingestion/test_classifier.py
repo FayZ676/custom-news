@@ -1,19 +1,15 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
-from openfeed.iptc.taxonomy import load_taxonomy, load_taxonomy_index
-from openfeed.services.ingestion.classifier import _classify
-from openfeed.openai_client import OpenAIClient
+from openfeed.iptc.taxonomy import load_taxonomy
+from openfeed.services.ingestion.classifier import ArticleClassifier
+from openfeed.database_models import PublicGlobalArticles
 
 TAXONOMY_PATH = (
     Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy.json"
 )
-INDEX_PATH = (
-    Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy-index.json"
-)
-
-openai_client = OpenAIClient()
 
 FIXTURES = [
     {
@@ -35,8 +31,7 @@ FIXTURES = [
             "crashes involving teleoperators as it works to scale its autonomous "
             "ride-hailing service."
         ),
-        "expected_root": "medtop:13000000",  # science and technology (LLM)
-        "expected_root_embeddings": "medtop:03000000",  # disaster/accident (embeddings)
+        "expected_root": "medtop:13000000",  # science and technology
     },
     {
         "title": (
@@ -132,19 +127,21 @@ def taxonomy():
 
 
 @pytest.fixture(scope="module")
-def index():
-    return load_taxonomy_index(INDEX_PATH)
+def article_classifier():
+    return ArticleClassifier()
+
+
+def _make_article(title: str, summary: str) -> PublicGlobalArticles:
+    article = MagicMock(spec=PublicGlobalArticles)
+    article.id = title
+    article.title = title
+    article.summary = summary
+    return article
 
 
 @pytest.fixture(scope="module")
-def classified_hybrid(taxonomy, index):
-    """Run classify_article_hybrid once per fixture."""
-    return {
-        f["title"]: (
-            f,
-            _classify(
-                f"{f['title']}\n\n{f['summary']}", taxonomy, index, openai_client
-            ),
-        )
-        for f in FIXTURES
-    }
+def classified(article_classifier):
+    """Run ArticleClassifier.classify_articles once for all fixtures."""
+    articles = [_make_article(f["title"], f["summary"]) for f in FIXTURES]
+    results = article_classifier.classify_articles(articles)
+    return {article.title: topics for article, topics in results}
