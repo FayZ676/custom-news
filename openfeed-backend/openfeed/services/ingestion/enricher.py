@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pydantic import BaseModel
 
 from openfeed.ner import extract_entities
-from openfeed.openai_client import OpenAIClient, Message
+from openfeed.clients.openai_client import OpenAIClient, Message
 
 
 class SummaryResponse(BaseModel):

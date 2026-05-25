@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from openfeed.openai_client import OpenAIClient
+from openfeed.clients.openai_client import OpenAIClient
 
 logger = logging.getLogger(__name__)
 

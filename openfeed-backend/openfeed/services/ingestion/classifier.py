@@ -10,7 +10,7 @@ from openfeed.iptc.taxonomy import (
     load_taxonomy,
     render_prompt_tree,
 )
-from openfeed.openai_client import OpenAIClient, Message
+from openfeed.clients.openai_client import OpenAIClient, Message
 
 logger = logging.getLogger(__name__)
 
