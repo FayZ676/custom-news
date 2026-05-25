@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class ArticleEnricher:
     def __init__(self) -> None:
         self._metadata_client = OpenAIClient(
-            model="gpt-5.4-nano",
+            model="gpt-5-nano",
             prompt_cache_key="article-metadata-v1",
             instructions=Message(role="system", content=_METADATA_SYSTEM_PROMPT),
         )

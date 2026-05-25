@@ -30,7 +30,7 @@ class ArticleClassifier:
             Path(__file__).parent.parent.parent / "iptc" / "taxonomy.json"
         )
         self._client = OpenAIClient(
-            model="gpt-5.4-nano",
+            model="gpt-5-nano",
             prompt_cache_key="iptc-classify-v1",
             instructions=Message(
                 role="system",

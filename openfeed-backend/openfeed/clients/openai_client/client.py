@@ -87,7 +87,9 @@ def _estimate_input_tokens(
 class OpenAIClient:
     def __init__(
         self,
-        model: Literal["gpt-5.4", "gpt-5.4-nano"] = "gpt-5.4-nano",
+        model: Literal[
+            "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano", "gpt-5-nano"
+        ] = "gpt-5-nano",
         temperature: float = 0.0,
         reasoning_effort: ReasoningEffort | None = None,
         prompt_cache_key: str | None = None,
