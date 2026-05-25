@@ -145,7 +145,7 @@ class OpenAIClient:
             raw = self._client.responses.with_raw_response.parse(
                 model=self._model,
                 input=cast(ResponseInputParam, input_),
-                temperature=self._temperature,
+                temperature=omit if self._model == "gpt-5-nano" else self._temperature,
                 text_format=response_model,
                 instructions=self._instructions.content if self._instructions else None,
                 prompt_cache_key=self._prompt_cache_key or omit,
