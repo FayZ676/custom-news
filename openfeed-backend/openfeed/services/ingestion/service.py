@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 
 import pytimeparse
 
-from openfeed.db.client import Client, client
+from openfeed.db.client import Client
 from openfeed.db.global_articles import (
     insert_global_articles,
     get_global_article_urls,
@@ -17,12 +17,10 @@ from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.global_settings import get_global_settings
 from openfeed.database_models import PublicGlobalArticles
 from openfeed.services.ingestion.enricher import ArticleEnricher
-from openfeed.services.ingestion.classifier import ArticleClassifier
 
 logger = logging.getLogger(__name__)
 
 enricher = ArticleEnricher()
-classifier = ArticleClassifier()
 
 
 def fetch_articles(db: Client):
@@ -48,8 +46,8 @@ def fetch_articles(db: Client):
 
     if articles:
         insert_global_articles(db, articles)
-        for article, topics in classifier.classify_articles(articles):
-            insert_article_topics(db, article.id, topics)
+        for article, metadata in zip(articles, article_metadata):
+            insert_article_topics(db, article.id, metadata.topics)
 
     logger.info("Fetched and inserted %d new articles", len(articles))
 
@@ -78,12 +76,3 @@ def _parse_ttl(article_ttl: str) -> timedelta:
     if seconds is None:
         raise ValueError(f"Unable to parse TTL string: {article_ttl!r}")
     return timedelta(seconds=seconds)
-
-
-if __name__ == "__main__":
-    from openfeed.db.global_articles import get_global_articles
-
-    db = client()
-    articles = get_global_articles(db)
-    for article, topics in classifier.classify_articles(articles):
-        insert_article_topics(db, article.id, topics)

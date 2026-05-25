@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from openfeed.iptc.taxonomy import load_taxonomy
-from openfeed.services.ingestion.classifier import ArticleClassifier
+from openfeed.services.ingestion.enricher import ArticleEnricher
 from openfeed.database_models import PublicGlobalArticles
 
 TAXONOMY_PATH = (
@@ -127,8 +127,8 @@ def taxonomy():
 
 
 @pytest.fixture(scope="module")
-def article_classifier():
-    return ArticleClassifier()
+def article_enricher():
+    return ArticleEnricher()
 
 
 def _make_article(title: str, summary: str) -> PublicGlobalArticles:
@@ -140,8 +140,8 @@ def _make_article(title: str, summary: str) -> PublicGlobalArticles:
 
 
 @pytest.fixture(scope="module")
-def classified(article_classifier):
-    """Run ArticleClassifier.classify_articles once for all fixtures."""
-    articles = [_make_article(f["title"], f["summary"]) for f in FIXTURES]
-    results = article_classifier.classify_articles(articles)
-    return {article.title: topics for article, topics in results}
+def classified(article_enricher):
+    """Run ArticleEnricher.extract_article_metadata once for all fixtures."""
+    texts = ["\n\n".join(filter(None, [f["title"], f["summary"]])) for f in FIXTURES]
+    results = article_enricher.extract_article_metadata(texts)
+    return {f["title"]: metadata.topics for f, metadata in zip(FIXTURES, results)}
