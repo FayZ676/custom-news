@@ -1,4 +1,3 @@
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -6,10 +5,6 @@ import pytest
 from openfeed.clients.iptc.taxonomy import load_taxonomy
 from openfeed.services.ingestion.enricher import ArticleEnricher
 from openfeed.db.models import PublicGlobalArticles
-
-TAXONOMY_PATH = (
-    Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy.json"
-)
 
 FIXTURES = [
     {
@@ -123,7 +118,7 @@ FIXTURES = [
 
 @pytest.fixture(scope="module")
 def taxonomy():
-    return load_taxonomy(TAXONOMY_PATH)
+    return load_taxonomy()
 
 
 @pytest.fixture(scope="module")

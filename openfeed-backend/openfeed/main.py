@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import Optional
 from contextlib import asynccontextmanager
 from uuid import UUID
@@ -35,7 +34,7 @@ taxonomy: Optional[Taxonomy] = None
 async def lifespan(app: FastAPI):
     global db_client, taxonomy
     db_client = client()
-    taxonomy = load_taxonomy(Path(__file__).parent / "iptc" / "taxonomy.json")
+    taxonomy = load_taxonomy()
     yield
 
 

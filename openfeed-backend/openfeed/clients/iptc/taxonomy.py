@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 _URI_PREFIX = "http://cv.iptc.org/newscodes/mediatopic/"
+_DEFAULT_TAXONOMY_PATH = Path(__file__).parent / "taxonomy.json"
 _DEFAULT_INDEX_PATH = Path(__file__).parent / "taxonomy-index.json"
 
 
@@ -42,7 +43,7 @@ class TaxonomyIndex:
         return self.vectors[medtop_id]
 
 
-def load_taxonomy(path: Path | str) -> Taxonomy:
+def load_taxonomy(path: Path | str = _DEFAULT_TAXONOMY_PATH) -> Taxonomy:
     """Parse the IPTC JSON-LD file into an in-memory dict.
 
     Ancestor chains are pre-computed once so no traversal is needed at query time.

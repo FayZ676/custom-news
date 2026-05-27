@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 from pydantic import BaseModel, field_validator
 
@@ -32,9 +31,7 @@ logger = logging.getLogger(__name__)
 
 class ArticleEnricher:
     def __init__(self) -> None:
-        self._taxonomy = load_taxonomy(
-            Path(__file__).parent.parent.parent / "iptc" / "taxonomy.json"
-        )
+        self._taxonomy = load_taxonomy()
         self._client = OpenAIClient(
             model="gpt-5.4-nano",
             prompt_cache_key="article-enrich-v1",

@@ -1,13 +1,9 @@
-from pathlib import Path
-
 from openfeed.clients.iptc.taxonomy import load_taxonomy
 from openfeed.clients.iptc.scorer import score_story
 
-TAXONOMY_PATH = Path(__file__).parent.parent / "openfeed" / "iptc" / "taxonomy.json"
-
 
 def _taxonomy():
-    return load_taxonomy(TAXONOMY_PATH)
+    return load_taxonomy()
 
 
 # medtop:11000000 = politics (root, depth 0)
