@@ -47,7 +47,9 @@ class ArticleEnricher:
 
     def extract_article_metadata(self, articles: list[str]) -> list[ArticleMetadata]:
         messages_batch = [[Message(role="user", content=text)] for text in articles]
-        responses = self._client.generate_responses(messages_batch, _EnrichmentResponse)
+        responses = self._client.generate_responses(
+            messages_batch, _EnrichmentResponse, batch_size=3
+        )
         processed = [_validate_medtop_ids(r, self._taxonomy) for r in responses]
         summaries = [r.summary for r in processed if r.summary]
         embeddings_by_summary: dict[str, list[float]] = {}
@@ -93,15 +95,18 @@ def _validate_medtop_ids(
 
 def _build_system_prompt(taxonomy: Taxonomy) -> str:
     all_ids = sorted(taxonomy.keys())
-    return _SYSTEM_PROMPT.format(tree=render_prompt_tree(all_ids, taxonomy))
+    return _SYSTEM_PROMPT.format(
+        tree=render_prompt_tree(all_ids, taxonomy, max_depth=2)
+    )
 
 
 _SYSTEM_PROMPT = """\
-You are a senior news editor and IPTC news classifier. For each submitted article, \
-perform two independent tasks and return the results in a single JSON object. If the \
-submitted text is not a news article (e.g. it is an error page, a login wall, or \
-boilerplate), return an empty summary, a significance score of 0.0, and an empty \
-medtop_ids list.
+You are a senior news editor and IPTC news classifier. Articles are submitted in a \
+single request, each wrapped in <item index="N"> XML tags. For each article, perform \
+two independent tasks and return one result per item in the `items` array, preserving \
+the original index order. If a submitted text is not a news article (e.g. it is an \
+error page, a login wall, or boilerplate), return an empty summary, a significance \
+score of 0.0, and an empty medtop_ids list for that item.
 
 ## Task 1: Article Metadata
 

@@ -3,14 +3,15 @@ import logging
 import statistics
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
-from typing import TypeVar, Literal, cast
+from dataclasses import dataclass
+from typing import Any, Callable, TypeVar, Literal, cast
 
 import tiktoken
 from openai import OpenAI
 from openai.types import Reasoning, ReasoningEffort
 from openai.types.responses import EasyInputMessageParam, ResponseInputParam
 from openai._types import omit  # type: ignore[attr-defined]
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 from tiktoken import Encoding
 
 from openfeed.config import settings
@@ -95,6 +96,72 @@ def _estimate_input_tokens(
     return total
 
 
+def _merge_messages_for_batch(group: list[list[Message]]) -> list[Message]:
+    parts = [
+        f'<item index="{i}">\n{msgs[-1].content}\n</item>'
+        for i, msgs in enumerate(group)
+    ]
+    return [Message(role="user", content="\n\n".join(parts))]
+
+
+@dataclass(frozen=True)
+class _BatchPlan:
+    effective_batch: list[list[Message]]
+    group_sizes: list[int] | None
+    effective_model: type[BaseModel]
+
+
+def _prepare_batch(
+    messages_batch: list[list[Message]],
+    batch_size: int,
+    response_model: type[BaseModel],
+) -> _BatchPlan:
+    """Pure function — derives the effective batch, group sizes, and response model."""
+    if batch_size <= 1:
+        return _BatchPlan(messages_batch, None, response_model)
+    groups = [
+        messages_batch[i : i + batch_size]
+        for i in range(0, len(messages_batch), batch_size)
+    ]
+    return _BatchPlan(
+        effective_batch=[_merge_messages_for_batch(g) for g in groups],
+        group_sizes=[len(g) for g in groups],
+        effective_model=create_model(
+            "_BatchedResponse", items=(list[response_model], ...)  # type: ignore[valid-type]
+        ),
+    )
+
+
+def _execute_wave(
+    window: list[list[Message]],
+    execute_one: Callable[[list[Message]], Any],
+) -> list:
+    """Execute a single wave of requests in parallel, returning results as a plain list."""
+    with ThreadPoolExecutor(max_workers=len(window)) as executor:
+        return list(executor.map(execute_one, window))
+
+
+def _unbatch_results(
+    raw: list, group_sizes: list[int], _response_model: type[T]
+) -> list[T]:
+    """Pure function — re-expands batched results back to per-item results."""
+
+    def expand(indexed: tuple[int, tuple]) -> list[T]:
+        i, (result, expected) = indexed
+        if len(result.items) != expected:
+            raise ValueError(
+                f"Batch {i}: model returned {len(result.items)} items, "
+                f"expected {expected}"
+            )
+        return result.items
+
+    return [
+        item
+        for chunk in map(expand, enumerate(zip(raw, group_sizes)))
+        for item in chunk
+    ]
+
+
 class OpenAIClient:
     def __init__(
         self,
@@ -173,21 +240,25 @@ class OpenAIClient:
         messages_batch: list[list[Message]],
         response_model: type[T],
         ramp: RampStrategy = Fibonacci(),
+        batch_size: int = 1,
     ) -> list[T]:
         """Send a batch of requests using a pluggable wave-based ramp strategy.
 
-        The ramp owns the wave size sequence. After each wave it either speeds
-        up (if the wave fired uncapped) or slows down (if the desired size
-        would exceed rate limit headroom).
+        When ``batch_size > 1``, messages are merged into a single request using
+        ``<item index="N">`` XML tags to amortise system-prompt token costs.
+        The model must return exactly one result per item, or ``ValueError`` is raised.
         """
-        results: list[T] = [None] * len(messages_batch)  # type: ignore[list-item]
+        plan = _prepare_batch(messages_batch, batch_size, response_model)
+        execute_one = lambda msgs: self.generate_response(msgs, plan.effective_model)
+
+        results: list = []
         pos = 0
-        while pos < len(messages_batch):
-            window = messages_batch[pos : pos + ramp.current]
+        while pos < len(plan.effective_batch):
+            window = plan.effective_batch[pos : pos + ramp.current]
             avg_tokens = round(
                 statistics.mean(
                     _estimate_input_tokens(
-                        m, self._instructions, self._model, response_model
+                        m, self._instructions, self._model, plan.effective_model
                     )
                     for m in window
                 )
@@ -203,24 +274,17 @@ class OpenAIClient:
                 ramp.slow_down()
                 continue
 
-            with ThreadPoolExecutor(max_workers=len(window)) as executor:
-                for i, result in enumerate(
-                    executor.map(
-                        lambda msgs: self.generate_response(msgs, response_model),
-                        window,
-                    )
-                ):
-                    results[pos + i] = result
+            results += _execute_wave(window, execute_one)
 
             logger.debug(
                 "Ramp wave completed: wave_size=%d, pos=%d->%d, total=%d",
                 len(window),
                 pos,
                 pos + len(window),
-                len(messages_batch),
+                len(plan.effective_batch),
             )
 
             ramp.speed_up()
             pos += len(window)
 
-        return results
+        return _unbatch_results(results, plan.group_sizes, response_model) if plan.group_sizes else results  # type: ignore[return-value]  # noqa: return-value

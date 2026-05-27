@@ -97,18 +97,28 @@ def get_subtree(medtop_id: str, taxonomy: Taxonomy) -> list[str]:
     )
 
 
-def render_prompt_tree(medtop_ids: list[str], taxonomy: Taxonomy) -> str:
+def render_prompt_tree(
+    medtop_ids: list[str],
+    taxonomy: Taxonomy,
+    max_depth: int | None = None,
+) -> str:
     """Render a set of taxonomy nodes as an indented plain-text tree.
 
     Indentation is relative to the shallowest node in the provided set,
     so a Pass 2 subtree starting at depth 1 renders from indent 0.
+
+    If *max_depth* is given, only nodes at or above that depth are rendered.
 
     Example output:
         medtop:11000000 (politics) — Local, regional, national...
           medtop:20000574 (election) — The process by which people vote...
             medtop:20000579 (national elections) — ...
     """
-    nodes = [taxonomy[mid] for mid in medtop_ids if mid in taxonomy]
+    nodes = [
+        taxonomy[mid]
+        for mid in medtop_ids
+        if mid in taxonomy and (max_depth is None or taxonomy[mid].depth <= max_depth)
+    ]
     if not nodes:
         return ""
 
