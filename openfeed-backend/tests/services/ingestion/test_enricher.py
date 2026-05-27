@@ -5,7 +5,7 @@ import pytest
 
 from openfeed.clients.iptc.taxonomy import load_taxonomy
 from openfeed.services.ingestion.enricher import ArticleEnricher
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.models import PublicGlobalArticles
 
 TAXONOMY_PATH = (
     Path(__file__).parent.parent.parent / "openfeed" / "iptc" / "taxonomy.json"
