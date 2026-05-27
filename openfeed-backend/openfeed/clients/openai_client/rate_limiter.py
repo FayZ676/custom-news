@@ -1,121 +1,167 @@
 import logging
 import threading
 import time
-import re
+from collections import deque
 from dataclasses import dataclass, field
 
-# Fraction of remaining capacity below which the limiter sleeps until reset.
-# e.g. 0.05 means: throttle once remaining drops below 5% of the limit.
+# Fraction of the limit kept as a safety buffer so we never ride the absolute edge.
+# e.g. 0.05 means we treat the effective limit as 95% of the stated value.
 _RATE_LIMIT_RESERVE: float = 0.05
 
-
-def _parse_reset_delta(value: str) -> float:
-    """Parse OpenAI's compact reset duration strings into seconds.
-
-    Handles formats like '1s', '6m0s', '1h30m0s', '500ms'.
-    """
-    total = 0.0
-    for amount, unit in re.findall(r"(\d+(?:\.\d+)?)(h|m(?!s)|s|ms)", value):
-        match unit:
-            case "h":
-                total += float(amount) * 3600
-            case "m":
-                total += float(amount) * 60
-            case "s":
-                total += float(amount)
-            case "ms":
-                total += float(amount) / 1000
-    return total
+# OpenAI TPM/RPM windows are 60 seconds.
+_WINDOW_SECONDS: float = 60.0
 
 
 @dataclass
 class RateLimiter:
-    """Thread-safe, proactive rate limiter driven by OpenAI response headers.
+    """Thread-safe, proactive rate limiter using a local sliding-window budget.
 
-    Reads x-ratelimit-* headers from every successful response and uses them
-    to proactively sleep before the next request whenever remaining capacity
-    drops below the configured reserve fraction of the limit.
+    Rather than relying on ``x-ratelimit-remaining-*`` headers (which reflect
+    OpenAI's per-request snapshot and are unreliable when many requests are
+    in-flight simultaneously), we maintain our own deque of
+    ``(monotonic_timestamp, tokens)`` entries covering the past 60 seconds.
+
+    This means we always have an accurate picture of how much of the current
+    TPM/RPM window we have consumed — regardless of how many concurrent
+    requests are in-flight or in what order their responses arrive.
+
+    Response headers are still read, but only to discover the limit values
+    (TPM / RPM).
     """
 
     _lock: threading.Lock = field(
         default_factory=threading.Lock, init=False, repr=False
     )
-    _remaining_requests: int | None = field(default=None, init=False)
-    _remaining_tokens: int | None = field(default=None, init=False)
+    # Discovered from response headers.
     _limit_requests: int | None = field(default=None, init=False)
     _limit_tokens: int | None = field(default=None, init=False)
-    _requests_reset_at: float | None = field(
-        default=None, init=False
-    )  # monotonic seconds
-    _tokens_reset_at: float | None = field(
-        default=None, init=False
-    )  # monotonic seconds
+    # Local sliding-window logs.
+    _token_log: deque[tuple[float, int]] = field(
+        default_factory=deque, init=False, repr=False
+    )
+    _request_log: deque[float] = field(default_factory=deque, init=False, repr=False)
+
+    # ------------------------------------------------------------------ #
+    # Internal helpers — must be called with _lock held                   #
+    # ------------------------------------------------------------------ #
+
+    def _evict_expired(self, now: float) -> None:
+        cutoff = now - _WINDOW_SECONDS
+        while self._token_log and self._token_log[0][0] < cutoff:
+            self._token_log.popleft()
+        while self._request_log and self._request_log[0] < cutoff:
+            self._request_log.popleft()
+
+    def _next_token_headroom_time(self, need: int) -> float | None:
+        """Earliest monotonic time at which ``need`` additional tokens will fit.
+
+        Returns None if there is already enough headroom right now.
+        Walks the token log oldest-first and accumulates until expiring those
+        entries frees sufficient capacity. Must be called with _lock held and
+        after _evict_expired.
+        """
+        if self._limit_tokens is None:
+            return None
+        effective_limit = int(self._limit_tokens * (1 - _RATE_LIMIT_RESERVE))
+        used = sum(t for _, t in self._token_log)
+        if used + need <= effective_limit:
+            return None
+        must_free = used + need - effective_limit
+        freed = 0
+        for ts, toks in self._token_log:
+            freed += toks
+            if freed >= must_free:
+                return ts + _WINDOW_SECONDS
+        return None
+
+    def _compute_sleep_until(self, estimated_tokens: int) -> float | None:
+        """Return the earliest wake time needed to satisfy budgets, or None if clear.
+
+        Pure read — does not mutate any state. Must be called with _lock held
+        and after _evict_expired.
+        """
+        sleep_until: float | None = None
+
+        if self._limit_tokens is not None and estimated_tokens > 0:
+            wake = self._next_token_headroom_time(estimated_tokens)
+            if wake is not None:
+                sleep_until = wake
+
+        if self._limit_requests is not None:
+            eff_req = int(self._limit_requests * (1 - _RATE_LIMIT_RESERVE))
+            if len(self._request_log) >= eff_req and self._request_log:
+                wake = self._request_log[0] + _WINDOW_SECONDS
+                sleep_until = wake if sleep_until is None else max(sleep_until, wake)
+
+        return sleep_until
+
+    # ------------------------------------------------------------------ #
+    # Public API                                                           #
+    # ------------------------------------------------------------------ #
+
+    def max_wave_size(self, estimated_tokens_per_request: int) -> int:
+        """Return the maximum number of requests that can safely fire right now.
+
+        Computed entirely from the local sliding-window usage log.
+        Returns 1 when no limit is known yet (conservative default).
+        """
+        with self._lock:
+            now = time.monotonic()
+            self._evict_expired(now)
+
+            if self._limit_requests is None or self._limit_tokens is None:
+                return 1
+
+            eff_req = int(self._limit_requests * (1 - _RATE_LIMIT_RESERVE))
+            eff_tok = int(self._limit_tokens * (1 - _RATE_LIMIT_RESERVE))
+
+            req_used = len(self._request_log)
+            tok_used = sum(t for _, t in self._token_log)
+
+            by_requests = max(0, eff_req - req_used)
+            if estimated_tokens_per_request > 0:
+                by_tokens = max(0, eff_tok - tok_used) // estimated_tokens_per_request
+                return max(1, min(by_requests, by_tokens))
+
+            return max(1, by_requests)
 
     def update_from_headers(self, headers) -> None:
-        """Update rate limit state from the HTTP headers of a successful response."""
-        now = time.monotonic()
+        """Learn limit values from response headers.
+
+        We intentionally ignore ``x-ratelimit-remaining-*`` — capacity
+        tracking is handled by the local usage log.
+        """
         with self._lock:
-            if (v := headers.get("x-ratelimit-remaining-requests")) is not None:
-                self._remaining_requests = int(v)
-            if (v := headers.get("x-ratelimit-remaining-tokens")) is not None:
-                self._remaining_tokens = int(v)
             if (v := headers.get("x-ratelimit-limit-requests")) is not None:
                 self._limit_requests = int(v)
             if (v := headers.get("x-ratelimit-limit-tokens")) is not None:
                 self._limit_tokens = int(v)
-            if (v := headers.get("x-ratelimit-reset-requests")) is not None:
-                self._requests_reset_at = now + _parse_reset_delta(v)
-            if (v := headers.get("x-ratelimit-reset-tokens")) is not None:
-                self._tokens_reset_at = now + _parse_reset_delta(v)
 
     def acquire(self, estimated_tokens: int = 0) -> None:
-        """Reserve capacity for one request before firing it.
+        """Reserve capacity for one request, blocking until budget permits.
 
-        Atomically checks remaining capacity and pessimistically decrements
-        both the request and token counters under the lock, so concurrent
-        threads each see the already-consumed capacity and cannot race past
-        the same headroom simultaneously.
-
-        If capacity is exhausted (remaining < reserve threshold), sleeps until
-        the reset time then retries — still under the decrement guarantee.
+        Records consumption in the local usage log immediately so that
+        concurrent threads each see reduced headroom before their own HTTP
+        request fires.
         """
         while True:
             with self._lock:
                 now = time.monotonic()
-                reserve = _RATE_LIMIT_RESERVE
-                sleep_for = 0.0
+                self._evict_expired(now)
+                sleep_until = self._compute_sleep_until(estimated_tokens)
 
-                if (
-                    self._remaining_requests is not None
-                    and self._limit_requests is not None
-                    and self._remaining_requests < self._limit_requests * reserve
-                ):
-                    if self._requests_reset_at and self._requests_reset_at > now:
-                        sleep_for = max(sleep_for, self._requests_reset_at - now + 0.1)
-
-                token_threshold = max(
-                    estimated_tokens,
-                    int(self._limit_tokens * reserve) if self._limit_tokens else 0,
-                )
-                if (
-                    token_threshold > 0
-                    and self._remaining_tokens is not None
-                    and self._remaining_tokens < token_threshold
-                ):
-                    if self._tokens_reset_at and self._tokens_reset_at > now:
-                        sleep_for = max(sleep_for, self._tokens_reset_at - now + 0.1)
-
-                if sleep_for == 0.0:
-                    # Capacity is available — pessimistically consume it so the
-                    # next thread sees reduced headroom before our response arrives.
-                    if self._remaining_requests is not None:
-                        self._remaining_requests -= 1
-                    if self._remaining_tokens is not None:
-                        self._remaining_tokens -= max(estimated_tokens, 0)
+                if sleep_until is None:
+                    # Capacity available — record consumption now.
+                    self._token_log.append((now, max(estimated_tokens, 0)))
+                    self._request_log.append(now)
                     return
 
-            logging.info("Proactively throttling for model — sleeping %.2fs", sleep_for)
-            time.sleep(sleep_for)
+            delay = sleep_until - time.monotonic() + 0.05
+            if delay > 0:
+                logging.info(
+                    "Rate limit: sleeping %.2fs to free token/request budget", delay
+                )
+                time.sleep(delay)
 
 
 _rate_limiters: dict[str, RateLimiter] = {}

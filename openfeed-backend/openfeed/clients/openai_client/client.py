@@ -1,4 +1,8 @@
+import json
+import logging
+import statistics
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from typing import TypeVar, Literal, cast
 
 import tiktoken
@@ -11,6 +15,9 @@ from tiktoken import Encoding
 
 from openfeed.config import settings
 from openfeed.clients.openai_client.rate_limiter import RateLimiter, get_rate_limiter
+from openfeed.clients.openai_client.ramp import RampStrategy, Fibonacci
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -68,6 +75,7 @@ def _estimate_input_tokens(
     messages: list[Message],
     instructions: Message | None,
     model: str,
+    response_model: type[BaseModel] | None = None,
     token_padding: int = 4,
 ) -> int:
     """Estimate the number of input tokens for a responses API call.
@@ -81,6 +89,9 @@ def _estimate_input_tokens(
         total += token_padding + len(encoder.encode(instructions.content))
     for message in messages:
         total += token_padding + len(encoder.encode(message.content))
+    if response_model is not None:
+        schema_text = json.dumps(response_model.model_json_schema())
+        total += len(encoder.encode(schema_text))
     return total
 
 
@@ -137,7 +148,7 @@ class OpenAIClient:
             EasyInputMessageParam(role=m.role, content=m.content) for m in messages
         ]
         estimated_tokens = _estimate_input_tokens(
-            messages, self._instructions, self._model
+            messages, self._instructions, self._model, response_model
         )
         self._response_rate_limiter.acquire(estimated_tokens)
 
@@ -156,3 +167,60 @@ class OpenAIClient:
             return raw.parse().output_parsed  # type: ignore
 
         return self._invoke(call)  # type: ignore[return-value]
+
+    def generate_responses(
+        self,
+        messages_batch: list[list[Message]],
+        response_model: type[T],
+        ramp: RampStrategy = Fibonacci(),
+    ) -> list[T]:
+        """Send a batch of requests using a pluggable wave-based ramp strategy.
+
+        The ramp owns the wave size sequence. After each wave it either speeds
+        up (if the wave fired uncapped) or slows down (if the desired size
+        would exceed rate limit headroom).
+        """
+        results: list[T] = [None] * len(messages_batch)  # type: ignore[list-item]
+        pos = 0
+        while pos < len(messages_batch):
+            window = messages_batch[pos : pos + ramp.current]
+            avg_tokens = round(
+                statistics.mean(
+                    _estimate_input_tokens(
+                        m, self._instructions, self._model, response_model
+                    )
+                    for m in window
+                )
+            )
+            cap = self._response_rate_limiter.max_wave_size(avg_tokens)
+
+            if cap == 0:
+                raise RuntimeError(
+                    "Rate limiter has no headroom — cannot make progress."
+                )
+
+            if ramp.current > cap:
+                ramp.slow_down()
+                continue
+
+            with ThreadPoolExecutor(max_workers=len(window)) as executor:
+                for i, result in enumerate(
+                    executor.map(
+                        lambda msgs: self.generate_response(msgs, response_model),
+                        window,
+                    )
+                ):
+                    results[pos + i] = result
+
+            logger.debug(
+                "Ramp wave completed: wave_size=%d, pos=%d->%d, total=%d",
+                len(window),
+                pos,
+                pos + len(window),
+                len(messages_batch),
+            )
+
+            ramp.speed_up()
+            pos += len(window)
+
+        return results

@@ -1,5 +1,4 @@
 import logging
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from pydantic import BaseModel, field_validator
@@ -37,7 +36,7 @@ class ArticleEnricher:
             Path(__file__).parent.parent.parent / "iptc" / "taxonomy.json"
         )
         self._client = OpenAIClient(
-            model="gpt-5-nano",
+            model="gpt-5.4-nano",
             prompt_cache_key="article-enrich-v1",
             instructions=Message(
                 role="system",
@@ -47,32 +46,49 @@ class ArticleEnricher:
         self._embeddings_client = OpenAIClient()
 
     def extract_article_metadata(self, articles: list[str]) -> list[ArticleMetadata]:
-        def process(text: str) -> ArticleMetadata:
-            response = self._client.generate_response(
-                [Message(role="user", content=text)],
-                _EnrichmentResponse,
-            )
-            summary = response.summary
-            medtop_ids = [mid for mid in response.medtop_ids if mid in self._taxonomy]
-            if not medtop_ids:
-                logger.warning("Enricher returned no valid topics for article")
-            topics = [
-                {"id": mid, "name": self._taxonomy[mid].name} for mid in medtop_ids
-            ]
-            return ArticleMetadata(
-                summary=summary,
-                significance_score=response.significance_score,
-                entities=extract_entities(summary) if summary else [],
-                summary_embeddings=(
-                    self._embeddings_client.embed([summary]).embeddings[0]
-                    if summary
-                    else None
-                ),
-                topics=topics,
-            )
+        messages_batch = [[Message(role="user", content=text)] for text in articles]
+        responses = self._client.generate_responses(messages_batch, _EnrichmentResponse)
+        processed = [_validate_medtop_ids(r, self._taxonomy) for r in responses]
+        summaries = [r.summary for r in processed if r.summary]
+        embeddings_by_summary: dict[str, list[float]] = {}
+        if summaries:
+            emb_resp = self._embeddings_client.embed(summaries)
+            embeddings_by_summary = dict(zip(summaries, emb_resp.embeddings))
 
-        with ThreadPoolExecutor(max_workers=10) as executor:
-            return list(executor.map(process, articles))
+        return [
+            ArticleMetadata(
+                summary=r.summary,
+                significance_score=r.significance_score,
+                entities=extract_entities(r.summary) if r.summary else [],
+                summary_embeddings=(
+                    embeddings_by_summary.get(r.summary) if r.summary else None
+                ),
+                topics=[
+                    {"id": mid, "name": self._taxonomy[mid].name}
+                    for mid in r.medtop_ids
+                ],
+            )
+            for r in processed
+        ]
+
+
+def _validate_medtop_ids(
+    response: _EnrichmentResponse, taxonomy: Taxonomy
+) -> _EnrichmentResponse:
+    """Validate topic IDs against the taxonomy and return a filtered response."""
+    medtop_ids = [mid for mid in response.medtop_ids if mid in taxonomy]
+    if not medtop_ids:
+        if response.significance_score == 0.0 and not response.medtop_ids:
+            logger.debug("Article skipped")
+        elif response.medtop_ids:
+            invalid = [mid for mid in response.medtop_ids if mid not in taxonomy]
+            logger.warning("%d invalid topic ID(s) returned", len(invalid))
+        else:
+            logger.warning(
+                "Zero topic ids returned for article with significance_score=%.2f",
+                response.significance_score,
+            )
+    return response.model_copy(update={"medtop_ids": medtop_ids})
 
 
 def _build_system_prompt(taxonomy: Taxonomy) -> str:

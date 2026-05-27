@@ -22,7 +22,8 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("openai._base_client").setLevel(logging.WARNING)
+logging.getLogger("openai._base_client").setLevel(logging.INFO)
+logging.getLogger("openfeed.clients.openai_client.client").setLevel(logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
