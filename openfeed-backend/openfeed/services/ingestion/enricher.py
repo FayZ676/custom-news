@@ -3,8 +3,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, field_validator
 
-from openfeed.ner import extract_entities
-from openfeed.iptc.taxonomy import load_taxonomy, render_prompt_tree, Taxonomy
+from openfeed.clients.ner import extract_entities
+from openfeed.clients.iptc.taxonomy import load_taxonomy, render_prompt_tree, Taxonomy
 from openfeed.clients.openai_client import OpenAIClient, Message
 
 

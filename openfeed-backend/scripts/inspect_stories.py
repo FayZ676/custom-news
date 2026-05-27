@@ -18,7 +18,7 @@ from typing import Optional
 
 from openfeed.db.client import client
 from openfeed.db.utils import decode_embeddings
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.models import PublicGlobalArticles
 from openfeed.clusterer import (
     _cosine_similarity,
     _hours_between,

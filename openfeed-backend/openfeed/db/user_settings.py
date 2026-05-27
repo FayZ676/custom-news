@@ -1,5 +1,5 @@
 from openfeed.db.client import Client
-from openfeed.database_models import PublicUserSettings
+from openfeed.db.models import PublicUserSettings
 
 
 def get_all_email_notification_users(db: Client) -> list[PublicUserSettings]:

@@ -6,7 +6,7 @@ from email.utils import parsedate_to_datetime
 
 from pydantic import BaseModel, field_validator, model_validator
 
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.models import PublicGlobalArticles
 from openfeed.services.ingestion.enricher import ArticleMetadata
 
 

@@ -3,7 +3,7 @@ import datetime
 from datetime import timezone, timedelta
 
 from openfeed.services.extraction import compute_significance_score
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.models import PublicGlobalArticles
 
 
 def _make_article(

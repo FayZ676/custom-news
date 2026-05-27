@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from openfeed.db.client import Client
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.models import PublicGlobalArticles
 from openfeed.db.utils import decode_embeddings, paginated_query
 
 

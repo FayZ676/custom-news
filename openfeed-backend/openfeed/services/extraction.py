@@ -11,7 +11,7 @@ from openfeed.db.client import Client
 from openfeed.db.global_emails import insert_email
 from openfeed.db.global_articles import get_recent_global_articles
 from openfeed.db.global_settings import get_global_settings
-from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
+from openfeed.db.models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.clusterer import cluster_articles, deduplicate_clusters
 from openfeed.db.global_stories import (
     get_stories,

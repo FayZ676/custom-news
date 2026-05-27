@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from openfeed.iptc.taxonomy import load_taxonomy
-from openfeed.iptc.scorer import score_story
+from openfeed.clients.iptc.taxonomy import load_taxonomy
+from openfeed.clients.iptc.scorer import score_story
 
 TAXONOMY_PATH = Path(__file__).parent.parent / "openfeed" / "iptc" / "taxonomy.json"
 

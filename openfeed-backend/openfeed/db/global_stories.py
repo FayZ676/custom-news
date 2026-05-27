@@ -3,7 +3,7 @@ from uuid import UUID
 
 from openfeed.db.client import Client
 from openfeed.db.utils import decode_embeddings, paginated_query
-from openfeed.database_models import PublicGlobalStories
+from openfeed.db.models import PublicGlobalStories
 
 
 @dataclass(frozen=True)

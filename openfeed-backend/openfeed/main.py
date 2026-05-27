@@ -12,7 +12,7 @@ from openfeed.db.client import Client, client
 from openfeed.db.global_stories import get_stories_with_topics
 from openfeed.db.user_stories_hidden import get_hidden_story_ids
 from openfeed.db.user_topic_preferences import get_user_preferences
-from openfeed.iptc.taxonomy import Taxonomy, load_taxonomy
+from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
 from openfeed.services.extraction import top_stories
 from openfeed.services.ingestion import fetch_articles, delete_old_articles
 from openfeed.services.preference_scoring import rank_stories

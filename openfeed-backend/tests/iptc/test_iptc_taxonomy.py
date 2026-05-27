@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from openfeed.iptc.taxonomy import (
+from openfeed.clients.iptc.taxonomy import (
     load_taxonomy,
     get_root_ids,
     get_subtree,

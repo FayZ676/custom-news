@@ -35,6 +35,6 @@ gen_types_ts:
 	supabase gen types typescript --local > ../../openfeed-frontend/lib/supabase/supabase.types.ts
 
 gen_types_py:
-	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/database_models.py
+	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/db/models.py
 
 init: snapshot reset deploy gen_types_py gen_types_ts restore_snapshot

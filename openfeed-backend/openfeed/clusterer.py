@@ -8,10 +8,9 @@ import nltk
 from nltk.corpus import stopwords as _nltk_stopwords
 
 
-from openfeed.database_models import PublicGlobalArticles, PublicGlobalStories
+from openfeed.db.models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.utils.bayesian import Belief, Likelihood, update_all
 from openfeed.utils.math import cosine_similarity as _cosine_similarity
-
 
 nltk.download("stopwords", quiet=True)
 

@@ -1,5 +1,5 @@
 from openfeed.db.client import Client
-from openfeed.database_models import PublicGlobalSettings
+from openfeed.db.models import PublicGlobalSettings
 
 
 def get_global_settings(db: Client) -> PublicGlobalSettings:

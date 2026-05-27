@@ -9,12 +9,12 @@ from openfeed.db.global_emails import get_latest_email
 from openfeed.db.global_settings import get_global_settings
 from openfeed.db.user_settings import get_all_email_notification_users
 from openfeed.db.user_stories import UserStoryDetails, get_unread_user_story_details
-from openfeed.resend import (
+from openfeed.clients.resend import (
     RawEmailInput,
     send_batch_raw_emails,
     _DIGEST_TEMPLATE_HTML,
 )
-from openfeed.database_models import PublicUserSettings
+from openfeed.db.models import PublicUserSettings
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,5 @@
 from openfeed.db.client import Client
-from openfeed.database_models import PublicGlobalEmails
+from openfeed.db.models import PublicGlobalEmails
 
 
 def get_latest_email(db: Client) -> PublicGlobalEmails | None:

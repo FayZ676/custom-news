@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openfeed.iptc.taxonomy import load_taxonomy
+from openfeed.clients.iptc.taxonomy import load_taxonomy
 from openfeed.services.ingestion.enricher import ArticleEnricher
 from openfeed.database_models import PublicGlobalArticles
 
