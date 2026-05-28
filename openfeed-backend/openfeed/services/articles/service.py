@@ -12,7 +12,7 @@ from openfeed.db.queries.global_articles import (
 )
 from openfeed.db.queries.global_article_topics import insert_article_topics
 from openfeed.models import Article
-from openfeed.feed_parser import get_articles
+from openfeed.clients.feed_parser import get_articles
 from openfeed.db.queries.global_feeds import get_global_feeds
 from openfeed.db.queries.global_settings import get_global_settings
 from openfeed.db.models import PublicGlobalArticles
