@@ -24,7 +24,7 @@ from openfeed.db.global_story_topics import insert_story_topics
 logger = logging.getLogger(__name__)
 
 
-def top_stories(db: Client):
+def identify_stories(db: Client):
     settings = get_global_settings(db)
     stories = get_stories(db)
     articles = get_recent_global_articles(db, settings.clustering_window_hours)
@@ -226,4 +226,4 @@ def compute_significance_score(
 if __name__ == "__main__":
     from openfeed.db.client import client
 
-    top_stories(client())
+    identify_stories(client())

@@ -2,8 +2,8 @@ import uuid
 import datetime
 from datetime import timezone, timedelta
 
-from openfeed.services.extraction import compute_significance_score
 from openfeed.db.models import PublicGlobalArticles
+from openfeed.services.stories.service import compute_significance_score
 
 
 def _make_article(

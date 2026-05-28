@@ -16,7 +16,7 @@ from openfeed.feed_parser import get_articles
 from openfeed.db.global_feeds import get_global_feeds
 from openfeed.db.global_settings import get_global_settings
 from openfeed.db.models import PublicGlobalArticles
-from openfeed.services.ingestion.enricher import ArticleEnricher
+from openfeed.services.articles.enricher import ArticleEnricher
 
 logger = logging.getLogger(__name__)
 

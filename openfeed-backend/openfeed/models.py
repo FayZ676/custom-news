@@ -7,7 +7,7 @@ from email.utils import parsedate_to_datetime
 from pydantic import BaseModel, field_validator, model_validator
 
 from openfeed.db.models import PublicGlobalArticles
-from openfeed.services.ingestion.enricher import ArticleMetadata
+from openfeed.services.articles.enricher import ArticleMetadata
 
 
 class _HTMLStripper(HTMLParser):

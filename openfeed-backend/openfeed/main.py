@@ -12,9 +12,9 @@ from openfeed.db.global_stories import get_stories_with_topics
 from openfeed.db.user_stories_hidden import get_hidden_story_ids
 from openfeed.db.user_topic_preferences import get_user_preferences
 from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
-from openfeed.services.extraction import top_stories
-from openfeed.services.ingestion import fetch_articles, delete_old_articles
-from openfeed.services.preference_scoring import rank_stories
+from openfeed.services.stories.ranker import rank_stories
+from openfeed.services.stories.service import identify_stories
+from openfeed.services.articles.service import fetch_articles, delete_old_articles
 
 logging.basicConfig(
     level=logging.INFO,
@@ -64,7 +64,7 @@ def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     db = get_db()
     background_tasks.add_task(_run_with_logging, "fetch_articles", fetch_articles, db)
-    background_tasks.add_task(_run_with_logging, "top_stories", top_stories, db)
+    background_tasks.add_task(_run_with_logging, "top_stories", identify_stories, db)
     # background_tasks.add_task(_run_with_logging, "notify_users", notify_users, db)
     return Response(status_code=202)
 
