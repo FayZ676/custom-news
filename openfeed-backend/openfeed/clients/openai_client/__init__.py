@@ -1,5 +1,5 @@
+from openfeed.clients.openai_client.models import Message
 from openfeed.clients.openai_client.client import (
-    Message,
     EmbeddingsResponse,
     OpenAIClient,
 )

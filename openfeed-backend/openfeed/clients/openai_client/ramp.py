@@ -7,13 +7,9 @@ class RampExhausted(Exception):
 
 @runtime_checkable
 class RampStrategy(Protocol):
-    """Contract for a stateful ramp strategy.
-
-    The ramp owns its position in the sequence. ``current`` expresses the
-    desired wave size. ``speed_up`` advances the sequence after a successful
-    wave; ``slow_down`` retreats it when the desired size would exceed rate
-    limit headroom. ``slow_down`` raises ``RampExhausted`` if already at the
-    minimum step.
+    """Stateful ramp strategy. ``current`` is the desired wave size;
+    ``speed_up`` advances after a successful wave; ``slow_down`` retreats
+    on headroom exhaustion, raising ``RampExhausted`` if already at minimum.
     """
 
     @property
@@ -25,13 +21,9 @@ class RampStrategy(Protocol):
 
 
 class Fibonacci:
-    """Ramp strategy whose wave sizes follow the Fibonacci sequence.
+    """Ramp strategy whose wave sizes follow the Fibonacci sequence (1, 1, 2, 3, 5, 8, …).
 
-    Steps: 1, 1, 2, 3, 5, 8, 13, ...
-
-    Starts conservatively with a single warm-up request, then grows at a
-    moderate pace — neither as aggressive as exponential nor as slow as
-    linear — making it a good general-purpose default.
+    A moderate-growth default — faster than linear, slower than exponential.
     """
 
     def __init__(self) -> None:

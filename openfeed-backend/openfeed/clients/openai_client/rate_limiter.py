@@ -2,67 +2,55 @@ import logging
 import threading
 import time
 from collections import deque
-from dataclasses import dataclass, field
-
-# Fraction of the limit kept as a safety buffer so we never ride the absolute edge.
-# e.g. 0.05 means we treat the effective limit as 95% of the stated value.
-_RATE_LIMIT_RESERVE: float = 0.05
-
-# OpenAI TPM/RPM windows are 60 seconds.
-_WINDOW_SECONDS: float = 60.0
 
 
-@dataclass
 class RateLimiter:
-    """Thread-safe, proactive rate limiter using a local sliding-window budget.
+    """Thread-safe sliding-window rate limiter for OpenAI TPM/RPM budgets.
 
-    Rather than relying on ``x-ratelimit-remaining-*`` headers (which reflect
-    OpenAI's per-request snapshot and are unreliable when many requests are
-    in-flight simultaneously), we maintain our own deque of
-    ``(monotonic_timestamp, tokens)`` entries covering the past 60 seconds.
+    Tracks usage locally rather than relying on ``x-ratelimit-remaining-*``
+    headers, which are unreliable under concurrent requests. Headers are still
+    read to discover the limit values.
 
-    This means we always have an accurate picture of how much of the current
-    TPM/RPM window we have consumed — regardless of how many concurrent
-    requests are in-flight or in what order their responses arrive.
-
-    Response headers are still read, but only to discover the limit values
-    (TPM / RPM).
+    Args:
+        rate_limit_reserve: Safety buffer as a fraction of the stated limit
+            (default 0.05 → use 95% of capacity).
+        window_seconds: Sliding-window duration in seconds (default 60).
     """
 
-    _lock: threading.Lock = field(
-        default_factory=threading.Lock, init=False, repr=False
-    )
-    # Discovered from response headers.
-    _limit_requests: int | None = field(default=None, init=False)
-    _limit_tokens: int | None = field(default=None, init=False)
-    # Local sliding-window logs.
-    _token_log: deque[tuple[float, int]] = field(
-        default_factory=deque, init=False, repr=False
-    )
-    _request_log: deque[float] = field(default_factory=deque, init=False, repr=False)
+    def __init__(
+        self,
+        rate_limit_reserve: float = 0.05,
+        window_seconds: float = 60.0,
+    ) -> None:
+        self._rate_limit_reserve = rate_limit_reserve
+        self._window_seconds = window_seconds
+        self._lock = threading.Lock()
+        # Discovered from response headers.
+        self._limit_requests: int | None = None
+        self._limit_tokens: int | None = None
+        # Local sliding-window logs.
+        self._token_log: deque[tuple[float, int]] = deque()
+        self._request_log: deque[float] = deque()
 
     # ------------------------------------------------------------------ #
     # Internal helpers — must be called with _lock held                   #
     # ------------------------------------------------------------------ #
 
     def _evict_expired(self, now: float) -> None:
-        cutoff = now - _WINDOW_SECONDS
+        cutoff = now - self._window_seconds
         while self._token_log and self._token_log[0][0] < cutoff:
             self._token_log.popleft()
         while self._request_log and self._request_log[0] < cutoff:
             self._request_log.popleft()
 
     def _next_token_headroom_time(self, need: int) -> float | None:
-        """Earliest monotonic time at which ``need`` additional tokens will fit.
+        """Return the earliest time ``need`` tokens will fit, or None if there is headroom now.
 
-        Returns None if there is already enough headroom right now.
-        Walks the token log oldest-first and accumulates until expiring those
-        entries frees sufficient capacity. Must be called with _lock held and
-        after _evict_expired.
+        Must be called with _lock held and after _evict_expired.
         """
         if self._limit_tokens is None:
             return None
-        effective_limit = int(self._limit_tokens * (1 - _RATE_LIMIT_RESERVE))
+        effective_limit = int(self._limit_tokens * (1 - self._rate_limit_reserve))
         used = sum(t for _, t in self._token_log)
         if used + need <= effective_limit:
             return None
@@ -71,14 +59,13 @@ class RateLimiter:
         for ts, toks in self._token_log:
             freed += toks
             if freed >= must_free:
-                return ts + _WINDOW_SECONDS
+                return ts + self._window_seconds
         return None
 
     def _compute_sleep_until(self, estimated_tokens: int) -> float | None:
-        """Return the earliest wake time needed to satisfy budgets, or None if clear.
+        """Return the earliest wake time needed to satisfy both budgets, or None if clear.
 
-        Pure read — does not mutate any state. Must be called with _lock held
-        and after _evict_expired.
+        Must be called with _lock held and after _evict_expired.
         """
         sleep_until: float | None = None
 
@@ -88,9 +75,9 @@ class RateLimiter:
                 sleep_until = wake
 
         if self._limit_requests is not None:
-            eff_req = int(self._limit_requests * (1 - _RATE_LIMIT_RESERVE))
+            eff_req = int(self._limit_requests * (1 - self._rate_limit_reserve))
             if len(self._request_log) >= eff_req and self._request_log:
-                wake = self._request_log[0] + _WINDOW_SECONDS
+                wake = self._request_log[0] + self._window_seconds
                 sleep_until = wake if sleep_until is None else max(sleep_until, wake)
 
         return sleep_until
@@ -100,11 +87,7 @@ class RateLimiter:
     # ------------------------------------------------------------------ #
 
     def max_wave_size(self, estimated_tokens_per_request: int) -> int:
-        """Return the maximum number of requests that can safely fire right now.
-
-        Computed entirely from the local sliding-window usage log.
-        Returns 1 when no limit is known yet (conservative default).
-        """
+        """Return how many requests can safely fire right now. Returns 1 if limits are unknown."""
         with self._lock:
             now = time.monotonic()
             self._evict_expired(now)
@@ -112,8 +95,8 @@ class RateLimiter:
             if self._limit_requests is None or self._limit_tokens is None:
                 return 1
 
-            eff_req = int(self._limit_requests * (1 - _RATE_LIMIT_RESERVE))
-            eff_tok = int(self._limit_tokens * (1 - _RATE_LIMIT_RESERVE))
+            eff_req = int(self._limit_requests * (1 - self._rate_limit_reserve))
+            eff_tok = int(self._limit_tokens * (1 - self._rate_limit_reserve))
 
             req_used = len(self._request_log)
             tok_used = sum(t for _, t in self._token_log)
@@ -126,11 +109,7 @@ class RateLimiter:
             return max(1, by_requests)
 
     def update_from_headers(self, headers) -> None:
-        """Learn limit values from response headers.
-
-        We intentionally ignore ``x-ratelimit-remaining-*`` — capacity
-        tracking is handled by the local usage log.
-        """
+        """Update TPM/RPM limits from response headers. Ignores ``x-ratelimit-remaining-*``."""
         with self._lock:
             if (v := headers.get("x-ratelimit-limit-requests")) is not None:
                 self._limit_requests = int(v)
@@ -138,12 +117,7 @@ class RateLimiter:
                 self._limit_tokens = int(v)
 
     def acquire(self, estimated_tokens: int = 0) -> None:
-        """Reserve capacity for one request, blocking until budget permits.
-
-        Records consumption in the local usage log immediately so that
-        concurrent threads each see reduced headroom before their own HTTP
-        request fires.
-        """
+        """Block until budget permits, then record consumption for one request."""
         while True:
             with self._lock:
                 now = time.monotonic()
@@ -169,11 +143,9 @@ _rate_limiters_lock = threading.Lock()
 
 
 def get_rate_limiter(model: str) -> RateLimiter:
-    """Return (or create) the shared RateLimiter for a given model.
+    """Return the shared RateLimiter for a model, creating it if needed.
 
-    Shared per model so that all OpenAIClient instances calling the same model
-    (e.g. ArticleEnricher + ArticleClassifier) contribute to and respect the
-    same rate limit state — reflecting that limits are org-level, not per-client.
+    Per-model singleton so all clients share the same org-level budget.
     """
     with _rate_limiters_lock:
         if model not in _rate_limiters:
