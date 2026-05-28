@@ -5,9 +5,9 @@ from datetime import datetime, timezone
 
 from openfeed.config import settings
 from openfeed.db.client import Client
-from openfeed.db.global_emails import get_latest_email
-from openfeed.db.global_settings import get_global_settings
-from openfeed.db.user_settings import get_all_email_notification_users
+from openfeed.db.queries.global_emails import get_latest_email
+from openfeed.db.queries.global_settings import get_global_settings
+from openfeed.db.queries.user_settings import get_all_email_notification_users
 from openfeed.db.user_stories import UserStoryDetails, get_unread_user_story_details
 from openfeed.clients.resend import (
     RawEmailInput,

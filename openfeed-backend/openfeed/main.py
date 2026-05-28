@@ -8,9 +8,9 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.auth import verify_api_key
 from openfeed.db.client import Client, client
-from openfeed.db.global_stories import get_stories_with_topics
-from openfeed.db.user_stories_hidden import get_hidden_story_ids
-from openfeed.db.user_topic_preferences import get_user_preferences
+from openfeed.db.queries.global_stories import get_stories_with_topics
+from openfeed.db.queries.user_stories_hidden import get_hidden_story_ids
+from openfeed.db.queries.user_topic_preferences import get_user_preferences
 from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
 from openfeed.services.stories.ranker import rank_stories
 from openfeed.services.stories.service import identify_stories

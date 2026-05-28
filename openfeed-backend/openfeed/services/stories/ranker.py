@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from openfeed.db.global_stories import StoryWithTopics
+from openfeed.db.queries.global_stories import StoryWithTopics
 from openfeed.clients.iptc.scorer import UserPreferences, score_story
 from openfeed.clients.iptc.taxonomy import Taxonomy
 

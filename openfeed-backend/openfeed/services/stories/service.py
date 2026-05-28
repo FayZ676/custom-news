@@ -8,18 +8,18 @@ from functools import partial
 from pydantic import BaseModel
 
 from openfeed.db.client import Client
-from openfeed.db.global_emails import insert_email
-from openfeed.db.global_articles import get_recent_global_articles
-from openfeed.db.global_settings import get_global_settings
+from openfeed.db.queries.global_emails import insert_email
+from openfeed.db.queries.global_articles import get_recent_global_articles
+from openfeed.db.queries.global_settings import get_global_settings
 from openfeed.db.models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.clusterer import cluster_articles, deduplicate_clusters
-from openfeed.db.global_stories import (
+from openfeed.db.queries.global_stories import (
     get_stories,
     delete_all_stories,
     insert_stories,
 )
-from openfeed.db.global_article_topics import get_article_topics_for_articles
-from openfeed.db.global_story_topics import insert_story_topics
+from openfeed.db.queries.global_article_topics import get_article_topics_for_articles
+from openfeed.db.queries.global_story_topics import insert_story_topics
 
 logger = logging.getLogger(__name__)
 
