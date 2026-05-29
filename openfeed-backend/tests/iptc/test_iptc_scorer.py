@@ -1,5 +1,5 @@
 from openfeed.clients.iptc.taxonomy import load_taxonomy
-from openfeed.clients.iptc.scorer import score_story
+from openfeed.services.stories.ranker import score_story
 
 
 def _taxonomy():

@@ -3,14 +3,11 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 
-from openfeed.clients.openai_client import OpenAIClient
-
 logger = logging.getLogger(__name__)
 
 
 _URI_PREFIX = "http://cv.iptc.org/newscodes/mediatopic/"
 _DEFAULT_TAXONOMY_PATH = Path(__file__).parent / "taxonomy.json"
-_DEFAULT_INDEX_PATH = Path(__file__).parent / "taxonomy-index.json"
 
 
 def _uri_to_qcode(uri: str) -> str:
@@ -28,19 +25,6 @@ class TaxonomyNode:
 
 
 Taxonomy = dict[str, TaxonomyNode]
-
-
-@dataclass(frozen=True)
-class TaxonomyIndex:
-    """Mapping from medtop_id to its embedding vector."""
-
-    vectors: dict[str, list[float]]
-
-    def __contains__(self, medtop_id: str) -> bool:
-        return medtop_id in self.vectors
-
-    def __getitem__(self, medtop_id: str) -> list[float]:
-        return self.vectors[medtop_id]
 
 
 def load_taxonomy(path: Path | str = _DEFAULT_TAXONOMY_PATH) -> Taxonomy:
@@ -134,41 +118,3 @@ def render_prompt_tree(
         lines.append(f"{indent}{bare_id} ({node.name}){defn}")
 
     return "\n".join(lines)
-
-
-def _node_text(node: TaxonomyNode) -> str:
-    """Produce the text to embed for a single taxonomy node."""
-    return f"{node.name} — {node.definition}" if node.definition else node.name
-
-
-def build_taxonomy_index(taxonomy: Taxonomy, client: OpenAIClient) -> TaxonomyIndex:
-    """Embed every taxonomy node and return a TaxonomyIndex."""
-    medtop_ids = list(taxonomy.keys())
-    texts = [_node_text(taxonomy[mid]) for mid in medtop_ids]
-
-    logger.info("Building taxonomy index: embedding %d nodes …", len(texts))
-    response = client.embed(texts)
-    logger.info("Taxonomy index built with model %r", response.model)
-
-    vectors = dict(zip(medtop_ids, response.embeddings))
-    return TaxonomyIndex(vectors=vectors)
-
-
-def save_taxonomy_index(
-    index: TaxonomyIndex,
-    path: Path | str = _DEFAULT_INDEX_PATH,
-) -> None:
-    """Serialise a TaxonomyIndex to a JSON file."""
-    path = Path(path)
-    path.write_text(json.dumps(index.vectors), encoding="utf-8")
-    logger.info("Taxonomy index saved to %s (%d nodes)", path, len(index.vectors))
-
-
-def load_taxonomy_index(
-    path: Path | str = _DEFAULT_INDEX_PATH,
-) -> TaxonomyIndex:
-    """Load a TaxonomyIndex previously saved with save_taxonomy_index."""
-    path = Path(path)
-    vectors: dict[str, list[float]] = json.loads(path.read_text(encoding="utf-8"))
-    logger.info("Taxonomy index loaded from %s (%d nodes)", path, len(vectors))
-    return TaxonomyIndex(vectors=vectors)

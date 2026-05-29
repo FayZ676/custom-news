@@ -3,14 +3,15 @@ import logging
 from pydantic import BaseModel
 
 from openfeed.clients.ner import extract_entities
-from openfeed.clients.iptc.taxonomy import load_taxonomy, render_prompt_tree, Taxonomy
+from openfeed.clients.iptc.taxonomy import load_taxonomy
+from openfeed.clients.iptc.tagger import search_taxonomy
 from openfeed.clients.openai_client import OpenAIClient, Message
 
 
 class _EnrichmentResponse(BaseModel):
     summary: str | None
     significance_score: float
-    medtop_ids: list[str]
+    key_terms: list[str]
 
 
 class ArticleMetadata(BaseModel):
@@ -32,7 +33,7 @@ class ArticleEnricher:
             prompt_cache_key="article-enrich-v1",
             instructions=Message(
                 role="system",
-                content=_build_system_prompt(self._taxonomy),
+                content=_SYSTEM_PROMPT,
             ),
         )
 
@@ -41,8 +42,7 @@ class ArticleEnricher:
         responses = self._client.generate_responses(
             messages_batch, _EnrichmentResponse, batch_size=3
         )
-        processed = [_validate_medtop_ids(r, self._taxonomy) for r in responses]
-        summaries = [r.summary for r in processed if r.summary]
+        summaries = [r.summary for r in responses if r.summary]
         embeddings_by_summary: dict[str, list[float]] = {}
         if summaries:
             emb_resp = self._client.embed(summaries)
@@ -58,38 +58,11 @@ class ArticleEnricher:
                 ),
                 topics=[
                     {"id": mid, "name": self._taxonomy[mid].name}
-                    for mid in r.medtop_ids
+                    for mid in search_taxonomy(r.key_terms, self._taxonomy)
                 ],
             )
-            for r in processed
+            for r in responses
         ]
-
-
-def _validate_medtop_ids(
-    response: _EnrichmentResponse, taxonomy: Taxonomy
-) -> _EnrichmentResponse:
-    """Normalize, validate, and filter topic IDs against the taxonomy."""
-    normalized = [f"medtop:{mid}" for mid in response.medtop_ids]
-    medtop_ids = [mid for mid in normalized if mid in taxonomy]
-    if not medtop_ids:
-        if response.significance_score == 0.0 and not normalized:
-            logger.debug("Article skipped")
-        elif normalized:
-            invalid = [mid for mid in normalized if mid not in taxonomy]
-            logger.warning("%d invalid topic ID(s) returned", len(invalid))
-        else:
-            logger.warning(
-                "Zero topic ids returned for article with significance_score=%.2f",
-                response.significance_score,
-            )
-    return response.model_copy(update={"medtop_ids": medtop_ids})
-
-
-def _build_system_prompt(taxonomy: Taxonomy) -> str:
-    all_ids = sorted(taxonomy.keys())
-    return _SYSTEM_PROMPT.format(
-        tree=render_prompt_tree(all_ids, taxonomy, max_depth=2)
-    )
 
 
 _SYSTEM_PROMPT = """\
@@ -98,7 +71,7 @@ single request, each wrapped in <item index="N"> XML tags. For each article, per
 two independent tasks and return one result per item in the `items` array, preserving \
 the original index order. If a submitted text is not a news article (e.g. it is an \
 error page, a login wall, or boilerplate), return an empty summary, a significance \
-score of 0.0, and an empty medtop_ids list for that item.
+score of 0.0, and an empty key_terms list for that item.
 
 ## Task 1: Article Metadata
 
@@ -170,15 +143,14 @@ like "shocking", "groundbreaking", or "revolutionary" unless they are direct quo
 Prefer active voice. If the article contains only a forecast, allegation, or rumor, your \
 summary must make that framing explicit (e.g. "X is reported to…" or "officials warn that…").
 
-## Task 2: IPTC Classification
+## Task 2: Key Terms
 
-Using the IPTC Media Topics taxonomy below, return the qcodes of the most specific IPTC \
-topics that apply. For each relevant branch of the taxonomy, choose the deepest term that \
-accurately describes the article's focus — do not over-generalise. Most articles belong to \
-one branch; some legitimately span two or three. Only include a topic if the article \
-substantially covers it.
-
-Full IPTC Media Topics taxonomy (ID — name — definition):
-{tree}
+Extract up to 8 key terms or phrases that describe the core topics of the article. \
+Order them from most to least central. These should be topical phrases that describe \
+subjects, themes, and domains (e.g. "presidential election", "carbon tax", \
+"renewable energy policy", "criminal justice reform") — not named entities or \
+proper nouns (no people, companies, places, or product names). If the article covers \
+multiple distinct topics, include terms for each. If the article is not a news article, \
+return an empty list.
 
 """

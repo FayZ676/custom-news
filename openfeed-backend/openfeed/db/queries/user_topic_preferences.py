@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from openfeed.db.client import Client
-from openfeed.clients.iptc.scorer import UserPreferences
+from openfeed.services.stories.ranker import UserPreferences
 
 
 def get_user_preferences(db: Client, user_id: UUID) -> UserPreferences:
