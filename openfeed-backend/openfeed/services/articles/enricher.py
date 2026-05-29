@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
 from openfeed.clients.ner import extract_entities
 from openfeed.clients.iptc.taxonomy import load_taxonomy, render_prompt_tree, Taxonomy
@@ -11,11 +11,6 @@ class _EnrichmentResponse(BaseModel):
     summary: str | None
     significance_score: float
     medtop_ids: list[str]
-
-    @field_validator("medtop_ids")
-    @classmethod
-    def _only_valid_qcodes(cls, ids: list[str]) -> list[str]:
-        return [mid for mid in ids if mid.startswith("medtop:")]
 
 
 class ArticleMetadata(BaseModel):
@@ -40,7 +35,6 @@ class ArticleEnricher:
                 content=_build_system_prompt(self._taxonomy),
             ),
         )
-        self._embeddings_client = OpenAIClient()
 
     def extract_article_metadata(self, articles: list[str]) -> list[ArticleMetadata]:
         messages_batch = [[Message(role="user", content=text)] for text in articles]
@@ -51,7 +45,7 @@ class ArticleEnricher:
         summaries = [r.summary for r in processed if r.summary]
         embeddings_by_summary: dict[str, list[float]] = {}
         if summaries:
-            emb_resp = self._embeddings_client.embed(summaries)
+            emb_resp = self._client.embed(summaries)
             embeddings_by_summary = dict(zip(summaries, emb_resp.embeddings))
 
         return [
@@ -74,13 +68,14 @@ class ArticleEnricher:
 def _validate_medtop_ids(
     response: _EnrichmentResponse, taxonomy: Taxonomy
 ) -> _EnrichmentResponse:
-    """Validate topic IDs against the taxonomy and return a filtered response."""
-    medtop_ids = [mid for mid in response.medtop_ids if mid in taxonomy]
+    """Normalize, validate, and filter topic IDs against the taxonomy."""
+    normalized = [f"medtop:{mid}" for mid in response.medtop_ids]
+    medtop_ids = [mid for mid in normalized if mid in taxonomy]
     if not medtop_ids:
-        if response.significance_score == 0.0 and not response.medtop_ids:
+        if response.significance_score == 0.0 and not normalized:
             logger.debug("Article skipped")
-        elif response.medtop_ids:
-            invalid = [mid for mid in response.medtop_ids if mid not in taxonomy]
+        elif normalized:
+            invalid = [mid for mid in normalized if mid not in taxonomy]
             logger.warning("%d invalid topic ID(s) returned", len(invalid))
         else:
             logger.warning(
@@ -183,7 +178,7 @@ accurately describes the article's focus — do not over-generalise. Most articl
 one branch; some legitimately span two or three. Only include a topic if the article \
 substantially covers it.
 
-Full IPTC Media Topics taxonomy (qcode — name — definition):
+Full IPTC Media Topics taxonomy (ID — name — definition):
 {tree}
 
 """

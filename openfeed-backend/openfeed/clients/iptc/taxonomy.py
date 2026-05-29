@@ -111,9 +111,9 @@ def render_prompt_tree(
     If *max_depth* is given, only nodes at or above that depth are rendered.
 
     Example output:
-        medtop:11000000 (politics) — Local, regional, national...
-          medtop:20000574 (election) — The process by which people vote...
-            medtop:20000579 (national elections) — ...
+        11000000 (politics) — Local, regional, national...
+          20000574 (election) — The process by which people vote...
+            20000579 (national elections) — ...
     """
     nodes = [
         taxonomy[mid]
@@ -130,7 +130,8 @@ def render_prompt_tree(
     for node in nodes:
         indent = "  " * (node.depth - min_depth)
         defn = f" — {node.definition}" if node.definition else ""
-        lines.append(f"{indent}{node.medtop_id} ({node.name}){defn}")
+        bare_id = node.medtop_id.removeprefix("medtop:")
+        lines.append(f"{indent}{bare_id} ({node.name}){defn}")
 
     return "\n".join(lines)
 
