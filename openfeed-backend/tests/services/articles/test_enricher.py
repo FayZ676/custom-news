@@ -60,11 +60,17 @@ def _format_failure(
         f"FAIL: {fixture['title']!r}\n"
         f"  expected root: {expected_root} ({expected_name})\n"
         f"  actual roots:  {actual_roots or '{none}'} ({actual_names or '{none}'})\n"
-        f"  raw topics:    {[t['id'] for t in metadata.topics]}"
+        f"  raw topics:    {[t['id'] for t in metadata.topics]}\n"
+        f"  significance:  {metadata.significance_score}"
     )
 
 
 def _check(fixture: dict, metadata: ArticleMetadata, taxonomy: Taxonomy) -> str | None:
-    if fixture["expected_root"] not in _actual_roots(metadata, taxonomy):
+    if fixture["expected_root"] is None:
+        return None
+    root_fail = fixture["expected_root"] not in _actual_roots(metadata, taxonomy)
+    sig = fixture["expected_significance"]
+    sig_fail = sig is not None and abs(metadata.significance_score - sig) > 0.05
+    if root_fail or sig_fail:
         return _format_failure(fixture, metadata, taxonomy)
     return None
