@@ -1,142 +1,75 @@
-from unittest.mock import MagicMock
+import json
+import logging
+from pathlib import Path
 
-import pytest
+from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
+from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
 
-from openfeed.clients.iptc.taxonomy import load_taxonomy
-from openfeed.services.articles.enricher import ArticleEnricher
-from openfeed.db.models import PublicGlobalArticles
+logging.basicConfig(
+    level=logging.DEBUG, format="%(levelname)-8s %(name)s — %(message)s"
+)
 
-FIXTURES = [
-    {
-        "title": (
-            "US orders travelers on Air Force One to throw away gifts, pins, "
-            "and burner phones after China trip"
-        ),
-        "summary": (
-            "The U.S. ordered travelers on Air Force One to discard gifts, pins, and "
-            "burner phones after a China trip amid concerns about China's intelligence "
-            "and espionage capabilities."
-        ),
-        "expected_root": "medtop:11000000",  # politics and government
-    },
-    {
-        "title": "Tesla reveals two Robotaxi crashes involving teleoperators",
-        "summary": (
-            "Tesla disclosed newly unredacted crash reports detailing two Robotaxi "
-            "crashes involving teleoperators as it works to scale its autonomous "
-            "ride-hailing service."
-        ),
-        "expected_root": "medtop:13000000",  # science and technology
-    },
-    {
-        "title": (
-            "OpenAI launches ChatGPT for personal finance, "
-            "will let you connect bank accounts"
-        ),
-        "summary": (
-            "OpenAI launched ChatGPT for personal finance, enabling users to connect "
-            "bank accounts and view a dashboard covering portfolio performance, "
-            "spending, subscriptions, and upcoming payments."
-        ),
-        "expected_root": "medtop:04000000",  # economy, business and finance
-    },
-    {
-        "title": "Ebola outbreak: WHO declares emergency, US restricts travel, American infected",
-        "summary": (
-            "The WHO declared an Ebola outbreak public health emergency as the US restricted "
-            "travel and the CDC arranged to move an infected American and six others to "
-            "Germany for treatment."
-        ),
-        "expected_root": "medtop:07000000",  # health
-    },
-    {
-        "title": "RFK Jr. forced to withdraw charter that opened CDC panel to anti-vaccine quacks",
-        "summary": (
-            "RFK Jr. was forced to withdraw a charter that would have expanded eligibility "
-            "for a CDC panel and focused on alleged vaccine injuries, enabling anti-vaccine "
-            "figures to gain influence."
-        ),
-        "expected_root": "medtop:07000000",  # health
-    },
-    {
-        "title": "Gaza Is Rebuilding With Lego-Like Bricks Made From Rubble",
-        "summary": (
-            "Palestinians in Gaza are rebuilding shelters by crushing rubble into "
-            "interlocking, Lego-like bricks because reconstruction materials remain blocked."
-        ),
-        "expected_root": "medtop:16000000",  # conflict, war and peace
-    },
-    {
-        "title": "Asteroid 2026 JH2 Is About to Fly Right Past Earth—Relatively Speaking",
-        "summary": (
-            "Asteroid 2026 JH2 is set to pass Earth on May 18 at a distance about four times "
-            "closer than the Moon, making it a notably close flyby despite being 'relatively' safe."
-        ),
-        "expected_root": "medtop:13000000",  # science and technology
-    },
-    {
-        "title": "An ICE Firearms Trainer Was Involved in At Least 4 Deadly Shootings",
-        "summary": (
-            "David Norman, a former Phoenix police officer now running an ICE Firearms Trainer "
-            "company, provided firearms training to Homeland Security's Special Response Teams "
-            "and was involved in at least four deadly shootings."
-        ),
-        "expected_root": "medtop:02000000",  # crime, law and justice
-    },
-    {
-        "title": "Tesla's lithium refinery discharges 231,000 gallons of polluted wastewater a day",
-        "summary": (
-            "Tesla's lithium refinery discharged 231,000 gallons of polluted wastewater per day, "
-            "raising concerns about environmental harm from the company's operations."
-        ),
-        "expected_root": "medtop:06000000",  # environment
-    },
-    {
-        "title": "Minnesota becomes first state to ban prediction markets",
-        "summary": "Minnesota became the first U.S. state to ban prediction markets.",
-        "expected_root": "medtop:11000000",  # politics and government
-    },
-    {
-        "title": "CISA Admin Leaked AWS GovCloud Keys on GitHub",
-        "summary": (
-            "A CISA administrator leaked AWS GovCloud keys on GitHub, exposing sensitive "
-            "credentials tied to the U.S. government cloud environment."
-        ),
-        "expected_root": "medtop:02000000",  # crime, law and justice
-    },
-    {
-        "title": "EV drivers will pay $130 a year under Congress' 2026 transportation bill",
-        "summary": (
-            "Congress' 2026 transportation bill would require electric vehicle drivers to pay "
-            "$130 per year to fund road use, as lawmakers argue EVs should contribute their "
-            "'fair share.'"
-        ),
-        "expected_root": "medtop:11000000",  # politics and government
-    },
-]
+_FIXTURES_PATH = Path(__file__).parent / "fixtures" / "enricher.jsonl"
+_DEBUG_PATH = Path(__file__).parent / "fixtures" / "enricher_debug.txt"
 
 
-@pytest.fixture(scope="module")
-def taxonomy():
-    return load_taxonomy()
+def test_enricher():
+    fixtures = _load_fixtures(_FIXTURES_PATH)
+    taxonomy = load_taxonomy()
+    results = ArticleEnricher().extract_article_metadata(
+        [_fixture_to_text(f) for f in fixtures]
+    )
+
+    checks = [_check(f, m, taxonomy) for f, m in zip(fixtures, results)]
+    failures = [c for c in checks if c is not None]
+
+    _DEBUG_PATH.write_text(
+        "\n\n".join(
+            c if c is not None else f"PASS: {f['title']!r}"
+            for f, c in zip(fixtures, checks)
+        )
+    )
+
+    assert (
+        not failures
+    ), f"{len(failures)}/{len(fixtures)} fixture(s) failed — see {_DEBUG_PATH.name}"
 
 
-@pytest.fixture(scope="module")
-def article_enricher():
-    return ArticleEnricher()
+### private ###
 
 
-def _make_article(title: str, summary: str) -> PublicGlobalArticles:
-    article = MagicMock(spec=PublicGlobalArticles)
-    article.id = title
-    article.title = title
-    article.summary = summary
-    return article
+def _load_fixtures(path: Path) -> list[dict]:
+    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
-@pytest.fixture(scope="module")
-def classified(article_enricher):
-    """Run ArticleEnricher.extract_article_metadata once for all fixtures."""
-    texts = ["\n\n".join(filter(None, [f["title"], f["summary"]])) for f in FIXTURES]
-    results = article_enricher.extract_article_metadata(texts)
-    return {f["title"]: metadata.topics for f, metadata in zip(FIXTURES, results)}
+def _fixture_to_text(fixture: dict) -> str:
+    return "\n\n".join(filter(None, [fixture["title"], fixture["summary"]]))
+
+
+def _actual_roots(metadata: ArticleMetadata, taxonomy: Taxonomy) -> set[str]:
+    return {
+        taxonomy[t["id"]].ancestors[0] for t in metadata.topics if t["id"] in taxonomy
+    }
+
+
+def _format_failure(
+    fixture: dict, metadata: ArticleMetadata, taxonomy: Taxonomy
+) -> str:
+    expected_root = fixture["expected_root"]
+    actual_roots = _actual_roots(metadata, taxonomy)
+    expected_name = (
+        taxonomy[expected_root].name if expected_root in taxonomy else expected_root
+    )
+    actual_names = {taxonomy[r].name for r in actual_roots}
+    return (
+        f"FAIL: {fixture['title']!r}\n"
+        f"  expected root: {expected_root} ({expected_name})\n"
+        f"  actual roots:  {actual_roots or '{none}'} ({actual_names or '{none}'})\n"
+        f"  raw topics:    {[t['id'] for t in metadata.topics]}"
+    )
+
+
+def _check(fixture: dict, metadata: ArticleMetadata, taxonomy: Taxonomy) -> str | None:
+    if fixture["expected_root"] not in _actual_roots(metadata, taxonomy):
+        return _format_failure(fixture, metadata, taxonomy)
+    return None
