@@ -1,13 +1,8 @@
 import json
-import logging
 from pathlib import Path
 
 from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
 from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
-
-logging.basicConfig(
-    level=logging.DEBUG, format="%(levelname)-8s %(name)s — %(message)s"
-)
 
 _FIXTURES_PATH = Path(__file__).parent / "fixtures" / "enricher.jsonl"
 _DEBUG_PATH = Path(__file__).parent / "fixtures" / "enricher_debug.txt"
