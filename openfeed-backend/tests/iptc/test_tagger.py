@@ -59,11 +59,11 @@ def isolation_results(taxonomy):
     }
 
 
-def test_single_exact_match_is_sufficient(isolation_results):
+def test_isolation_single_match(isolation_results):
     assert "medtop:20000056" in isolation_results["single"]
 
 
-def test_adding_unrelated_term_preserves_existing_result(isolation_results):
+def test_isolation_unrelated_term_preserved(isolation_results):
     assert all(
         mid in isolation_results["combined"] for mid in isolation_results["single"]
     )
