@@ -1,3 +1,7 @@
+---
+applyTo: "openfeed-backend/tests/*"
+---
+
 # Testing Instructions
 
 This document captures the testing principles and patterns used in this project, derived from experience writing and refining the test suite.
@@ -12,7 +16,7 @@ Tests should be held to the same standards as production code: **functional, min
 
 ## Eliminate Redundancy Before Writing More Tests
 
-Before adding a new test, ask: *is this already implied by something that exists?*
+Before adding a new test, ask: _is this already implied by something that exists?_
 
 **Subsumed assertions** — an assertion is redundant if failing it necessarily means another assertion also fails with a better message. For example:
 
@@ -45,7 +49,7 @@ This turns N parametrized test functions × M fixtures = N×M API calls into M c
 
 ## Consolidate Related Assertions Into One Test
 
-Separate parametrized test functions that operate on the same result should be merged into a single test with multiple assertions. One test per invariant *of a given output* — not one test per function.
+Separate parametrized test functions that operate on the same result should be merged into a single test with multiple assertions. One test per invariant _of a given output_ — not one test per function.
 
 **Before:** 5 test functions, each calling `classify_article` independently per fixture = 15 API calls.
 
@@ -80,6 +84,7 @@ def _within_pass1_branch(t: ClassifiedTopic, taxonomy: Taxonomy, pass1_ids: set[
 ```
 
 Pure predicates are:
+
 - Reusable in both the `all()` check and the failure message's filter
 - Testable independently if needed
 - Named, making the assertion's intent self-documenting
