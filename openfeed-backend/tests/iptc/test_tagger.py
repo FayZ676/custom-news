@@ -49,3 +49,21 @@ def _cases() -> list[tuple]:
 @pytest.mark.parametrize("terms,expected_ids", _cases())
 def test_search_taxonomy(taxonomy, terms, expected_ids):
     assert search_taxonomy(terms, taxonomy) == expected_ids
+
+
+@pytest.fixture(scope="module")
+def isolation_results(taxonomy):
+    return {
+        "single": search_taxonomy(["armed conflict"], taxonomy),
+        "combined": search_taxonomy(["armed conflict", "stock market crash"], taxonomy),
+    }
+
+
+def test_single_exact_match_is_sufficient(isolation_results):
+    assert "medtop:20000056" in isolation_results["single"]
+
+
+def test_adding_unrelated_term_preserves_existing_result(isolation_results):
+    assert all(
+        mid in isolation_results["combined"] for mid in isolation_results["single"]
+    )
