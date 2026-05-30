@@ -19,10 +19,13 @@ _EMBEDDINGS_PATH = _DEFAULT_TAXONOMY_PATH.parent / "taxonomy_embeddings.json"
 def main() -> None:
     taxonomy = load_taxonomy()
     nodes = list(taxonomy.values())
-    node_names = [node.name or node.medtop_id for node in nodes]
+    node_texts = [
+        f"{node.name}: {node.definition}".rstrip(": ") if node.definition else (node.name or node.medtop_id)
+        for node in nodes
+    ]
 
     print(f"Embedding {len(nodes)} taxonomy nodes…")
-    response = OpenAIClient().embed(node_names)
+    response = OpenAIClient().embed(node_texts)
 
     embeddings = {node.medtop_id: vec for node, vec in zip(nodes, response.embeddings)}
     _EMBEDDINGS_PATH.write_text(json.dumps(embeddings), encoding="utf-8")
