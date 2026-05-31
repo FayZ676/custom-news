@@ -20,7 +20,11 @@ def main() -> None:
     taxonomy = load_taxonomy()
     nodes = list(taxonomy.values())
     node_texts = [
-        f"{node.name}: {node.definition}".rstrip(": ") if node.definition else (node.name or node.medtop_id)
+        (
+            f"{node.name}: {node.definition}".rstrip(": ")
+            if node.definition
+            else (node.name or node.medtop_id)
+        )
         for node in nodes
     ]
 

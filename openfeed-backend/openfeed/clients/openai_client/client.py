@@ -35,6 +35,7 @@ class OpenAIClient:
         model: Literal[
             "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano", "gpt-5-nano"
         ] = "gpt-5-nano",
+        embedding_model: str = "text-embedding-3-large",
         temperature: float = 0.0,
         reasoning_effort: ReasoningEffort | None = None,
         prompt_cache_key: str | None = None,
@@ -42,13 +43,14 @@ class OpenAIClient:
     ) -> None:
         self._client = OpenAI(api_key=settings.openai_api_key)
         self._model = model
+        self.embedding_model = embedding_model
         self._temperature = temperature
         self._reasoning_effort = reasoning_effort
         self._prompt_cache_key = prompt_cache_key
         self._instructions = instructions
         self._response_rate_limiter: RateLimiter = get_rate_limiter(model)
         self._embedding_rate_limiter: RateLimiter = get_rate_limiter(
-            settings.embedding_model
+            self.embedding_model
         )
 
     def _invoke(self, fn):
@@ -56,22 +58,20 @@ class OpenAIClient:
 
     def embed(self, texts: list[str]) -> EmbeddingsResponse:
         all_embeddings: list[list[float]] = []
-        for batch, batch_tokens in make_batches(texts):
+        for batch, batch_tokens in make_batches(texts, self.embedding_model):
             self._embedding_rate_limiter.acquire(batch_tokens)
 
             def call(batch=batch):
                 raw = self._client.embeddings.with_raw_response.create(
                     input=batch,
-                    model=settings.embedding_model,
+                    model=self.embedding_model,
                     dimensions=settings.embedding_dimensions,
                 )
                 self._embedding_rate_limiter.update_from_headers(raw.headers)
                 return [item.embedding for item in raw.parse().data]
 
             all_embeddings.extend(self._invoke(call))
-        return EmbeddingsResponse(
-            embeddings=all_embeddings, model=settings.embedding_model
-        )
+        return EmbeddingsResponse(embeddings=all_embeddings, model=self.embedding_model)
 
     def generate_response(
         self,

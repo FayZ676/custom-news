@@ -28,11 +28,13 @@ def _prepare(text: str, encoder: Encoding) -> tuple[str, int]:
     return encoder.decode(truncated), len(truncated)
 
 
-def make_batches(texts: list[str]) -> Iterator[tuple[list[str], int]]:
+def make_batches(
+    texts: list[str], embedding_model: str
+) -> Iterator[tuple[list[str], int]]:
     """Yield (batch, token_count) pairs respecting per-input and per-batch token limits."""
     batch: list[str] = []
     batch_tokens = 0
-    encoder = tiktoken.encoding_for_model(settings.embedding_model)
+    encoder = tiktoken.encoding_for_model(embedding_model)
 
     for text in texts:
         text, tokens = _prepare(text, encoder)

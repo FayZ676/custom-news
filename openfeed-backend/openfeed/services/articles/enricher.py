@@ -154,3 +154,21 @@ multiple distinct topics, include terms for each. If the article is not a news a
 return an empty list.
 
 """
+
+
+_IPTC_SYSTEM_PROMPT_SECTION = """
+Generate key terms for IPTC semantic topic matching.
+
+Output rules:
+- Return a JSON array of strings.
+- Max 8 terms.
+- Each term must be 3–7 words.
+- Each term must express exactly one topic.
+- Use taxonomy-like category language.
+- Build each term as:
+  [domain anchor] + [event/type noun] + [one disambiguator].
+- Do not include person names, exact locations, dates, numbers, quotes, or commentary.
+- Do not write full sentences.
+- Do not use "and/or" to combine multiple topics in one term.
+- Order terms by confidence (best match first).
+"""
