@@ -46,9 +46,21 @@ def _cases() -> list[tuple]:
     return cases
 
 
+def _format_ids(ids: list[str], taxonomy: Taxonomy) -> list[str]:
+    return [
+        f"{mid} ({taxonomy[mid].name})" if mid in taxonomy else f"{mid} (unknown)"
+        for mid in ids
+    ]
+
+
 @pytest.mark.parametrize("terms,expected_ids", _cases())
 def test_search_taxonomy(taxonomy, terms, expected_ids):
-    assert search_taxonomy(terms, taxonomy) == expected_ids
+    actual_ids = search_taxonomy(terms, taxonomy)
+    assert actual_ids == expected_ids, (
+        f"terms={terms}\n"
+        f"expected={_format_ids(expected_ids, taxonomy)}\n"
+        f"actual={_format_ids(actual_ids, taxonomy)}"
+    )
 
 
 @pytest.fixture(scope="module")
