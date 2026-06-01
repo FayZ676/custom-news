@@ -95,19 +95,7 @@ class Tagger:
         self.scoring_fn: ScoringFn = default_scoring
 
     def search_taxonomy(self, key_terms: list[str]) -> list[TaxonomyNode]:
-        """Return taxonomy nodes matched per-term, unioned in key_terms order.
-
-        Each term is scored independently against a uniform prior; nodes with Bayes factor
-        (posterior * N) >= threshold are included. A BF of 10 means 10x more probable than chance.
-
-        Args:
-            key_terms:  Ordered key terms (most → least important).
-            taxonomy:   Loaded IPTC taxonomy.
-            threshold:  Minimum per-term Bayes factor to include a node.
-            max_terms:  Maximum number of key terms to consider.
-            signals:    Signal functions (term, term_vec, node) -> 0.0..1.0.
-            scoring_fn: Scoring function (similarity, depth, position) -> score.
-        """
+        """Return taxonomy nodes matched per-term, unioned in key_terms order."""
         capped = key_terms[: self.max_terms]
         nodes = list(self.taxonomy.values())
 
