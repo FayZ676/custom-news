@@ -3,8 +3,7 @@ import logging
 from pydantic import BaseModel
 
 from openfeed.clients.ner import extract_entities
-from openfeed.clients.iptc.taxonomy import load_taxonomy
-from openfeed.clients.iptc.tagger import search_taxonomy
+from openfeed.clients.iptc.tagger import Tagger
 from openfeed.clients.openai_client import OpenAIClient, Message
 
 
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class ArticleEnricher:
     def __init__(self) -> None:
-        self._taxonomy = load_taxonomy()
+        self.tagger = Tagger()
         self._client = OpenAIClient(
             model="gpt-5.4-nano",
             prompt_cache_key="article-enrich-v1",
@@ -57,8 +56,8 @@ class ArticleEnricher:
                     embeddings_by_summary.get(r.summary) if r.summary else None
                 ),
                 topics=[
-                    {"id": mid, "name": self._taxonomy[mid].name}
-                    for mid in search_taxonomy(r.key_terms, self._taxonomy)
+                    {"id": node.medtop_id, "name": node.name}
+                    for node in self.tagger.search_taxonomy(r.key_terms)
                 ],
             )
             for r in responses

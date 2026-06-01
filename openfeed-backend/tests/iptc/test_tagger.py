@@ -17,15 +17,11 @@ from pathlib import Path
 
 import pytest
 
-from openfeed.clients.iptc.tagger import search_taxonomy
-from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
+from openfeed.clients.iptc.tagger import Tagger
+from openfeed.clients.iptc.taxonomy import Taxonomy
 
 CASES_DIR = Path(__file__).parent / "cases"
-
-
-@pytest.fixture(scope="module")
-def taxonomy() -> Taxonomy:
-    return load_taxonomy()
+TAGGER = Tagger()
 
 
 def _parse(value: str) -> list[str]:
@@ -54,28 +50,30 @@ def _format_ids(ids: list[str], taxonomy: Taxonomy) -> list[str]:
 
 
 @pytest.mark.parametrize("terms,expected_ids", _cases())
-def test_search_taxonomy(taxonomy, terms, expected_ids):
-    actual_ids = search_taxonomy(terms, taxonomy)
+def test_search_taxonomy(terms, expected_ids):
+    actual_nodes = TAGGER.search_taxonomy(terms)
+    actual_ids = [node.medtop_id for node in actual_nodes]
     assert actual_ids == expected_ids, (
         f"terms={terms}\n"
-        f"expected={_format_ids(expected_ids, taxonomy)}\n"
-        f"actual={_format_ids(actual_ids, taxonomy)}"
+        f"expected={_format_ids(expected_ids, TAGGER.taxonomy)}\n"
+        f"actual={_format_ids(actual_ids, TAGGER.taxonomy)}"
     )
 
 
-@pytest.fixture(scope="module")
-def isolation_results(taxonomy):
+def _isolation_results():
     return {
-        "single": search_taxonomy(["armed conflict"], taxonomy),
-        "combined": search_taxonomy(["armed conflict", "stock market crash"], taxonomy),
+        "single": TAGGER.search_taxonomy(["armed conflict"]),
+        "combined": TAGGER.search_taxonomy(["armed conflict", "stock market crash"]),
     }
 
 
-def test_isolation_single_match(isolation_results):
-    assert "medtop:20000056" in isolation_results["single"]
+def test_isolation_single_match():
+    isolation_results = _isolation_results()
+    assert "medtop:20000056" in {node.medtop_id for node in isolation_results["single"]}
 
 
-def test_isolation_unrelated_term_preserved(isolation_results):
-    assert all(
-        mid in isolation_results["combined"] for mid in isolation_results["single"]
-    )
+def test_isolation_unrelated_term_preserved():
+    isolation_results = _isolation_results()
+    single_ids = {node.medtop_id for node in isolation_results["single"]}
+    combined_ids = {node.medtop_id for node in isolation_results["combined"]}
+    assert single_ids.issubset(combined_ids)

@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from rapidfuzz import fuzz
 
-from openfeed.clients.iptc.taxonomy import Taxonomy, TaxonomyNode
+from openfeed.clients.iptc.taxonomy import load_taxonomy, Taxonomy, TaxonomyNode
 from openfeed.clients.openai_client.client import OpenAIClient
 from openfeed.utils.bayesian import Belief, Likelihood, update_all
 
@@ -51,9 +51,7 @@ def cosine_signal(_term: str, term_vec: list[float], node: "TaxonomyNode") -> fl
     return _cosine_similarity(term_vec, list(node.embedding))
 
 
-def default_scoring(
-    similarity: float, depth: int, position: int
-) -> float:  # noqa: ARG001
+def default_scoring(similarity: float, _depth: int, position: int) -> float:
     """Position-decayed score: similarity / (position + 1). Depth unused (natural tie-breaker)."""
     return similarity / (position + 1)
 
@@ -88,59 +86,55 @@ def _build_likelihoods(
     ]
 
 
-def _search_single_term(
-    term: str,
-    term_vec: list[float],
-    nodes: list[TaxonomyNode],
-    signals: list[SignalFn],
-    scoring_fn: ScoringFn,
-    threshold: float,
-) -> list[str]:
-    """Return medtop_ids above threshold for a single term, sorted by descending BF."""
-    likelihoods = _build_likelihoods([term], nodes, [term_vec], signals, scoring_fn)
-    posterior = update_all(_uniform_prior(nodes), likelihoods)
-    n = len(nodes)
-    return [
-        mid
-        for mid, p in sorted(posterior.items(), key=lambda x: x[1], reverse=True)
-        if p * n >= threshold
-    ]
+class Tagger:
+    def __init__(self):
+        self.taxonomy: Taxonomy = load_taxonomy()
+        self.threshold: float = 10.0
+        self.max_terms: int = 8
+        self.signals: list[SignalFn] = [fuzzy_signal, cosine_signal]
+        self.scoring_fn: ScoringFn = default_scoring
 
+    def search_taxonomy(self, key_terms: list[str]) -> list[TaxonomyNode]:
+        """Return taxonomy nodes matched per-term, unioned in key_terms order.
 
-def search_taxonomy(
-    key_terms: list[str],
-    taxonomy: Taxonomy,
-    threshold: float = 10.0,
-    max_terms: int = 8,
-    signals: list[SignalFn] = [fuzzy_signal, cosine_signal],
-    scoring_fn: ScoringFn = default_scoring,
-) -> list[str]:
-    """Return medtop_ids matched per-term, unioned in key_terms order (earliest match wins).
+        Each term is scored independently against a uniform prior; nodes with Bayes factor
+        (posterior * N) >= threshold are included. A BF of 10 means 10x more probable than chance.
 
-    Each term is scored independently against a uniform prior; nodes with Bayes factor
-    (posterior * N) >= threshold are included. A BF of 10 means 10x more probable than chance.
+        Args:
+            key_terms:  Ordered key terms (most → least important).
+            taxonomy:   Loaded IPTC taxonomy.
+            threshold:  Minimum per-term Bayes factor to include a node.
+            max_terms:  Maximum number of key terms to consider.
+            signals:    Signal functions (term, term_vec, node) -> 0.0..1.0.
+            scoring_fn: Scoring function (similarity, depth, position) -> score.
+        """
+        capped = key_terms[: self.max_terms]
+        nodes = list(self.taxonomy.values())
 
-    Args:
-        key_terms:  Ordered key terms (most → least important).
-        taxonomy:   Loaded IPTC taxonomy.
-        threshold:  Minimum per-term Bayes factor to include a node.
-        max_terms:  Maximum number of key terms to consider.
-        signals:    Signal functions (term, term_vec, node) -> 0.0..1.0.
-        scoring_fn: Scoring function (similarity, depth, position) -> score.
-    """
-    capped = key_terms[:max_terms]
-    nodes = list(taxonomy.values())
+        response = OpenAIClient().embed(list(capped))
+        term_vecs = response.embeddings
 
-    response = OpenAIClient().embed(list(capped))
-    term_vecs = response.embeddings
+        seen: set[str] = set()
+        result: list[TaxonomyNode] = []
+        for term, term_vec in zip(capped, term_vecs):
+            for node in self._search_single_term(term, term_vec, nodes):
+                if node.medtop_id not in seen:
+                    seen.add(node.medtop_id)
+                    result.append(node)
+        return result
 
-    seen: set[str] = set()
-    result: list[str] = []
-    for term, term_vec in zip(capped, term_vecs):
-        for mid in _search_single_term(
-            term, term_vec, nodes, signals, scoring_fn, threshold
-        ):
-            if mid not in seen:
-                seen.add(mid)
-                result.append(mid)
-    return result
+    def _search_single_term(
+        self, term: str, term_vec: list[float], nodes: list[TaxonomyNode]
+    ) -> list[TaxonomyNode]:
+        """Return nodes above threshold for a single term, sorted by descending BF."""
+        likelihoods = _build_likelihoods(
+            [term], nodes, [term_vec], self.signals, self.scoring_fn
+        )
+        posterior = update_all(_uniform_prior(nodes), likelihoods)
+        n = len(nodes)
+        nodes_by_id = {node.medtop_id: node for node in nodes}
+        return [
+            nodes_by_id[mid]
+            for mid, p in sorted(posterior.items(), key=lambda x: x[1], reverse=True)
+            if p * n >= self.threshold
+        ]
