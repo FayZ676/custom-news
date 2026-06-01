@@ -90,21 +90,19 @@ class Tagger:
     def __init__(self):
         self.taxonomy: Taxonomy = load_taxonomy()
         self.threshold: float = 10.0
-        self.max_terms: int = 8
         self.signals: list[SignalFn] = [fuzzy_signal, cosine_signal]
         self.scoring_fn: ScoringFn = default_scoring
 
     def search_taxonomy(self, key_terms: list[str]) -> list[TaxonomyNode]:
         """Return taxonomy nodes matched per-term, unioned in key_terms order."""
-        capped = key_terms[: self.max_terms]
         nodes = list(self.taxonomy.values())
 
-        response = OpenAIClient().embed(list(capped))
+        response = OpenAIClient().embed(key_terms)
         term_vecs = response.embeddings
 
         seen: set[str] = set()
         result: list[TaxonomyNode] = []
-        for term, term_vec in zip(capped, term_vecs):
+        for term, term_vec in zip(key_terms, term_vecs):
             for node in self._search_single_term(term, term_vec, nodes):
                 if node.medtop_id not in seen:
                     seen.add(node.medtop_id)
