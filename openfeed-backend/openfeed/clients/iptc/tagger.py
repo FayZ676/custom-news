@@ -96,18 +96,12 @@ class Tagger:
     def search_taxonomy(self, key_terms: list[str]) -> list[TaxonomyNode]:
         """Return taxonomy nodes matched per-term, unioned in key_terms order."""
         nodes = list(self.taxonomy.values())
-
-        response = OpenAIClient().embed(key_terms)
-        term_vecs = response.embeddings
-
-        seen: set[str] = set()
-        result: list[TaxonomyNode] = []
-        for term, term_vec in zip(key_terms, term_vecs):
+        term_vectors = OpenAIClient().embed(key_terms).embeddings
+        result_by_id: dict[str, TaxonomyNode] = {}
+        for term, term_vec in zip(key_terms, term_vectors):
             for node in self._search_single_term(term, term_vec, nodes):
-                if node.medtop_id not in seen:
-                    seen.add(node.medtop_id)
-                    result.append(node)
-        return result
+                result_by_id[node.medtop_id] = node
+        return list(result_by_id.values())
 
     def _search_single_term(
         self, term: str, term_vec: list[float], nodes: list[TaxonomyNode]
