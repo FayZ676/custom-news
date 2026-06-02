@@ -149,7 +149,7 @@ def topic_significance_score(topic_ids: list[str]) -> float:
 
 def format_topics_for_prompt() -> str:
     return "\n".join(
-        f"- {topic['name']}"
+        f"- {topic['id']}: {topic['name']}"
         for topic in sorted(
             TOPICS,
             key=lambda topic: (
