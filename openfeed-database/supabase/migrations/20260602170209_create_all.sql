@@ -5,8 +5,8 @@ create extension if not exists "vector" with schema "public";
 
   create table "public"."global_article_topics" (
     "article_id" uuid not null,
-    "medtop_id" text not null,
-    "medtop_name" text not null
+    "topic_id" text not null,
+    "topic_name" text not null
       );
 
 
@@ -99,8 +99,8 @@ alter table "public"."global_stories" enable row level security;
 
   create table "public"."global_story_topics" (
     "story_id" uuid not null,
-    "medtop_id" text not null,
-    "medtop_name" text not null
+    "topic_id" text not null,
+    "topic_name" text not null
       );
 
 
@@ -130,8 +130,8 @@ alter table "public"."user_stories_hidden" enable row level security;
 
   create table "public"."user_topic_preferences" (
     "user_id" uuid not null,
-    "medtop_id" text not null,
-    "medtop_name" text not null,
+    "topic_id" text not null,
+    "topic_name" text not null,
     "preference" text not null,
     "created_at" timestamp with time zone not null default now()
       );
@@ -139,7 +139,7 @@ alter table "public"."user_stories_hidden" enable row level security;
 
 alter table "public"."user_topic_preferences" enable row level security;
 
-CREATE UNIQUE INDEX global_article_topics_pkey ON public.global_article_topics USING btree (article_id, medtop_id);
+CREATE UNIQUE INDEX global_article_topics_pkey ON public.global_article_topics USING btree (article_id, topic_id);
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
@@ -161,7 +161,7 @@ CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING b
 
 CREATE UNIQUE INDEX global_stories_pkey ON public.global_stories USING btree (id);
 
-CREATE UNIQUE INDEX global_story_topics_pkey ON public.global_story_topics USING btree (story_id, medtop_id);
+CREATE UNIQUE INDEX global_story_topics_pkey ON public.global_story_topics USING btree (story_id, topic_id);
 
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
@@ -169,7 +169,7 @@ CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user
 
 CREATE UNIQUE INDEX user_stories_hidden_pkey ON public.user_stories_hidden USING btree (user_id, story_id);
 
-CREATE UNIQUE INDEX user_topic_preferences_pkey ON public.user_topic_preferences USING btree (user_id, medtop_id);
+CREATE UNIQUE INDEX user_topic_preferences_pkey ON public.user_topic_preferences USING btree (user_id, topic_id);
 
 alter table "public"."global_article_topics" add constraint "global_article_topics_pkey" PRIMARY KEY using index "global_article_topics_pkey";
 

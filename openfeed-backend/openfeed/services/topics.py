@@ -1,7 +1,9 @@
 import re
 from typing import cast
 
-IPTC_TOPICS: tuple[dict[str, str | float], ...] = (
+# Root topic taxonomy used across enrichment, scoring, and user preferences.
+# Topic labels are sourced from the IPTC Media Topics root taxonomy.
+TOPICS: tuple[dict[str, str | float], ...] = (
     {
         "id": "01",
         "name": "arts, culture, entertainment and media",
@@ -106,23 +108,14 @@ IPTC_TOPICS: tuple[dict[str, str | float], ...] = (
     },
 )
 
-_TOPIC_NAME_BY_ID = {topic["id"]: cast(str, topic["name"]) for topic in IPTC_TOPICS}
+_TOPIC_NAME_BY_ID = {topic["id"]: cast(str, topic["name"]) for topic in TOPICS}
 
-_MEDTOP_ROOT_LEGACY_RE = re.compile(r"^medtop:(\d{2})0{6}$")
-_MEDTOP_ROOT_SHORT_RE = re.compile(r"^medtop:(\d{1,2})$")
 _ROOT_NUMERIC_RE = re.compile(r"^(\d{1,2})$")
-_ROOT_NUMERIC_LEGACY_RE = re.compile(r"^(\d{2})0{6}$")
 
 
 def normalize_topic_id(value: str) -> str:
-    """Normalize legacy MedTop-like root encodings to 2-digit IPTC root IDs."""
+    """Normalize topic IDs to a canonical 2-digit form."""
     topic_id = value.strip().lower()
-    if match := _MEDTOP_ROOT_LEGACY_RE.fullmatch(topic_id):
-        return f"{int(match.group(1)):02d}"
-    if match := _MEDTOP_ROOT_SHORT_RE.fullmatch(topic_id):
-        return f"{int(match.group(1)):02d}"
-    if match := _ROOT_NUMERIC_LEGACY_RE.fullmatch(topic_id):
-        return f"{int(match.group(1)):02d}"
     if match := _ROOT_NUMERIC_RE.fullmatch(topic_id):
         return f"{int(match.group(1)):02d}"
     return topic_id
@@ -147,12 +140,12 @@ def topic_significance_score(topic_ids: list[str]) -> float:
     return max(
         (
             float(topic["significance_score"])
-            for topic in IPTC_TOPICS
+            for topic in TOPICS
             if topic["id"] in normalized_topic_ids
         ),
         default=0.0,
     )
 
 
-def format_iptc_root_topics_for_prompt() -> str:
-    return "\n".join(f"- {topic['id']}: {topic['name']}" for topic in IPTC_TOPICS)
+def format_topics_for_prompt() -> str:
+    return "\n".join(f"- {topic['id']}: {topic['name']}" for topic in TOPICS)

@@ -2,8 +2,8 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
 export interface StoryWithTopics extends Tables<"global_stories"> {
-  medtop_ids: string[];
-  medtop_names: string[];
+  topic_ids: string[];
+  topic_names: string[];
   final_score?: number;
 }
 
@@ -12,18 +12,18 @@ export async function getStoriesWithTopics(
 ): Promise<StoryWithTopics[]> {
   const { data, error } = await (supabase as any)
     .from("global_stories")
-    .select("*, global_story_topics(medtop_id, medtop_name)");
+    .select("*, global_story_topics(topic_id, topic_name)");
 
   if (error) throw new Error(error.message);
 
   return (data as any[]).map(({ global_story_topics, ...story }) => ({
     ...story,
-    medtop_ids: (
-      global_story_topics as { medtop_id: string; medtop_name: string }[]
-    ).map((t) => t.medtop_id),
-    medtop_names: (
-      global_story_topics as { medtop_id: string; medtop_name: string }[]
-    ).map((t) => t.medtop_name),
+    topic_ids: (
+      global_story_topics as { topic_id: string; topic_name: string }[]
+    ).map((t) => t.topic_id),
+    topic_names: (
+      global_story_topics as { topic_id: string; topic_name: string }[]
+    ).map((t) => t.topic_name),
   }));
 }
 

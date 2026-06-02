@@ -135,7 +135,7 @@ def _aggregate_and_insert_story_topics(
     story_articles: dict,
     all_stories: list[PublicGlobalStories],
 ) -> None:
-    """Aggregate article-level IPTC topics into story-level topics and insert them.
+    """Aggregate article-level topics into story-level topics and insert them.
 
     Fetches all article topics in a single batch query, then aggregates per story
     by taking the union of all constituent article topics.

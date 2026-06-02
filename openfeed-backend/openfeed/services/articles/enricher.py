@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from openfeed.clients.ner import extract_entities
 from openfeed.clients.openai_client import OpenAIClient, Message
 from openfeed.services.topics import (
-    format_iptc_root_topics_for_prompt,
+    format_topics_for_prompt,
     to_topic_payload,
     topic_significance_score,
 )
@@ -64,7 +64,7 @@ class ArticleEnricher:
 
 
 _SYSTEM_PROMPT = f"""\
-You are a senior news editor and IPTC news classifier. Articles are submitted in a \
+You are a senior news editor and topic classifier. Articles are submitted in a \
 single request, each wrapped in <item index="N"> XML tags. For each article, perform \
 two independent tasks and return one result per item in the `items` array, preserving \
 the original index order. If a submitted text is not a news article (e.g. it is an \
@@ -100,10 +100,10 @@ like "shocking", "groundbreaking", or "revolutionary" unless they are direct quo
 Prefer active voice. If the article contains only a forecast, allegation, or rumor, your \
 summary must make that framing explicit (e.g. "X is reported to…" or "officials warn that…").
 
-## Task 2: IPTC Topic Classification
+## Task 2: Topic Classification
 
 Classify each article into one or more topic IDs from this fixed set of 17 root topics:
-{format_iptc_root_topics_for_prompt()}
+{format_topics_for_prompt()}
 
 Output rules for `topics`:
 - Return a JSON array of strings.

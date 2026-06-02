@@ -71,8 +71,8 @@ def get_user_feed(user_id: UUID):
     return [
         {
             **s.story_with_topics.story.model_dump(mode="json"),
-            "medtop_ids": s.story_with_topics.topic_ids,
-            "medtop_names": s.story_with_topics.topic_names,
+            "topic_ids": s.story_with_topics.topic_ids,
+            "topic_names": s.story_with_topics.topic_names,
             "final_score": s.final_score,
         }
         for s in ranked

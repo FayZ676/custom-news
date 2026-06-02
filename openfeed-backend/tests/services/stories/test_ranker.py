@@ -70,7 +70,7 @@ def test_multiple_liked_topics_accumulate():
 
 def test_unknown_topic_id_ignored():
     score = score_story(
-        story_topics=["medtop:NONEXISTENT"],
+        story_topics=["legacy:NONEXISTENT"],
         preferences={"11": "liked"},
         significance_score=0.0,
     )
@@ -87,9 +87,9 @@ def test_liked_and_disliked_on_same_story_cancel():
     assert score == 0.0
 
 
-def test_legacy_root_ids_normalize_to_flat_topic_ids():
+def test_topic_ids_normalize_to_flat_topic_ids():
     score = score_story(
-        story_topics=["medtop:11000000"],
+        story_topics=["11"],
         preferences={"11": "liked"},
         significance_score=0.0,
     )

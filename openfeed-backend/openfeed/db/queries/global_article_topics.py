@@ -17,7 +17,7 @@ def insert_article_topics(
     article_id: UUID,
     topics: list[dict[str, str]],
 ) -> None:
-    """Insert classified IPTC topics for a single article into global_article_topics.
+    """Insert classified topics for a single article into global_article_topics.
 
     Args:
         topics: list of dicts with keys 'id' and 'name'.
@@ -28,8 +28,8 @@ def insert_article_topics(
     rows = [
         {
             "article_id": str(article_id),
-            "medtop_id": t["id"],
-            "medtop_name": t["name"],
+            "topic_id": t["id"],
+            "topic_name": t["name"],
         }
         for t in topics
     ]
@@ -40,7 +40,7 @@ def get_article_topics_for_articles(
     db: Client,
     article_ids: list[UUID],
 ) -> dict[UUID, set[tuple[str, str]]]:
-    """Return a mapping of article_id → set of (medtop_id, medtop_name) pairs.
+    """Return a mapping of article_id -> set of (topic_id, topic_name) pairs.
 
     Articles with no topics are omitted from the result.
     """
@@ -51,11 +51,11 @@ def get_article_topics_for_articles(
     for chunk in _chunked(article_ids, _CHUNK_SIZE):
         response = (
             db.table("global_article_topics")
-            .select("article_id, medtop_id, medtop_name")
+            .select("article_id, topic_id, topic_name")
             .in_("article_id", [str(aid) for aid in chunk])
             .execute()
         )
         for row in response.data:
             aid = UUID(row["article_id"])
-            result.setdefault(aid, set()).add((row["medtop_id"], row["medtop_name"]))
+            result.setdefault(aid, set()).add((row["topic_id"], row["topic_name"]))
     return result

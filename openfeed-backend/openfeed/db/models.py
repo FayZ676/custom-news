@@ -43,18 +43,18 @@ AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 
 class PublicGlobalArticleTopics(BaseModel):
     article_id: uuid.UUID = Field(alias="article_id")
-    medtop_id: str = Field(alias="medtop_id")
-    medtop_name: str = Field(alias="medtop_name")
+    topic_id: str = Field(alias="topic_id")
+    topic_name: str = Field(alias="topic_name")
 
 class PublicGlobalArticleTopicsInsert(TypedDict):
     article_id: Annotated[uuid.UUID, Field(alias="article_id")]
-    medtop_id: Annotated[str, Field(alias="medtop_id")]
-    medtop_name: Annotated[str, Field(alias="medtop_name")]
+    topic_id: Annotated[str, Field(alias="topic_id")]
+    topic_name: Annotated[str, Field(alias="topic_name")]
 
 class PublicGlobalArticleTopicsUpdate(TypedDict):
     article_id: NotRequired[Annotated[uuid.UUID, Field(alias="article_id")]]
-    medtop_id: NotRequired[Annotated[str, Field(alias="medtop_id")]]
-    medtop_name: NotRequired[Annotated[str, Field(alias="medtop_name")]]
+    topic_id: NotRequired[Annotated[str, Field(alias="topic_id")]]
+    topic_name: NotRequired[Annotated[str, Field(alias="topic_name")]]
 
 class PublicGlobalArticles(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
@@ -219,19 +219,19 @@ class PublicGlobalStoriesUpdate(TypedDict):
     velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
 
 class PublicGlobalStoryTopics(BaseModel):
-    medtop_id: str = Field(alias="medtop_id")
-    medtop_name: str = Field(alias="medtop_name")
     story_id: uuid.UUID = Field(alias="story_id")
+    topic_id: str = Field(alias="topic_id")
+    topic_name: str = Field(alias="topic_name")
 
 class PublicGlobalStoryTopicsInsert(TypedDict):
-    medtop_id: Annotated[str, Field(alias="medtop_id")]
-    medtop_name: Annotated[str, Field(alias="medtop_name")]
     story_id: Annotated[uuid.UUID, Field(alias="story_id")]
+    topic_id: Annotated[str, Field(alias="topic_id")]
+    topic_name: Annotated[str, Field(alias="topic_name")]
 
 class PublicGlobalStoryTopicsUpdate(TypedDict):
-    medtop_id: NotRequired[Annotated[str, Field(alias="medtop_id")]]
-    medtop_name: NotRequired[Annotated[str, Field(alias="medtop_name")]]
     story_id: NotRequired[Annotated[uuid.UUID, Field(alias="story_id")]]
+    topic_id: NotRequired[Annotated[str, Field(alias="topic_id")]]
+    topic_name: NotRequired[Annotated[str, Field(alias="topic_name")]]
 
 class PublicUserSettings(BaseModel):
     color_theme: str = Field(alias="color_theme")
@@ -268,21 +268,21 @@ class PublicUserStoriesHiddenUpdate(TypedDict):
 
 class PublicUserTopicPreferences(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
-    medtop_id: str = Field(alias="medtop_id")
-    medtop_name: str = Field(alias="medtop_name")
     preference: str = Field(alias="preference")
+    topic_id: str = Field(alias="topic_id")
+    topic_name: str = Field(alias="topic_name")
     user_id: uuid.UUID = Field(alias="user_id")
 
 class PublicUserTopicPreferencesInsert(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    medtop_id: Annotated[str, Field(alias="medtop_id")]
-    medtop_name: Annotated[str, Field(alias="medtop_name")]
     preference: Annotated[str, Field(alias="preference")]
+    topic_id: Annotated[str, Field(alias="topic_id")]
+    topic_name: Annotated[str, Field(alias="topic_name")]
     user_id: Annotated[uuid.UUID, Field(alias="user_id")]
 
 class PublicUserTopicPreferencesUpdate(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    medtop_id: NotRequired[Annotated[str, Field(alias="medtop_id")]]
-    medtop_name: NotRequired[Annotated[str, Field(alias="medtop_name")]]
     preference: NotRequired[Annotated[str, Field(alias="preference")]]
+    topic_id: NotRequired[Annotated[str, Field(alias="topic_id")]]
+    topic_name: NotRequired[Annotated[str, Field(alias="topic_name")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]

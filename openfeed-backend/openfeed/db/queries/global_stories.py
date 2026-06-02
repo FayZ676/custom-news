@@ -36,14 +36,14 @@ def delete_all_stories(db: Client):
 def get_stories_with_topics(
     db: Client, excluded_story_ids: set[UUID] | None = None
 ) -> list[StoryWithTopics]:
-    """Fetch all current stories with their aggregated IPTC topic ids.
+    """Fetch all current stories with their aggregated topic IDs.
 
     Args:
         excluded_story_ids: optional set of story UUIDs to exclude (e.g. hidden stories).
     """
     response = (
         db.table("global_stories")
-        .select("*, global_story_topics(medtop_id, medtop_name)")
+        .select("*, global_story_topics(topic_id, topic_name)")
         .execute()
     )
     excluded = excluded_story_ids or set()
@@ -54,8 +54,8 @@ def get_stories_with_topics(
         if story_id in excluded:
             continue
         raw_topics = row.get("global_story_topics") or []
-        topic_ids = [t["medtop_id"] for t in raw_topics]
-        topic_names = [t["medtop_name"] for t in raw_topics]
+        topic_ids = [t["topic_id"] for t in raw_topics]
+        topic_names = [t["topic_name"] for t in raw_topics]
         story = PublicGlobalStories.model_validate(row)
         result.append(
             StoryWithTopics(story=story, topic_ids=topic_ids, topic_names=topic_names)
