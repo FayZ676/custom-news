@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from uuid import UUID
 
 from fastapi.responses import Response
-from fastapi import FastAPI, Depends, BackgroundTasks
+from fastapi import FastAPI, Depends, BackgroundTasks, Query
 
 from openfeed.auth import verify_api_key
 from openfeed.db.client import Client, client
@@ -62,21 +62,33 @@ def global_articles_update(background_tasks: BackgroundTasks):
 
 
 @app.post("/feed/{user_id}")
-def get_user_feed(user_id: UUID):
+def get_user_feed(
+    user_id: UUID,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+):
     db = get_db()
     hidden_ids = get_hidden_story_ids(db, user_id)
     stories = get_stories_with_topics(db, excluded_story_ids=hidden_ids)
     preferences = get_user_preferences(db, user_id)
     ranked = rank_stories(stories, preferences)
-    return [
-        {
-            **s.story_with_topics.story.model_dump(mode="json"),
-            "topic_ids": s.story_with_topics.topic_ids,
-            "topic_names": s.story_with_topics.topic_names,
-            "final_score": s.final_score,
-        }
-        for s in ranked
-    ]
+
+    start = (page - 1) * page_size
+    end = start + page_size
+    page_ranked = ranked[start:end]
+
+    return {
+        "stories": [
+            {
+                **s.story_with_topics.story.model_dump(mode="json"),
+                "topic_ids": s.story_with_topics.topic_ids,
+                "topic_names": s.story_with_topics.topic_names,
+                "final_score": s.final_score,
+            }
+            for s in page_ranked
+        ],
+        "hasNextPage": end < len(ranked),
+    }
 
 
 # @app.post("/notify", status_code=202)

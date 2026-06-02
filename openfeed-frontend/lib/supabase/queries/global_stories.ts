@@ -7,6 +7,11 @@ export interface StoryWithTopics extends Tables<"global_stories"> {
   final_score?: number;
 }
 
+export interface PaginatedStories {
+  stories: StoryWithTopics[];
+  hasNextPage: boolean;
+}
+
 export async function getStoriesWithTopics(
   supabase: SupabaseClient<Database>,
 ): Promise<StoryWithTopics[]> {
@@ -25,6 +30,42 @@ export async function getStoriesWithTopics(
       global_story_topics as { topic_id: string; topic_name: string }[]
     ).map((t) => t.topic_name),
   }));
+}
+
+export async function getSignificantStoriesWithTopicsPage(
+  supabase: SupabaseClient<Database>,
+  threshold: number,
+  page: number,
+  pageSize: number,
+): Promise<PaginatedStories> {
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+
+  const { data, error } = await (supabase as any)
+    .from("global_stories")
+    .select("*, global_story_topics(topic_id, topic_name)")
+    .gte("score", threshold)
+    .order("score", { ascending: false })
+    .range(start, end);
+
+  if (error) throw new Error(error.message);
+
+  const allRows = (data as any[]) ?? [];
+  const hasNextPage = allRows.length > pageSize;
+  const pageRows = allRows.slice(0, pageSize);
+
+  return {
+    stories: pageRows.map(({ global_story_topics, ...story }) => ({
+      ...story,
+      topic_ids: (
+        global_story_topics as { topic_id: string; topic_name: string }[]
+      ).map((t) => t.topic_id),
+      topic_names: (
+        global_story_topics as { topic_id: string; topic_name: string }[]
+      ).map((t) => t.topic_name),
+    })),
+    hasNextPage,
+  };
 }
 
 export interface InterestArticle {

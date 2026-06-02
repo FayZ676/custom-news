@@ -1,4 +1,4 @@
-import { StoryWithTopics } from "@/lib/supabase/queries/global_stories";
+import { PaginatedStories } from "@/lib/supabase/queries/global_stories";
 
 const BACKEND_URL = process.env.BACKEND_URL;
 const BACKEND_API_KEY = process.env.BACKEND_API_KEY;
@@ -11,18 +11,32 @@ function getBackendHeaders(): HeadersInit {
   };
 }
 
-export async function getUserFeed(userId: string): Promise<StoryWithTopics[]> {
+export async function getUserFeed(
+  userId: string,
+  page: number,
+  pageSize: number,
+): Promise<PaginatedStories> {
   if (!BACKEND_URL) throw new Error("BACKEND_URL is not set");
 
-  const res = await fetch(`${BACKEND_URL}/feed/${userId}`, {
-    method: "POST",
-    headers: getBackendHeaders(),
-    cache: "no-store",
+  const params = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
   });
 
+  const res = await fetch(
+    `${BACKEND_URL}/feed/${userId}?${params.toString()}`,
+    {
+      method: "POST",
+      headers: getBackendHeaders(),
+      cache: "no-store",
+    },
+  );
+
   if (!res.ok) {
-    throw new Error(`Backend /feed/${userId} returned ${res.status}`);
+    throw new Error(
+      `Backend /feed/${userId}?${params.toString()} returned ${res.status}`,
+    );
   }
 
-  return res.json() as Promise<StoryWithTopics[]>;
+  return res.json() as Promise<PaginatedStories>;
 }

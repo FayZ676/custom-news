@@ -2,30 +2,35 @@ import { Suspense } from "react";
 
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getStoriesWithTopics } from "@/lib/supabase/queries/global_stories";
+import { getSignificantStoriesWithTopicsPage } from "@/lib/supabase/queries/global_stories";
 import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 import { getUserFeed } from "@/lib/backend";
 
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
+import {
+  FeedPaginationNav,
+  FeedPaginationNavSkeleton,
+} from "@/components/FeedPaginationNav";
 
-async function ViewFeedContent() {
+const PAGE_SIZE = 10;
+
+async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   const supabase = await createClient();
   const { userId } = await getAuthenticatedUser();
 
-  const feedStories = await (async () => {
+  const { stories: feedStories, hasNextPage } = await (async () => {
     if (userId) {
-      return getUserFeed(userId);
+      return getUserFeed(userId, currentPage, PAGE_SIZE);
     }
 
-    const [stories, settings] = await Promise.all([
-      getStoriesWithTopics(supabase),
-      getGlobalSettings(supabase),
-    ]);
-
-    return stories.filter(
-      (s) => s.score >= settings.cluster_significance_threshold,
+    const settings = await getGlobalSettings(supabase);
+    return getSignificantStoriesWithTopicsPage(
+      supabase,
+      settings.cluster_significance_threshold,
+      currentPage,
+      PAGE_SIZE,
     );
   })();
 
@@ -41,14 +46,31 @@ async function ViewFeedContent() {
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
       <ViewFeed stories={feedStories} userId={userId} />
+      <FeedPaginationNav currentPage={currentPage} hasNextPage={hasNextPage} />
     </ShareLinkProvider>
   );
 }
 
-export default function FeedPage() {
+export default async function FeedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page } = await searchParams;
+  const parsedPage = Number.parseInt(page ?? "1", 10);
+  const currentPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
   return (
-    <Suspense fallback={<ViewFeedSkeleton />}>
-      <ViewFeedContent />
+    <Suspense
+      fallback={
+        <>
+          <ViewFeedSkeleton />
+          <FeedPaginationNavSkeleton />
+        </>
+      }
+    >
+      <ViewFeedContent currentPage={currentPage} />
     </Suspense>
   );
 }
