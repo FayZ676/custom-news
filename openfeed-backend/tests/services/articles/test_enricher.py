@@ -51,16 +51,17 @@ def _format_failure(fixture: dict, metadata: ArticleMetadata) -> str:
         f"FAIL: {fixture['title']!r}\n"
         f"  invalid topic ids: {invalid_topic_ids or '{none}'}\n"
         f"  duplicate topic ids: {duplicate_topic_ids or '{none}'}\n"
-        f"  raw topics:    {[t['id'] for t in metadata.topics]}\n"
-        f"  significance:  {metadata.significance_score}"
+        f"  raw topics:    {[t['id'] for t in metadata.topics]}"
     )
 
 
 def _check(fixture: dict, metadata: ArticleMetadata) -> str | None:
     invalid_ids = any(t["id"] not in _ALLOWED_TOPIC_IDS for t in metadata.topics)
     duplicate_ids = len({t["id"] for t in metadata.topics}) != len(metadata.topics)
-    sig = fixture["expected_significance"]
-    sig_fail = sig is not None and abs(metadata.significance_score - sig) > 0.05
-    if invalid_ids or duplicate_ids or sig_fail:
+    expected_topics = fixture.get("topics")
+    topics_fail = ("topics" in fixture) and expected_topics != [
+        t["id"] for t in metadata.topics
+    ]
+    if invalid_ids or duplicate_ids or topics_fail:
         return _format_failure(fixture, metadata)
     return None

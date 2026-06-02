@@ -31,7 +31,8 @@ FEEDS = [
 
 ARTICLES_PER_FEED = 5
 OUTPUT_PATH = (
-    Path(__file__).parent.parent / "tests/services/articles/fixtures/enricher.jsonl"
+    Path(__file__).parent.parent
+    / "tests/services/articles/fixtures/articles_enriched.jsonl"
 )
 
 
@@ -41,8 +42,7 @@ def fetch_articles(feed_title: str, url: str, n: int) -> list[dict]:
         {
             "title": a.title,
             "summary": a.summary,
-            "expected_root": None,
-            "expected_significance": None,
+            "topics": [],
         }
         for a in get_articles(url, top_n=n)
         if a.summary
