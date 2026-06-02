@@ -1,30 +1,13 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
 
 _FIXTURES_PATH = Path(__file__).parent / "fixtures" / "articles_enriched.jsonl"
 _DEBUG_PATH = Path(__file__).parent / "fixtures" / "enricher_debug.txt"
 _ALLOWED_TOPIC_IDS = {f"{i:02d}" for i in range(1, 18)}
-
-
-def test_enricher():
-    fixtures = _load_fixtures(_FIXTURES_PATH)
-    results = ArticleEnricher().enrich_articles([_fixture_to_text(f) for f in fixtures])
-
-    checks = [_check(f, m) for f, m in zip(fixtures, results)]
-    failures = [c for c in checks if c is not None]
-
-    _DEBUG_PATH.write_text(
-        "\n\n".join(
-            c if c is not None else f"PASS: {f['title']!r}"
-            for f, c in zip(fixtures, checks)
-        )
-    )
-
-    assert (
-        not failures
-    ), f"{len(failures)}/{len(fixtures)} fixture(s) failed — see {_DEBUG_PATH.name}"
 
 
 ### private ###
@@ -39,29 +22,42 @@ def _fixture_to_text(fixture: dict) -> str:
 
 
 def _format_failure(fixture: dict, metadata: ArticleMetadata) -> str:
-    invalid_topic_ids = [
-        t["id"] for t in metadata.topics if t["id"] not in _ALLOWED_TOPIC_IDS
-    ]
-    duplicate_topic_ids = [
-        topic_id
-        for topic_id in {t["id"] for t in metadata.topics}
-        if sum(1 for t in metadata.topics if t["id"] == topic_id) > 1
-    ]
+    expected_topic_ids = fixture.get("topics")
+    received_topic_ids = [t["id"] for t in metadata.topics]
     return (
         f"FAIL: {fixture['title']!r}\n"
-        f"  invalid topic ids: {invalid_topic_ids or '{none}'}\n"
-        f"  duplicate topic ids: {duplicate_topic_ids or '{none}'}\n"
-        f"  raw topics:    {[t['id'] for t in metadata.topics]}"
+        f"  expected topics: {expected_topic_ids}\n"
+        f"  received topics: {received_topic_ids}\n"
     )
 
 
 def _check(fixture: dict, metadata: ArticleMetadata) -> str | None:
     invalid_ids = any(t["id"] not in _ALLOWED_TOPIC_IDS for t in metadata.topics)
     duplicate_ids = len({t["id"] for t in metadata.topics}) != len(metadata.topics)
-    expected_topics = fixture.get("topics")
-    topics_fail = ("topics" in fixture) and expected_topics != [
-        t["id"] for t in metadata.topics
-    ]
+    expected_topics = fixture.get("topics") or []
+    received_topic_ids = [t["id"] for t in metadata.topics]
+    topics_fail = ("topics" in fixture) and set(expected_topics) != set(
+        received_topic_ids
+    )
     if invalid_ids or duplicate_ids or topics_fail:
         return _format_failure(fixture, metadata)
     return None
+
+
+_FIXTURES = _load_fixtures(_FIXTURES_PATH)
+_FIXTURE_TEXTS = [_fixture_to_text(f) for f in _FIXTURES]
+_RESULTS = ArticleEnricher().enrich_articles(_FIXTURE_TEXTS)
+_CHECKS = [_check(f, m) for f, m in zip(_FIXTURES, _RESULTS)]
+
+
+_DEBUG_PATH.write_text(
+    "\n\n".join(
+        c if c is not None else f"PASS: {f['title']!r}"
+        for f, c in zip(_FIXTURES, _CHECKS)
+    )
+)
+
+
+@pytest.mark.parametrize("check", _CHECKS, ids=[f["title"] for f in _FIXTURES])
+def test_enricher(check: str | None):
+    assert check is None, check
