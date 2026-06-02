@@ -1,9 +1,9 @@
-terms,expected_ids
-quarterly revenue growth update,medtop:01000000
-post-consolidation share trading move,medtop:04000000
-startup mega funding round valuation,medtop:01000000
-ai impersonation payment scams,medtop:03000000
-botnet proxy network takedown,medtop:16000000
-regional measles outbreak complications,medtop:03000000
-fantasy drama season trailer release,medtop:01000000
-government pressure on broadcast speech,medtop:16000000
+terms,expected_ids,label
+quarterly revenue growth update,04,"economy, business and finance"
+post-consolidation share trading move,04,"economy, business and finance"
+semiconductor manufacturing process node breakthrough,13,"science and technology"
+cabinet reshuffle after confidence vote,11,"politics and government"
+wildfire evacuation orders after lightning storm,03,"disaster, accident and emergency incident"
+regional measles outbreak complications,03,"disaster, accident and emergency incident"
+fantasy drama season trailer release,01,"arts, culture, entertainment and media"
+hospital triage pressure during flu surge,07,"health"

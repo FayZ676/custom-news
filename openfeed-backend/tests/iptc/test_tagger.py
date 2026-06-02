@@ -2,9 +2,10 @@
 Tagger tests driven by CSV case files under tests/iptc/cases/.
 Each CSV covers one behavior group (see README). All share the same schema:
 
-    terms,expected_ids
+    terms,expected_ids[,label]
 
-Both columns are pipe-separated lists. expected_ids may be empty (non-news cases).
+Both primary columns are pipe-separated lists. expected_ids may be empty
+(non-news cases). label is optional and used for readability only.
 The assertion is an ordered equality: search_taxonomy must return exactly the
 expected IDs in the expected order — nothing more, nothing less.
 
@@ -69,7 +70,7 @@ def _isolation_results():
 
 def test_isolation_single_match():
     isolation_results = _isolation_results()
-    assert "medtop:16000000" in {node.medtop_id for node in isolation_results["single"]}
+    assert "16" in {node.medtop_id for node in isolation_results["single"]}
 
 
 def test_isolation_unrelated_term_preserved():

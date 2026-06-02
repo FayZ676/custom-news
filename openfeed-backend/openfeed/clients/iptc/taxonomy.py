@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,6 +28,39 @@ class TaxonomyNode:
 Taxonomy = dict[str, TaxonomyNode]
 
 
+_MEDTOP_ROOT_LEGACY_RE = re.compile(r"^medtop:(\d{2})0{6}$")
+_MEDTOP_ROOT_SHORT_RE = re.compile(r"^medtop:(\d{1,2})$")
+_ROOT_NUMERIC_RE = re.compile(r"^(\d{1,2})$")
+_ROOT_NUMERIC_LEGACY_RE = re.compile(r"^(\d{2})0{6}$")
+
+
+def normalize_medtop_id(value: str) -> str:
+    """Normalize known root MedTop IDs to the short canonical form.
+
+    Canonical root format is plain `NN` (01..17). Legacy root IDs such as
+    `medtop:01000000` and `medtop:01` are mapped to `01`.
+    """
+    topic_id = value.strip()
+    if not topic_id:
+        return topic_id
+
+    lowered = topic_id.lower()
+
+    if match := _MEDTOP_ROOT_LEGACY_RE.fullmatch(lowered):
+        return f"{int(match.group(1)):02d}"
+
+    if match := _MEDTOP_ROOT_SHORT_RE.fullmatch(lowered):
+        return f"{int(match.group(1)):02d}"
+
+    if match := _ROOT_NUMERIC_LEGACY_RE.fullmatch(topic_id):
+        return f"{int(match.group(1)):02d}"
+
+    if match := _ROOT_NUMERIC_RE.fullmatch(topic_id):
+        return f"{int(match.group(1)):02d}"
+
+    return lowered
+
+
 def load_taxonomy(
     path: Path = _DEFAULT_TOPICS_PATH,
     embeddings_path: Path = _DEFAULT_EMBEDDINGS_PATH,
@@ -35,7 +69,7 @@ def load_taxonomy(
     raw: dict[str, tuple[str, str]] = {}
     with path.open(newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            medtop_id = (row.get("medtop_id") or "").strip()
+            medtop_id = normalize_medtop_id(row.get("medtop_id") or "")
             label = (row.get("label") or "").strip()
             description = (row.get("description") or "").strip()
             if not medtop_id:
@@ -48,7 +82,7 @@ def load_taxonomy(
     raw_emb: dict[str, list[float]] = json.loads(
         embeddings_path.read_text(encoding="utf-8")
     )
-    embeddings = {k: tuple(v) for k, v in raw_emb.items()}
+    embeddings = {normalize_medtop_id(k): tuple(v) for k, v in raw_emb.items()}
 
     return {
         medtop_id: TaxonomyNode(

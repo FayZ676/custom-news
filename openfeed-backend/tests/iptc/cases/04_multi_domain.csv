@@ -1,5 +1,9 @@
-terms,expected_ids
-armed conflict|stock market crash,medtop:16000000
-infectious disease|criminal justice,medtop:16000000|medtop:02000000
-natural disaster|national elections,medtop:03000000|medtop:05000000
-scientific research|corporate bankruptcy,medtop:13000000|medtop:04000000
+terms,expected_ids,label
+armed conflict|stock market crash,16|04,"conflict, war and peace|economy, business and finance"
+infectious disease|criminal justice,07|02,"health|crime, law and justice"
+natural disaster|national elections,03|11,"disaster, accident and emergency incident|politics and government"
+scientific research|corporate bankruptcy,13|04,"science and technology|economy, business and finance"
+startup mega funding round valuation|startup technology,04|13,"economy, business and finance|science and technology"
+ai impersonation|payment scams|financial fraud,13|04|02,"science and technology|economy, business and finance|crime, law and justice"
+botnet proxy network takedown|cyber crime enforcement,16|02,"conflict, war and peace|crime, law and justice"
+government pressure on broadcast speech|media regulation policy,16|11,"conflict, war and peace|politics and government"

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from openfeed.db.queries.global_stories import StoryWithTopics
-from openfeed.clients.iptc.taxonomy import Taxonomy
+from openfeed.clients.iptc.taxonomy import Taxonomy, normalize_medtop_id
 
 Preference = Literal["liked", "disliked"]
 UserPreferences = dict[str, Preference]  # medtop_id → "liked" | "disliked"
@@ -22,11 +22,14 @@ def _preference_contribution(
     match (distance 0) contributes BASE_WEIGHT; each additional hop halves the
     weight. Disliked ancestors contribute negatively with the same decay.
     """
-    if topic_id not in taxonomy:
+    normalized_topic_id = normalize_medtop_id(topic_id)
+    if normalized_topic_id not in taxonomy:
         return 0.0
 
     # ancestors is ordered root→self; reverse to walk most-specific-first
-    for distance, ancestor_id in enumerate(reversed(taxonomy[topic_id].ancestors)):
+    for distance, ancestor_id in enumerate(
+        reversed(taxonomy[normalized_topic_id].ancestors)
+    ):
         if ancestor_id in preferences:
             weight = _BASE_WEIGHT / (distance + 1)
             return weight if preferences[ancestor_id] == "liked" else -weight
@@ -58,8 +61,13 @@ def score_story(
     if not preferences:
         return significance_score
 
+    normalized_preferences = {
+        normalize_medtop_id(topic_id): preference
+        for topic_id, preference in preferences.items()
+    }
+
     preference_score = sum(
-        _preference_contribution(topic_id, preferences, taxonomy)
+        _preference_contribution(topic_id, normalized_preferences, taxonomy)
         for topic_id in story_topics
     )
     return w1 * preference_score + w2 * significance_score
