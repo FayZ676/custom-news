@@ -69,7 +69,7 @@ def _isolation_results():
 
 def test_isolation_single_match():
     isolation_results = _isolation_results()
-    assert "medtop:20000056" in {node.medtop_id for node in isolation_results["single"]}
+    assert "medtop:16000000" in {node.medtop_id for node in isolation_results["single"]}
 
 
 def test_isolation_unrelated_term_preserved():

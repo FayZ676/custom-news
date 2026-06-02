@@ -51,67 +51,38 @@ def cosine_signal(_term: str, term_vec: list[float], node: "TaxonomyNode") -> fl
 class Tagger:
     def __init__(self):
         self.taxonomy: Taxonomy = load_taxonomy()
-        self.threshold: float = 10.0
         self.signals: list[SignalFn] = [fuzzy_signal, cosine_signal]
         self.scoring_fn: ScoringFn = lambda similarity, _depth, position: similarity / (
             position + 1
         )
 
     def search_taxonomy(self, key_terms: list[str]) -> list[TaxonomyNode]:
-        """Return taxonomy nodes matched per-term, unioned in key_terms order."""
+        """Return closest topic per term, unioned in key_terms order."""
+        if not key_terms:
+            return []
+
         nodes = list(self.taxonomy.values())
         term_vectors = OpenAIClient().embed(key_terms).embeddings
         result_by_id: dict[str, TaxonomyNode] = {}
         for term, term_vec in zip(key_terms, term_vectors):
-            for node in self._search_single_term(term, term_vec, nodes):
+            node = self._search_single_term(term, term_vec, nodes)
+            if node is not None:
                 result_by_id[node.medtop_id] = node
         return list(result_by_id.values())
 
     def _search_single_term(
         self, term: str, term_vec: list[float], nodes: list[TaxonomyNode]
-    ) -> list[TaxonomyNode]:
-        """Return nodes above threshold for a single term using branch-first ordering.
+    ) -> TaxonomyNode | None:
+        """Return the single closest topic for a term across all configured topics."""
+        if not nodes:
+            return None
 
-        Nodes are filtered by a direct score threshold relative to the candidate-set
-        average. Branch-first ordering is applied after filtering: branches are
-        ranked by their best node score, and within each branch nodes are ordered by
-        score descending.
-        """
-        # Step 1: Score all candidates and keep nodes that clear the relative cutoff.
-        scores = {
-            node.medtop_id: prod(
-                self.scoring_fn(signal(term, term_vec, node), node.depth, 0)
-                for signal in self.signals
-            )
-            for node in nodes
-        }
-        minimum_score = (
-            (sum(scores.values()) / len(scores)) * self.threshold if scores else 0.0
+        best_node = max(
+            nodes,
+            key=lambda node: self.scoring_fn(
+                prod(signal(term, term_vec, node) for signal in self.signals),
+                node.depth,
+                0,
+            ),
         )
-        node_index = {node.medtop_id: i for i, node in enumerate(nodes)}
-        ranked_nodes = sorted(
-            ((node, scores[node.medtop_id]) for node in nodes),
-            key=lambda item: (-item[1], node_index[item[0].medtop_id]),
-        )
-        passing = [node for node, score in ranked_nodes if score >= minimum_score]
-        if not passing:
-            return []
-
-        # Step 2: Group passing nodes by root branch.
-        passing_by_root: dict[str, list[tuple[TaxonomyNode, float]]] = {}
-        for node in passing:
-            rid = node.ancestors[0] if node.ancestors else node.medtop_id
-            passing_by_root.setdefault(rid, []).append((node, scores[node.medtop_id]))
-
-        # Step 3: Rank branches by their best global posterior, then emit nodes
-        # within each branch ordered by score descending.
-        ranked_branches = sorted(
-            passing_by_root.values(),
-            key=lambda branch: max(score for _, score in branch),
-            reverse=True,
-        )
-        return [
-            node
-            for branch in ranked_branches
-            for node, _ in sorted(branch, key=lambda x: x[1], reverse=True)
-        ]
+        return best_node

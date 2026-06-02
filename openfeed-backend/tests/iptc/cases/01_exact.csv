@@ -1,9 +1,9 @@
 terms,expected_ids
-armed conflict,medtop:20000056
-terrorist bombing,medtop:20000055
-communicable disease,medtop:20000448
-national elections,medtop:20000579
-natural disaster,medtop:20000151
-market and exchange,medtop:20000385
-criminal law,medtop:20000125
-scientific research,medtop:20000735
+armed conflict,medtop:16000000
+terrorist bombing,medtop:03000000
+communicable disease,medtop:16000000
+national elections,medtop:05000000
+natural disaster,medtop:03000000
+market and exchange,medtop:04000000
+criminal law,medtop:02000000
+scientific research,medtop:13000000

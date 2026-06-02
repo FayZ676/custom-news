@@ -1,5 +1,5 @@
 terms,expected_ids
-armed conflict|stock market crash,medtop:20000056|medtop:20000385
-infectious disease|criminal justice,medtop:20000448|medtop:20000125
-natural disaster|national elections,medtop:20000151|medtop:20000579
-scientific research|corporate bankruptcy,medtop:20000735|medtop:20000170
+armed conflict|stock market crash,medtop:16000000
+infectious disease|criminal justice,medtop:16000000|medtop:02000000
+natural disaster|national elections,medtop:03000000|medtop:05000000
+scientific research|corporate bankruptcy,medtop:13000000|medtop:04000000

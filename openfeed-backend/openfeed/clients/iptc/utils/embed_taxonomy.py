@@ -1,19 +1,19 @@
-"""Utility script: embed all IPTC taxonomy nodes and write taxonomy_embeddings.json.
+"""Utility script: embed all configured IPTC topics and write taxonomy_embeddings.json.
 
-Run once (or whenever taxonomy.json changes) from the repo root:
+Run once (or whenever topics.csv changes) from the repo root:
 
-    python -m openfeed.clients.iptc.embed_taxonomy
+    python -m openfeed.clients.iptc.utils.embed_taxonomy
 
-Writes taxonomy_embeddings.json alongside taxonomy.json. load_taxonomy() picks
-it up automatically on next load.
+Writes taxonomy_embeddings.json alongside topics.csv. load_taxonomy() picks it
+up automatically on next load.
 """
 
 import json
 
-from openfeed.clients.iptc.taxonomy import _DEFAULT_TAXONOMY_PATH, load_taxonomy
+from openfeed.clients.iptc.taxonomy import _DEFAULT_EMBEDDINGS_PATH, load_taxonomy
 from openfeed.clients.openai_client.client import OpenAIClient
 
-_EMBEDDINGS_PATH = _DEFAULT_TAXONOMY_PATH.parent / "taxonomy_embeddings.json"
+_EMBEDDINGS_PATH = _DEFAULT_EMBEDDINGS_PATH
 
 
 def main() -> None:
