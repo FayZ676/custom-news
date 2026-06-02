@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 class ArticleEnricher:
     def __init__(self) -> None:
         self._client = OpenAIClient(
-            model="gpt-5.4-nano",
-            prompt_cache_key="article-enrich-v4",
+            model="gpt-5.4-mini",
+            prompt_cache_key="article-enrich-v5",
             instructions=Message(
                 role="system",
                 content=_SYSTEM_PROMPT,
@@ -95,36 +95,46 @@ Entity naming:
 
 ### Topic classification rules
 
-Classify each article into its relevant topic IDs from this fixed set:
+Classify each article into relevant topic IDs from this fixed set.
 
-> The topics are ordered from most significant (top) to least significant (bottom). Keep this in mind when classifying.
-
+Topic list (ordered by priority, highest to lowest):
 {format_topics_for_prompt()}
 
-Topic classification steps:
-1. Read the full article and identify the single core news event or development.
-3. From the topic list, create a candidate set of IDs that directly describe that core event.
-4. For each candidate, consider centrality:
-    - If the article would still mean the same thing without that topic, exclude it.
-    - If the topic is only background context, side detail, geography, or consequence, exclude it.
-    - Keep only topics that are indispensable to the article's main subject.
-5. Resolve overlaps using specificity:
-    - Prefer the most specific fitting topic over a broader umbrella topic.
-    - If two topics both seem central, include both only if each captures a distinct core facet.
-6. Apply strict count limits:
-    - Default to exactly 1 topic.
-    - Use 2 only when both are independently central.
-    - Use 3 only when all three are undeniably core and non-redundant.
-7. Rank selected IDs by confidence (highest first).
-8. Final validation pass before output:
-    - Every ID must be from the fixed list.
-    - No tangential, weak, speculative, or inferred-only topics.
-    - If confidence is low, return fewer topics.
-    - If nothing is clearly central, return [].
+Interpretation of priority:
+- Priority affects selection order when multiple topics are directly relevant
+- Priority does not override relevance; never include a topic unless it directly pertains to the article
+
+Input handling:
+- If there is meaningful text to classify, classify it
+- Return [] only when content is unusable for classification (for example empty or nonsensical text)
+
+Classification process:
+1. Read the full text and identify the core subject.
+2. Evaluate topics in priority order, highest to lowest.
+3. Mark a topic as eligible only if the article directly pertains to it.
+4. Build the output from eligible topics, preserving priority order.
+5. Apply centrality check:
+    - Keep a topic only if removing it would materially change the article's core meaning.
+    - Exclude background, incidental mentions, weak implications, and tangential context.
+6. Apply count limits:
+    - Default to 1 topic.
+    - Use 2 only when both are independently core.
+    - Use 3 only when all three are independently core and non-redundant.
+7. Final validation:
+    - Every item must be a valid topic ID from the fixed list.
+    - Output only topic IDs.
+    - No duplicates.
+    - If confidence is low, return fewer topics, not broader ones.
 
 Ambiguity handling:
-- When in doubt between two topics, choose the more specific one.
-- When in doubt between include vs exclude, exclude.
-- Never use topical breadth to "cover possibilities".
+- If uncertain whether a topic is directly relevant, exclude it.
+- If multiple eligible topics are direct and core, keep the higher-priority ones first.
+
+General examples:
+- An entry centered on corporate funding tied to a new technical platform can include both business and technology.
+- An entry centered on criminal misuse of a technical system can include both justice-related and technology-related topics.
+- An entry centered on technology but with explicit mentions of political terms or groups is both technological and political.
+- An entry centered on athletics but in relation to a healthcare product is both sport and health related.
+- An entry with a personal narrative frame should still use the topic tied to the underlying core development.
 
 """
