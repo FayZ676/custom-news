@@ -137,14 +137,12 @@ def to_topic_payload(topic_ids: list[str]) -> list[dict[str, str]]:
 
 def topic_significance_score(topic_ids: list[str]) -> float:
     normalized_topic_ids = {normalize_topic_id(topic_id) for topic_id in topic_ids}
-    return max(
-        (
-            float(topic["significance_score"])
-            for topic in TOPICS
-            if topic["id"] in normalized_topic_ids
-        ),
-        default=0.0,
-    )
+    scores = [
+        float(topic["significance_score"])
+        for topic in TOPICS
+        if topic["id"] in normalized_topic_ids
+    ]
+    return sum(scores) / len(scores) if scores else 0.0
 
 
 def format_topics_for_prompt() -> str:
