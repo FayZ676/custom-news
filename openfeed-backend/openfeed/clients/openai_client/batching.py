@@ -56,7 +56,10 @@ def execute_wave(
 
 
 def unbatch_results(
-    raw: list, group_sizes: list[int], _response_model: type[T]
+    raw: list,
+    group_sizes: list[int],
+    _response_model: type[T],
+    batched_inputs: list[list[Message]] | None = None,
 ) -> list[T]:
     """Pure function — re-expands batched results back to per-item results."""
 
@@ -65,7 +68,9 @@ def unbatch_results(
         if len(result.items) != expected:
             raise ValueError(
                 f"Batch {i}: model returned {len(result.items)} items, "
-                f"expected {expected}"
+                f"expected {expected}\n"
+                f"Input: {batched_inputs[i] if batched_inputs else None}\n"
+                f"Output: {result}\n"
             )
         return result.items
 

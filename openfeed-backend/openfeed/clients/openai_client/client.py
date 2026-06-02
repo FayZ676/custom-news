@@ -154,4 +154,13 @@ class OpenAIClient:
             ramp.speed_up()
             pos += len(window)
 
-        return unbatch_results(results, plan.group_sizes, response_model) if plan.group_sizes else results  # type: ignore[return-value]  # noqa: return-value
+        return (
+            unbatch_results(
+                results,
+                plan.group_sizes,
+                response_model,
+                plan.effective_batch,
+            )
+            if plan.group_sizes
+            else results
+        )  # type: ignore[return-value]  # noqa: return-value
