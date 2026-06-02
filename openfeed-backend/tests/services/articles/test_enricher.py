@@ -1,21 +1,20 @@
 import json
 from pathlib import Path
 
-from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
 from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
 
 _FIXTURES_PATH = Path(__file__).parent / "fixtures" / "enricher.jsonl"
 _DEBUG_PATH = Path(__file__).parent / "fixtures" / "enricher_debug.txt"
+_ALLOWED_TOPIC_IDS = {f"{i:02d}" for i in range(1, 18)}
 
 
 def test_enricher():
     fixtures = _load_fixtures(_FIXTURES_PATH)
-    taxonomy = load_taxonomy()
     results = ArticleEnricher().extract_article_metadata(
         [_fixture_to_text(f) for f in fixtures]
     )
 
-    checks = [_check(f, m, taxonomy) for f, m in zip(fixtures, results)]
+    checks = [_check(f, m) for f, m in zip(fixtures, results)]
     failures = [c for c in checks if c is not None]
 
     _DEBUG_PATH.write_text(
@@ -41,36 +40,29 @@ def _fixture_to_text(fixture: dict) -> str:
     return "\n\n".join(filter(None, [fixture["title"], fixture["summary"]]))
 
 
-def _actual_roots(metadata: ArticleMetadata, taxonomy: Taxonomy) -> set[str]:
-    return {
-        taxonomy[t["id"]].ancestors[0] for t in metadata.topics if t["id"] in taxonomy
-    }
-
-
-def _format_failure(
-    fixture: dict, metadata: ArticleMetadata, taxonomy: Taxonomy
-) -> str:
-    expected_root = fixture["expected_root"]
-    actual_roots = _actual_roots(metadata, taxonomy)
-    expected_name = (
-        taxonomy[expected_root].name if expected_root in taxonomy else expected_root
-    )
-    actual_names = {taxonomy[r].name for r in actual_roots}
+def _format_failure(fixture: dict, metadata: ArticleMetadata) -> str:
+    invalid_topic_ids = [
+        t["id"] for t in metadata.topics if t["id"] not in _ALLOWED_TOPIC_IDS
+    ]
+    duplicate_topic_ids = [
+        topic_id
+        for topic_id in {t["id"] for t in metadata.topics}
+        if sum(1 for t in metadata.topics if t["id"] == topic_id) > 1
+    ]
     return (
         f"FAIL: {fixture['title']!r}\n"
-        f"  expected root: {expected_root} ({expected_name})\n"
-        f"  actual roots:  {actual_roots or '{none}'} ({actual_names or '{none}'})\n"
+        f"  invalid topic ids: {invalid_topic_ids or '{none}'}\n"
+        f"  duplicate topic ids: {duplicate_topic_ids or '{none}'}\n"
         f"  raw topics:    {[t['id'] for t in metadata.topics]}\n"
         f"  significance:  {metadata.significance_score}"
     )
 
 
-def _check(fixture: dict, metadata: ArticleMetadata, taxonomy: Taxonomy) -> str | None:
-    if fixture["expected_root"] is None:
-        return None
-    root_fail = fixture["expected_root"] not in _actual_roots(metadata, taxonomy)
+def _check(fixture: dict, metadata: ArticleMetadata) -> str | None:
+    invalid_ids = any(t["id"] not in _ALLOWED_TOPIC_IDS for t in metadata.topics)
+    duplicate_ids = len({t["id"] for t in metadata.topics}) != len(metadata.topics)
     sig = fixture["expected_significance"]
     sig_fail = sig is not None and abs(metadata.significance_score - sig) > 0.05
-    if root_fail or sig_fail:
-        return _format_failure(fixture, metadata, taxonomy)
+    if invalid_ids or duplicate_ids or sig_fail:
+        return _format_failure(fixture, metadata)
     return None

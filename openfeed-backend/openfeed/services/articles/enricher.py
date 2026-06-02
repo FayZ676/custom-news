@@ -3,14 +3,17 @@ import logging
 from pydantic import BaseModel
 
 from openfeed.clients.ner import extract_entities
-from openfeed.clients.iptc.tagger import Tagger
 from openfeed.clients.openai_client import OpenAIClient, Message
+from openfeed.services.topics import (
+    format_iptc_root_topics_for_prompt,
+    to_topic_payload,
+    topic_significance_score,
+)
 
 
 class _EnrichmentResponse(BaseModel):
     summary: str | None
-    significance_score: float
-    key_terms: list[str]
+    topics: list[str]
 
 
 class ArticleMetadata(BaseModel):
@@ -26,10 +29,9 @@ logger = logging.getLogger(__name__)
 
 class ArticleEnricher:
     def __init__(self) -> None:
-        self.tagger = Tagger()
         self._client = OpenAIClient(
             model="gpt-5.4-nano",
-            prompt_cache_key="article-enrich-v1",
+            prompt_cache_key="article-enrich-v4",
             instructions=Message(
                 role="system",
                 content=_SYSTEM_PROMPT,
@@ -50,34 +52,31 @@ class ArticleEnricher:
         return [
             ArticleMetadata(
                 summary=r.summary,
-                significance_score=r.significance_score,
+                significance_score=topic_significance_score(r.topics),
                 entities=extract_entities(r.summary) if r.summary else [],
                 summary_embeddings=(
                     embeddings_by_summary.get(r.summary) if r.summary else None
                 ),
-                topics=[
-                    {"id": node.medtop_id, "name": node.name}
-                    for node in self.tagger.search_taxonomy(r.key_terms)
-                ],
+                topics=to_topic_payload(r.topics),
             )
             for r in responses
         ]
 
 
-_SYSTEM_PROMPT = """\
+_SYSTEM_PROMPT = f"""\
 You are a senior news editor and IPTC news classifier. Articles are submitted in a \
 single request, each wrapped in <item index="N"> XML tags. For each article, perform \
 two independent tasks and return one result per item in the `items` array, preserving \
 the original index order. If a submitted text is not a news article (e.g. it is an \
-error page, a login wall, or boilerplate), return an empty summary, a significance \
-score of 0.0, and an empty key_terms list for that item.
+error page, a login wall, or boilerplate), return an empty summary and an empty topics \
+list for that item. Significance scoring is handled downstream from the predicted topic(s).
 
 ## Task 1: Article Metadata
 
-Write a tight one-sentence summary and assign a significance score as it would appear \
-in a general-interest news digest. Your readers are ordinary people — not engineers, \
-not investors, not specialists. Write and score based on how much this story would \
-matter to the average person's life, safety, rights, or understanding of the world.
+Write a tight one-sentence summary as it would appear in a general-interest news digest. \
+Your readers are ordinary people — not engineers, not investors, not specialists. Write \
+based on how much this story would matter to the average person's life, safety, rights, \
+or understanding of the world.
 
 ### Summary
 
@@ -93,48 +92,7 @@ Use "Google" not "Alphabet" (unless the story is specifically about Alphabet). U
 full names for people: "Elon Musk" not "Musk". Prefer the most specific entity over \
 its parent when it IS the story — write "GitHub Copilot" not "Microsoft".
 
-### Significance Score
-
-Score the article's newsworthiness and societal importance on a scale from 0.0 to 1.0 \
-based on:
-- **Broad impact**: Does this affect a large number of people or industries?
-- **Significance**: Is this a major development, breakthrough, or decision with lasting consequences?
-- **Novelty**: Is this genuinely new and noteworthy, not routine or recurring?
-- **Stakes**: Are there real-world consequences (security, finance, health, policy, etc.)?
-- **Calibration**: Use the full range. A score of 0.5 or above should be reserved for \
-stories that would genuinely appear in a major newspaper. Most articles will score below \
-0.5. Do not cluster scores around a middle value — discriminate clearly between tiers. \
-Technical sophistication or security severity alone does not equal broad societal importance.
-
-#### Score Guide (applies to ANY domain)
-
-- 0.8–1.0: Events with immediate, broad societal impact affecting tens of millions of people.
-    Examples: armed conflicts or ceasefires with mass civilian impact, major disease outbreaks \
-or pandemics, large-scale natural disasters (earthquakes, floods, wildfires), landmark court \
-rulings or legislation with sweeping effects on civil rights or public policy, significant \
-geopolitical shifts (sanctions, treaties, elections in major democracies), major economic \
-shocks (bank collapses, currency crises, recessions), significant scientific breakthroughs \
-with immediate real-world consequences (e.g. a newly approved vaccine, a fusion energy \
-milestone), critical infrastructure cyberattacks with widespread societal disruption \
-(e.g. SolarWinds).
-- 0.5–0.8: Meaningful developments affecting a large but specific industry, region, or user \
-base (millions of people). Examples: major climate or environmental policy decisions, a \
-significant regulatory action against a large company with broad consumer impact, a \
-large-scale data breach exposing millions of users, a major public health development \
-(drug approval, outbreak containment), a large-scale labor dispute or strike, a major \
-product launch with genuine mass-market consequences, a notable acquisition or merger with \
-industry-wide effects, a CVE in critical widely-used infrastructure (e.g. OpenSSL, Linux kernel).
-- 0.3–0.5: Noteworthy but narrow in scope — affects a specialized or professional audience \
-(thousands to low millions). Examples: a notable research paper with plausible near-term \
-application, a meaningful open-source library release with clear production use, a startup \
-funding round with genuine industry relevance, a CVE in niche or mid-tier software \
-(e.g. cPanel, a specific CMS), a regional policy change with localized impact.
-- 0.0–0.3: Low-impact, routine, or promotional content. Examples: vendor case studies and \
-DevOps blog posts, hardware reviews, product deals, opinion pieces, "how-to" tutorials, \
-minor software version bumps, niche ML/infra optimizations targeting a narrow specialist \
-audience, lifestyle or productivity tips.
-
-#### Editorial Tone
+### Editorial Tone
 
 Your summary must read like a wire-service headline turned into a single declarative \
 sentence — factual, specific, and free of editorial opinion or hyperbole. Avoid words \
@@ -142,32 +100,16 @@ like "shocking", "groundbreaking", or "revolutionary" unless they are direct quo
 Prefer active voice. If the article contains only a forecast, allegation, or rumor, your \
 summary must make that framing explicit (e.g. "X is reported to…" or "officials warn that…").
 
-## Task 2: Key Terms
+## Task 2: IPTC Topic Classification
 
-Extract up to 8 key terms or phrases that describe the core topics of the article. \
-Order them from most to least central. These should be topical phrases that describe \
-subjects, themes, and domains (e.g. "presidential election", "carbon tax", \
-"renewable energy policy", "criminal justice reform") — not named entities or \
-proper nouns (no people, companies, places, or product names). If the article covers \
-multiple distinct topics, include terms for each. If the article is not a news article, \
-return an empty list.
+Classify each article into one or more topic IDs from this fixed set of 17 root topics:
+{format_iptc_root_topics_for_prompt()}
 
-"""
-
-
-_IPTC_SYSTEM_PROMPT_SECTION = """
-Generate key terms for IPTC semantic topic matching.
-
-Output rules:
+Output rules for `topics`:
 - Return a JSON array of strings.
-- Max 8 terms.
-- Each term must be 3–7 words.
-- Each term must express exactly one topic.
-- Use taxonomy-like category language.
-- Build each term as:
-  [domain anchor] + [event/type noun] + [one disambiguator].
-- Do not include person names, exact locations, dates, numbers, quotes, or commentary.
-- Do not write full sentences.
-- Do not use "and/or" to combine multiple topics in one term.
-- Order terms by confidence (best match first).
+- Each item must be one of the topic IDs above ("01" to "17").
+- Return up to 3 IDs, ordered by confidence.
+- Use an empty array when the text is not a news article.
+- Do not invent IDs or labels.
+
 """

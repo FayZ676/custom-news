@@ -11,7 +11,6 @@ from openfeed.db.client import Client, client
 from openfeed.db.queries.global_stories import get_stories_with_topics
 from openfeed.db.queries.user_stories_hidden import get_hidden_story_ids
 from openfeed.db.queries.user_topic_preferences import get_user_preferences
-from openfeed.clients.iptc.taxonomy import Taxonomy, load_taxonomy
 from openfeed.services.stories.ranker import rank_stories
 from openfeed.services.stories.service import identify_stories
 from openfeed.services.articles.service import fetch_articles, delete_old_articles
@@ -27,14 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 db_client: Optional[Client] = None
-taxonomy: Optional[Taxonomy] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global db_client, taxonomy
+    global db_client
     db_client = client()
-    taxonomy = load_taxonomy()
     yield
 
 
@@ -51,11 +48,6 @@ def _run_with_logging(name: str, fn, *args) -> None:
         fn(*args)
     except Exception:
         logger.exception("Background task '%s' failed", name)
-
-
-def get_taxonomy() -> Taxonomy:
-    assert taxonomy is not None, "taxonomy not initialized"
-    return taxonomy
 
 
 # TODO: Break this up into separate endpoints.
@@ -75,7 +67,7 @@ def get_user_feed(user_id: UUID):
     hidden_ids = get_hidden_story_ids(db, user_id)
     stories = get_stories_with_topics(db, excluded_story_ids=hidden_ids)
     preferences = get_user_preferences(db, user_id)
-    ranked = rank_stories(stories, preferences, get_taxonomy())
+    ranked = rank_stories(stories, preferences)
     return [
         {
             **s.story_with_topics.story.model_dump(mode="json"),

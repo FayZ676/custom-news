@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from openfeed.db.queries.global_stories import StoryWithTopics
-from openfeed.clients.iptc.taxonomy import Taxonomy, normalize_medtop_id
+from openfeed.services.topics import normalize_topic_id
 
 Preference = Literal["liked", "disliked"]
 UserPreferences = dict[str, Preference]  # medtop_id → "liked" | "disliked"
@@ -13,34 +13,20 @@ _BASE_WEIGHT = 1.0
 def _preference_contribution(
     topic_id: str,
     preferences: UserPreferences,
-    taxonomy: Taxonomy,
 ) -> float:
-    """Compute the preference contribution for a single story topic tag.
-
-    Walks the ancestor chain from the most specific node (self) up to the root,
-    stopping at the nearest ancestor that has an explicit preference. A direct
-    match (distance 0) contributes BASE_WEIGHT; each additional hop halves the
-    weight. Disliked ancestors contribute negatively with the same decay.
-    """
-    normalized_topic_id = normalize_medtop_id(topic_id)
-    if normalized_topic_id not in taxonomy:
+    """Compute the preference contribution for a single story topic tag."""
+    normalized_topic_id = normalize_topic_id(topic_id)
+    if normalized_topic_id not in preferences:
         return 0.0
 
-    # ancestors is ordered root→self; reverse to walk most-specific-first
-    for distance, ancestor_id in enumerate(
-        reversed(taxonomy[normalized_topic_id].ancestors)
-    ):
-        if ancestor_id in preferences:
-            weight = _BASE_WEIGHT / (distance + 1)
-            return weight if preferences[ancestor_id] == "liked" else -weight
-
-    return 0.0
+    return (
+        _BASE_WEIGHT if preferences[normalized_topic_id] == "liked" else -_BASE_WEIGHT
+    )
 
 
 def score_story(
     story_topics: list[str],
     preferences: UserPreferences,
-    taxonomy: Taxonomy,
     significance_score: float,
     w1: float = 0.7,
     w2: float = 0.3,
@@ -53,7 +39,6 @@ def score_story(
     Args:
         story_topics:       list of medtop_ids tagged on the story
         preferences:        user's liked/disliked medtop_id map
-        taxonomy:           loaded IPTC taxonomy
         significance_score: pre-computed cluster significance (0..N)
         w1:                 weight for preference score (default 0.7)
         w2:                 weight for significance score (default 0.3)
@@ -61,13 +46,13 @@ def score_story(
     if not preferences:
         return significance_score
 
-    normalized_preferences = {
-        normalize_medtop_id(topic_id): preference
+    normalized_preferences: UserPreferences = {
+        normalize_topic_id(topic_id): preference
         for topic_id, preference in preferences.items()
     }
 
     preference_score = sum(
-        _preference_contribution(topic_id, normalized_preferences, taxonomy)
+        _preference_contribution(topic_id, normalized_preferences)
         for topic_id in story_topics
     )
     return w1 * preference_score + w2 * significance_score
@@ -82,7 +67,6 @@ class ScoredStory:
 def rank_stories(
     stories: list[StoryWithTopics],
     preferences: UserPreferences,
-    taxonomy: Taxonomy,
 ) -> list[ScoredStory]:
     """Score each story against user preferences and return them sorted descending."""
     scored = [
@@ -91,7 +75,6 @@ def rank_stories(
             final_score=score_story(
                 story_topics=s.topic_ids,
                 preferences=preferences,
-                taxonomy=taxonomy,
                 significance_score=s.story.score,
             ),
         )
