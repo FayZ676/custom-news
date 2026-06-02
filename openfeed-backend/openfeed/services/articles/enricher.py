@@ -38,7 +38,7 @@ class ArticleEnricher:
             ),
         )
 
-    def extract_article_metadata(self, articles: list[str]) -> list[ArticleMetadata]:
+    def enrich_articles(self, articles: list[str]) -> list[ArticleMetadata]:
         messages_batch = [[Message(role="user", content=text)] for text in articles]
         responses = self._client.generate_responses(
             messages_batch, _EnrichmentResponse, batch_size=3

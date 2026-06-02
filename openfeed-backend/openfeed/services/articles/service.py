@@ -34,7 +34,7 @@ def fetch_articles(db: Client):
             seen_urls.add(article.link)
             unique_found_articles.append((feed_title, article))
 
-    article_metadata = enricher.extract_article_metadata(
+    article_metadata = enricher.enrich_articles(
         [str(article) for _, article in unique_found_articles]
     )
     articles: list[PublicGlobalArticles] = [

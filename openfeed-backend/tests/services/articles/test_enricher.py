@@ -3,16 +3,14 @@ from pathlib import Path
 
 from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
 
-_FIXTURES_PATH = Path(__file__).parent / "fixtures" / "enricher.jsonl"
+_FIXTURES_PATH = Path(__file__).parent / "fixtures" / "articles_enriched.jsonl"
 _DEBUG_PATH = Path(__file__).parent / "fixtures" / "enricher_debug.txt"
 _ALLOWED_TOPIC_IDS = {f"{i:02d}" for i in range(1, 18)}
 
 
 def test_enricher():
     fixtures = _load_fixtures(_FIXTURES_PATH)
-    results = ArticleEnricher().extract_article_metadata(
-        [_fixture_to_text(f) for f in fixtures]
-    )
+    results = ArticleEnricher().enrich_articles([_fixture_to_text(f) for f in fixtures])
 
     checks = [_check(f, m) for f, m in zip(fixtures, results)]
     failures = [c for c in checks if c is not None]
