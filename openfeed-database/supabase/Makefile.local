@@ -22,7 +22,12 @@ fetch_articles:
 		--header 'x-api-key: $(BACKEND_API_KEY)' \
 		--header 'Content-Type: application/json';
 
-reset:
+delete_articles:
+	psql "$(PG_CONN)" -c "TRUNCATE public.global_article_topics, public.global_story_topics, public.global_articles, public.global_stories CASCADE;"
+
+reset_articles: delete_articles fetch_articles
+
+reset_db:
 	supabase stop --no-backup \
 		&& rm -rf migrations/*_create_all.sql .branches .temp
 
