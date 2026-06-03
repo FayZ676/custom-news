@@ -11,6 +11,7 @@ from openfeed.db.queries.global_articles import (
     delete_global_articles,
 )
 from openfeed.db.queries.global_article_topics import insert_article_topics
+from openfeed.db.queries.global_topics import get_global_topics
 from openfeed.models import Article
 from openfeed.clients.feed_parser import get_articles
 from openfeed.db.queries.global_feeds import get_global_feeds
@@ -25,6 +26,7 @@ enricher = ArticleEnricher()
 
 def fetch_articles(db: Client):
     global_settings = get_global_settings(db)
+    global_topics = get_global_topics(db)
     seen_urls = set(get_global_article_urls(db))
     feed_articles = _fetch_feed_articles(get_global_feeds(db))
     unique_found_articles: list[tuple[str, Article]] = []
@@ -35,7 +37,7 @@ def fetch_articles(db: Client):
             unique_found_articles.append((feed_title, article))
 
     article_metadata = enricher.enrich_articles(
-        [str(article) for _, article in unique_found_articles]
+        [str(article) for _, article in unique_found_articles], global_topics
     )
     articles: list[PublicGlobalArticles] = [
         article.to_db_schema(feed_title, metadata)

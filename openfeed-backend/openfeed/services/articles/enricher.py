@@ -29,41 +29,49 @@ logger = logging.getLogger(__name__)
 
 class ArticleEnricher:
     def __init__(self) -> None:
-        self._client = OpenAIClient(
+        self._embedding_client = OpenAIClient(
             model="gpt-5.4-mini",
-            prompt_cache_key="article-enrich-v5",
-            instructions=Message(
-                role="system",
-                content=_SYSTEM_PROMPT,
-            ),
         )
 
-    def enrich_articles(self, articles: list[str]) -> list[ArticleMetadata]:
+    def enrich_articles(
+        self,
+        articles: list[str],
+        topics: list[dict[str, str | float]],
+    ) -> list[ArticleMetadata]:
+        topic_list = format_topics_for_prompt(topics)
+        classifier_client = OpenAIClient(
+            model="gpt-5.4-mini",
+            prompt_cache_key="article-enrich-v6",
+            instructions=Message(
+                role="system",
+                content=_SYSTEM_PROMPT_TEMPLATE.format(topic_list=topic_list),
+            ),
+        )
         messages_batch = [[Message(role="user", content=text)] for text in articles]
-        responses = self._client.generate_responses(
+        responses = classifier_client.generate_responses(
             messages_batch, _EnrichmentResponse, batch_size=3
         )
         summaries = [r.summary for r in responses if r.summary]
         embeddings_by_summary: dict[str, list[float]] = {}
         if summaries:
-            emb_resp = self._client.embed(summaries)
+            emb_resp = self._embedding_client.embed(summaries)
             embeddings_by_summary = dict(zip(summaries, emb_resp.embeddings))
 
         return [
             ArticleMetadata(
                 summary=r.summary,
-                significance_score=topic_significance_score(r.topics),
+                significance_score=topic_significance_score(r.topics, topics),
                 entities=extract_entities(r.summary) if r.summary else [],
                 summary_embeddings=(
                     embeddings_by_summary.get(r.summary) if r.summary else None
                 ),
-                topics=to_topic_payload(r.topics),
+                topics=to_topic_payload(r.topics, topics),
             )
             for r in responses
         ]
 
 
-_SYSTEM_PROMPT = f"""\
+_SYSTEM_PROMPT_TEMPLATE = """\
 # Instructions
 
 You are a senior news editor and topic classifier.
@@ -98,7 +106,7 @@ Entity naming:
 Classify each article into relevant topic IDs from this fixed set.
 
 Topic list (ordered by priority, highest to lowest):
-{format_topics_for_prompt()}
+{topic_list}
 
 Interpretation of priority:
 - Priority affects selection order when multiple topics are directly relevant

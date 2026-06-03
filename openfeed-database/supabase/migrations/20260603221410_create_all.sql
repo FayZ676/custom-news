@@ -107,6 +107,17 @@ alter table "public"."global_stories" enable row level security;
 alter table "public"."global_story_topics" enable row level security;
 
 
+  create table "public"."global_topics" (
+    "id" text not null,
+    "name" text not null,
+    "description" text not null,
+    "significance_score" real not null
+      );
+
+
+alter table "public"."global_topics" enable row level security;
+
+
   create table "public"."user_settings" (
     "user_id" uuid not null,
     "email_notification" boolean not null default true,
@@ -141,6 +152,8 @@ CREATE UNIQUE INDEX global_stories_pkey ON public.global_stories USING btree (id
 
 CREATE UNIQUE INDEX global_story_topics_pkey ON public.global_story_topics USING btree (story_id, topic_id);
 
+CREATE UNIQUE INDEX global_topics_pkey ON public.global_topics USING btree (id);
+
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
@@ -160,6 +173,8 @@ alter table "public"."global_share_links" add constraint "global_share_links_pke
 alter table "public"."global_stories" add constraint "global_stories_pkey" PRIMARY KEY using index "global_stories_pkey";
 
 alter table "public"."global_story_topics" add constraint "global_story_topics_pkey" PRIMARY KEY using index "global_story_topics_pkey";
+
+alter table "public"."global_topics" add constraint "global_topics_pkey" PRIMARY KEY using index "global_topics_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
 
@@ -194,6 +209,14 @@ alter table "public"."global_share_links" validate constraint "global_share_link
 alter table "public"."global_story_topics" add constraint "global_story_topics_story_id_fkey" FOREIGN KEY (story_id) REFERENCES public.global_stories(id) ON DELETE CASCADE not valid;
 
 alter table "public"."global_story_topics" validate constraint "global_story_topics_story_id_fkey";
+
+alter table "public"."global_topics" add constraint "global_topics_id_format" CHECK ((id ~ '^[0-9]{2}$'::text)) not valid;
+
+alter table "public"."global_topics" validate constraint "global_topics_id_format";
+
+alter table "public"."global_topics" add constraint "global_topics_significance_range" CHECK (((significance_score >= (0)::double precision) AND (significance_score <= (1)::double precision))) not valid;
+
+alter table "public"."global_topics" validate constraint "global_topics_significance_range";
 
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
@@ -577,6 +600,48 @@ grant truncate on table "public"."global_story_topics" to "service_role";
 
 grant update on table "public"."global_story_topics" to "service_role";
 
+grant delete on table "public"."global_topics" to "anon";
+
+grant insert on table "public"."global_topics" to "anon";
+
+grant references on table "public"."global_topics" to "anon";
+
+grant select on table "public"."global_topics" to "anon";
+
+grant trigger on table "public"."global_topics" to "anon";
+
+grant truncate on table "public"."global_topics" to "anon";
+
+grant update on table "public"."global_topics" to "anon";
+
+grant delete on table "public"."global_topics" to "authenticated";
+
+grant insert on table "public"."global_topics" to "authenticated";
+
+grant references on table "public"."global_topics" to "authenticated";
+
+grant select on table "public"."global_topics" to "authenticated";
+
+grant trigger on table "public"."global_topics" to "authenticated";
+
+grant truncate on table "public"."global_topics" to "authenticated";
+
+grant update on table "public"."global_topics" to "authenticated";
+
+grant delete on table "public"."global_topics" to "service_role";
+
+grant insert on table "public"."global_topics" to "service_role";
+
+grant references on table "public"."global_topics" to "service_role";
+
+grant select on table "public"."global_topics" to "service_role";
+
+grant trigger on table "public"."global_topics" to "service_role";
+
+grant truncate on table "public"."global_topics" to "service_role";
+
+grant update on table "public"."global_topics" to "service_role";
+
 grant delete on table "public"."user_settings" to "anon";
 
 grant insert on table "public"."user_settings" to "anon";
@@ -694,6 +759,15 @@ using (true);
 
   create policy "global_story_topics_select_policy"
   on "public"."global_story_topics"
+  as permissive
+  for select
+  to anon, authenticated
+using (true);
+
+
+
+  create policy "global_topics_select_policy"
+  on "public"."global_topics"
   as permissive
   for select
   to anon, authenticated

@@ -3,11 +3,14 @@ from pathlib import Path
 
 import pytest
 
+from openfeed.db.client import client
+from openfeed.db.queries.global_topics import get_global_topics
 from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
 
 _FIXTURES_PATH = Path(__file__).parent / "fixtures" / "articles_enriched.jsonl"
 _DEBUG_PATH = Path(__file__).parent / "fixtures" / "enricher_debug.txt"
-_ALLOWED_TOPIC_IDS = {f"{i:02d}" for i in range(1, 18)}
+_TOPICS = get_global_topics(client())
+_ALLOWED_TOPIC_IDS = {str(topic["id"]) for topic in _TOPICS}
 
 
 ### private ###
@@ -46,7 +49,7 @@ def _check(fixture: dict, metadata: ArticleMetadata) -> str | None:
 
 _FIXTURES = _load_fixtures(_FIXTURES_PATH)
 _FIXTURE_TEXTS = [_fixture_to_text(f) for f in _FIXTURES]
-_RESULTS = ArticleEnricher().enrich_articles(_FIXTURE_TEXTS)
+_RESULTS = ArticleEnricher().enrich_articles(_FIXTURE_TEXTS, _TOPICS)
 _CHECKS = [_check(f, m) for f, m in zip(_FIXTURES, _RESULTS)]
 
 
