@@ -295,56 +295,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_stories_hidden: {
-        Row: {
-          created_at: string
-          story_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          story_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          story_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_stories_hidden_story_id_fkey"
-            columns: ["story_id"]
-            isOneToOne: false
-            referencedRelation: "global_stories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_topic_preferences: {
-        Row: {
-          created_at: string
-          preference: string
-          topic_id: string
-          topic_name: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          preference: string
-          topic_id: string
-          topic_name: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          preference?: string
-          topic_id?: string
-          topic_name?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never

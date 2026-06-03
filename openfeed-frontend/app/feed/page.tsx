@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getSignificantStoriesWithTopicsPage } from "@/lib/supabase/queries/global_stories";
 import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
-import { getUserFeed } from "@/lib/backend";
 
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
@@ -20,19 +19,14 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   const supabase = await createClient();
   const { userId } = await getAuthenticatedUser();
 
-  const { stories: feedStories, hasNextPage } = await (async () => {
-    if (userId) {
-      return getUserFeed(userId, currentPage, PAGE_SIZE);
-    }
-
-    const settings = await getGlobalSettings(supabase);
-    return getSignificantStoriesWithTopicsPage(
+  const settings = await getGlobalSettings(supabase);
+  const { stories: feedStories, hasNextPage } =
+    await getSignificantStoriesWithTopicsPage(
       supabase,
       settings.cluster_significance_threshold,
       currentPage,
       PAGE_SIZE,
     );
-  })();
 
   async function handleCreateShareLink(
     contentType: "article" | "story",
@@ -45,7 +39,7 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
 
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
-      <ViewFeed stories={feedStories} userId={userId} />
+      <ViewFeed stories={feedStories} />
       <FeedPaginationNav currentPage={currentPage} hasNextPage={hasNextPage} />
     </ShareLinkProvider>
   );

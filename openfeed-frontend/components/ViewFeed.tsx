@@ -1,15 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
-import { createClient } from "@/lib/supabase/client";
 import { StoryWithTopics } from "@/lib/supabase/queries/global_stories";
-import { hideStory } from "@/lib/supabase/queries/user_stories_hidden";
-import {
-  addDislikedTopics,
-  addLikedTopics,
-  Topic,
-} from "@/lib/supabase/queries/user_topic_preferences";
 
 import {
   NewsItemModal,
@@ -24,14 +17,12 @@ const FEATURED_THRESHOLD = 0.6;
 
 interface ViewFeedProps {
   stories: StoryWithTopics[];
-  userId?: string;
   onStoryRead?: (storyId: string) => void;
 }
 
-export function ViewFeed({ stories, userId, onStoryRead }: ViewFeedProps) {
+export function ViewFeed({ stories, onStoryRead }: ViewFeedProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
   const pendingReadId = useRef<string | null>(null);
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
 
   function openModal(story: StoryWithTopics) {
     const item: NewsItemStory = {
@@ -44,10 +35,7 @@ export function ViewFeed({ stories, userId, onStoryRead }: ViewFeedProps) {
       topicNames: story.topic_names,
     };
     pendingReadId.current = story.id;
-    modalRef.current?.open(item, {
-      onLike: userId ? () => handleLike(story) : undefined,
-      onDislike: userId ? () => handleDislike(story) : undefined,
-    });
+    modalRef.current?.open(item);
   }
 
   function handleModalClose() {
@@ -57,34 +45,7 @@ export function ViewFeed({ stories, userId, onStoryRead }: ViewFeedProps) {
     }
   }
 
-  function handleDislike(story: StoryWithTopics) {
-    // Optimistically hide immediately
-    setHiddenIds((prev) => new Set(prev).add(story.id));
-
-    if (!userId) return;
-
-    // Fire-and-forget writes to Supabase
-    const supabase = createClient();
-    const topics: Topic[] = story.topic_ids.map((id, i) => ({
-      id,
-      name: story.topic_names[i] ?? id,
-    }));
-    hideStory(supabase, userId, story.id).catch(console.error);
-    addDislikedTopics(supabase, userId, topics).catch(console.error);
-  }
-
-  function handleLike(story: StoryWithTopics) {
-    if (!userId) return;
-    const supabase = createClient();
-    const topics: Topic[] = story.topic_ids.map((id, i) => ({
-      id,
-      name: story.topic_names[i] ?? id,
-    }));
-    addLikedTopics(supabase, userId, topics).catch(console.error);
-  }
-
-  const visibleStories = stories.filter((s) => !hiddenIds.has(s.id));
-  const storiesOrdered = [...visibleStories].sort(
+  const storiesOrdered = [...stories].sort(
     (a, b) => (b.final_score ?? b.score) - (a.final_score ?? a.score),
   );
 

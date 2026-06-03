@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Copy, ClipboardCheck, ThumbsUp, ThumbsDown, Info } from "lucide-react";
+import { Copy, ClipboardCheck, Info } from "lucide-react";
 
 import Modal from "@/components/Modal";
 import { useShareLink } from "@/components/ShareLinkContext";
@@ -12,11 +12,6 @@ import { useShareLink } from "@/components/ShareLinkContext";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-
-export interface ItemActions {
-  onLike?: () => void;
-  onDislike?: () => void;
-}
 
 export type NewsItemArticle = {
   type: "article";
@@ -42,7 +37,7 @@ export type NewsItemStory = {
 export type NewsItem = NewsItemArticle | NewsItemStory;
 
 export interface NewsItemModalHandle {
-  open: (item: NewsItem, actions?: ItemActions) => void;
+  open: (item: NewsItem) => void;
 }
 
 interface NewsItemModalProps {
@@ -70,7 +65,6 @@ export const NewsItemModal = forwardRef<
   const handleCreateShareLink = useShareLink();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
-  const [itemActions, setItemActions] = useState<ItemActions>({});
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isPreparingShare, setIsPreparingShare] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "loading" | "copied">(
@@ -102,9 +96,8 @@ export const NewsItemModal = forwardRef<
   }
 
   useImperativeHandle(ref, () => ({
-    open(item: NewsItem, actions: ItemActions = {}) {
+    open(item: NewsItem) {
       setSelectedItem(item);
-      setItemActions(actions);
       setCopyState("idle");
       setShareUrl(null);
       setShowTopics(false);
@@ -175,28 +168,7 @@ export const NewsItemModal = forwardRef<
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-neutral-700">
-            <div className="flex items-center gap-1">
-              {itemActions.onLike && (
-                <button
-                  onClick={itemActions.onLike}
-                  title="More like this"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-base-content/60 hover:text-success hover:bg-base-200 transition-colors"
-                >
-                  <ThumbsUp size={15} />
-                  <span>More like this</span>
-                </button>
-              )}
-              {itemActions.onDislike && (
-                <button
-                  onClick={itemActions.onDislike}
-                  title="Not interested"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm text-base-content/60 hover:text-error hover:bg-base-200 transition-colors"
-                >
-                  <ThumbsDown size={15} />
-                  <span>Not interested</span>
-                </button>
-              )}
-            </div>
+            <div />
 
             <div className="flex items-center gap-1">
               {selectedItem.type === "story" &&

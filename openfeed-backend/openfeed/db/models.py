@@ -250,39 +250,3 @@ class PublicUserSettingsUpdate(TypedDict):
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
-
-class PublicUserStoriesHidden(BaseModel):
-    created_at: datetime.datetime = Field(alias="created_at")
-    story_id: uuid.UUID = Field(alias="story_id")
-    user_id: uuid.UUID = Field(alias="user_id")
-
-class PublicUserStoriesHiddenInsert(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    story_id: Annotated[uuid.UUID, Field(alias="story_id")]
-    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
-
-class PublicUserStoriesHiddenUpdate(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    story_id: NotRequired[Annotated[uuid.UUID, Field(alias="story_id")]]
-    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
-
-class PublicUserTopicPreferences(BaseModel):
-    created_at: datetime.datetime = Field(alias="created_at")
-    preference: str = Field(alias="preference")
-    topic_id: str = Field(alias="topic_id")
-    topic_name: str = Field(alias="topic_name")
-    user_id: uuid.UUID = Field(alias="user_id")
-
-class PublicUserTopicPreferencesInsert(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    preference: Annotated[str, Field(alias="preference")]
-    topic_id: Annotated[str, Field(alias="topic_id")]
-    topic_name: Annotated[str, Field(alias="topic_name")]
-    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
-
-class PublicUserTopicPreferencesUpdate(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    preference: NotRequired[Annotated[str, Field(alias="preference")]]
-    topic_id: NotRequired[Annotated[str, Field(alias="topic_id")]]
-    topic_name: NotRequired[Annotated[str, Field(alias="topic_name")]]
-    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]

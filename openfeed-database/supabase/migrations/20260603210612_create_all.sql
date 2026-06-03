@@ -117,28 +117,6 @@ alter table "public"."global_story_topics" enable row level security;
 
 alter table "public"."user_settings" enable row level security;
 
-
-  create table "public"."user_stories_hidden" (
-    "user_id" uuid not null,
-    "story_id" uuid not null,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."user_stories_hidden" enable row level security;
-
-
-  create table "public"."user_topic_preferences" (
-    "user_id" uuid not null,
-    "topic_id" text not null,
-    "topic_name" text not null,
-    "preference" text not null,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."user_topic_preferences" enable row level security;
-
 CREATE UNIQUE INDEX global_article_topics_pkey ON public.global_article_topics USING btree (article_id, topic_id);
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
@@ -167,10 +145,6 @@ CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
 
-CREATE UNIQUE INDEX user_stories_hidden_pkey ON public.user_stories_hidden USING btree (user_id, story_id);
-
-CREATE UNIQUE INDEX user_topic_preferences_pkey ON public.user_topic_preferences USING btree (user_id, topic_id);
-
 alter table "public"."global_article_topics" add constraint "global_article_topics_pkey" PRIMARY KEY using index "global_article_topics_pkey";
 
 alter table "public"."global_articles" add constraint "global_articles_pkey" PRIMARY KEY using index "global_articles_pkey";
@@ -188,10 +162,6 @@ alter table "public"."global_stories" add constraint "global_stories_pkey" PRIMA
 alter table "public"."global_story_topics" add constraint "global_story_topics_pkey" PRIMARY KEY using index "global_story_topics_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
-
-alter table "public"."user_stories_hidden" add constraint "user_stories_hidden_pkey" PRIMARY KEY using index "user_stories_hidden_pkey";
-
-alter table "public"."user_topic_preferences" add constraint "user_topic_preferences_pkey" PRIMARY KEY using index "user_topic_preferences_pkey";
 
 alter table "public"."global_article_topics" add constraint "global_article_topics_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
 
@@ -228,22 +198,6 @@ alter table "public"."global_story_topics" validate constraint "global_story_top
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
-
-alter table "public"."user_stories_hidden" add constraint "user_stories_hidden_story_id_fkey" FOREIGN KEY (story_id) REFERENCES public.global_stories(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_stories_hidden" validate constraint "user_stories_hidden_story_id_fkey";
-
-alter table "public"."user_stories_hidden" add constraint "user_stories_hidden_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_stories_hidden" validate constraint "user_stories_hidden_user_id_fkey";
-
-alter table "public"."user_topic_preferences" add constraint "user_topic_preferences_preference_check" CHECK ((preference = ANY (ARRAY['liked'::text, 'disliked'::text]))) not valid;
-
-alter table "public"."user_topic_preferences" validate constraint "user_topic_preferences_preference_check";
-
-alter table "public"."user_topic_preferences" add constraint "user_topic_preferences_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_topic_preferences" validate constraint "user_topic_preferences_user_id_fkey";
 
 set check_function_bodies = off;
 
@@ -665,90 +619,6 @@ grant truncate on table "public"."user_settings" to "service_role";
 
 grant update on table "public"."user_settings" to "service_role";
 
-grant delete on table "public"."user_stories_hidden" to "anon";
-
-grant insert on table "public"."user_stories_hidden" to "anon";
-
-grant references on table "public"."user_stories_hidden" to "anon";
-
-grant select on table "public"."user_stories_hidden" to "anon";
-
-grant trigger on table "public"."user_stories_hidden" to "anon";
-
-grant truncate on table "public"."user_stories_hidden" to "anon";
-
-grant update on table "public"."user_stories_hidden" to "anon";
-
-grant delete on table "public"."user_stories_hidden" to "authenticated";
-
-grant insert on table "public"."user_stories_hidden" to "authenticated";
-
-grant references on table "public"."user_stories_hidden" to "authenticated";
-
-grant select on table "public"."user_stories_hidden" to "authenticated";
-
-grant trigger on table "public"."user_stories_hidden" to "authenticated";
-
-grant truncate on table "public"."user_stories_hidden" to "authenticated";
-
-grant update on table "public"."user_stories_hidden" to "authenticated";
-
-grant delete on table "public"."user_stories_hidden" to "service_role";
-
-grant insert on table "public"."user_stories_hidden" to "service_role";
-
-grant references on table "public"."user_stories_hidden" to "service_role";
-
-grant select on table "public"."user_stories_hidden" to "service_role";
-
-grant trigger on table "public"."user_stories_hidden" to "service_role";
-
-grant truncate on table "public"."user_stories_hidden" to "service_role";
-
-grant update on table "public"."user_stories_hidden" to "service_role";
-
-grant delete on table "public"."user_topic_preferences" to "anon";
-
-grant insert on table "public"."user_topic_preferences" to "anon";
-
-grant references on table "public"."user_topic_preferences" to "anon";
-
-grant select on table "public"."user_topic_preferences" to "anon";
-
-grant trigger on table "public"."user_topic_preferences" to "anon";
-
-grant truncate on table "public"."user_topic_preferences" to "anon";
-
-grant update on table "public"."user_topic_preferences" to "anon";
-
-grant delete on table "public"."user_topic_preferences" to "authenticated";
-
-grant insert on table "public"."user_topic_preferences" to "authenticated";
-
-grant references on table "public"."user_topic_preferences" to "authenticated";
-
-grant select on table "public"."user_topic_preferences" to "authenticated";
-
-grant trigger on table "public"."user_topic_preferences" to "authenticated";
-
-grant truncate on table "public"."user_topic_preferences" to "authenticated";
-
-grant update on table "public"."user_topic_preferences" to "authenticated";
-
-grant delete on table "public"."user_topic_preferences" to "service_role";
-
-grant insert on table "public"."user_topic_preferences" to "service_role";
-
-grant references on table "public"."user_topic_preferences" to "service_role";
-
-grant select on table "public"."user_topic_preferences" to "service_role";
-
-grant trigger on table "public"."user_topic_preferences" to "service_role";
-
-grant truncate on table "public"."user_topic_preferences" to "service_role";
-
-grant update on table "public"."user_topic_preferences" to "service_role";
-
 
   create policy "global_article_topics_select_policy"
   on "public"."global_article_topics"
@@ -833,26 +703,6 @@ using (true);
 
   create policy "Users can manage their own article scores"
   on "public"."user_settings"
-  as permissive
-  for all
-  to public
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
-
-
-
-  create policy "Users manage their own hidden stories"
-  on "public"."user_stories_hidden"
-  as permissive
-  for all
-  to public
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
-
-
-
-  create policy "Users manage their own topic preferences"
-  on "public"."user_topic_preferences"
   as permissive
   for all
   to public
