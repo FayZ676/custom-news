@@ -118,6 +118,16 @@ alter table "public"."global_story_topics" enable row level security;
 alter table "public"."global_topics" enable row level security;
 
 
+  create table "public"."user_keywords" (
+    "user_id" uuid not null,
+    "keywords" text not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."user_keywords" enable row level security;
+
+
   create table "public"."user_settings" (
     "user_id" uuid not null,
     "email_notification" boolean not null default true,
@@ -127,6 +137,16 @@ alter table "public"."global_topics" enable row level security;
 
 
 alter table "public"."user_settings" enable row level security;
+
+
+  create table "public"."user_topics" (
+    "user_id" uuid not null,
+    "topic_id" text not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."user_topics" enable row level security;
 
 CREATE UNIQUE INDEX global_article_topics_pkey ON public.global_article_topics USING btree (article_id, topic_id);
 
@@ -154,9 +174,17 @@ CREATE UNIQUE INDEX global_story_topics_pkey ON public.global_story_topics USING
 
 CREATE UNIQUE INDEX global_topics_pkey ON public.global_topics USING btree (id);
 
+CREATE UNIQUE INDEX user_keywords_pkey ON public.user_keywords USING btree (user_id, keywords);
+
+CREATE INDEX user_keywords_user_id_idx ON public.user_keywords USING btree (user_id);
+
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
+
+CREATE UNIQUE INDEX user_topics_pkey ON public.user_topics USING btree (user_id, topic_id);
+
+CREATE INDEX user_topics_user_id_idx ON public.user_topics USING btree (user_id);
 
 alter table "public"."global_article_topics" add constraint "global_article_topics_pkey" PRIMARY KEY using index "global_article_topics_pkey";
 
@@ -176,7 +204,11 @@ alter table "public"."global_story_topics" add constraint "global_story_topics_p
 
 alter table "public"."global_topics" add constraint "global_topics_pkey" PRIMARY KEY using index "global_topics_pkey";
 
+alter table "public"."user_keywords" add constraint "user_keywords_pkey" PRIMARY KEY using index "user_keywords_pkey";
+
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
+
+alter table "public"."user_topics" add constraint "user_topics_pkey" PRIMARY KEY using index "user_topics_pkey";
 
 alter table "public"."global_article_topics" add constraint "global_article_topics_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
 
@@ -218,9 +250,21 @@ alter table "public"."global_topics" add constraint "global_topics_significance_
 
 alter table "public"."global_topics" validate constraint "global_topics_significance_range";
 
+alter table "public"."user_keywords" add constraint "user_keywords_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_keywords" validate constraint "user_keywords_user_id_fkey";
+
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
+
+alter table "public"."user_topics" add constraint "user_topics_topic_id_fkey" FOREIGN KEY (topic_id) REFERENCES public.global_topics(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_topics" validate constraint "user_topics_topic_id_fkey";
+
+alter table "public"."user_topics" add constraint "user_topics_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_topics" validate constraint "user_topics_user_id_fkey";
 
 set check_function_bodies = off;
 
@@ -642,6 +686,48 @@ grant truncate on table "public"."global_topics" to "service_role";
 
 grant update on table "public"."global_topics" to "service_role";
 
+grant delete on table "public"."user_keywords" to "anon";
+
+grant insert on table "public"."user_keywords" to "anon";
+
+grant references on table "public"."user_keywords" to "anon";
+
+grant select on table "public"."user_keywords" to "anon";
+
+grant trigger on table "public"."user_keywords" to "anon";
+
+grant truncate on table "public"."user_keywords" to "anon";
+
+grant update on table "public"."user_keywords" to "anon";
+
+grant delete on table "public"."user_keywords" to "authenticated";
+
+grant insert on table "public"."user_keywords" to "authenticated";
+
+grant references on table "public"."user_keywords" to "authenticated";
+
+grant select on table "public"."user_keywords" to "authenticated";
+
+grant trigger on table "public"."user_keywords" to "authenticated";
+
+grant truncate on table "public"."user_keywords" to "authenticated";
+
+grant update on table "public"."user_keywords" to "authenticated";
+
+grant delete on table "public"."user_keywords" to "service_role";
+
+grant insert on table "public"."user_keywords" to "service_role";
+
+grant references on table "public"."user_keywords" to "service_role";
+
+grant select on table "public"."user_keywords" to "service_role";
+
+grant trigger on table "public"."user_keywords" to "service_role";
+
+grant truncate on table "public"."user_keywords" to "service_role";
+
+grant update on table "public"."user_keywords" to "service_role";
+
 grant delete on table "public"."user_settings" to "anon";
 
 grant insert on table "public"."user_settings" to "anon";
@@ -683,6 +769,48 @@ grant trigger on table "public"."user_settings" to "service_role";
 grant truncate on table "public"."user_settings" to "service_role";
 
 grant update on table "public"."user_settings" to "service_role";
+
+grant delete on table "public"."user_topics" to "anon";
+
+grant insert on table "public"."user_topics" to "anon";
+
+grant references on table "public"."user_topics" to "anon";
+
+grant select on table "public"."user_topics" to "anon";
+
+grant trigger on table "public"."user_topics" to "anon";
+
+grant truncate on table "public"."user_topics" to "anon";
+
+grant update on table "public"."user_topics" to "anon";
+
+grant delete on table "public"."user_topics" to "authenticated";
+
+grant insert on table "public"."user_topics" to "authenticated";
+
+grant references on table "public"."user_topics" to "authenticated";
+
+grant select on table "public"."user_topics" to "authenticated";
+
+grant trigger on table "public"."user_topics" to "authenticated";
+
+grant truncate on table "public"."user_topics" to "authenticated";
+
+grant update on table "public"."user_topics" to "authenticated";
+
+grant delete on table "public"."user_topics" to "service_role";
+
+grant insert on table "public"."user_topics" to "service_role";
+
+grant references on table "public"."user_topics" to "service_role";
+
+grant select on table "public"."user_topics" to "service_role";
+
+grant trigger on table "public"."user_topics" to "service_role";
+
+grant truncate on table "public"."user_topics" to "service_role";
+
+grant update on table "public"."user_topics" to "service_role";
 
 
   create policy "global_article_topics_select_policy"
@@ -775,11 +903,31 @@ using (true);
 
 
 
+  create policy "Users can manage their own keywords"
+  on "public"."user_keywords"
+  as permissive
+  for all
+  to authenticated
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
   create policy "Users can manage their own article scores"
   on "public"."user_settings"
   as permissive
   for all
   to public
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
+  create policy "Users can manage their own topics"
+  on "public"."user_topics"
+  as permissive
+  for all
+  to authenticated
 using ((auth.uid() = user_id))
 with check ((auth.uid() = user_id));
 

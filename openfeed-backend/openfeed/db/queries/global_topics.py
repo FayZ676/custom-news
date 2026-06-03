@@ -1,17 +1,11 @@
-from typing import cast
-
 from openfeed.db.client import Client
+from openfeed.db.models import PublicGlobalTopics
 from openfeed.db.utils import paginated_query
 
 
-def get_global_topics(db: Client) -> list[dict[str, str | float]]:
+def get_global_topics(db: Client) -> list[PublicGlobalTopics]:
     topics = [
-        {
-            "id": cast(str, row["id"]),
-            "name": cast(str, row["name"]),
-            "description": cast(str, row["description"]),
-            "significance_score": float(row["significance_score"]),
-        }
+        PublicGlobalTopics.model_validate(row)
         for page in paginated_query(
             db,
             "global_topics",
@@ -22,7 +16,7 @@ def get_global_topics(db: Client) -> list[dict[str, str | float]]:
     return sorted(
         topics,
         key=lambda topic: (
-            -float(topic["significance_score"]),
-            cast(str, topic["id"]),
+            -topic.significance_score,
+            topic.id,
         ),
     )

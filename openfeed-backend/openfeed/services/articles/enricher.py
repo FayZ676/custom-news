@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from openfeed.clients.ner import extract_entities
 from openfeed.clients.openai_client import OpenAIClient, Message
+from openfeed.db.models import PublicGlobalTopics
 from openfeed.services.topics import (
     format_topics_for_prompt,
     to_topic_payload,
@@ -36,7 +37,7 @@ class ArticleEnricher:
     def enrich_articles(
         self,
         articles: list[str],
-        topics: list[dict[str, str | float]],
+        topics: list[PublicGlobalTopics],
     ) -> list[ArticleMetadata]:
         topic_list = format_topics_for_prompt(topics)
         classifier_client = OpenAIClient(
