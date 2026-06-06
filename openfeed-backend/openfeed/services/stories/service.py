@@ -94,7 +94,6 @@ def _rescore_story(
         update={
             "headline": representative.title,
             "summary": representative.summary or "",
-            "summary_embeddings": representative.summary_embeddings,
             "related_articles_urls": [a.url for a in articles],
             "score": cluster_score.score,
             "velocity": cluster_score.velocity,
@@ -121,7 +120,6 @@ def _generate_story(
         id=uuid.uuid4(),
         headline=representative.title,
         summary=representative.summary or "",
-        summary_embeddings=representative.summary_embeddings,
         related_articles_urls=[article.url for article in articles],
         score=cluster_score.score,
         velocity=cluster_score.velocity,

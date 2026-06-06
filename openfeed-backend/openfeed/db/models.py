@@ -77,8 +77,6 @@ class PublicGlobalArticles(BaseModel):
     published_at: datetime.datetime = Field(alias="published_at")
     significance_score: float = Field(alias="significance_score")
     summary: Optional[str] = Field(alias="summary")
-    summary_embeddings: Optional[list[Any]] = Field(alias="summary_embeddings")
-    summary_entities: List[str] = Field(alias="summary_entities")
     title: str = Field(alias="title")
     url: str = Field(alias="url")
 
@@ -91,10 +89,6 @@ class PublicGlobalArticlesInsert(TypedDict):
     published_at: Annotated[datetime.datetime, Field(alias="published_at")]
     significance_score: Annotated[float, Field(alias="significance_score")]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
-    summary_embeddings: NotRequired[
-        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
-    ]
-    summary_entities: NotRequired[Annotated[List[str], Field(alias="summary_entities")]]
     title: Annotated[str, Field(alias="title")]
     url: Annotated[str, Field(alias="url")]
 
@@ -107,10 +101,6 @@ class PublicGlobalArticlesUpdate(TypedDict):
     published_at: NotRequired[Annotated[datetime.datetime, Field(alias="published_at")]]
     significance_score: NotRequired[Annotated[float, Field(alias="significance_score")]]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
-    summary_embeddings: NotRequired[
-        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
-    ]
-    summary_entities: NotRequired[Annotated[List[str], Field(alias="summary_entities")]]
     title: NotRequired[Annotated[str, Field(alias="title")]]
     url: NotRequired[Annotated[str, Field(alias="url")]]
 
@@ -165,7 +155,6 @@ class PublicGlobalSettings(BaseModel):
     clustering_window_hours: int = Field(alias="clustering_window_hours")
     id: uuid.UUID = Field(alias="id")
     max_match_count: int = Field(alias="max_match_count")
-    min_similarity_threshold: float = Field(alias="min_similarity_threshold")
     notification_hours: List[int] = Field(alias="notification_hours")
     singleton: bool = Field(alias="singleton")
 
@@ -180,7 +169,6 @@ class PublicGlobalSettingsInsert(TypedDict):
     ]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     max_match_count: Annotated[int, Field(alias="max_match_count")]
-    min_similarity_threshold: Annotated[float, Field(alias="min_similarity_threshold")]
     notification_hours: Annotated[List[int], Field(alias="notification_hours")]
     singleton: NotRequired[Annotated[bool, Field(alias="singleton")]]
 
@@ -195,9 +183,6 @@ class PublicGlobalSettingsUpdate(TypedDict):
     ]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     max_match_count: NotRequired[Annotated[int, Field(alias="max_match_count")]]
-    min_similarity_threshold: NotRequired[
-        Annotated[float, Field(alias="min_similarity_threshold")]
-    ]
     notification_hours: NotRequired[
         Annotated[List[int], Field(alias="notification_hours")]
     ]
@@ -243,7 +228,6 @@ class PublicGlobalStories(BaseModel):
     related_articles_urls: List[str] = Field(alias="related_articles_urls")
     score: float = Field(alias="score")
     summary: str = Field(alias="summary")
-    summary_embeddings: Optional[list[Any]] = Field(alias="summary_embeddings")
     velocity: float = Field(alias="velocity")
 
 
@@ -257,9 +241,6 @@ class PublicGlobalStoriesInsert(TypedDict):
     ]
     score: Annotated[float, Field(alias="score")]
     summary: Annotated[str, Field(alias="summary")]
-    summary_embeddings: NotRequired[
-        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
-    ]
     velocity: Annotated[float, Field(alias="velocity")]
 
 
@@ -273,9 +254,6 @@ class PublicGlobalStoriesUpdate(TypedDict):
     ]
     score: NotRequired[Annotated[float, Field(alias="score")]]
     summary: NotRequired[Annotated[str, Field(alias="summary")]]
-    summary_embeddings: NotRequired[
-        Annotated[Optional[list[Any]], Field(alias="summary_embeddings")]
-    ]
     velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
 
 

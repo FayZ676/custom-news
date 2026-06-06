@@ -109,8 +109,6 @@ class Article(BaseModel):
             feed_title=feed_title,
             title=self.title,
             summary=metadata.summary,
-            summary_embeddings=metadata.summary_embeddings,
-            summary_entities=metadata.entities,
             significance_score=metadata.significance_score,
             image_url=self.image_url,
             url=self.link,

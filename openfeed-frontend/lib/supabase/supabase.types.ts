@@ -69,8 +69,6 @@ export type Database = {
           published_at: string;
           significance_score: number;
           summary: string | null;
-          summary_embeddings: string | null;
-          summary_entities: string[];
           title: string;
           url: string;
         };
@@ -82,8 +80,6 @@ export type Database = {
           published_at: string;
           significance_score: number;
           summary?: string | null;
-          summary_embeddings?: string | null;
-          summary_entities?: string[];
           title: string;
           url: string;
         };
@@ -95,8 +91,6 @@ export type Database = {
           published_at?: string;
           significance_score?: number;
           summary?: string | null;
-          summary_embeddings?: string | null;
-          summary_entities?: string[];
           title?: string;
           url?: string;
         };
@@ -159,7 +153,6 @@ export type Database = {
           clustering_window_hours: number;
           id: string;
           max_match_count: number;
-          min_similarity_threshold: number;
           notification_hours: number[];
           singleton: boolean;
         };
@@ -169,7 +162,6 @@ export type Database = {
           clustering_window_hours?: number;
           id?: string;
           max_match_count: number;
-          min_similarity_threshold: number;
           notification_hours: number[];
           singleton?: boolean;
         };
@@ -179,7 +171,6 @@ export type Database = {
           clustering_window_hours?: number;
           id?: string;
           max_match_count?: number;
-          min_similarity_threshold?: number;
           notification_hours?: number[];
           singleton?: boolean;
         };
@@ -221,7 +212,6 @@ export type Database = {
           related_articles_urls: string[];
           score: number;
           summary: string;
-          summary_embeddings: string | null;
           velocity: number;
         };
         Insert: {
@@ -232,7 +222,6 @@ export type Database = {
           related_articles_urls?: string[];
           score: number;
           summary: string;
-          summary_embeddings?: string | null;
           velocity: number;
         };
         Update: {
@@ -243,7 +232,6 @@ export type Database = {
           related_articles_urls?: string[];
           score?: number;
           summary?: string;
-          summary_embeddings?: string | null;
           velocity?: number;
         };
         Relationships: [];
@@ -365,20 +353,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      match_stories: {
-        Args: {
-          match_count: number;
-          min_similarity: number;
-          query_embedding: string;
-          query_text: string;
-        };
-        Returns: {
-          headline: string;
-          id: string;
-          similarity: number;
-          summary: string;
-        }[];
-      };
+      [_ in never]: never;
     };
     Enums: {
       [_ in never]: never;

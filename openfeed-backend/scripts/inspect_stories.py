@@ -17,14 +17,10 @@ from pathlib import Path
 from typing import Optional
 
 from openfeed.db.client import client
-from openfeed.db.utils import decode_embeddings
 from openfeed.db.models import PublicGlobalArticles
 from openfeed.clusterer import (
-    _cosine_similarity,
     _hours_between,
-    _jaccard_similarity,
     _keyword_tokens,
-    _normalized_entities,
     _overlap_coefficient,
     score_pair,
 )
@@ -93,7 +89,7 @@ def _fetch_articles_by_url(db, urls: list[str]) -> dict[str, PublicGlobalArticle
     rows = (
         db.table("global_articles")
         .select(
-            "id, title, summary, summary_embeddings, summary_entities, "
+            "id, title, summary, "
             "published_at, feed_title, significance_score, url, image_url, created_at"
         )
         .execute()
@@ -103,7 +99,6 @@ def _fetch_articles_by_url(db, urls: list[str]) -> dict[str, PublicGlobalArticle
     for row in rows:
         if row["url"] not in url_set:
             continue
-        decode_embeddings(row)
         article = PublicGlobalArticles(**row)
         articles[article.url] = article
     return articles
@@ -135,14 +130,6 @@ def fetch_stories(db) -> list[Story]:
 
 def _signal_breakdown(a: PublicGlobalArticles, b: PublicGlobalArticles) -> dict:
     return {
-        "embedding_sim": (
-            round(_cosine_similarity(a.summary_embeddings, b.summary_embeddings), 4)
-            if a.summary_embeddings and b.summary_embeddings
-            else None
-        ),
-        "entity_jaccard": round(
-            _jaccard_similarity(_normalized_entities(a), _normalized_entities(b)), 4
-        ),
         "keyword_overlap": round(
             _overlap_coefficient(_keyword_tokens(a), _keyword_tokens(b)), 4
         ),
@@ -170,9 +157,6 @@ def find_near_misses(stories: list[Story]) -> list[NearMiss]:
     near_misses = []
     for singleton_story in singletons:
         article = singleton_story.articles[0]
-        if not article.summary_embeddings:
-            continue
-
         best_score, best_match, best_cluster = max(
             (
                 (*_best_score_against_cluster(article, cluster), cluster)

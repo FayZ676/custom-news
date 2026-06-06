@@ -2,7 +2,6 @@ import logging
 
 from pydantic import BaseModel
 
-from openfeed.clients.ner import extract_entities
 from openfeed.clients.openai_client import OpenAIClient, Message
 from openfeed.db.models import PublicGlobalTopics
 from openfeed.services.topics import (
@@ -19,10 +18,8 @@ class _EnrichmentResponse(BaseModel):
 
 class ArticleMetadata(BaseModel):
     summary: str | None
-    significance_score: float
-    entities: list[str]
-    summary_embeddings: list[float] | None
     topics: list[dict]
+    significance_score: float
 
 
 logger = logging.getLogger(__name__)
@@ -52,20 +49,10 @@ class ArticleEnricher:
         responses = classifier_client.generate_responses(
             messages_batch, _EnrichmentResponse, batch_size=3
         )
-        summaries = [r.summary for r in responses if r.summary]
-        embeddings_by_summary: dict[str, list[float]] = {}
-        if summaries:
-            emb_resp = self._embedding_client.embed(summaries)
-            embeddings_by_summary = dict(zip(summaries, emb_resp.embeddings))
-
         return [
             ArticleMetadata(
                 summary=r.summary,
                 significance_score=topic_significance_score(r.topics, topics),
-                entities=extract_entities(r.summary) if r.summary else [],
-                summary_embeddings=(
-                    embeddings_by_summary.get(r.summary) if r.summary else None
-                ),
                 topics=to_topic_payload(r.topics, topics),
             )
             for r in responses

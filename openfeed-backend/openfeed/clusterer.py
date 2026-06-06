@@ -10,7 +10,6 @@ from nltk.corpus import stopwords as _nltk_stopwords
 
 from openfeed.db.models import PublicGlobalArticles, PublicGlobalStories
 from openfeed.utils.bayesian import Belief, Likelihood, update_all
-from openfeed.utils.math import cosine_similarity as _cosine_similarity
 
 nltk.download("stopwords", quiet=True)
 
@@ -31,20 +30,10 @@ _STOPWORDS: frozenset[str] = frozenset(_nltk_stopwords.words("english"))
 # ---------------------------------------------------------------------------
 
 
-def _jaccard_similarity(a: frozenset[str], b: frozenset[str]) -> float:
-    if not a and not b:
-        return 0.0
-    return len(a & b) / len(a | b)
-
-
 def _hours_between(a: datetime, b: datetime) -> float:
     a_utc = a.replace(tzinfo=timezone.utc) if a.tzinfo is None else a
     b_utc = b.replace(tzinfo=timezone.utc) if b.tzinfo is None else b
     return abs((a_utc - b_utc).total_seconds()) / 3600
-
-
-def _normalized_entities(article: PublicGlobalArticles) -> frozenset[str]:
-    return frozenset(e.lower().strip() for e in article.summary_entities)
 
 
 def _keyword_tokens(article: PublicGlobalArticles) -> frozenset[str]:
@@ -70,40 +59,6 @@ def _overlap_coefficient(a: frozenset[str], b: frozenset[str]) -> float:
 # "Given this feature value, how likely is same_event vs diff_event?"
 # Buckets are tunable — refine against labeled pairs.
 # ---------------------------------------------------------------------------
-
-
-def _embedding_likelihood(similarity: float) -> Likelihood:
-    if similarity > 0.85:
-        bucket = "high"
-    elif similarity > 0.60:
-        bucket = "mid"
-    else:
-        bucket = "low"
-
-    rates = {
-        "high": {"same_event": 0.90, "diff_event": 0.20},
-        "mid": {"same_event": 0.40, "diff_event": 0.30},
-        "low": {"same_event": 0.05, "diff_event": 0.80},
-    }[bucket]
-
-    return lambda hypothesis: rates[hypothesis]
-
-
-def _entity_likelihood(jaccard: float) -> Likelihood:
-    if jaccard > 0.30:
-        bucket = "high"
-    elif jaccard > 0.10:
-        bucket = "mid"
-    else:
-        bucket = "low"
-
-    rates = {
-        "high": {"same_event": 0.85, "diff_event": 0.10},
-        "mid": {"same_event": 0.50, "diff_event": 0.30},
-        "low": {"same_event": 0.10, "diff_event": 0.70},
-    }[bucket]
-
-    return lambda hypothesis: rates[hypothesis]
 
 
 def _keyword_likelihood(overlap: float) -> Likelihood:
@@ -150,28 +105,12 @@ def score_pair(a: PublicGlobalArticles, b: PublicGlobalArticles) -> float:
     Returns P(same_event | embedding, entities, time).
     Returns 0.0 if either article is missing embeddings.
     """
-    if not a.summary_embeddings or not b.summary_embeddings:
-        return 0.0
-
     likelihoods = [
-        _embedding_likelihood(
-            _cosine_similarity(a.summary_embeddings, b.summary_embeddings)
-        ),
         _keyword_likelihood(
             _overlap_coefficient(_keyword_tokens(a), _keyword_tokens(b))
         ),
         _time_likelihood(_hours_between(a.published_at, b.published_at)),
     ]
-
-    entities_a = _normalized_entities(a)
-    entities_b = _normalized_entities(b)
-
-    # Only apply entity signal when both articles have extracted entities.
-    # Absence of entity data is missing information, not evidence against a match.
-    if entities_a and entities_b:
-        likelihoods.append(
-            _entity_likelihood(_jaccard_similarity(entities_a, entities_b))
-        )
 
     return update_all(PRIOR, likelihoods)["same_event"]
 

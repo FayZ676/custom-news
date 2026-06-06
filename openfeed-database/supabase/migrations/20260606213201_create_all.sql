@@ -19,8 +19,6 @@ alter table "public"."global_article_topics" enable row level security;
     "title" text not null,
     "url" text not null,
     "summary" text,
-    "summary_embeddings" public.vector(512),
-    "summary_entities" text[] not null default '{}'::text[],
     "significance_score" double precision not null,
     "image_url" text,
     "published_at" timestamp with time zone not null,
@@ -58,7 +56,6 @@ alter table "public"."global_feeds" enable row level security;
     "notification_hours" integer[] not null,
     "article_ttl" interval not null,
     "clustering_window_hours" integer not null default 72,
-    "min_similarity_threshold" real not null,
     "max_match_count" integer not null,
     "cluster_significance_threshold" real not null default 0.6,
     "singleton" boolean not null default true
@@ -85,7 +82,6 @@ alter table "public"."global_share_links" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "headline" text not null,
     "summary" text not null,
-    "summary_embeddings" public.vector(512),
     "related_articles_urls" text[] not null default '{}'::text[],
     "score" double precision not null,
     "velocity" double precision not null,
@@ -278,57 +274,6 @@ begin
     values (new.id);
     return new;
 end;
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.match_stories(query_embedding public.vector, query_text text, match_count integer, min_similarity double precision)
- RETURNS TABLE(id uuid, headline text, summary text, similarity double precision)
- LANGUAGE sql
-AS $function$
-  with normalized_query as (
-    select trim(coalesce(query_text, '')) as text
-  ),
-  vector_matches as (
-    select
-      id,
-      headline,
-      summary,
-      1 - (summary_embeddings <=> query_embedding) as similarity,
-      false as is_lexical
-    from global_stories
-    where summary_embeddings is not null
-      and (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
-  ),
-  lexical_matches as (
-    select
-      gs.id,
-      gs.headline,
-      gs.summary,
-      coalesce(1 - (gs.summary_embeddings <=> query_embedding), min_similarity) as similarity,
-      true as is_lexical
-    from global_stories gs
-    cross join normalized_query nq
-    where nq.text <> ''
-      and gs.headline ilike '%' || nq.text || '%'
-  ),
-  combined as (
-    select distinct on (id)
-      id,
-      headline,
-      summary,
-      similarity,
-      is_lexical
-    from (
-      select * from lexical_matches
-      union all
-      select * from vector_matches
-    ) all_matches
-    order by id, is_lexical desc, similarity desc
-  )
-  select id, headline, summary, similarity
-  from combined
-  order by is_lexical desc, similarity desc
-  limit match_count;
 $function$
 ;
 

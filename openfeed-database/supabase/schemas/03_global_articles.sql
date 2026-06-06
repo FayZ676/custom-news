@@ -6,8 +6,6 @@ create table "global_articles" (
     "title" text not null,
     "url" text not null unique,
     "summary" text,
-    "summary_embeddings" vector(512),
-    "summary_entities" text[] not null default '{}',
     "significance_score" float not null,
     "image_url" text,
     "published_at" timestamptz not null,

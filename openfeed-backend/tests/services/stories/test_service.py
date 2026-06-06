@@ -16,8 +16,6 @@ def _make_article(
         url=f"https://example.com/{uuid.uuid4()}",
         feed_title="Test Feed",
         summary="Summary",
-        summary_embeddings=None,
-        summary_entities=[],
         significance_score=significance_score,
         created_at=published_at,
         published_at=published_at,
