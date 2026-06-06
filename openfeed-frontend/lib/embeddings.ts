@@ -30,7 +30,7 @@ export async function embedTexts(texts: string[]): Promise<EmbeddingsResponse> {
     },
     body: JSON.stringify({
       input: texts,
-      model: "text-embedding-3-small",
+      model: "text-embedding-3-large",
       dimensions: 512,
     }),
   });
