@@ -9,7 +9,8 @@ interface SearchFilterBarProps {
   keywords?: string[];
   onChangeTopics: (topics: string[]) => void;
   onChangeKeywords: (keywords: string[]) => void;
-  onSearchStories?: (query: string) => Promise<void>;
+  onSearchStories: (query: string) => Promise<void>;
+  onFilterSheetClose: () => void;
 }
 
 function fuzzyMatch(query: string, str: string): boolean {
@@ -25,6 +26,7 @@ export default function SearchFilterBar({
   onChangeTopics,
   onChangeKeywords,
   onSearchStories,
+  onFilterSheetClose,
 }: SearchFilterBarProps) {
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
@@ -207,6 +209,7 @@ export default function SearchFilterBar({
         activeTopics={activeTopics}
         onToggleTopic={handleToggleTopic}
         keywords={keywords}
+        onClose={onFilterSheetClose}
         onRemoveKeyword={(kw: string) =>
           onChangeKeywords(keywords.filter((k) => k !== kw))
         }

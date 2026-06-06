@@ -32,19 +32,21 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   const topics = await getGlobalTopics(supabase);
   const userTopicRows = await getUserTopics(supabase, userId);
   const userKeywordRows = await getUserKeywords(supabase, userId);
-  const { stories: feedStories, hasNextPage } =
-    await getSignificantStoriesWithTopicsPage(
-      supabase,
-      settings.cluster_significance_threshold,
-      currentPage,
-      PAGE_SIZE,
-    );
 
   const topicIdToName = new Map(topics.map((topic) => [topic.id, topic.name]));
   const initialActiveTopics = userTopicRows
     .map((row) => topicIdToName.get(row.topic_id))
     .filter((topicName): topicName is string => Boolean(topicName));
   const initialKeywords = userKeywordRows.map((row) => row.keywords);
+
+  const { stories: feedStories, hasNextPage } =
+    await getSignificantStoriesWithTopicsPage(
+      supabase,
+      settings.cluster_significance_threshold,
+      currentPage,
+      PAGE_SIZE,
+      initialActiveTopics,
+    );
 
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
   const handleChangeTopics = changeTopicsAction.bind(null, userId);

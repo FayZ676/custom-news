@@ -13,6 +13,7 @@ interface FilterSheetProps {
   onRemoveKeyword: (keyword: string) => void;
   onClearTopics: () => void;
   onClearKeywords: () => void;
+  onClose: () => void;
 }
 
 export interface FilterSheetHandle {
@@ -29,6 +30,7 @@ const FilterSheet = forwardRef<FilterSheetHandle, FilterSheetProps>(
       onRemoveKeyword,
       onClearTopics,
       onClearKeywords,
+      onClose,
     },
     ref,
   ) => {
@@ -41,7 +43,7 @@ const FilterSheet = forwardRef<FilterSheetHandle, FilterSheetProps>(
     }));
 
     return (
-      <Modal ref={dialogRef}>
+      <Modal ref={dialogRef} onClose={onClose}>
         <div className="w-full max-w-97.5 -mx-6 px-5 pb-8 pt-0 max-h-[80vh] flex flex-col">
           {/* Header */}
           <div className="px-5 pt-4 pb-3">

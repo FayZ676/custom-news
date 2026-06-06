@@ -37,16 +37,25 @@ export async function getSignificantStoriesWithTopicsPage(
   threshold: number,
   page: number,
   pageSize: number,
+  topicNames: string[] = [],
 ): Promise<PaginatedStories> {
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
+  const storyTopicsSelect = topicNames.length
+    ? "*, global_story_topics!inner(topic_id, topic_name)"
+    : "*, global_story_topics(topic_id, topic_name)";
 
-  const { data, error } = await (supabase as any)
+  let query = (supabase as any)
     .from("global_stories")
-    .select("*, global_story_topics(topic_id, topic_name)")
+    .select(storyTopicsSelect)
     .gte("score", threshold)
-    .order("score", { ascending: false })
-    .range(start, end);
+    .order("score", { ascending: false });
+
+  if (topicNames.length > 0) {
+    query = query.in("global_story_topics.topic_name", topicNames);
+  }
+
+  const { data, error } = await query.range(start, end);
 
   if (error) throw new Error(error.message);
 
