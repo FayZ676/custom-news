@@ -13,6 +13,7 @@ interface FeedPageContentProps {
   initialKeywords: string[];
   onChangeTopics: (topics: string[]) => Promise<void>;
   onChangeKeywords: (keywords: string[]) => Promise<void>;
+  onSearchStories: (query: string) => Promise<StoryWithTopics[]>;
 }
 
 export function FeedPageContent({
@@ -22,10 +23,13 @@ export function FeedPageContent({
   initialKeywords,
   onChangeTopics,
   onChangeKeywords,
+  onSearchStories,
 }: FeedPageContentProps) {
   const [activeTopics, setActiveTopics] =
     useState<string[]>(initialActiveTopics);
   const [keywords, setKeywords] = useState<string[]>(initialKeywords);
+  const [displayStories, setDisplayStories] =
+    useState<StoryWithTopics[]>(stories);
 
   const handleChangeTopics = useCallback(
     async (nextTopics: string[]) => {
@@ -51,6 +55,18 @@ export function FeedPageContent({
     [keywords, onChangeKeywords],
   );
 
+  const handleSearchStories = useCallback(
+    async (query: string) => {
+      try {
+        const nextStories = await onSearchStories(query);
+        setDisplayStories(nextStories);
+      } catch {
+        setDisplayStories(stories);
+      }
+    },
+    [onSearchStories, stories],
+  );
+
   return (
     <>
       <SearchFilterBar
@@ -59,9 +75,10 @@ export function FeedPageContent({
         keywords={keywords}
         onChangeTopics={handleChangeTopics}
         onChangeKeywords={handleChangeKeywords}
+        onSearchStories={handleSearchStories}
       />
       <div className="pt-4">
-        <ViewFeed stories={stories} />
+        <ViewFeed stories={displayStories} />
       </div>
     </>
   );

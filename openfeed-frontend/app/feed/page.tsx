@@ -5,17 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { getSignificantStoriesWithTopicsPage } from "@/lib/supabase/queries/global_stories";
 import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
 import { getGlobalTopics } from "@/lib/supabase/queries/global_topics";
-import { createShareLink } from "@/lib/supabase/queries/global_share_links";
+import { getUserKeywords } from "@/lib/supabase/queries/user_keywords";
+import { getUserTopics } from "@/lib/supabase/queries/user_topics";
 import {
-  addUserKeyword,
-  getUserKeywords,
-  removeUserKeyword,
-} from "@/lib/supabase/queries/user_keywords";
-import {
-  addUserTopic,
-  getUserTopics,
-  removeUserTopic,
-} from "@/lib/supabase/queries/user_topics";
+  changeKeywordsAction,
+  changeTopicsAction,
+  createShareLinkAction,
+  searchStoriesAction,
+} from "@/app/feed/actions";
 
 import { FeedPageContent } from "@/components/FeedPageContent";
 import { ViewFeedSkeleton } from "@/components/ViewFeed";
@@ -49,69 +46,9 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
     .filter((topicName): topicName is string => Boolean(topicName));
   const initialKeywords = userKeywordRows.map((row) => row.keywords);
 
-  async function handleCreateShareLink(
-    contentType: "article" | "story",
-    contentId: string,
-  ): Promise<string> {
-    "use server";
-    const supabase = await createClient();
-    return await createShareLink(supabase, userId, contentType, contentId);
-  }
-
-  async function handleChangeTopics(nextTopics: string[]): Promise<void> {
-    "use server";
-    const supabase = await createClient();
-    const [globalTopics, existingRows] = await Promise.all([
-      getGlobalTopics(supabase),
-      getUserTopics(supabase, userId),
-    ]);
-
-    const topicNameToId = new Map(
-      globalTopics.map((topic) => [topic.name, topic.id]),
-    );
-    const desiredTopicIds = new Set(
-      nextTopics
-        .map((topicName) => topicNameToId.get(topicName))
-        .filter((topicId): topicId is string => Boolean(topicId)),
-    );
-    const existingTopicIds = new Set(existingRows.map((row) => row.topic_id));
-
-    const toAdd = [...desiredTopicIds].filter(
-      (topicId) => !existingTopicIds.has(topicId),
-    );
-    const toRemove = [...existingTopicIds].filter(
-      (topicId) => !desiredTopicIds.has(topicId),
-    );
-
-    await Promise.all([
-      ...toAdd.map((topicId) => addUserTopic(supabase, userId, topicId)),
-      ...toRemove.map((topicId) => removeUserTopic(supabase, userId, topicId)),
-    ]);
-  }
-
-  async function handleChangeKeywords(nextKeywords: string[]): Promise<void> {
-    "use server";
-    const supabase = await createClient();
-    const existingRows = await getUserKeywords(supabase, userId);
-    const desiredKeywords = new Set(
-      nextKeywords.map((keyword) => keyword.trim()).filter(Boolean),
-    );
-    const existingKeywords = new Set(existingRows.map((row) => row.keywords));
-
-    const toAdd = [...desiredKeywords].filter(
-      (keyword) => !existingKeywords.has(keyword),
-    );
-    const toRemove = [...existingKeywords].filter(
-      (keyword) => !desiredKeywords.has(keyword),
-    );
-
-    await Promise.all([
-      ...toAdd.map((keyword) => addUserKeyword(supabase, userId, keyword)),
-      ...toRemove.map((keyword) =>
-        removeUserKeyword(supabase, userId, keyword),
-      ),
-    ]);
-  }
+  const handleCreateShareLink = createShareLinkAction.bind(null, userId);
+  const handleChangeTopics = changeTopicsAction.bind(null, userId);
+  const handleChangeKeywords = changeKeywordsAction.bind(null, userId);
 
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
@@ -122,6 +59,7 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
         initialKeywords={initialKeywords}
         onChangeTopics={handleChangeTopics}
         onChangeKeywords={handleChangeKeywords}
+        onSearchStories={searchStoriesAction}
       />
       <FeedPaginationNav currentPage={currentPage} hasNextPage={hasNextPage} />
     </ShareLinkProvider>

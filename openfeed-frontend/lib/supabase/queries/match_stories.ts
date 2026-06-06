@@ -4,6 +4,7 @@ import { Database } from "@/lib/supabase/supabase.types";
 export async function matchStoriesByEmbedding(
   supabase: SupabaseClient<Database>,
   embedding: number[],
+  queryText: string,
   matchCount: number,
   minSimilarity: number,
 ): Promise<{ id: string; similarity: number }[]> {
@@ -11,6 +12,7 @@ export async function matchStoriesByEmbedding(
     "match_stories",
     {
       query_embedding: JSON.stringify(embedding),
+      query_text: queryText,
       match_count: matchCount,
       min_similarity: minSimilarity,
     },

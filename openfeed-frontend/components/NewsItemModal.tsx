@@ -131,6 +131,7 @@ export const NewsItemModal = forwardRef<
                 src={selectedItem.imageUrl}
                 alt="Article image"
                 fill
+                sizes="(min-width: 1024px) 768px, 100vw"
                 className="object-cover"
               />
             </div>

@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { embedTexts } from "@/lib/embeddings";
-import { rerankTexts } from "@/lib/reranker";
-import { matchStoriesByEmbedding } from "@/lib/supabase/queries/match_stories";
+import { searchStories } from "../../../lib/story-search";
 import { getStoriesByIds } from "@/lib/supabase/queries/global_stories";
-import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
 
 const MAX_LANDING_RESULTS = 5;
 
@@ -17,31 +14,21 @@ export async function GET(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
   );
 
-  const settings = await getGlobalSettings(supabase);
-  const { embeddings } = await embedTexts([query]);
-  const matches = await matchStoriesByEmbedding(
+  const { stories } = await searchStories({
     supabase,
-    embeddings[0],
-    settings.max_match_count,
-    settings.min_similarity_threshold,
-  );
-
-  if (matches.length === 0) return NextResponse.json({ results: [] });
-
-  const stories = await getStoriesByIds(
-    supabase,
-    matches.map((m) => m.id),
-  );
-  const reranked = await rerankTexts(
     query,
-    stories.map((s) => s.headline),
-  );
+    loadStoriesByIds: (ids) => getStoriesByIds(supabase, ids),
+  });
 
-  const results = reranked.slice(0, MAX_LANDING_RESULTS).map((r) => ({
-    title: stories[r.index].headline,
-    summary: stories[r.index].summary,
+  if (stories.length === 0) {
+    return NextResponse.json({ results: [] });
+  }
+
+  const results = stories.slice(0, MAX_LANDING_RESULTS).map((story) => ({
+    title: story.headline,
+    summary: story.summary,
     feed_title: null,
-    url: stories[r.index].related_articles_urls[0] ?? null,
+    url: story.related_articles_urls[0] ?? null,
   }));
 
   return NextResponse.json({ results });

@@ -9,6 +9,7 @@ interface SearchFilterBarProps {
   keywords?: string[];
   onChangeTopics: (topics: string[]) => void;
   onChangeKeywords: (keywords: string[]) => void;
+  onSearchStories?: (query: string) => Promise<void>;
 }
 
 function fuzzyMatch(query: string, str: string): boolean {
@@ -23,9 +24,11 @@ export default function SearchFilterBar({
   keywords = [],
   onChangeTopics,
   onChangeKeywords,
+  onSearchStories,
 }: SearchFilterBarProps) {
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const [isSubmittingSearch, setIsSubmittingSearch] = useState(false);
   const [chipTrayVisible, setChipTrayVisible] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const filterSheetRef = useRef<FilterSheetHandle>(null);
@@ -77,6 +80,18 @@ export default function SearchFilterBar({
     );
   };
 
+  const handleSubmitSearch = async () => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery || !onSearchStories) return;
+
+    setIsSubmittingSearch(true);
+    try {
+      await onSearchStories(trimmedQuery);
+    } finally {
+      setIsSubmittingSearch(false);
+    }
+  };
+
   return (
     <div className="sticky top-0 z-30 bg-base-100 border-b border-base-300 px-5 py-2.5">
       {/* Search + Filter row */}
@@ -100,9 +115,19 @@ export default function SearchFilterBar({
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setSearching(true)}
             onBlur={handleSearchBlur}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              e.preventDefault();
+              void handleSubmitSearch();
+            }}
             placeholder="Search stories..."
             className="flex-1 border-none bg-transparent outline-none text-[12px] text-base-content tracking-[0.02em]"
           />
+          {isSubmittingSearch && (
+            <span className="text-[10px] text-base-content/60 uppercase tracking-wide">
+              Searching
+            </span>
+          )}
           {query.length > 0 && (
             <button
               onMouseDown={(e) => {

@@ -125,3 +125,34 @@ export async function getStoriesByIds(
   if (error) throw new Error(error.message);
   return data;
 }
+
+export async function getStoriesWithTopicsByIds(
+  supabase: SupabaseClient<Database>,
+  ids: string[],
+): Promise<StoryWithTopics[]> {
+  if (ids.length === 0) return [];
+
+  const { data, error } = await (supabase as any)
+    .from("global_stories")
+    .select("*, global_story_topics(topic_id, topic_name)")
+    .in("id", ids);
+
+  if (error) throw new Error(error.message);
+
+  const stories = ((data as any[]) ?? []).map(
+    ({ global_story_topics, ...story }) => ({
+      ...story,
+      topic_ids: (
+        global_story_topics as { topic_id: string; topic_name: string }[]
+      ).map((t) => t.topic_id),
+      topic_names: (
+        global_story_topics as { topic_id: string; topic_name: string }[]
+      ).map((t) => t.topic_name),
+    }),
+  );
+
+  const byId = new Map(stories.map((story) => [story.id, story]));
+  return ids
+    .map((id) => byId.get(id))
+    .filter((story): story is StoryWithTopics => Boolean(story));
+}

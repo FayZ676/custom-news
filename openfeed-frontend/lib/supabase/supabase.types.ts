@@ -370,6 +370,7 @@ export type Database = {
           match_count: number;
           min_similarity: number;
           query_embedding: string;
+          query_text: string;
         };
         Returns: {
           headline: string;

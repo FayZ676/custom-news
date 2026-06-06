@@ -44,6 +44,7 @@ export function NewsItemCard({
                 src={safeImageUrl}
                 alt="Thumbnail"
                 fill
+                sizes="(min-width: 1024px) 960px, (min-width: 640px) 90vw, 100vw"
                 loading="lazy"
                 className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                 onLoad={() => setIsLoaded(true)}
@@ -84,6 +85,7 @@ export function NewsItemCard({
                 src={safeImageUrl}
                 alt="Thumbnail"
                 fill
+                sizes="(min-width: 640px) 33vw, 40vw"
                 loading="lazy"
                 className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
                 onLoad={() => setIsLoaded(true)}
@@ -139,6 +141,7 @@ export function NewsItemCard({
               src={safeImageUrl}
               alt="Thumbnail"
               fill
+              sizes="56px"
               loading="lazy"
               className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setIsLoaded(true)}

@@ -281,15 +281,53 @@ end;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.match_stories(query_embedding public.vector, match_count integer, min_similarity double precision)
+CREATE OR REPLACE FUNCTION public.match_stories(query_embedding public.vector, query_text text, match_count integer, min_similarity double precision)
  RETURNS TABLE(id uuid, headline text, summary text, similarity double precision)
  LANGUAGE sql
 AS $function$
-  select id, headline, summary, 1 - (summary_embeddings <=> query_embedding) as similarity
-  from global_stories
-  where summary_embeddings is not null
-    and (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
-  order by summary_embeddings <=> query_embedding
+  with normalized_query as (
+    select trim(coalesce(query_text, '')) as text
+  ),
+  vector_matches as (
+    select
+      id,
+      headline,
+      summary,
+      1 - (summary_embeddings <=> query_embedding) as similarity,
+      false as is_lexical
+    from global_stories
+    where summary_embeddings is not null
+      and (1 - (summary_embeddings <=> query_embedding)) >= min_similarity
+  ),
+  lexical_matches as (
+    select
+      gs.id,
+      gs.headline,
+      gs.summary,
+      coalesce(1 - (gs.summary_embeddings <=> query_embedding), min_similarity) as similarity,
+      true as is_lexical
+    from global_stories gs
+    cross join normalized_query nq
+    where nq.text <> ''
+      and gs.headline ilike '%' || nq.text || '%'
+  ),
+  combined as (
+    select distinct on (id)
+      id,
+      headline,
+      summary,
+      similarity,
+      is_lexical
+    from (
+      select * from lexical_matches
+      union all
+      select * from vector_matches
+    ) all_matches
+    order by id, is_lexical desc, similarity desc
+  )
+  select id, headline, summary, similarity
+  from combined
+  order by is_lexical desc, similarity desc
   limit match_count;
 $function$
 ;

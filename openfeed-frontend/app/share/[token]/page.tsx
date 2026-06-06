@@ -37,6 +37,7 @@ function StoryView({ story }: { story: Tables<"global_stories"> }) {
             src={story.image_url}
             alt={story.headline}
             fill
+            sizes="(min-width: 1024px) 768px, 100vw"
             className="object-cover"
           />
         </div>
