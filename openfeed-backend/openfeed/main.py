@@ -7,7 +7,6 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.auth import verify_api_key
 from openfeed.db.client import Client, client
-from openfeed.services.stories.service import identify_stories
 from openfeed.services.articles.service import fetch_articles, delete_old_articles
 
 logging.basicConfig(
@@ -51,18 +50,7 @@ def global_articles_update(background_tasks: BackgroundTasks):
     logger.info("POST /global/articles - accepted, processing in background")
     db = get_db()
     background_tasks.add_task(_run_with_logging, "fetch_articles", fetch_articles, db)
-    background_tasks.add_task(_run_with_logging, "top_stories", identify_stories, db)
-    # background_tasks.add_task(_run_with_logging, "notify_users", notify_users, db)
     return Response(status_code=202)
-
-
-# @app.post("/notify", status_code=202)
-# def notify(background_tasks: BackgroundTasks):
-#     Disabled until feed personalisation is stable.
-#     logger.info("POST /notify - accepted, processing in background")
-#     db = get_db()
-#     background_tasks.add_task(_run_with_logging, "notify_users", notify_users, db)
-#     return Response(status_code=202)
 
 
 @app.delete("/global/articles", status_code=202)

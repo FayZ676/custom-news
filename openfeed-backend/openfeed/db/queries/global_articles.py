@@ -2,13 +2,13 @@ from datetime import datetime, timedelta, timezone
 
 from openfeed.db.client import Client
 from openfeed.db.models import PublicGlobalArticles
-from openfeed.db.utils import decode_embeddings, paginated_query
+from openfeed.db.utils import paginated_query
 
 
 def get_global_articles(db: Client) -> list[PublicGlobalArticles]:
     return [
         PublicGlobalArticles.model_validate(r)
-        for page in paginated_query(db, "global_articles", transform=decode_embeddings)
+        for page in paginated_query(db, "global_articles")
         for r in page
     ]
 
@@ -20,10 +20,7 @@ def get_recent_global_articles(
     return [
         PublicGlobalArticles.model_validate(r)
         for page in paginated_query(
-            db,
-            "global_articles",
-            gte_filters={"published_at": cutoff},
-            transform=decode_embeddings,
+            db, "global_articles", gte_filters={"published_at": cutoff}
         )
         for r in page
     ]
