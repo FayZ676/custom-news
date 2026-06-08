@@ -37,7 +37,11 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   const metadataOptions = groupMetadataOptionsByField(globalMetadataOptions);
   const initialMetadataFilters = groupUserMetadataByField(userMetadataRows);
 
-  const { articles: feedArticles, hasNextPage } = await getArticlesPage(
+  const {
+    articles: feedArticles,
+    hasNextPage,
+    totalPages,
+  } = await getArticlesPage(
     supabase,
     currentPage,
     PAGE_SIZE,
@@ -58,7 +62,11 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
         initialMetadataFilters={initialMetadataFilters}
         onChangeMetadataOptions={handleChangeMetadataOptions}
       />
-      <FeedPaginationNav currentPage={currentPage} hasNextPage={hasNextPage} />
+      <FeedPaginationNav
+        currentPage={currentPage}
+        hasNextPage={hasNextPage}
+        totalPages={totalPages}
+      />
     </ShareLinkProvider>
   );
 }
