@@ -82,14 +82,15 @@ alter table "public"."global_settings" enable row level security;
 alter table "public"."global_share_links" enable row level security;
 
 
-  create table "public"."user_keywords" (
+  create table "public"."user_article_metadata_options" (
     "user_id" uuid not null,
-    "keywords" text not null,
+    "field" text not null,
+    "name" text not null,
     "created_at" timestamp with time zone not null default now()
       );
 
 
-alter table "public"."user_keywords" enable row level security;
+alter table "public"."user_article_metadata_options" enable row level security;
 
 
   create table "public"."user_settings" (
@@ -101,16 +102,6 @@ alter table "public"."user_keywords" enable row level security;
 
 
 alter table "public"."user_settings" enable row level security;
-
-
-  create table "public"."user_topics" (
-    "user_id" uuid not null,
-    "topic_id" text not null,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."user_topics" enable row level security;
 
 CREATE UNIQUE INDEX global_article_metadata_options_pkey ON public.global_article_metadata_options USING btree (field, name);
 
@@ -132,17 +123,15 @@ CREATE UNIQUE INDEX global_settings_singleton ON public.global_settings USING bt
 
 CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING btree (token);
 
-CREATE UNIQUE INDEX user_keywords_pkey ON public.user_keywords USING btree (user_id, keywords);
+CREATE UNIQUE INDEX user_article_metadata_options_pkey ON public.user_article_metadata_options USING btree (user_id, field, name);
 
-CREATE INDEX user_keywords_user_id_idx ON public.user_keywords USING btree (user_id);
+CREATE INDEX user_article_metadata_options_user_id_field_idx ON public.user_article_metadata_options USING btree (user_id, field);
+
+CREATE INDEX user_article_metadata_options_user_id_idx ON public.user_article_metadata_options USING btree (user_id);
 
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
-
-CREATE UNIQUE INDEX user_topics_pkey ON public.user_topics USING btree (user_id, topic_id);
-
-CREATE INDEX user_topics_user_id_idx ON public.user_topics USING btree (user_id);
 
 alter table "public"."global_article_metadata_options" add constraint "global_article_metadata_options_pkey" PRIMARY KEY using index "global_article_metadata_options_pkey";
 
@@ -156,11 +145,9 @@ alter table "public"."global_settings" add constraint "global_settings_pkey" PRI
 
 alter table "public"."global_share_links" add constraint "global_share_links_pkey" PRIMARY KEY using index "global_share_links_pkey";
 
-alter table "public"."user_keywords" add constraint "user_keywords_pkey" PRIMARY KEY using index "user_keywords_pkey";
+alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_pkey" PRIMARY KEY using index "user_article_metadata_options_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
-
-alter table "public"."user_topics" add constraint "user_topics_pkey" PRIMARY KEY using index "user_topics_pkey";
 
 alter table "public"."global_article_metadata_options" add constraint "global_article_metadata_options_field_check" CHECK ((field = ANY (ARRAY['topic'::text, 'type'::text, 'coverage'::text, 'duration'::text, 'impact'::text]))) not valid;
 
@@ -190,17 +177,17 @@ alter table "public"."global_share_links" add constraint "global_share_links_cre
 
 alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
 
-alter table "public"."user_keywords" add constraint "user_keywords_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_field_name_fkey" FOREIGN KEY (field, name) REFERENCES public.global_article_metadata_options(field, name) ON DELETE CASCADE not valid;
 
-alter table "public"."user_keywords" validate constraint "user_keywords_user_id_fkey";
+alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_field_name_fkey";
+
+alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_user_id_fkey";
 
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
-
-alter table "public"."user_topics" add constraint "user_topics_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_topics" validate constraint "user_topics_user_id_fkey";
 
 set check_function_bodies = off;
 
@@ -483,47 +470,47 @@ grant truncate on table "public"."global_share_links" to "service_role";
 
 grant update on table "public"."global_share_links" to "service_role";
 
-grant delete on table "public"."user_keywords" to "anon";
+grant delete on table "public"."user_article_metadata_options" to "anon";
 
-grant insert on table "public"."user_keywords" to "anon";
+grant insert on table "public"."user_article_metadata_options" to "anon";
 
-grant references on table "public"."user_keywords" to "anon";
+grant references on table "public"."user_article_metadata_options" to "anon";
 
-grant select on table "public"."user_keywords" to "anon";
+grant select on table "public"."user_article_metadata_options" to "anon";
 
-grant trigger on table "public"."user_keywords" to "anon";
+grant trigger on table "public"."user_article_metadata_options" to "anon";
 
-grant truncate on table "public"."user_keywords" to "anon";
+grant truncate on table "public"."user_article_metadata_options" to "anon";
 
-grant update on table "public"."user_keywords" to "anon";
+grant update on table "public"."user_article_metadata_options" to "anon";
 
-grant delete on table "public"."user_keywords" to "authenticated";
+grant delete on table "public"."user_article_metadata_options" to "authenticated";
 
-grant insert on table "public"."user_keywords" to "authenticated";
+grant insert on table "public"."user_article_metadata_options" to "authenticated";
 
-grant references on table "public"."user_keywords" to "authenticated";
+grant references on table "public"."user_article_metadata_options" to "authenticated";
 
-grant select on table "public"."user_keywords" to "authenticated";
+grant select on table "public"."user_article_metadata_options" to "authenticated";
 
-grant trigger on table "public"."user_keywords" to "authenticated";
+grant trigger on table "public"."user_article_metadata_options" to "authenticated";
 
-grant truncate on table "public"."user_keywords" to "authenticated";
+grant truncate on table "public"."user_article_metadata_options" to "authenticated";
 
-grant update on table "public"."user_keywords" to "authenticated";
+grant update on table "public"."user_article_metadata_options" to "authenticated";
 
-grant delete on table "public"."user_keywords" to "service_role";
+grant delete on table "public"."user_article_metadata_options" to "service_role";
 
-grant insert on table "public"."user_keywords" to "service_role";
+grant insert on table "public"."user_article_metadata_options" to "service_role";
 
-grant references on table "public"."user_keywords" to "service_role";
+grant references on table "public"."user_article_metadata_options" to "service_role";
 
-grant select on table "public"."user_keywords" to "service_role";
+grant select on table "public"."user_article_metadata_options" to "service_role";
 
-grant trigger on table "public"."user_keywords" to "service_role";
+grant trigger on table "public"."user_article_metadata_options" to "service_role";
 
-grant truncate on table "public"."user_keywords" to "service_role";
+grant truncate on table "public"."user_article_metadata_options" to "service_role";
 
-grant update on table "public"."user_keywords" to "service_role";
+grant update on table "public"."user_article_metadata_options" to "service_role";
 
 grant delete on table "public"."user_settings" to "anon";
 
@@ -566,48 +553,6 @@ grant trigger on table "public"."user_settings" to "service_role";
 grant truncate on table "public"."user_settings" to "service_role";
 
 grant update on table "public"."user_settings" to "service_role";
-
-grant delete on table "public"."user_topics" to "anon";
-
-grant insert on table "public"."user_topics" to "anon";
-
-grant references on table "public"."user_topics" to "anon";
-
-grant select on table "public"."user_topics" to "anon";
-
-grant trigger on table "public"."user_topics" to "anon";
-
-grant truncate on table "public"."user_topics" to "anon";
-
-grant update on table "public"."user_topics" to "anon";
-
-grant delete on table "public"."user_topics" to "authenticated";
-
-grant insert on table "public"."user_topics" to "authenticated";
-
-grant references on table "public"."user_topics" to "authenticated";
-
-grant select on table "public"."user_topics" to "authenticated";
-
-grant trigger on table "public"."user_topics" to "authenticated";
-
-grant truncate on table "public"."user_topics" to "authenticated";
-
-grant update on table "public"."user_topics" to "authenticated";
-
-grant delete on table "public"."user_topics" to "service_role";
-
-grant insert on table "public"."user_topics" to "service_role";
-
-grant references on table "public"."user_topics" to "service_role";
-
-grant select on table "public"."user_topics" to "service_role";
-
-grant trigger on table "public"."user_topics" to "service_role";
-
-grant truncate on table "public"."user_topics" to "service_role";
-
-grant update on table "public"."user_topics" to "service_role";
 
 
   create policy "global_article_metadata_options_select_policy"
@@ -673,8 +618,8 @@ using ((expires_at > now()));
 
 
 
-  create policy "Users can manage their own keywords"
-  on "public"."user_keywords"
+  create policy "Users can manage their own metadata options"
+  on "public"."user_article_metadata_options"
   as permissive
   for all
   to authenticated
@@ -688,16 +633,6 @@ with check ((auth.uid() = user_id));
   as permissive
   for all
   to public
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
-
-
-
-  create policy "Users can manage their own topics"
-  on "public"."user_topics"
-  as permissive
-  for all
-  to authenticated
 using ((auth.uid() = user_id))
 with check ((auth.uid() = user_id));
 

@@ -1,13 +1,13 @@
 create table "user_article_metadata_options" (
-		"user_id" uuid not null references auth.users(id) on delete cascade,
-		"field" text not null,
-		"name" text not null,
-		"created_at" timestamptz not null default now(),
-		primary key (user_id, field, name),
-		constraint "user_article_metadata_options_field_name_fkey"
-			foreign key (field, name)
-			references "global_article_metadata_options" (field, name)
-			on delete cascade
+	"user_id" uuid not null references auth.users(id) on delete cascade,
+	"field" text not null,
+	"name" text not null,
+	"created_at" timestamptz not null default now(),
+	primary key (user_id, field, name),
+	constraint "user_article_metadata_options_field_name_fkey"
+		foreign key (field, name)
+		references "global_article_metadata_options" (field, name)
+		on delete cascade
 );
 
 create index on "user_article_metadata_options" (user_id);
