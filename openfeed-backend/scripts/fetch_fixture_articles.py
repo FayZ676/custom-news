@@ -1,9 +1,9 @@
 """
 Fetches real articles from a curated set of feeds for use as enricher test fixtures.
-Spans a range of impact: high (Reuters, NYT) → mid (TechCrunch, Wired, Quanta) → low (Daring Fireball, SO Blog, HN).
+Spans a range of impact: high (Reuters, NYT) -> mid (TechCrunch, Wired, Quanta) -> low (Daring Fireball, SO Blog, HN).
 """
 
-import json
+import csv
 from pathlib import Path
 
 from openfeed.clients.feed_parser import get_articles
@@ -32,7 +32,7 @@ FEEDS = [
 ARTICLES_PER_FEED = 5
 OUTPUT_PATH = (
     Path(__file__).parent.parent
-    / "tests/services/articles/fixtures/articles_enriched.jsonl"
+    / "tests/services/articles/fixtures/articles_enriched.csv"
 )
 
 
@@ -59,8 +59,21 @@ def main() -> None:
 
     print(f"\nTotal: {len(all_articles)} articles")
 
-    lines = [json.dumps(a, ensure_ascii=False) for a in all_articles]
-    OUTPUT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    with OUTPUT_PATH.open("w", encoding="utf-8", newline="") as output_file:
+        writer = csv.DictWriter(
+            output_file,
+            fieldnames=["title", "summary", "topics", "significance_score"],
+        )
+        writer.writeheader()
+        writer.writerows(
+            {
+                **article,
+                "topics": "|".join(article["topics"]),
+                "significance_score": article.get("significance_score", 0.0),
+            }
+            for article in all_articles
+        )
+
     print(f"Written to: {OUTPUT_PATH}")
 
 

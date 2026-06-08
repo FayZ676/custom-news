@@ -6,7 +6,11 @@ create table "global_articles" (
     "title" text not null,
     "url" text not null unique,
     "summary" text,
-    "significance_score" float not null,
+    "topic" text,
+    "type" text,
+    "coverage" text,
+    "duration" text,
+    "impact" text,
     "image_url" text,
     "published_at" timestamptz not null,
     "created_at" timestamptz not null default now()

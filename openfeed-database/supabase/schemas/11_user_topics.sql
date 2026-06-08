@@ -1,6 +1,6 @@
 create table "user_topics" (
 		"user_id" uuid not null references auth.users(id) on delete cascade,
-		"topic_id" text not null references global_topics(id) on delete cascade,
+		"topic_id" text not null,
 		"created_at" timestamptz not null default now(),
 		primary key (user_id, topic_id)
 );

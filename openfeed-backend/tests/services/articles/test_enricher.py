@@ -1,55 +1,107 @@
-import json
+import csv
 from pathlib import Path
 
 import pytest
 
 from openfeed.db.client import client
-from openfeed.db.queries.global_topics import get_global_topics
-from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
+from openfeed.db.queries.global_article_metadata_options import (
+    get_global_article_metadata_options,
+)
+from openfeed.services.articles.enricher import (
+    ArticleEnricher,
+    ArticleMetadata,
+)
 
-_FIXTURES_PATH = Path(__file__).parent / "fixtures" / "articles_enriched.jsonl"
+_FIXTURES_PATH = Path(__file__).parent / "fixtures" / "articles_enriched.csv"
 _DEBUG_PATH = Path(__file__).parent / "fixtures" / "enricher_debug.txt"
-_TOPICS = get_global_topics(client())
-_ALLOWED_TOPIC_IDS = {str(topic["id"]) for topic in _TOPICS}
+_METADATA_OPTIONS = get_global_article_metadata_options(client())
+_ALLOWED_TOPIC_IDS = {option.label for option in _METADATA_OPTIONS["topic"]}
+_ALLOWED_TYPES = {option.label for option in _METADATA_OPTIONS["type"]}
+_ALLOWED_COVERAGE = {option.label for option in _METADATA_OPTIONS["coverage"]}
+_ALLOWED_DURATION = {option.label for option in _METADATA_OPTIONS["duration"]}
+_ALLOWED_IMPACT = {option.label for option in _METADATA_OPTIONS["impact"]}
 
 
 ### private ###
 
 
 def _load_fixtures(path: Path) -> list[dict]:
-    return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    with path.open(encoding="utf-8", newline="") as fixture_file:
+        rows = csv.DictReader(fixture_file)
+        return [
+            {
+                **row,
+                "topic": row["topic"] or None,
+                "type": row["type"] or None,
+                "coverage": row["coverage"] or None,
+                "duration": row["duration"] or None,
+                "impact": row["impact"] or None,
+            }
+            for row in rows
+        ]
 
 
 def _fixture_to_text(fixture: dict) -> str:
     return "\n\n".join(filter(None, [fixture["title"], fixture["summary"]]))
 
 
-def _format_failure(fixture: dict, metadata: ArticleMetadata) -> str:
-    expected_topic_ids = fixture.get("topics")
-    received_topic_ids = [t["id"] for t in metadata.topics]
-    return (
-        f"FAIL: {fixture['title']!r}\n"
-        f"  expected topics: {expected_topic_ids}\n"
-        f"  received topics: {received_topic_ids}\n"
-    )
+def _format_failure(
+    fixture: dict,
+    metadata: ArticleMetadata,
+    failures: dict[str, bool],
+) -> str:
+    fields = [
+        ("topic", fixture.get("topic") or "*", metadata.topic),
+        ("type", fixture.get("type") or "*", metadata.type),
+        ("coverage", fixture.get("coverage") or "*", metadata.coverage),
+        ("duration", fixture.get("duration") or "*", metadata.duration),
+        ("impact", fixture.get("impact") or "*", metadata.impact),
+    ]
+    mismatch_lines = [
+        f"  expected {name}: {expected}\n  received {name}: {received}\n"
+        for name, expected, received in fields
+        if failures[name]
+    ]
+    return f"FAIL: {fixture['title']!r}\n" + "".join(mismatch_lines)
+
+
+def _matches_topic(expected: str | None, received: str) -> bool:
+    return received == expected if expected else received in _ALLOWED_TOPIC_IDS
+
+
+def _matches_expected(expected: str | None, received: str, allowed: set[str]) -> bool:
+    return received == expected if expected else received in allowed
 
 
 def _check(fixture: dict, metadata: ArticleMetadata) -> str | None:
-    invalid_ids = any(t["id"] not in _ALLOWED_TOPIC_IDS for t in metadata.topics)
-    duplicate_ids = len({t["id"] for t in metadata.topics}) != len(metadata.topics)
-    expected_topics = fixture.get("topics") or []
-    received_topic_ids = [t["id"] for t in metadata.topics]
-    topics_fail = ("topics" in fixture) and set(expected_topics) != set(
-        received_topic_ids
-    )
-    if invalid_ids or duplicate_ids or topics_fail:
-        return _format_failure(fixture, metadata)
+    failures = {
+        "topic": not _matches_topic(fixture.get("topic"), metadata.topic),
+        "type": not _matches_expected(
+            fixture.get("type"), metadata.type, _ALLOWED_TYPES
+        ),
+        "coverage": not _matches_expected(
+            fixture.get("coverage"), metadata.coverage, _ALLOWED_COVERAGE
+        ),
+        "duration": not _matches_expected(
+            fixture.get("duration"), metadata.duration, _ALLOWED_DURATION
+        ),
+        "impact": not _matches_expected(
+            fixture.get("impact"),
+            metadata.impact,
+            _ALLOWED_IMPACT,
+        ),
+    }
+    if any(failures.values()):
+        return _format_failure(fixture, metadata, failures)
     return None
 
 
 _FIXTURES = _load_fixtures(_FIXTURES_PATH)
 _FIXTURE_TEXTS = [_fixture_to_text(f) for f in _FIXTURES]
-_RESULTS = ArticleEnricher().enrich_articles(_FIXTURE_TEXTS, _TOPICS)
+_RESULTS = ArticleEnricher().enrich_articles(
+    _FIXTURE_TEXTS,
+    _METADATA_OPTIONS,
+)
 _CHECKS = [_check(f, m) for f, m in zip(_FIXTURES, _RESULTS)]
 
 

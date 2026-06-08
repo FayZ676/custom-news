@@ -51,57 +51,69 @@ AuthOauthResponseType: TypeAlias = Literal["code"]
 AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 
 
-class PublicGlobalArticleTopics(BaseModel):
-    article_id: uuid.UUID = Field(alias="article_id")
-    topic_id: str = Field(alias="topic_id")
-    topic_name: str = Field(alias="topic_name")
+class PublicGlobalArticleMetadataOptions(BaseModel):
+    description: str = Field(alias="description")
+    field: str = Field(alias="field")
+    name: str = Field(alias="name")
 
 
-class PublicGlobalArticleTopicsInsert(TypedDict):
-    article_id: Annotated[uuid.UUID, Field(alias="article_id")]
-    topic_id: Annotated[str, Field(alias="topic_id")]
-    topic_name: Annotated[str, Field(alias="topic_name")]
+class PublicGlobalArticleMetadataOptionsInsert(TypedDict):
+    description: Annotated[str, Field(alias="description")]
+    field: Annotated[str, Field(alias="field")]
+    name: Annotated[str, Field(alias="name")]
 
 
-class PublicGlobalArticleTopicsUpdate(TypedDict):
-    article_id: NotRequired[Annotated[uuid.UUID, Field(alias="article_id")]]
-    topic_id: NotRequired[Annotated[str, Field(alias="topic_id")]]
-    topic_name: NotRequired[Annotated[str, Field(alias="topic_name")]]
+class PublicGlobalArticleMetadataOptionsUpdate(TypedDict):
+    description: NotRequired[Annotated[str, Field(alias="description")]]
+    field: NotRequired[Annotated[str, Field(alias="field")]]
+    name: NotRequired[Annotated[str, Field(alias="name")]]
 
 
 class PublicGlobalArticles(BaseModel):
+    coverage: Optional[str] = Field(alias="coverage")
     created_at: datetime.datetime = Field(alias="created_at")
+    duration: Optional[str] = Field(alias="duration")
     feed_title: str = Field(alias="feed_title")
     id: uuid.UUID = Field(alias="id")
     image_url: Optional[str] = Field(alias="image_url")
+    impact: Optional[str] = Field(alias="impact")
     published_at: datetime.datetime = Field(alias="published_at")
-    significance_score: float = Field(alias="significance_score")
     summary: Optional[str] = Field(alias="summary")
     title: str = Field(alias="title")
+    topic: Optional[str] = Field(alias="topic")
+    type: Optional[str] = Field(alias="type")
     url: str = Field(alias="url")
 
 
 class PublicGlobalArticlesInsert(TypedDict):
+    coverage: NotRequired[Annotated[Optional[str], Field(alias="coverage")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    duration: NotRequired[Annotated[Optional[str], Field(alias="duration")]]
     feed_title: Annotated[str, Field(alias="feed_title")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
+    impact: NotRequired[Annotated[Optional[str], Field(alias="impact")]]
     published_at: Annotated[datetime.datetime, Field(alias="published_at")]
-    significance_score: Annotated[float, Field(alias="significance_score")]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
     title: Annotated[str, Field(alias="title")]
+    topic: NotRequired[Annotated[Optional[str], Field(alias="topic")]]
+    type: NotRequired[Annotated[Optional[str], Field(alias="type")]]
     url: Annotated[str, Field(alias="url")]
 
 
 class PublicGlobalArticlesUpdate(TypedDict):
+    coverage: NotRequired[Annotated[Optional[str], Field(alias="coverage")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    duration: NotRequired[Annotated[Optional[str], Field(alias="duration")]]
     feed_title: NotRequired[Annotated[str, Field(alias="feed_title")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
+    impact: NotRequired[Annotated[Optional[str], Field(alias="impact")]]
     published_at: NotRequired[Annotated[datetime.datetime, Field(alias="published_at")]]
-    significance_score: NotRequired[Annotated[float, Field(alias="significance_score")]]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
     title: NotRequired[Annotated[str, Field(alias="title")]]
+    topic: NotRequired[Annotated[Optional[str], Field(alias="topic")]]
+    type: NotRequired[Annotated[Optional[str], Field(alias="type")]]
     url: NotRequired[Annotated[str, Field(alias="url")]]
 
 
@@ -218,82 +230,6 @@ class PublicGlobalShareLinksUpdate(TypedDict):
     created_by: NotRequired[Annotated[Optional[uuid.UUID], Field(alias="created_by")]]
     expires_at: NotRequired[Annotated[datetime.datetime, Field(alias="expires_at")]]
     token: NotRequired[Annotated[uuid.UUID, Field(alias="token")]]
-
-
-class PublicGlobalStories(BaseModel):
-    created_at: datetime.datetime = Field(alias="created_at")
-    headline: str = Field(alias="headline")
-    id: uuid.UUID = Field(alias="id")
-    image_url: Optional[str] = Field(alias="image_url")
-    related_articles_urls: List[str] = Field(alias="related_articles_urls")
-    score: float = Field(alias="score")
-    summary: str = Field(alias="summary")
-    velocity: float = Field(alias="velocity")
-
-
-class PublicGlobalStoriesInsert(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    headline: Annotated[str, Field(alias="headline")]
-    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
-    related_articles_urls: NotRequired[
-        Annotated[List[str], Field(alias="related_articles_urls")]
-    ]
-    score: Annotated[float, Field(alias="score")]
-    summary: Annotated[str, Field(alias="summary")]
-    velocity: Annotated[float, Field(alias="velocity")]
-
-
-class PublicGlobalStoriesUpdate(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    headline: NotRequired[Annotated[str, Field(alias="headline")]]
-    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
-    image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
-    related_articles_urls: NotRequired[
-        Annotated[List[str], Field(alias="related_articles_urls")]
-    ]
-    score: NotRequired[Annotated[float, Field(alias="score")]]
-    summary: NotRequired[Annotated[str, Field(alias="summary")]]
-    velocity: NotRequired[Annotated[float, Field(alias="velocity")]]
-
-
-class PublicGlobalStoryTopics(BaseModel):
-    story_id: uuid.UUID = Field(alias="story_id")
-    topic_id: str = Field(alias="topic_id")
-    topic_name: str = Field(alias="topic_name")
-
-
-class PublicGlobalStoryTopicsInsert(TypedDict):
-    story_id: Annotated[uuid.UUID, Field(alias="story_id")]
-    topic_id: Annotated[str, Field(alias="topic_id")]
-    topic_name: Annotated[str, Field(alias="topic_name")]
-
-
-class PublicGlobalStoryTopicsUpdate(TypedDict):
-    story_id: NotRequired[Annotated[uuid.UUID, Field(alias="story_id")]]
-    topic_id: NotRequired[Annotated[str, Field(alias="topic_id")]]
-    topic_name: NotRequired[Annotated[str, Field(alias="topic_name")]]
-
-
-class PublicGlobalTopics(BaseModel):
-    description: str = Field(alias="description")
-    id: str = Field(alias="id")
-    name: str = Field(alias="name")
-    significance_score: float = Field(alias="significance_score")
-
-
-class PublicGlobalTopicsInsert(TypedDict):
-    description: Annotated[str, Field(alias="description")]
-    id: Annotated[str, Field(alias="id")]
-    name: Annotated[str, Field(alias="name")]
-    significance_score: Annotated[float, Field(alias="significance_score")]
-
-
-class PublicGlobalTopicsUpdate(TypedDict):
-    description: NotRequired[Annotated[str, Field(alias="description")]]
-    id: NotRequired[Annotated[str, Field(alias="id")]]
-    name: NotRequired[Annotated[str, Field(alias="name")]]
-    significance_score: NotRequired[Annotated[float, Field(alias="significance_score")]]
 
 
 class PublicUserKeywords(BaseModel):
