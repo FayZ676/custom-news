@@ -19,6 +19,15 @@ interface ViewFeedProps {
 
 export function ViewFeed({ articles }: ViewFeedProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
+  const hasRenderableImage = (imageUrl?: string | null) =>
+    imageUrl?.startsWith("https://") ?? false;
+  const articlesWithImages = articles.filter((article) =>
+    hasRenderableImage(article.image_url),
+  );
+  const articlesWithoutImages = articles.filter(
+    (article) => !hasRenderableImage(article.image_url),
+  );
+  const orderedArticles = [...articlesWithImages, ...articlesWithoutImages];
 
   function openModal(article: GlobalArticle) {
     const item: NewsItemArticle = {
@@ -42,69 +51,35 @@ export function ViewFeed({ articles }: ViewFeedProps) {
     );
   }
 
-  const heroArticles = articles.slice(0, 1);
-  const featuredArticles = articles.slice(1, 5);
-  const compactArticles = articles.slice(5);
-
   return (
-    <section className="flex flex-col">
-      {heroArticles.length > 0 && (
-        <ol className="flex flex-col gap-6 pb-6">
-          {heroArticles.map((article) => (
-            <NewsItemCard
-              key={article.id}
-              variant="hero"
-              title={toTitleCase(article.title)}
-              imageUrl={article.image_url}
-              summary={article.summary}
-              meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
-              onClick={() => openModal(article)}
-            />
-          ))}
-        </ol>
-      )}
-
-      {featuredArticles.length > 0 && (
-        <>
-          {heroArticles.length > 0 && (
-            <hr className="border-t border-neutral-700 mb-6" />
-          )}
-          <ol className="flex flex-col gap-4 pb-6">
-            {featuredArticles.map((article) => (
-              <NewsItemCard
-                key={article.id}
-                variant="featured"
-                title={toTitleCase(article.title)}
-                imageUrl={article.image_url}
-                summary={article.summary}
-                meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
-                onClick={() => openModal(article)}
-              />
-            ))}
-          </ol>
-        </>
-      )}
-
-      {compactArticles.length > 0 && (
-        <>
-          {(heroArticles.length > 0 || featuredArticles.length > 0) && (
-            <hr className="border-t border-neutral-700 mb-4" />
-          )}
-          <ol className="flex flex-col gap-2">
-            {compactArticles.map((article) => (
-              <NewsItemCard
-                key={article.id}
-                variant="compact"
-                title={toTitleCase(article.title)}
-                imageUrl={article.image_url}
-                summary={article.summary}
-                meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
-                onClick={() => openModal(article)}
-              />
-            ))}
-          </ol>
-        </>
-      )}
+    <section className="flex flex-col gap-4">
+      <ol className="flex flex-col gap-4">
+        {articlesWithImages.map((article) => (
+          <NewsItemCard
+            key={article.id}
+            title={toTitleCase(article.title)}
+            imageUrl={article.image_url}
+            summary={article.summary}
+            meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+            onClick={() => openModal(article)}
+          />
+        ))}
+        {articlesWithImages.length > 0 && articlesWithoutImages.length > 0 && (
+          <li aria-hidden="true" className="py-1">
+            <hr className="border-t border-neutral-800" />
+          </li>
+        )}
+        {articlesWithoutImages.map((article) => (
+          <NewsItemCard
+            key={article.id}
+            title={toTitleCase(article.title)}
+            imageUrl={article.image_url}
+            summary={article.summary}
+            meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+            onClick={() => openModal(article)}
+          />
+        ))}
+      </ol>
 
       <NewsItemModal ref={modalRef} />
     </section>
