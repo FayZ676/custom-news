@@ -44,7 +44,10 @@ class ArticleEnricher:
                 ),
             ),
         )
-        messages_batch = [[Message(role="user", content=text)] for text in articles]
+        messages_batch = [
+            [Message(role="user", content=_limit_article_words(text))]
+            for text in articles
+        ]
         return classifier_client.generate_responses(
             messages_batch, ArticleMetadata, batch_size=3
         )
@@ -93,3 +96,10 @@ def _format_options(
     if not options:
         raise ValueError(f"Missing article metadata options for field: {field}")
     return "\n".join(f"- {option.label}: {option.description}" for option in options)
+
+
+def _limit_article_words(text: str, max_words: int = 180) -> str:
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words])

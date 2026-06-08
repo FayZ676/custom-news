@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 
 type ShareLinkFn = (
-  contentType: "article" | "story",
+  contentType: "article",
   contentId: string,
 ) => Promise<string>;
 

@@ -1,12 +1,12 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
-export type ShareContentType = "article" | "story";
+export type ShareContentType = "article";
 
 export async function createShareLink(
   supabase: SupabaseClient<Database>,
   userId: string,
-  contentType: "article" | "story",
+  contentType: "article",
   contentId: string,
 ): Promise<string> {
   const { data, error } = await supabase

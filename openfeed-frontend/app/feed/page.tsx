@@ -2,16 +2,18 @@ import { Suspense } from "react";
 
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getSignificantStoriesWithTopicsPage } from "@/lib/supabase/queries/global_stories";
-import { getGlobalSettings } from "@/lib/supabase/queries/global_settings";
-import { getGlobalTopics } from "@/lib/supabase/queries/global_topics";
-import { getUserKeywords } from "@/lib/supabase/queries/user_keywords";
-import { getUserTopics } from "@/lib/supabase/queries/user_topics";
+import { getArticlesPage } from "@/lib/supabase/queries/global_articles";
 import {
-  changeKeywordsAction,
-  changeTopicsAction,
+  groupMetadataOptionsByField,
+  getGlobalArticleMetadataOptions,
+} from "@/lib/supabase/queries/global_article_metadata_options";
+import {
+  getUserArticleMetadataOptions,
+  groupUserMetadataByField,
+} from "@/lib/supabase/queries/user_article_metadata_options";
+import {
+  changeMetadataOptionsAction,
   createShareLinkAction,
-  searchStoriesAction,
 } from "@/app/feed/actions";
 
 import { FeedPageContent } from "@/components/FeedPageContent";
@@ -28,40 +30,33 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   const supabase = await createClient();
   const { userId } = await getAuthenticatedUser();
 
-  const settings = await getGlobalSettings(supabase);
-  const topics = await getGlobalTopics(supabase);
-  const userTopicRows = await getUserTopics(supabase, userId);
-  const userKeywordRows = await getUserKeywords(supabase, userId);
+  const [globalMetadataOptions, userMetadataRows] = await Promise.all([
+    getGlobalArticleMetadataOptions(supabase),
+    getUserArticleMetadataOptions(supabase, userId),
+  ]);
+  const metadataOptions = groupMetadataOptionsByField(globalMetadataOptions);
+  const initialMetadataFilters = groupUserMetadataByField(userMetadataRows);
 
-  const topicIdToName = new Map(topics.map((topic) => [topic.id, topic.name]));
-  const initialActiveTopics = userTopicRows
-    .map((row) => topicIdToName.get(row.topic_id))
-    .filter((topicName): topicName is string => Boolean(topicName));
-  const initialKeywords = userKeywordRows.map((row) => row.keywords);
-
-  const { stories: feedStories, hasNextPage } =
-    await getSignificantStoriesWithTopicsPage(
-      supabase,
-      settings.cluster_significance_threshold,
-      currentPage,
-      PAGE_SIZE,
-      initialActiveTopics,
-    );
+  const { articles: feedArticles, hasNextPage } = await getArticlesPage(
+    supabase,
+    currentPage,
+    PAGE_SIZE,
+    initialMetadataFilters,
+  );
 
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
-  const handleChangeTopics = changeTopicsAction.bind(null, userId);
-  const handleChangeKeywords = changeKeywordsAction.bind(null, userId);
+  const handleChangeMetadataOptions = changeMetadataOptionsAction.bind(
+    null,
+    userId,
+  );
 
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
       <FeedPageContent
-        stories={feedStories}
-        topics={topics.map((topic) => topic.name)}
-        initialActiveTopics={initialActiveTopics}
-        initialKeywords={initialKeywords}
-        onChangeTopics={handleChangeTopics}
-        onChangeKeywords={handleChangeKeywords}
-        onSearchStories={searchStoriesAction}
+        articles={feedArticles}
+        metadataOptions={metadataOptions}
+        initialMetadataFilters={initialMetadataFilters}
+        onChangeMetadataOptions={handleChangeMetadataOptions}
       />
       <FeedPaginationNav currentPage={currentPage} hasNextPage={hasNextPage} />
     </ShareLinkProvider>

@@ -1,6 +1,6 @@
 import { createAnonClient } from "@/lib/supabase/anon";
 import { cacheLife } from "next/cache";
-import { getStories } from "@/lib/supabase/queries/global_stories";
+import { getArticles } from "@/lib/supabase/queries/global_articles";
 import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
 import { LandingPage } from "@/components/LandingPage";
 
@@ -13,10 +13,10 @@ async function LandingPageContent() {
   cacheLife("hours");
 
   const supabase = createAnonClient();
-  const [stories, feeds] = await Promise.all([
-    getStories(supabase),
+  const [articles, feeds] = await Promise.all([
+    getArticles(supabase),
     getGlobalFeeds(supabase),
   ]);
 
-  return <LandingPage stories={stories} feeds={feeds} />;
+  return <LandingPage articles={articles} feeds={feeds} />;
 }

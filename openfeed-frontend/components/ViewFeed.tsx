@@ -2,127 +2,111 @@
 
 import { useRef } from "react";
 
-import { StoryWithTopics } from "@/lib/supabase/queries/global_stories";
+import { GlobalArticle } from "@/lib/supabase/queries/global_articles";
+import { timeAgo, toTitleCase } from "@/lib/utils";
 
 import {
   NewsItemModal,
   NewsItemModalHandle,
-  NewsItemStory,
+  NewsItemArticle,
 } from "@/components/NewsItemModal";
 import { SectionArticleSkeleton } from "@/components/SectionArticles";
 import { NewsItemCard } from "@/components/NewsItemCard";
 
-const HERO_THRESHOLD = 0.9;
-const FEATURED_THRESHOLD = 0.6;
-
 interface ViewFeedProps {
-  stories: StoryWithTopics[];
-  onStoryRead?: (storyId: string) => void;
+  articles: GlobalArticle[];
 }
 
-export function ViewFeed({ stories, onStoryRead }: ViewFeedProps) {
+export function ViewFeed({ articles }: ViewFeedProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
-  const pendingReadId = useRef<string | null>(null);
 
-  function openModal(story: StoryWithTopics) {
-    const item: NewsItemStory = {
-      type: "story",
-      id: story.id,
-      headline: story.headline,
-      summary: story.summary,
-      articleUrls: story.related_articles_urls as string[],
-      imageUrl: story.image_url,
-      topicNames: story.topic_names,
+  function openModal(article: GlobalArticle) {
+    const item: NewsItemArticle = {
+      type: "article",
+      id: article.id,
+      title: article.title,
+      summary: article.summary,
+      url: article.url,
+      feedTitle: article.feed_title,
+      publishedAt: article.published_at,
+      imageUrl: article.image_url,
     };
-    pendingReadId.current = story.id;
     modalRef.current?.open(item);
   }
 
-  function handleModalClose() {
-    if (pendingReadId.current) {
-      onStoryRead?.(pendingReadId.current);
-      pendingReadId.current = null;
-    }
-  }
-
-  const storiesOrdered = [...stories].sort(
-    (a, b) => (b.final_score ?? b.score) - (a.final_score ?? a.score),
-  );
-
-  if (storiesOrdered.length === 0) {
+  if (articles.length === 0) {
     return (
       <p className="text-sm italic text-neutral-500">
-        No stories available right now.
+        No articles available right now.
       </p>
     );
   }
 
-  const heroStories = storiesOrdered.filter((s) => s.score >= HERO_THRESHOLD);
-  const featuredStories = storiesOrdered.filter(
-    (s) => s.score >= FEATURED_THRESHOLD && s.score < HERO_THRESHOLD,
-  );
-  const compactStories = storiesOrdered.filter(
-    (s) => s.score < FEATURED_THRESHOLD,
-  );
+  const heroArticles = articles.slice(0, 1);
+  const featuredArticles = articles.slice(1, 5);
+  const compactArticles = articles.slice(5);
 
   return (
     <section className="flex flex-col">
-      {heroStories.length > 0 && (
+      {heroArticles.length > 0 && (
         <ol className="flex flex-col gap-6 pb-6">
-          {heroStories.map((story) => (
+          {heroArticles.map((article) => (
             <NewsItemCard
-              key={story.id}
+              key={article.id}
               variant="hero"
-              title={story.headline}
-              imageUrl={story.image_url}
-              summary={story.summary}
-              onClick={() => openModal(story)}
+              title={toTitleCase(article.title)}
+              imageUrl={article.image_url}
+              summary={article.summary}
+              meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+              onClick={() => openModal(article)}
             />
           ))}
         </ol>
       )}
 
-      {featuredStories.length > 0 && (
+      {featuredArticles.length > 0 && (
         <>
-          {heroStories.length > 0 && (
+          {heroArticles.length > 0 && (
             <hr className="border-t border-neutral-700 mb-6" />
           )}
           <ol className="flex flex-col gap-4 pb-6">
-            {featuredStories.map((story) => (
+            {featuredArticles.map((article) => (
               <NewsItemCard
-                key={story.id}
+                key={article.id}
                 variant="featured"
-                title={story.headline}
-                imageUrl={story.image_url}
-                summary={story.summary}
-                onClick={() => openModal(story)}
+                title={toTitleCase(article.title)}
+                imageUrl={article.image_url}
+                summary={article.summary}
+                meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+                onClick={() => openModal(article)}
               />
             ))}
           </ol>
         </>
       )}
 
-      {compactStories.length > 0 && (
+      {compactArticles.length > 0 && (
         <>
-          {(heroStories.length > 0 || featuredStories.length > 0) && (
+          {(heroArticles.length > 0 || featuredArticles.length > 0) && (
             <hr className="border-t border-neutral-700 mb-4" />
           )}
           <ol className="flex flex-col gap-2">
-            {compactStories.map((story) => (
+            {compactArticles.map((article) => (
               <NewsItemCard
-                key={story.id}
+                key={article.id}
                 variant="compact"
-                title={story.headline}
-                imageUrl={story.image_url}
-                summary={story.summary}
-                onClick={() => openModal(story)}
+                title={toTitleCase(article.title)}
+                imageUrl={article.image_url}
+                summary={article.summary}
+                meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+                onClick={() => openModal(article)}
               />
             ))}
           </ol>
         </>
       )}
 
-      <NewsItemModal ref={modalRef} onClose={handleModalClose} />
+      <NewsItemModal ref={modalRef} />
     </section>
   );
 }

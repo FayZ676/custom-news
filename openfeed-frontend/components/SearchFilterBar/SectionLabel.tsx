@@ -12,7 +12,7 @@ export default function SectionLabel({
   showClear,
 }: SectionLabelProps) {
   return (
-    <div className="flex justify-between items-baseline mb-[10px]">
+    <div className="flex justify-between items-baseline mb-2.5">
       <span className="text-[9px] tracking-[0.12em] uppercase text-base-content/40">
         {children}
       </span>

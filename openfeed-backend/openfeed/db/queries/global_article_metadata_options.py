@@ -10,7 +10,6 @@ class GlobalArticleMetadataOption(BaseModel):
     description: str
     field: str
     name: str
-    sort_order: int
 
     @property
     def label(self) -> str:
@@ -25,7 +24,7 @@ def get_global_article_metadata_options(
         for page in paginated_query(
             db,
             "global_article_metadata_options",
-            select="field, name, description, sort_order",
+            select="field, name, description",
         )
         for row in page
     ]
@@ -34,7 +33,6 @@ def get_global_article_metadata_options(
         options,
         key=lambda option: (
             option.field,
-            option.sort_order,
             option.name,
         ),
     ):

@@ -1,41 +1,49 @@
 import type { Metadata } from "next";
 
 import Image from "next/image";
-import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { Tables } from "@/lib/supabase/supabase.types";
+import { getArticleById } from "@/lib/supabase/queries/global_articles";
 import { getShareLinkByToken } from "@/lib/supabase/queries/global_share_links";
-import { getStoryById } from "@/lib/supabase/queries/global_stories";
+import { timeAgo, toTitleCase } from "@/lib/utils";
 
 const isUuid = (value: string): boolean =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
   );
 
-const resolveSharedStory = async (
+const resolveSharedArticle = async (
   token: string,
-): Promise<Tables<"global_stories"> | null> => {
+): Promise<Tables<"global_articles"> | null> => {
   const supabase = await createClient();
   const shareLink = await getShareLinkByToken(supabase, token);
 
-  if (!shareLink || shareLink.content_type !== "story") return null;
+  if (!shareLink || shareLink.content_type !== "article") return null;
 
-  return getStoryById(supabase, shareLink.content_id);
+  return getArticleById(supabase, shareLink.content_id);
 };
 
-function StoryView({ story }: { story: Tables<"global_stories"> }) {
+function ArticleView({ article }: { article: Tables<"global_articles"> }) {
   return (
     <article className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{story.headline}</h1>
+      <h1 className="text-2xl font-semibold">{toTitleCase(article.title)}</h1>
 
-      {story.image_url && (
+      {(article.feed_title || article.published_at) && (
+        <p className="text-sm text-neutral-500">
+          {article.feed_title}
+          {article.feed_title && article.published_at && " · "}
+          {article.published_at && timeAgo(article.published_at)}
+        </p>
+      )}
+
+      {article.image_url && (
         <div className="relative w-full aspect-video overflow-hidden">
           <Image
-            src={story.image_url}
-            alt={story.headline}
+            src={article.image_url}
+            alt={toTitleCase(article.title)}
             fill
             sizes="(min-width: 1024px) 768px, 100vw"
             className="object-cover"
@@ -43,25 +51,18 @@ function StoryView({ story }: { story: Tables<"global_stories"> }) {
         </div>
       )}
 
-      {story.summary && (
-        <p className="text-base leading-relaxed">{story.summary}</p>
+      {article.summary && (
+        <p className="text-base leading-relaxed">{article.summary}</p>
       )}
 
-      {story.related_articles_urls.length > 0 && (
-        <div className="flex gap-2">
-          {story.related_articles_urls.map((url, index) => (
-            <Link
-              key={url}
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold underline"
-            >
-              Article {index + 1}
-            </Link>
-          ))}
-        </div>
-      )}
+      <a
+        href={article.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-bold underline"
+      >
+        Read full article →
+      </a>
     </article>
   );
 }
@@ -75,12 +76,12 @@ export async function generateMetadata({
 
   if (!isUuid(token)) return {};
 
-  const story = await resolveSharedStory(token);
-  if (!story) return {};
+  const article = await resolveSharedArticle(token);
+  if (!article) return {};
 
-  const title = story.headline;
-  const description = story.summary ?? "Shared via The Latest Times";
-  const imageUrl = story.image_url;
+  const title = toTitleCase(article.title);
+  const description = article.summary ?? "Shared via The Latest Times";
+  const imageUrl = article.image_url;
 
   return {
     title,
@@ -121,8 +122,8 @@ async function SharePageContent({
 
   if (!isUuid(token)) notFound();
 
-  const story = await resolveSharedStory(token);
-  if (!story) notFound();
+  const article = await resolveSharedArticle(token);
+  if (!article) notFound();
 
   const logoSrc = "/logo-light.svg";
 
@@ -142,7 +143,7 @@ async function SharePageContent({
       </div>
 
       <section className="border border-base-300 p-5">
-        <StoryView story={story} />
+        <ArticleView article={article} />
       </section>
 
       <p className="text-sm text-base-content/60 text-center">

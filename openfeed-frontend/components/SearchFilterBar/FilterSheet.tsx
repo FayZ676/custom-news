@@ -1,18 +1,19 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 
 import Modal from "@/components/Modal";
+import {
+  ArticleMetadataField,
+  MetadataOptionsByField,
+} from "@/lib/supabase/queries/global_article_metadata_options";
 
 import Chip from "./Chip";
 import SectionLabel from "./SectionLabel";
 
 interface FilterSheetProps {
-  topics: string[];
-  activeTopics: string[];
-  onToggleTopic: (topic: string) => void;
-  keywords: string[];
-  onRemoveKeyword: (keyword: string) => void;
-  onClearTopics: () => void;
-  onClearKeywords: () => void;
+  metadataOptions: MetadataOptionsByField;
+  activeMetadataFilters: MetadataOptionsByField;
+  onToggleFieldOption: (field: ArticleMetadataField, name: string) => void;
+  onClearField: (field: ArticleMetadataField) => void;
   onClose: () => void;
 }
 
@@ -23,13 +24,10 @@ export interface FilterSheetHandle {
 const FilterSheet = forwardRef<FilterSheetHandle, FilterSheetProps>(
   (
     {
-      topics,
-      activeTopics,
-      onToggleTopic,
-      keywords,
-      onRemoveKeyword,
-      onClearTopics,
-      onClearKeywords,
+      metadataOptions,
+      activeMetadataFilters,
+      onToggleFieldOption,
+      onClearField,
       onClose,
     },
     ref,
@@ -56,52 +54,47 @@ const FilterSheet = forwardRef<FilterSheetHandle, FilterSheetProps>(
           </div>
 
           <div className="overflow-y-auto flex-1">
-            {/* Topics */}
-            <SectionLabel
-              onClear={onClearTopics}
-              showClear={activeTopics.length > 0}
-            >
-              Topics
-            </SectionLabel>
-            <div className="flex flex-wrap gap-1.5 mb-7">
-              {topics.map((topic) => (
-                <Chip
-                  key={topic}
-                  label={topic}
-                  variant="solid"
-                  active={activeTopics.includes(topic)}
-                  onTap={() => onToggleTopic(topic)}
-                />
-              ))}
-            </div>
+            {(
+              [
+                "topic",
+                "type",
+                "coverage",
+                "duration",
+                "impact",
+              ] as ArticleMetadataField[]
+            ).map((field) => {
+              const options = metadataOptions[field];
+              const selected = activeMetadataFilters[field];
+              const label = field[0].toUpperCase() + field.slice(1);
 
-            {/* Keywords */}
-            <SectionLabel
-              onClear={onClearKeywords}
-              showClear={keywords.length > 0}
-            >
-              Keywords
-            </SectionLabel>
-            {keywords.length === 0 ? (
-              <p className="text-[11px] text-base-content/30 m-0">
-                Search to add keywords to your filters.
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {keywords.map((kw) => (
-                  <button
-                    key={kw}
-                    onClick={() => onRemoveKeyword(kw)}
-                    className="inline-flex items-center gap-1.25 px-2.5 py-1.25 rounded-sm text-[11px] bg-transparent border border-dashed border-base-content/30 text-base-content/60 cursor-pointer"
+              return (
+                <div key={field} className="mb-7">
+                  <SectionLabel
+                    onClear={() => onClearField(field)}
+                    showClear={selected.length > 0}
                   >
-                    {kw}
-                    <span className="text-[13px] text-base-content/30 leading-none">
-                      ×
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
+                    {label}
+                  </SectionLabel>
+                  {options.length === 0 ? (
+                    <p className="text-[11px] text-base-content/30 m-0">
+                      No options available.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {options.map((optionName) => (
+                        <Chip
+                          key={optionName}
+                          label={optionName}
+                          variant="solid"
+                          active={selected.includes(optionName)}
+                          onTap={() => onToggleFieldOption(field, optionName)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </Modal>

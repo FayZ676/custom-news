@@ -5,49 +5,39 @@ import { useRouter } from "next/navigation";
 
 import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
 import { ViewFeed } from "@/components/ViewFeed";
-import { StoryWithTopics } from "@/lib/supabase/queries/global_stories";
+import { GlobalArticle } from "@/lib/supabase/queries/global_articles";
+import {
+  ArticleMetadataField,
+  MetadataOptionsByField,
+} from "@/lib/supabase/queries/global_article_metadata_options";
 
 interface FeedPageContentProps {
-  stories: StoryWithTopics[];
-  topics: string[];
-  initialActiveTopics: string[];
-  initialKeywords: string[];
-  onChangeTopics: (topics: string[]) => Promise<void>;
-  onChangeKeywords: (keywords: string[]) => Promise<void>;
-  onSearchStories: (query: string) => Promise<StoryWithTopics[]>;
+  articles: GlobalArticle[];
+  metadataOptions: MetadataOptionsByField;
+  initialMetadataFilters: MetadataOptionsByField;
+  onChangeMetadataOptions: (
+    field: ArticleMetadataField,
+    optionNames: string[],
+  ) => Promise<void>;
 }
 
 export function FeedPageContent({
-  stories,
-  topics,
-  initialActiveTopics,
-  initialKeywords,
-  onChangeTopics,
-  onChangeKeywords,
-  onSearchStories,
+  articles,
+  metadataOptions,
+  initialMetadataFilters,
+  onChangeMetadataOptions,
 }: FeedPageContentProps) {
   const router = useRouter();
-  const [activeTopics, setActiveTopics] =
-    useState<string[]>(initialActiveTopics);
-  const [keywords, setKeywords] = useState<string[]>(initialKeywords);
-  const [displayStories, setDisplayStories] =
-    useState<StoryWithTopics[]>(stories);
+  const [activeMetadataFilters, setActiveMetadataFilters] =
+    useState<MetadataOptionsByField>(initialMetadataFilters);
   const [hasPendingFilterChanges, setHasPendingFilterChanges] = useState(false);
   const [pendingFilterSaveCount, setPendingFilterSaveCount] = useState(0);
   const [refreshOnFilterSheetClose, setRefreshOnFilterSheetClose] =
     useState(false);
 
   useEffect(() => {
-    setDisplayStories(stories);
-  }, [stories]);
-
-  useEffect(() => {
-    setActiveTopics(initialActiveTopics);
-  }, [initialActiveTopics]);
-
-  useEffect(() => {
-    setKeywords(initialKeywords);
-  }, [initialKeywords]);
+    setActiveMetadataFilters(initialMetadataFilters);
+  }, [initialMetadataFilters]);
 
   useEffect(() => {
     if (!refreshOnFilterSheetClose || pendingFilterSaveCount > 0) {
@@ -59,40 +49,25 @@ export function FeedPageContent({
     router.refresh();
   }, [pendingFilterSaveCount, refreshOnFilterSheetClose, router]);
 
-  const handleChangeTopics = useCallback(
-    async (nextTopics: string[]) => {
-      const prevTopics = activeTopics;
-      setActiveTopics(nextTopics);
+  const handleChangeFieldOptions = useCallback(
+    async (field: ArticleMetadataField, nextOptions: string[]) => {
+      const prevFilters = activeMetadataFilters;
+      setActiveMetadataFilters((current) => ({
+        ...current,
+        [field]: nextOptions,
+      }));
       setHasPendingFilterChanges(true);
       setPendingFilterSaveCount((count) => count + 1);
       try {
-        await onChangeTopics(nextTopics);
+        await onChangeMetadataOptions(field, nextOptions);
       } catch {
-        setActiveTopics(prevTopics);
+        setActiveMetadataFilters(prevFilters);
         setHasPendingFilterChanges(false);
       } finally {
         setPendingFilterSaveCount((count) => Math.max(0, count - 1));
       }
     },
-    [activeTopics, onChangeTopics],
-  );
-
-  const handleChangeKeywords = useCallback(
-    async (nextKeywords: string[]) => {
-      const prevKeywords = keywords;
-      setKeywords(nextKeywords);
-      setHasPendingFilterChanges(true);
-      setPendingFilterSaveCount((count) => count + 1);
-      try {
-        await onChangeKeywords(nextKeywords);
-      } catch {
-        setKeywords(prevKeywords);
-        setHasPendingFilterChanges(false);
-      } finally {
-        setPendingFilterSaveCount((count) => Math.max(0, count - 1));
-      }
-    },
-    [keywords, onChangeKeywords],
+    [activeMetadataFilters, onChangeMetadataOptions],
   );
 
   const handleFilterSheetClose = useCallback(() => {
@@ -100,31 +75,16 @@ export function FeedPageContent({
     setRefreshOnFilterSheetClose(true);
   }, [hasPendingFilterChanges]);
 
-  const handleSearchStories = useCallback(
-    async (query: string) => {
-      try {
-        const nextStories = await onSearchStories(query);
-        setDisplayStories(nextStories);
-      } catch {
-        setDisplayStories(stories);
-      }
-    },
-    [onSearchStories, stories],
-  );
-
   return (
     <>
       <SearchFilterBar
-        topics={topics}
-        activeTopics={activeTopics}
-        keywords={keywords}
-        onChangeTopics={handleChangeTopics}
-        onChangeKeywords={handleChangeKeywords}
-        onSearchStories={handleSearchStories}
+        metadataOptions={metadataOptions}
+        activeMetadataFilters={activeMetadataFilters}
+        onChangeFieldOptions={handleChangeFieldOptions}
         onFilterSheetClose={handleFilterSheetClose}
       />
       <div className="pt-4">
-        <ViewFeed stories={displayStories} />
+        <ViewFeed articles={articles} />
       </div>
     </>
   );

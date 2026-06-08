@@ -16,14 +16,14 @@ interface SearchResult {
 }
 
 interface LandingPageProps {
-  stories: Tables<"global_stories">[];
+  articles: Tables<"global_articles">[];
   feeds: Tables<"global_feeds">[];
 }
 
 const resolveLogoSrc = (theme?: string): string =>
   theme === "cupcake" ? "/logo-light.svg" : "/logo-dark.svg";
 
-export function LandingPage({ stories, feeds }: LandingPageProps) {
+export function LandingPage({ articles, feeds }: LandingPageProps) {
   const [logoSrc, setLogoSrc] = useState("/logo-light.svg");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -59,7 +59,7 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
     }
   };
 
-  const topStories = [...stories].sort((a, b) => b.score - a.score).slice(0, 5);
+  const latestArticles = [...articles].slice(0, 5);
 
   return (
     <div className="flex flex-col gap-16 pb-16">
@@ -91,29 +91,28 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
         <hr className="border-t-2" />
       </section>
 
-      {/* Trending Stories */}
-      {topStories.length > 0 && (
+      {/* Latest Articles */}
+      {latestArticles.length > 0 && (
         <section className="flex flex-col gap-6">
           <h2 className="text-3xl md:text-4xl font-bold">
-            Never miss a breaking news story
+            Never miss an important update
           </h2>
           <p className="opacity-70 -mt-2">
-            Automatically identified from thousands of articles across all
-            sources.
+            Freshly published articles from all tracked sources.
           </p>
           <ol className="flex flex-col divide-y-2 divide-base-content/20">
-            {topStories.map((story, i) => (
-              <li key={story.id} className="py-4 flex gap-4 items-start">
+            {latestArticles.map((article, i) => (
+              <li key={article.id} className="py-4 flex gap-4 items-start">
                 <span className="text-4xl font-black opacity-20 leading-none shrink-0 w-8 text-right">
                   {i + 1}
                 </span>
                 <div>
                   <h3 className="font-bold text-lg leading-snug">
-                    {story.headline}
+                    {article.title}
                   </h3>
-                  {story.summary && (
+                  {article.summary && (
                     <p className="text-sm opacity-70 mt-1 line-clamp-2">
-                      {story.summary}
+                      {article.summary}
                     </p>
                   )}
                 </div>
@@ -121,8 +120,11 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
             ))}
           </ol>
           <p className="text-sm opacity-50 italic text-right">
-            Stories are refreshed hourly.{" "}
-            <Link href="/feed" className="underline hover:opacity-80 transition-opacity">
+            Articles are refreshed hourly.{" "}
+            <Link
+              href="/feed"
+              className="underline hover:opacity-80 transition-opacity"
+            >
               View the full feed.
             </Link>
           </p>
@@ -209,7 +211,7 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
           </h2>
           <p className="mt-2 opacity-70 max-w-xl">
             Twice daily — morning and evening — you get a digest of the top
-            stories and the latest from your interests. No app required.
+            articles and the latest from your interests. No app required.
           </p>
         </div>
         {/* Email mockup shell */}
@@ -230,7 +232,7 @@ export function LandingPage({ stories, feeds }: LandingPageProps) {
           <div className="px-6 py-6 flex flex-col gap-6">
             <div>
               <p className="text-xs uppercase tracking-widest opacity-50 mb-2">
-                Top Stories
+                Top Articles
               </p>
               <div className="flex flex-col gap-3">
                 {[
