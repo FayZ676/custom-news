@@ -3,7 +3,7 @@ import json
 import pathlib
 from datetime import datetime
 
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.models import PublicGlobalArticles
 
 _HERE = pathlib.Path(__file__).parent
 

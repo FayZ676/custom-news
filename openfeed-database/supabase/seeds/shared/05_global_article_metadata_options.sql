@@ -1,0 +1,33 @@
+insert into "global_article_metadata_options" ("field", "name", "description") values
+  ('topic', 'politics', 'The exercise of political power, governance, elections, policy-making, and political movements at local, national, and international levels.'),
+  ('topic', 'world', 'International affairs, geopolitical developments, foreign relations, conflict, and events shaping the global order.'),
+  ('topic', 'business', 'Commercial activity, corporate affairs, financial markets, economic policy, trade, and the organizations and forces that drive them.'),
+  ('topic', 'technology', 'Innovation, digital systems, artificial intelligence, software, hardware, and the societal impact of emerging tech.'),
+  ('topic', 'health', 'Physical and mental well-being, medicine, public health crises, and the systems and policies that govern healthcare.'),
+  ('topic', 'science', 'Research, discovery, and inquiry across natural, formal, and social sciences, including space exploration.'),
+  ('topic', 'environment', 'The condition of natural ecosystems, climate change, conservation efforts, and the policies and events that shape them.'),
+  ('topic', 'sport', 'Competitive athletics, sporting events, athletes, teams, and the organizations that govern them.'),
+  ('topic', 'entertainment', 'Film, television, music, gaming, and other forms of popular media and the industry behind them.'),
+  ('topic', 'culture', 'Arts, society, religion, education, and the ideas, movements, and human stories that shape how people live and understand the world.'),
+  ('type', 'non-news', 'Content that does not primarily report or analyze a real-world event, development, or issue.'),
+  ('type', 'analysis', 'Content that primarily interprets, explains, evaluates, or provides context for events, trends, or ideas.'),
+  ('type', 'event', 'Content that primarily reports a specific real-world occurrence, action, decision, discovery, or development.'),
+  ('coverage', 'individual', 'Effects are limited to a specific person or a small number of directly involved individuals.'),
+  ('coverage', 'communal', 'Effects are felt by a local community, organization, institution, or specialized group.'),
+  ('coverage', 'regional', 'Effects are felt across a city, state, province, or broader geographic region.'),
+  ('coverage', 'national', 'Effects are felt across a single country or have significance for a nation''s population or institutions.'),
+  ('coverage', 'global', 'Effects are felt across multiple countries or have worldwide significance.'),
+  ('duration', 'fleeting', 'Effects are expected to last for days or less before largely disappearing.'),
+  ('duration', 'short-term', 'Effects are expected to last for weeks to several months.'),
+  ('duration', 'medium-term', 'Effects are expected to last for months to a few years.'),
+  ('duration', 'long-term', 'Effects are expected to last for many years but are not expected to permanently alter future conditions.'),
+  ('duration', 'permanent', 'Effects are expected to persist indefinitely or establish a lasting new baseline.'),
+  ('impact', 'informational', 'Effects have no real world changes. Awareness only. Reporting, commentary and updates'),
+  ('impact', 'behavioral', 'Effects changes individual or group behavior, decisions, and actions'),
+  ('impact', 'operational', 'Effects changes how organizations or systems functions'),
+  ('impact', 'structural', 'Effects changes rules, policies, markets, and institutions with long lasting systemic adjustement'),
+  ('impact', 'transformational', 'Effects fundamentally alters domain trajectories, creating entirely new baseline conditions')
+on conflict ("field", "name") do update
+set
+  "name" = excluded."name",
+  "description" = excluded."description";

@@ -2,7 +2,6 @@
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 
 import { Copy, ClipboardCheck } from "lucide-react";
 
@@ -24,16 +23,7 @@ export type NewsItemArticle = {
   imageUrl?: string | null;
 };
 
-export type NewsItemStory = {
-  type: "story";
-  id: string;
-  headline: string;
-  summary?: string | null;
-  articleUrls: string[];
-  imageUrl?: string | null;
-};
-
-export type NewsItem = NewsItemArticle | NewsItemStory;
+export type NewsItem = NewsItemArticle;
 
 export interface NewsItemModalHandle {
   open: (item: NewsItem) => void;
@@ -106,21 +96,18 @@ export const NewsItemModal = forwardRef<
   return (
     <Modal ref={dialogRef} onClose={onClose}>
       {selectedItem && (
-        <div className="flex flex-col gap-4 relative">
+        <div className="flex flex-col gap-4">
           <h3 className="text-xl font-semibold pr-6">
-            {selectedItem.type === "story"
-              ? selectedItem.headline
-              : toTitleCase(selectedItem.title)}
+            {toTitleCase(selectedItem.title)}
           </h3>
 
-          {selectedItem.type === "article" &&
-            (selectedItem.feedTitle || selectedItem.publishedAt) && (
-              <p className="text-sm text-neutral-500">
-                {selectedItem.feedTitle}
-                {selectedItem.feedTitle && selectedItem.publishedAt && " · "}
-                {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
-              </p>
-            )}
+          {(selectedItem.feedTitle || selectedItem.publishedAt) && (
+            <p className="text-sm text-neutral-500">
+              {selectedItem.feedTitle}
+              {selectedItem.feedTitle && selectedItem.publishedAt && " · "}
+              {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
+            </p>
+          )}
 
           {selectedItem.imageUrl && (
             <div className="relative w-full aspect-video">
@@ -128,6 +115,7 @@ export const NewsItemModal = forwardRef<
                 src={selectedItem.imageUrl}
                 alt="Article image"
                 fill
+                sizes="(min-width: 1024px) 768px, 100vw"
                 className="object-cover"
               />
             </div>
@@ -138,46 +126,38 @@ export const NewsItemModal = forwardRef<
           )}
 
           <div className="flex flex-wrap gap-2">
-            {selectedItem.type === "story" &&
-              selectedItem.articleUrls.length > 0 &&
-              selectedItem.articleUrls.map((url, i) => (
-                <Link
-                  key={i}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-bold underline"
-                >
-                  Article {i + 1}
-                </Link>
-              ))}
-
-            {selectedItem.type === "article" && (
-              <a
-                href={selectedItem.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold underline"
-              >
-                Read full article →
-              </a>
-            )}
+            <a
+              href={selectedItem.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold underline"
+            >
+              Read full article →
+            </a>
           </div>
 
-          <button
-            className="absolute bottom-0 right-0 disabled:opacity-50 cursor-pointer"
-            onClick={handleCopy}
-            disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
-            aria-label={
-              copyState === "copied" ? "Copied to clipboard" : "Copy share link"
-            }
-          >
-            {copyState === "copied" ? (
-              <ClipboardCheck size={18} className="text-success" />
-            ) : (
-              <Copy size={18} />
-            )}
-          </button>
+          <div className="flex items-center justify-between pt-2 border-t border-neutral-700">
+            <div />
+
+            <div className="flex items-center gap-1">
+              <button
+                className="p-1.5 disabled:opacity-50 cursor-pointer text-base-content/60 hover:text-base-content transition-colors"
+                onClick={handleCopy}
+                disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
+                aria-label={
+                  copyState === "copied"
+                    ? "Copied to clipboard"
+                    : "Copy share link"
+                }
+              >
+                {copyState === "copied" ? (
+                  <ClipboardCheck size={18} className="text-success" />
+                ) : (
+                  <Copy size={18} />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </Modal>

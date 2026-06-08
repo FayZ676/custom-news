@@ -1,98 +1,101 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition, useOptimistic } from "react";
+import { useRef } from "react";
 
-import { InterestStories } from "@/lib/supabase/queries/user_interests";
-import { useUnreadCount } from "@/components/UnreadCountContext";
+import { GlobalArticle } from "@/lib/supabase/queries/global_articles";
+import { timeAgo, toTitleCase } from "@/lib/utils";
 
-import SectionInterest from "@/components/SectionInterest";
+import {
+  NewsItemModal,
+  NewsItemModalHandle,
+  NewsItemArticle,
+} from "@/components/NewsItemModal";
 import { SectionArticleSkeleton } from "@/components/SectionArticles";
+import { NewsItemCard } from "@/components/NewsItemCard";
 
-export interface ViewFeedProps {
-  interestStories: InterestStories[];
-  handleDeleteInterest: (interestId: string) => Promise<void>;
-  handleReadUserStories: (storyIds: string[], isRead: boolean) => Promise<void>;
+interface ViewFeedProps {
+  articles: GlobalArticle[];
 }
 
-export function ViewFeed({
-  interestStories,
-  handleDeleteInterest,
-  handleReadUserStories,
-}: ViewFeedProps) {
-  const router = useRouter();
-  const { adjustCount } = useUnreadCount();
-
-  const [deleting, startDeleteTransition] = useTransition();
-
-  const [optimisticInterests, removeOptimisticInterest] = useOptimistic(
-    interestStories,
-    (current: InterestStories[], deletedId: string) =>
-      current.filter((interest) => interest.id !== deletedId),
+export function ViewFeed({ articles }: ViewFeedProps) {
+  const modalRef = useRef<NewsItemModalHandle>(null);
+  const hasRenderableImage = (imageUrl?: string | null) =>
+    imageUrl?.startsWith("https://") ?? false;
+  const articlesWithImages = articles.filter((article) =>
+    hasRenderableImage(article.image_url),
   );
+  const articlesWithoutImages = articles.filter(
+    (article) => !hasRenderableImage(article.image_url),
+  );
+  const orderedArticles = [...articlesWithImages, ...articlesWithoutImages];
 
-  const handleDelete = (interestId: string) => {
-    startDeleteTransition(async () => {
-      const interest = optimisticInterests.find((i) => i.id === interestId);
-      const unreadCount =
-        interest?.stories.filter((s) => !s.is_read).length ?? 0;
-      adjustCount(-unreadCount);
-      removeOptimisticInterest(interestId);
-      await handleDeleteInterest(interestId);
-      router.refresh();
-    });
-  };
+  function openModal(article: GlobalArticle) {
+    const item: NewsItemArticle = {
+      type: "article",
+      id: article.id,
+      title: article.title,
+      summary: article.summary,
+      url: article.url,
+      feedTitle: article.feed_title,
+      publishedAt: article.published_at,
+      imageUrl: article.image_url,
+    };
+    modalRef.current?.open(item);
+  }
 
-  const handleRead = async (storyIds: string[], isRead: boolean) => {
-    const unreadCountDelta = isRead ? -storyIds.length : storyIds.length;
-    adjustCount(unreadCountDelta);
-    try {
-      await handleReadUserStories(storyIds, isRead);
-      router.refresh();
-    } catch (error) {
-      adjustCount(-unreadCountDelta);
-      throw error;
-    }
-  };
-
-  if (optimisticInterests.length === 0) {
+  if (articles.length === 0) {
     return (
       <p className="text-sm italic text-neutral-500">
-        No interests yet. Use the{" "}
-        <span className="font-semibold not-italic">Search</span> tab to find
-        topics and save them to your news feed.
+        No articles available right now.
       </p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {optimisticInterests
-        .slice()
-        .sort((a, b) => {
-          const aHasUnread = a.stories.some((s) => !s.is_read);
-          const bHasUnread = b.stories.some((s) => !s.is_read);
-          return Number(bHasUnread) - Number(aHasUnread);
-        })
-        .map((interest) => (
-          <SectionInterest
-            key={interest.id}
-            interest={interest}
-            deleting={deleting}
-            handleDeleteInterest={handleDelete}
-            handleReadStories={handleRead}
+    <section className="flex flex-col gap-4">
+      <ol className="flex flex-col gap-4">
+        {articlesWithImages.map((article) => (
+          <NewsItemCard
+            key={article.id}
+            title={toTitleCase(article.title)}
+            imageUrl={article.image_url}
+            summary={article.summary}
+            meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+            onClick={() => openModal(article)}
           />
         ))}
-    </div>
+        {articlesWithImages.length > 0 && articlesWithoutImages.length > 0 && (
+          <li aria-hidden="true" className="py-1">
+            <hr className="border-t border-neutral-800" />
+          </li>
+        )}
+        {articlesWithoutImages.map((article) => (
+          <NewsItemCard
+            key={article.id}
+            title={toTitleCase(article.title)}
+            imageUrl={article.image_url}
+            summary={article.summary}
+            meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+            onClick={() => openModal(article)}
+          />
+        ))}
+      </ol>
+
+      <NewsItemModal ref={modalRef} />
+    </section>
   );
 }
 
-export function ViewFeedSkeleton({ count = 3 }: { count?: number }) {
+export function ViewFeedSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <div className="flex flex-col gap-6">
-      {Array.from({ length: count }).map((_, i) => (
-        <SectionArticleSkeleton key={i} />
-      ))}
-    </div>
+    <section className="flex flex-col gap-4">
+      <ol className="flex flex-col gap-4">
+        {Array.from({ length: count }).map((_, i) => (
+          <li key={i}>
+            <SectionArticleSkeleton />
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

@@ -54,10 +54,10 @@ npm run dev
 
 ### Option A (production only)
 
-| Requirement                                 | What it's for                                                                                    |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [Vercel account](https://vercel.com/signup) | Hosts and deploys the frontend (free hobby plan is sufficient)                                   |
-| Supabase project                            | The database and auth backend — set up via the [database README](../openfeed-database/README.md) |
+| Requirement                                 | What it's for                                                                                     |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| [Vercel account](https://vercel.com/signup) | Hosts and deploys the frontend (free hobby plan is sufficient)                                    |
+| Supabase project                            | The database and auth provider — set up via the [database README](../openfeed-database/README.md) |
 
 ### Option B (local development — everything above plus)
 
@@ -84,4 +84,4 @@ You'll need two environment variables — both come from your Supabase project s
 
 ## How it works
 
-OpenFeed's frontend is a NextJS app that connects to your Supabase project for everything — authentication, data storage, and ranked article queries. Articles are fetched and ranked automatically by the database backend, so the frontend simply reads and displays what's already there.
+OpenFeed's frontend is a NextJS app that connects to your Supabase project for everything — authentication, data storage, and ranked article queries. Articles are fetched and ranked automatically in Supabase, so the frontend simply reads and displays what's already there.

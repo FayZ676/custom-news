@@ -1,12 +1,15 @@
 import uuid
+import re
 import time as _time
+import unicodedata
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from email.utils import parsedate_to_datetime
 
 from pydantic import BaseModel, field_validator, model_validator
 
-from openfeed.database_models import PublicGlobalArticles
+from openfeed.db.models import PublicGlobalArticles
+from openfeed.services.articles.enricher import ArticleMetadata
 
 
 class _HTMLStripper(HTMLParser):
@@ -27,14 +30,11 @@ def _strip_html(text: str) -> str:
     return stripper.get_text()
 
 
-class EntitiesResponse(BaseModel):
-    summary: str
-    entities: list[str]
-    significance_score: float
-
-
-class ArticleMetadata(EntitiesResponse):
-    summary_embeddings: list[float]
+def _strip_invisible(text: str) -> str:
+    patterns = re.compile(
+        r"[\u200b-\u200f\u2028\u2029\u202a-\u202e\u2060-\u206f\ufeff\u00ad]+"
+    )
+    return patterns.sub("", unicodedata.normalize("NFC", text)).strip()
 
 
 class Article(BaseModel):
@@ -46,6 +46,11 @@ class Article(BaseModel):
     media_thumbnail: list[dict] | None = None
     media_content: list[dict] | None = None
     enclosures: list[dict] | None = None
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def clean_title(cls, v: object) -> str:
+        return _strip_invisible(str(v))
 
     @model_validator(mode="before")
     @classmethod
@@ -74,7 +79,7 @@ class Article(BaseModel):
     def clean_html_fields(cls, v: str) -> str | None:
         if v is None:
             return None
-        return _strip_html(v) or None
+        return _strip_invisible(_strip_html(v)) or None
 
     @property
     def image_url(self) -> str | None:
@@ -103,12 +108,14 @@ class Article(BaseModel):
             published_at=self.published,
             feed_title=feed_title,
             title=self.title,
-            summary=metadata.summary,
-            summary_embeddings=metadata.summary_embeddings,
-            summary_entities=metadata.entities,
-            significance_score=metadata.significance_score,
+            summary=self.summary,
             image_url=self.image_url,
             url=self.link,
             id=uuid.uuid4(),
             created_at=datetime.now(),
+            coverage=metadata.coverage,
+            duration=metadata.duration,
+            impact=metadata.impact,
+            type=metadata.type,
+            topic=metadata.topic,
         )

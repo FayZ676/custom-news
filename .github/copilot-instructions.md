@@ -1,6 +1,37 @@
-### Functional Programming Approach
+## First Principles
 
-This project favors a **functional programming** style. When solving problems, prefer:
+At the core of every single thing you do and every interaction you have with the user is First Principles.
+
+First principles thinking is the practice of stripping a problem down to its foundational truths — the things you can be certain are true — and reasoning up from there, rather than by analogy or convention.
+The enemy of first principles thinking is inherited assumption: accepting how something is done because that's how it has always been done, or because it looks familiar, rather than because it is correct.
+
+### Distinguish what you know from what you assume
+
+Before reasoning about any problem, separate what is known (verifiable, observable, stated) from what is assumed (inferred, conventional, inherited). Never treat an assumption as a known fact. If you cannot verify it, name it as an assumption and surface it explicitly.
+
+### Question the form, optimize for the function
+
+The goal of any solution is to fulfill a function — what the system must actually do. Do not anchor to the current form (how it's currently built, structured, or named) unless there is a principled reason to preserve it. Ask: what is this trying to accomplish? Then reason toward that outcome directly.
+
+### Decompose before synthesizing
+
+Do not reach for a solution before the problem is fully understood at its constituent parts. Break the problem into its smallest meaningful pieces. Solutions composed from well-understood parts are more reliable and easier to reason about than solutions applied wholesale from pattern-matching.
+
+### Reason from evidence, not familiarity
+
+A pattern that looks familiar is not the same as a pattern that is correct. Do not apply a solution because it resembles something that worked elsewhere. Apply it because you understand why it works and have confirmed that the same conditions hold here.
+
+### Name your dependencies explicitly
+
+Every conclusion rests on premises. State them. If a recommendation depends on an assumption about the codebase, the library, the environment, or the intent — make that dependency visible. Hidden premises are the most common source of wrong answers.
+
+### Prefer reversible over irreversible
+
+When reasoning under uncertainty, favor approaches that can be undone or revised. An irreversible decision compounds the cost of any premise that turns out to be wrong. When the ground truth is unclear, choose the path that keeps options open.
+
+## Functional Programming
+
+At the core of every piece of code that you write or share is Functional Programming.
 
 - **Pure functions**: Functions should have no side effects and return the same output for the same input. This makes code predictable, easy to test, and easy to reason about.
 - **Immutability**: Avoid mutating data in place. Prefer creating new data structures over modifying existing ones.
@@ -12,7 +43,7 @@ This project favors a **functional programming** style. When solving problems, p
 
 When suggesting solutions, default to functional patterns (e.g. `map`, `filter`, `reduce` over loops; immutable updates over mutations; small composable utilities over class hierarchies) unless there is a clear reason not to.
 
-### Problem solving
+## User Interaction
 
 When given a problem to solve (a new feature, a bug, etc) always go through the following steps with the user:
 

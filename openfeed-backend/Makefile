@@ -7,6 +7,7 @@ install:
 	python -m venv .venv
 	.venv/bin/pip install --upgrade pip
 	.venv/bin/pip install -e ".[dev]"
+	.venv/bin/python -m spacy download en_core_web_trf
 
 
 install-hooks:

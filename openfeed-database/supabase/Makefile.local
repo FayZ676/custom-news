@@ -1,28 +1,33 @@
 include ../.env
 
 PG_CONN = postgresql://postgres:postgres@localhost:54322/postgres
-INTERESTS_SNAPSHOT = /tmp/_user_interests_snapshot.csv
 SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
 ARTICLES_SNAPSHOT = /tmp/_global_articles_snapshot.csv
+STORIES_SNAPSHOT = /tmp/_global_stories_snapshot.csv
 
 snapshot:
-	psql "$(PG_CONN)" -c "\copy public.user_interests TO '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
 		&& psql "$(PG_CONN)" -c "\copy public.global_articles TO '$(ARTICLES_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.global_stories TO '$(STORIES_SNAPSHOT)' CSV HEADER" \
 		&& echo "Snapshot saved to /tmp/"
 
 restore_snapshot:
-	psql "$(PG_CONN)" -c "TRUNCATE public.global_articles, public.global_stories, public.user_interests, public.user_settings CASCADE;" \
+	psql "$(PG_CONN)" -c "TRUNCATE public.global_articles, public.global_stories, public.user_settings CASCADE;" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
 		&& psql "$(PG_CONN)" -c "\copy public.global_articles FROM '$(ARTICLES_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
+		&& psql "$(PG_CONN)" -c "\copy public.global_stories FROM '$(STORIES_SNAPSHOT)' CSV HEADER"
 
 fetch_articles:
 	curl -i --location --request POST '$(BACKEND_URL)/global/articles' \
 		--header 'x-api-key: $(BACKEND_API_KEY)' \
 		--header 'Content-Type: application/json';
 
-reset:
+delete_articles:
+	psql "$(PG_CONN)" -c "TRUNCATE public.global_article_topics, public.global_story_topics, public.global_articles, public.global_stories CASCADE;"
+
+reset_articles: delete_articles fetch_articles
+
+reset_db:
 	supabase stop --no-backup \
 		&& rm -rf migrations/*_create_all.sql .branches .temp
 
@@ -35,6 +40,6 @@ gen_types_ts:
 	supabase gen types typescript --local > ../../openfeed-frontend/lib/supabase/supabase.types.ts
 
 gen_types_py:
-	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/database_models.py
+	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/db/models.py
 
-init: snapshot reset deploy gen_types_py gen_types_ts restore_snapshot
+init: snapshot reset_db deploy gen_types_py gen_types_ts restore_snapshot

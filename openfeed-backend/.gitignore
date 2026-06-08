@@ -1,5 +1,5 @@
 .env
 .env.prod
 
-# Generated taxonomy embedding index (model-dependent, rebuild with build_taxonomy_index)
-openfeed/iptc/taxonomy-index.json
+# Test debug output
+tests/**/*_debug.txt
