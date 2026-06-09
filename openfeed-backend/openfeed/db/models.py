@@ -232,21 +232,24 @@ class PublicGlobalShareLinksUpdate(TypedDict):
     token: NotRequired[Annotated[uuid.UUID, Field(alias="token")]]
 
 
-class PublicUserKeywords(BaseModel):
+class PublicUserArticleMetadataOptions(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
-    keywords: str = Field(alias="keywords")
+    field: str = Field(alias="field")
+    name: str = Field(alias="name")
     user_id: uuid.UUID = Field(alias="user_id")
 
 
-class PublicUserKeywordsInsert(TypedDict):
+class PublicUserArticleMetadataOptionsInsert(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    keywords: Annotated[str, Field(alias="keywords")]
+    field: Annotated[str, Field(alias="field")]
+    name: Annotated[str, Field(alias="name")]
     user_id: Annotated[uuid.UUID, Field(alias="user_id")]
 
 
-class PublicUserKeywordsUpdate(TypedDict):
+class PublicUserArticleMetadataOptionsUpdate(TypedDict):
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    keywords: NotRequired[Annotated[str, Field(alias="keywords")]]
+    field: NotRequired[Annotated[str, Field(alias="field")]]
+    name: NotRequired[Annotated[str, Field(alias="name")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
 
 
@@ -268,22 +271,4 @@ class PublicUserSettingsUpdate(TypedDict):
     color_theme: NotRequired[Annotated[str, Field(alias="color_theme")]]
     email_notification: NotRequired[Annotated[bool, Field(alias="email_notification")]]
     timezone: NotRequired[Annotated[str, Field(alias="timezone")]]
-    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
-
-
-class PublicUserTopics(BaseModel):
-    created_at: datetime.datetime = Field(alias="created_at")
-    topic_id: str = Field(alias="topic_id")
-    user_id: uuid.UUID = Field(alias="user_id")
-
-
-class PublicUserTopicsInsert(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    topic_id: Annotated[str, Field(alias="topic_id")]
-    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
-
-
-class PublicUserTopicsUpdate(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    topic_id: NotRequired[Annotated[str, Field(alias="topic_id")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]

@@ -1,5 +1,7 @@
 drop extension if exists "pg_cron";
 
+create extension if not exists "pg_trgm" with schema "public";
+
 create extension if not exists "vector" with schema "public";
 
 
@@ -107,6 +109,8 @@ CREATE UNIQUE INDEX global_article_metadata_options_pkey ON public.global_articl
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
 
+CREATE INDEX global_articles_title_trgm_idx ON public.global_articles USING gin (title public.gin_trgm_ops);
+
 CREATE UNIQUE INDEX global_articles_url_key ON public.global_articles USING btree (url);
 
 CREATE UNIQUE INDEX global_emails_pkey ON public.global_emails USING btree (id);
@@ -201,6 +205,136 @@ begin
     values (new.id);
     return new;
 end;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.search_articles_by_title_fuzzy(query_text text, match_count integer DEFAULT 3)
+ RETURNS SETOF public.global_articles
+ LANGUAGE sql
+ STABLE
+AS $function$
+  select ga.*
+  from global_articles ga
+  where length(trim(query_text)) >= 3
+    and (
+      ga.title ilike '%' || trim(query_text) || '%'
+      or lower(trim(query_text)) <% lower(ga.title)
+    )
+  order by
+    case
+      when ga.title ilike '%' || trim(query_text) || '%' then 1
+      else 0
+    end desc,
+    word_similarity(lower(trim(query_text)), lower(ga.title)) desc,
+    similarity(lower(ga.title), lower(trim(query_text))) desc,
+    ga.published_at desc
+  limit greatest(match_count, 1);
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.search_articles_feed_page(query_text text DEFAULT NULL::text, topic_filters text[] DEFAULT NULL::text[], type_filters text[] DEFAULT NULL::text[], coverage_filters text[] DEFAULT NULL::text[], duration_filters text[] DEFAULT NULL::text[], impact_filters text[] DEFAULT NULL::text[], page_size integer DEFAULT 10, page_offset integer DEFAULT 0)
+ RETURNS TABLE(id uuid, feed_title text, title text, url text, summary text, topic text, type text, coverage text, duration text, impact text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone, total_count bigint)
+ LANGUAGE sql
+ STABLE
+AS $function$
+  with normalized as (
+    select nullif(trim(query_text), '') as q
+  ),
+  filtered as (
+    select ga.*, n.q
+    from global_articles ga
+    cross join normalized n
+    where
+      (
+        n.q is null
+        or length(n.q) < 3
+        or ga.title ilike '%' || n.q || '%'
+        or lower(n.q) <% lower(ga.title)
+      )
+      and (
+        topic_filters is null
+        or cardinality(topic_filters) = 0
+        or ga.topic = any(topic_filters)
+      )
+      and (
+        type_filters is null
+        or cardinality(type_filters) = 0
+        or ga.type = any(type_filters)
+      )
+      and (
+        coverage_filters is null
+        or cardinality(coverage_filters) = 0
+        or ga.coverage = any(coverage_filters)
+      )
+      and (
+        duration_filters is null
+        or cardinality(duration_filters) = 0
+        or ga.duration = any(duration_filters)
+      )
+      and (
+        impact_filters is null
+        or cardinality(impact_filters) = 0
+        or ga.impact = any(impact_filters)
+      )
+  ),
+  ranked as (
+    select
+      filtered.id,
+      filtered.feed_title,
+      filtered.title,
+      filtered.url,
+      filtered.summary,
+      filtered.topic,
+      filtered.type,
+      filtered.coverage,
+      filtered.duration,
+      filtered.impact,
+      filtered.image_url,
+      filtered.published_at,
+      filtered.created_at,
+      count(*) over() as total_count,
+      case
+        when filtered.q is not null
+          and length(filtered.q) >= 3
+          and filtered.title ilike '%' || filtered.q || '%'
+          then 1
+        else 0
+      end as exact_match_rank,
+      case
+        when filtered.q is not null and length(filtered.q) >= 3
+          then word_similarity(lower(filtered.q), lower(filtered.title))
+        else 0
+      end as word_similarity_rank,
+      case
+        when filtered.q is not null and length(filtered.q) >= 3
+          then similarity(lower(filtered.title), lower(filtered.q))
+        else 0
+      end as trigram_similarity_rank
+    from filtered
+  )
+  select
+    ranked.id,
+    ranked.feed_title,
+    ranked.title,
+    ranked.url,
+    ranked.summary,
+    ranked.topic,
+    ranked.type,
+    ranked.coverage,
+    ranked.duration,
+    ranked.impact,
+    ranked.image_url,
+    ranked.published_at,
+    ranked.created_at,
+    ranked.total_count
+  from ranked
+  order by
+    exact_match_rank desc,
+    word_similarity_rank desc,
+    trigram_similarity_rank desc,
+    published_at desc
+  limit greatest(page_size, 1)
+  offset greatest(page_offset, 0);
 $function$
 ;
 

@@ -19,10 +19,7 @@ import {
 import { FeedPageContent } from "@/components/FeedPageContent";
 import { ViewFeedSkeleton } from "@/components/ViewFeed";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
-import {
-  FeedPaginationNav,
-  FeedPaginationNavSkeleton,
-} from "@/components/FeedPaginationNav";
+import { FeedPaginationNavSkeleton } from "@/components/FeedPaginationNav";
 
 const PAGE_SIZE = 10;
 
@@ -58,14 +55,13 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
       <FeedPageContent
         articles={feedArticles}
-        metadataOptions={metadataOptions}
-        initialMetadataFilters={initialMetadataFilters}
-        onChangeMetadataOptions={handleChangeMetadataOptions}
-      />
-      <FeedPaginationNav
         currentPage={currentPage}
         hasNextPage={hasNextPage}
         totalPages={totalPages}
+        pageSize={PAGE_SIZE}
+        metadataOptions={metadataOptions}
+        initialMetadataFilters={initialMetadataFilters}
+        onChangeMetadataOptions={handleChangeMetadataOptions}
       />
     </ShareLinkProvider>
   );

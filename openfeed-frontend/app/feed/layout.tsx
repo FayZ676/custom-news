@@ -1,33 +1,18 @@
 import { Suspense } from "react";
-import { cacheLife } from "next/cache";
-
-import { createAnonClient } from "@/lib/supabase/anon";
 import { signOut, getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getGlobalFeeds } from "@/lib/supabase/queries/global_feeds";
 import {
   getUserSettings,
   updateUserNotificationSettings,
   updateUserTheme,
 } from "@/lib/supabase/queries/user_settings";
-import { getCurrentDate } from "@/lib/utils";
 
-import { Banner, BannerSkeleton } from "@/components/Banner";
 import { Footer, FooterSkeleton } from "@/components/Footer";
 import { ThemedLogo } from "@/components/ThemedLogo";
 
 // ---------------------------------------------------------------------------
 // Shared async sub-components
 // ---------------------------------------------------------------------------
-
-async function BannerContent() {
-  "use cache";
-  cacheLife("hours");
-  const supabase = createAnonClient();
-  const date = getCurrentDate();
-  const feeds = await getGlobalFeeds(supabase);
-  return <Banner date={date} feeds={feeds} />;
-}
 
 async function FooterContent() {
   const { userId, email } = await getAuthenticatedUser();
@@ -75,10 +60,6 @@ export default function FeedLayout({
       <div className="flex justify-center">
         <ThemedLogo />
       </div>
-
-      <Suspense fallback={<BannerSkeleton />}>
-        <BannerContent />
-      </Suspense>
 
       {children}
 

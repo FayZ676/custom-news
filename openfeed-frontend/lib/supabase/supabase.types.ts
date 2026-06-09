@@ -34,64 +34,68 @@ export type Database = {
   };
   public: {
     Tables: {
-      global_article_topics: {
+      global_article_metadata_options: {
         Row: {
-          article_id: string;
-          topic_id: string;
-          topic_name: string;
+          description: string;
+          field: string;
+          name: string;
         };
         Insert: {
-          article_id: string;
-          topic_id: string;
-          topic_name: string;
+          description: string;
+          field: string;
+          name: string;
         };
         Update: {
-          article_id?: string;
-          topic_id?: string;
-          topic_name?: string;
+          description?: string;
+          field?: string;
+          name?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "global_article_topics_article_id_fkey";
-            columns: ["article_id"];
-            isOneToOne: false;
-            referencedRelation: "global_articles";
-            referencedColumns: ["id"];
-          },
-        ];
+        Relationships: [];
       };
       global_articles: {
         Row: {
+          coverage: string | null;
           created_at: string;
+          duration: string | null;
           feed_title: string;
           id: string;
           image_url: string | null;
+          impact: string | null;
           published_at: string;
-          significance_score: number;
           summary: string | null;
           title: string;
+          topic: string | null;
+          type: string | null;
           url: string;
         };
         Insert: {
+          coverage?: string | null;
           created_at?: string;
+          duration?: string | null;
           feed_title: string;
           id?: string;
           image_url?: string | null;
+          impact?: string | null;
           published_at: string;
-          significance_score: number;
           summary?: string | null;
           title: string;
+          topic?: string | null;
+          type?: string | null;
           url: string;
         };
         Update: {
+          coverage?: string | null;
           created_at?: string;
+          duration?: string | null;
           feed_title?: string;
           id?: string;
           image_url?: string | null;
+          impact?: string | null;
           published_at?: string;
-          significance_score?: number;
           summary?: string | null;
           title?: string;
+          topic?: string | null;
+          type?: string | null;
           url?: string;
         };
         Relationships: [
@@ -203,103 +207,34 @@ export type Database = {
         };
         Relationships: [];
       };
-      global_stories: {
+      user_article_metadata_options: {
         Row: {
           created_at: string;
-          headline: string;
-          id: string;
-          image_url: string | null;
-          related_articles_urls: string[];
-          score: number;
-          summary: string;
-          velocity: number;
+          field: string;
+          name: string;
+          user_id: string;
         };
         Insert: {
           created_at?: string;
-          headline: string;
-          id?: string;
-          image_url?: string | null;
-          related_articles_urls?: string[];
-          score: number;
-          summary: string;
-          velocity: number;
+          field: string;
+          name: string;
+          user_id: string;
         };
         Update: {
           created_at?: string;
-          headline?: string;
-          id?: string;
-          image_url?: string | null;
-          related_articles_urls?: string[];
-          score?: number;
-          summary?: string;
-          velocity?: number;
-        };
-        Relationships: [];
-      };
-      global_story_topics: {
-        Row: {
-          story_id: string;
-          topic_id: string;
-          topic_name: string;
-        };
-        Insert: {
-          story_id: string;
-          topic_id: string;
-          topic_name: string;
-        };
-        Update: {
-          story_id?: string;
-          topic_id?: string;
-          topic_name?: string;
+          field?: string;
+          name?: string;
+          user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "global_story_topics_story_id_fkey";
-            columns: ["story_id"];
+            foreignKeyName: "user_article_metadata_options_field_name_fkey";
+            columns: ["field", "name"];
             isOneToOne: false;
-            referencedRelation: "global_stories";
-            referencedColumns: ["id"];
+            referencedRelation: "global_article_metadata_options";
+            referencedColumns: ["field", "name"];
           },
         ];
-      };
-      global_topics: {
-        Row: {
-          description: string;
-          id: string;
-          name: string;
-          significance_score: number;
-        };
-        Insert: {
-          description: string;
-          id: string;
-          name: string;
-          significance_score: number;
-        };
-        Update: {
-          description?: string;
-          id?: string;
-          name?: string;
-          significance_score?: number;
-        };
-        Relationships: [];
-      };
-      user_keywords: {
-        Row: {
-          created_at: string;
-          keywords: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          keywords: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          keywords?: string;
-          user_id?: string;
-        };
-        Relationships: [];
       };
       user_settings: {
         Row: {
@@ -322,38 +257,41 @@ export type Database = {
         };
         Relationships: [];
       };
-      user_topics: {
-        Row: {
-          created_at: string;
-          topic_id: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          topic_id: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          topic_id?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_topics_topic_id_fkey";
-            columns: ["topic_id"];
-            isOneToOne: false;
-            referencedRelation: "global_topics";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      search_articles_feed_page: {
+        Args: {
+          coverage_filters?: string[];
+          duration_filters?: string[];
+          impact_filters?: string[];
+          page_offset?: number;
+          page_size?: number;
+          query_text?: string;
+          topic_filters?: string[];
+          type_filters?: string[];
+        };
+        Returns: {
+          coverage: string;
+          created_at: string;
+          duration: string;
+          feed_title: string;
+          id: string;
+          image_url: string;
+          impact: string;
+          published_at: string;
+          summary: string;
+          title: string;
+          topic: string;
+          total_count: number;
+          type: string;
+          url: string;
+        }[];
+      };
+      show_limit: { Args: never; Returns: number };
+      show_trgm: { Args: { "": string }; Returns: string[] };
     };
     Enums: {
       [_ in never]: never;

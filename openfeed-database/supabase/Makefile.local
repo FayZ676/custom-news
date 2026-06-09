@@ -3,29 +3,21 @@ include ../.env
 PG_CONN = postgresql://postgres:postgres@localhost:54322/postgres
 SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
 ARTICLES_SNAPSHOT = /tmp/_global_articles_snapshot.csv
-STORIES_SNAPSHOT = /tmp/_global_stories_snapshot.csv
 
 snapshot:
 	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
 		&& psql "$(PG_CONN)" -c "\copy public.global_articles TO '$(ARTICLES_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.global_stories TO '$(STORIES_SNAPSHOT)' CSV HEADER" \
 		&& echo "Snapshot saved to /tmp/"
 
 restore_snapshot:
-	psql "$(PG_CONN)" -c "TRUNCATE public.global_articles, public.global_stories, public.user_settings CASCADE;" \
+	psql "$(PG_CONN)" -c "TRUNCATE public.global_articles, public.user_settings CASCADE;" \
 		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.global_articles FROM '$(ARTICLES_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.global_stories FROM '$(STORIES_SNAPSHOT)' CSV HEADER"
+		&& psql "$(PG_CONN)" -c "\copy public.global_articles FROM '$(ARTICLES_SNAPSHOT)' CSV HEADER"
 
 fetch_articles:
 	curl -i --location --request POST '$(BACKEND_URL)/global/articles' \
 		--header 'x-api-key: $(BACKEND_API_KEY)' \
 		--header 'Content-Type: application/json';
-
-delete_articles:
-	psql "$(PG_CONN)" -c "TRUNCATE public.global_article_topics, public.global_story_topics, public.global_articles, public.global_stories CASCADE;"
-
-reset_articles: delete_articles fetch_articles
 
 reset_db:
 	supabase stop --no-backup \

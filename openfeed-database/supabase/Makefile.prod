@@ -1,31 +1,17 @@
 include ../.env.prod
 
 PG_CONN = postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres
-INTERESTS_SNAPSHOT = /tmp/_user_interests_snapshot.csv
 SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
 ARTICLES_SNAPSHOT = /tmp/_global_articles_snapshot.csv
-STORIES_SNAPSHOT = /tmp/_global_stories_snapshot.csv
 
 snapshot:
-	psql "$(PG_CONN)" -c "\copy public.user_interests TO '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
 		&& psql "$(PG_CONN)" -c "\copy public.global_articles TO '$(ARTICLES_SNAPSHOT)' CSV HEADER" \
 		&& echo "Snapshot saved to /tmp/"
 
 restore_snapshot:
-	psql "$(PG_CONN)" -c "TRUNCATE public.global_articles, public.global_stories, public.user_interests, public.user_settings CASCADE;" \
+	psql "$(PG_CONN)" -c "TRUNCATE public.global_articles, public.user_settings CASCADE;" \
 		&& psql "$(PG_CONN)" -c "\copy public.global_articles FROM '$(ARTICLES_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
-
-snapshot_users:
-	psql "$(PG_CONN)" -c "\copy public.user_interests TO '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
-		&& echo "User snapshot saved to /tmp/"
-
-restore_snapshot_users:
-	psql "$(PG_CONN)" -c "TRUNCATE public.user_interests, public.user_settings CASCADE;" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
 		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
 
 fetch_articles:
@@ -63,7 +49,4 @@ update:
 	supabase link --project-ref $(PROJECT_ID) \
 		&& supabase db push --include-all
 
-backfill_user_settings:
-	psql "$(PG_CONN)" -c "INSERT INTO public.user_settings (user_id) SELECT id FROM auth.users ON CONFLICT (user_id) DO NOTHING;"
-
-init: snapshot_users reset deploy seed restore_snapshot_users backfill_user_settings
+init: snapshot reset deploy seed restore_snapshot

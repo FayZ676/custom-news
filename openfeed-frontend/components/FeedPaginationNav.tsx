@@ -7,6 +7,7 @@ interface FeedPaginationNavProps {
   currentPage: number;
   hasNextPage: boolean;
   totalPages: number;
+  onPageChange?: (page: number) => void;
 }
 
 const buildPageHref = (page: number): string =>
@@ -16,7 +17,9 @@ export function FeedPaginationNav({
   currentPage,
   hasNextPage,
   totalPages,
+  onPageChange,
 }: FeedPaginationNavProps) {
+  const isControlled = Boolean(onPageChange);
   const numberStripRef = useRef<HTMLDivElement>(null);
   const prevHref = buildPageHref(currentPage - 1);
   const nextHref = buildPageHref(currentPage + 1);
@@ -48,13 +51,24 @@ export function FeedPaginationNav({
     >
       <div className="flex items-center justify-center gap-2">
         {currentPage > 1 ? (
-          <Link
-            href={prevHref}
-            aria-label="Go to previous page"
-            className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
-          >
-            <span aria-hidden="true">&larr;</span>
-          </Link>
+          isControlled ? (
+            <button
+              type="button"
+              onClick={() => onPageChange?.(currentPage - 1)}
+              aria-label="Go to previous page"
+              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+            >
+              <span aria-hidden="true">&larr;</span>
+            </button>
+          ) : (
+            <Link
+              href={prevHref}
+              aria-label="Go to previous page"
+              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+            >
+              <span aria-hidden="true">&larr;</span>
+            </Link>
+          )
         ) : (
           <span className="h-9 min-w-9 shrink-0 px-2 border border-base-300/60 bg-base-200/40 text-base-content/30 inline-flex items-center justify-center text-sm font-medium cursor-not-allowed">
             <span aria-hidden="true">&larr;</span>
@@ -69,7 +83,23 @@ export function FeedPaginationNav({
             {pages.map((pageNumber) => {
               const isCurrent = pageNumber === currentPage;
 
-              return (
+              return isControlled ? (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  onClick={() => onPageChange?.(pageNumber)}
+                  data-page-active={isCurrent ? "true" : undefined}
+                  aria-current={isCurrent ? "page" : undefined}
+                  aria-label={`Go to page ${pageNumber}`}
+                  className={`h-9 min-w-9 px-2 border inline-flex items-center justify-center text-sm transition-colors ${
+                    isCurrent
+                      ? "border-base-content bg-base-content text-base-100 font-semibold"
+                      : "border-base-300/70 bg-base-100 hover:bg-base-200/60"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              ) : (
                 <Link
                   key={pageNumber}
                   href={buildPageHref(pageNumber)}
@@ -90,13 +120,24 @@ export function FeedPaginationNav({
         </div>
 
         {hasNextPage ? (
-          <Link
-            href={nextHref}
-            aria-label="Go to next page"
-            className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
-          >
-            <span aria-hidden="true">&rarr;</span>
-          </Link>
+          isControlled ? (
+            <button
+              type="button"
+              onClick={() => onPageChange?.(currentPage + 1)}
+              aria-label="Go to next page"
+              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+            >
+              <span aria-hidden="true">&rarr;</span>
+            </button>
+          ) : (
+            <Link
+              href={nextHref}
+              aria-label="Go to next page"
+              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+            >
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+          )
         ) : (
           <span className="h-9 min-w-9 shrink-0 px-2 border border-base-300/60 bg-base-200/40 text-base-content/30 inline-flex items-center justify-center text-sm font-medium cursor-not-allowed">
             <span aria-hidden="true">&rarr;</span>

@@ -11,6 +11,15 @@ export interface PaginatedArticles {
   totalPages: number;
 }
 
+interface UnifiedFeedPageParams {
+  page: number;
+  pageSize: number;
+  metadataFilters?: MetadataOptionsByField;
+  queryText?: string;
+}
+
+const MIN_SEARCH_QUERY_LENGTH = 3;
+
 export async function getArticles(
   supabase: SupabaseClient<Database>,
 ): Promise<GlobalArticle[]> {
@@ -29,48 +38,62 @@ export async function getArticlesPage(
   pageSize: number,
   metadataFilters?: MetadataOptionsByField,
 ): Promise<PaginatedArticles> {
+  return getUnifiedFeedPage(supabase, {
+    page,
+    pageSize,
+    metadataFilters,
+  });
+}
+
+export async function getUnifiedFeedPage(
+  supabase: SupabaseClient<Database>,
+  { page, pageSize, metadataFilters, queryText }: UnifiedFeedPageParams,
+): Promise<PaginatedArticles> {
   const start = (page - 1) * pageSize;
-  const end = start + pageSize;
 
-  let query = (supabase as any)
-    .from("global_articles")
-    .select("*")
-    .order("published_at", { ascending: false });
+  const normalizedQuery = queryText?.trim() ?? "";
+  const activeQuery =
+    normalizedQuery.length >= MIN_SEARCH_QUERY_LENGTH ? normalizedQuery : null;
 
-  let countQuery = (supabase as any)
-    .from("global_articles")
-    .select("id", { count: "exact", head: true });
-
-  const metadataFields: Array<keyof MetadataOptionsByField> = [
-    "topic",
-    "type",
-    "coverage",
-    "duration",
-    "impact",
-  ];
-
-  for (const field of metadataFields) {
-    const selected = metadataFilters?.[field] ?? [];
-    if (selected.length > 0) {
-      query = query.in(field, selected);
-      countQuery = countQuery.in(field, selected);
-    }
-  }
-
-  const [{ data, error }, { count, error: countError }] = await Promise.all([
-    query.range(start, end),
-    countQuery,
-  ]);
+  const { data, error } = await (supabase as any).rpc(
+    "search_articles_feed_page",
+    {
+      query_text: activeQuery,
+      topic_filters:
+        metadataFilters?.topic && metadataFilters.topic.length > 0
+          ? metadataFilters.topic
+          : null,
+      type_filters:
+        metadataFilters?.type && metadataFilters.type.length > 0
+          ? metadataFilters.type
+          : null,
+      coverage_filters:
+        metadataFilters?.coverage && metadataFilters.coverage.length > 0
+          ? metadataFilters.coverage
+          : null,
+      duration_filters:
+        metadataFilters?.duration && metadataFilters.duration.length > 0
+          ? metadataFilters.duration
+          : null,
+      impact_filters:
+        metadataFilters?.impact && metadataFilters.impact.length > 0
+          ? metadataFilters.impact
+          : null,
+      page_size: Math.max(1, pageSize),
+      page_offset: Math.max(0, start),
+    },
+  );
 
   if (error) throw new Error(error.message);
-  if (countError) throw new Error(countError.message);
 
-  const allRows = (data as GlobalArticle[] | null) ?? [];
-  const totalPages = Math.max(1, Math.ceil((count ?? 0) / pageSize));
+  const rows =
+    (data as Array<GlobalArticle & { total_count: number | null }>) ?? [];
+  const totalCount = rows[0]?.total_count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / Math.max(pageSize, 1)));
 
   return {
-    articles: allRows.slice(0, pageSize),
-    hasNextPage: allRows.length > pageSize,
+    articles: rows.map(({ total_count: _totalCount, ...article }) => article),
+    hasNextPage: page < totalPages,
     totalPages,
   };
 }

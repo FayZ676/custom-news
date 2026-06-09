@@ -15,9 +15,10 @@ import { NewsItemCard } from "@/components/NewsItemCard";
 
 interface ViewFeedProps {
   articles: GlobalArticle[];
+  emptyStateMessage?: string;
 }
 
-export function ViewFeed({ articles }: ViewFeedProps) {
+export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
   const hasRenderableImage = (imageUrl?: string | null) =>
     imageUrl?.startsWith("https://") ?? false;
@@ -27,7 +28,6 @@ export function ViewFeed({ articles }: ViewFeedProps) {
   const articlesWithoutImages = articles.filter(
     (article) => !hasRenderableImage(article.image_url),
   );
-  const orderedArticles = [...articlesWithImages, ...articlesWithoutImages];
 
   function openModal(article: GlobalArticle) {
     const item: NewsItemArticle = {
@@ -46,7 +46,7 @@ export function ViewFeed({ articles }: ViewFeedProps) {
   if (articles.length === 0) {
     return (
       <p className="text-sm italic text-neutral-500">
-        No articles available right now.
+        {emptyStateMessage ?? "No articles available right now."}
       </p>
     );
   }

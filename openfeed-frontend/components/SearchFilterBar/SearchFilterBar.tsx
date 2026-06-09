@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   ArticleMetadataField,
@@ -15,6 +15,7 @@ interface SearchFilterBarProps {
     field: ArticleMetadataField,
     nextOptions: string[],
   ) => Promise<void>;
+  onSearchQueryChange: (query: string) => void;
   onFilterSheetClose: () => void;
 }
 
@@ -22,9 +23,11 @@ export default function SearchFilterBar({
   metadataOptions,
   activeMetadataFilters,
   onChangeFieldOptions,
+  onSearchQueryChange,
   onFilterSheetClose,
 }: SearchFilterBarProps) {
   const filterSheetRef = useRef<FilterSheetHandle>(null);
+  const [searchValue, setSearchValue] = useState("");
 
   const totalFilters = useMemo(
     () =>
@@ -34,6 +37,14 @@ export default function SearchFilterBar({
       ),
     [activeMetadataFilters],
   );
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      onSearchQueryChange(searchValue.trim());
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [onSearchQueryChange, searchValue]);
 
   const handleToggleFieldOption = (
     field: ArticleMetadataField,
@@ -54,8 +65,15 @@ export default function SearchFilterBar({
   return (
     <div className="sticky top-0 z-30 bg-base-100 border-b border-base-300 px-5 py-2.5">
       <div className="flex items-center justify-between gap-2.5">
-        <div className="text-[11px] uppercase tracking-[0.12em] text-base-content/50">
-          Personalize your feed with metadata filters
+        <div className="flex-1">
+          <input
+            type="search"
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder="Search article titles"
+            className="w-full rounded-sm bg-base-200 border border-base-300 px-3 h-9.5 text-sm text-base-content placeholder:text-base-content/45 focus:outline-none focus:ring-1 focus:ring-base-content/35"
+            aria-label="Search article titles"
+          />
         </div>
 
         <div className="relative shrink-0">
