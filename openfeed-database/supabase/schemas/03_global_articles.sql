@@ -14,7 +14,10 @@ create table "global_articles" (
     "impact" text,
     "image_url" text,
     "published_at" timestamptz not null,
-    "created_at" timestamptz not null default now()
+    "created_at" timestamptz not null default now(),
+    "search_vector" tsvector generated always as (
+        to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, ''))
+    ) stored
 );
 
 alter table "global_articles" enable row level security;
@@ -26,6 +29,9 @@ create policy "global_articles_select_policy"
 
 create index if not exists global_articles_title_trgm_idx
   on global_articles using gin (title gin_trgm_ops);
+
+create index global_articles_search_vector_idx
+  on global_articles using gin (search_vector);
 
 create or replace function search_articles_feed_page(
   query_text text default null,
@@ -57,44 +63,30 @@ language sql
 stable
 as $$
   with normalized as (
-    select nullif(trim(query_text), '') as q
+    select
+      nullif(trim(query_text), '') as q,
+      case
+        when length(nullif(trim(query_text), '')) >= 3
+          then websearch_to_tsquery('english', nullif(trim(query_text), ''))
+        else null
+      end as tsq
   ),
   filtered as (
-    select ga.*, n.q
+    select ga.*, n.q, n.tsq
     from global_articles ga
     cross join normalized n
     where
       (
         n.q is null
         or length(n.q) < 3
-        or ga.title ilike '%' || n.q || '%'
+        or (n.tsq is not null and ga.search_vector @@ n.tsq)
         or lower(n.q) <% lower(ga.title)
       )
-      and (
-        topic_filters is null
-        or cardinality(topic_filters) = 0
-        or ga.topic = any(topic_filters)
-      )
-      and (
-        type_filters is null
-        or cardinality(type_filters) = 0
-        or ga.type = any(type_filters)
-      )
-      and (
-        coverage_filters is null
-        or cardinality(coverage_filters) = 0
-        or ga.coverage = any(coverage_filters)
-      )
-      and (
-        duration_filters is null
-        or cardinality(duration_filters) = 0
-        or ga.duration = any(duration_filters)
-      )
-      and (
-        impact_filters is null
-        or cardinality(impact_filters) = 0
-        or ga.impact = any(impact_filters)
-      )
+      and (topic_filters is null or cardinality(topic_filters) = 0 or ga.topic = any(topic_filters))
+      and (type_filters is null or cardinality(type_filters) = 0 or ga.type = any(type_filters))
+      and (coverage_filters is null or cardinality(coverage_filters) = 0 or ga.coverage = any(coverage_filters))
+      and (duration_filters is null or cardinality(duration_filters) = 0 or ga.duration = any(duration_filters))
+      and (impact_filters is null or cardinality(impact_filters) = 0 or ga.impact = any(impact_filters))
   ),
   ranked as (
     select
@@ -113,22 +105,15 @@ as $$
       filtered.created_at,
       count(*) over() as total_count,
       case
-        when filtered.q is not null
-          and length(filtered.q) >= 3
-          and filtered.title ilike '%' || filtered.q || '%'
-          then 1
+        when filtered.tsq is not null and filtered.search_vector @@ filtered.tsq
+          then ts_rank(filtered.search_vector, filtered.tsq)
         else 0
-      end as exact_match_rank,
+      end as fts_rank,
       case
         when filtered.q is not null and length(filtered.q) >= 3
           then word_similarity(lower(filtered.q), lower(filtered.title))
         else 0
-      end as word_similarity_rank,
-      case
-        when filtered.q is not null and length(filtered.q) >= 3
-          then similarity(lower(filtered.title), lower(filtered.q))
-        else 0
-      end as trigram_similarity_rank
+      end as trgm_rank
     from filtered
   )
   select
@@ -148,9 +133,8 @@ as $$
     ranked.total_count
   from ranked
   order by
-    exact_match_rank desc,
-    word_similarity_rank desc,
-    trigram_similarity_rank desc,
+    fts_rank desc,
+    trgm_rank desc,
     published_at desc
   limit greatest(page_size, 1)
   offset greatest(page_offset, 0);

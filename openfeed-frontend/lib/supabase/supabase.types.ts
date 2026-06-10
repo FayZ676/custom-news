@@ -62,6 +62,7 @@ export type Database = {
           image_url: string | null;
           impact: string | null;
           published_at: string;
+          search_vector: unknown;
           summary: string | null;
           title: string;
           topic: string | null;
@@ -77,6 +78,7 @@ export type Database = {
           image_url?: string | null;
           impact?: string | null;
           published_at: string;
+          search_vector?: unknown;
           summary?: string | null;
           title: string;
           topic?: string | null;
@@ -92,6 +94,7 @@ export type Database = {
           image_url?: string | null;
           impact?: string | null;
           published_at?: string;
+          search_vector?: unknown;
           summary?: string | null;
           title?: string;
           topic?: string | null;

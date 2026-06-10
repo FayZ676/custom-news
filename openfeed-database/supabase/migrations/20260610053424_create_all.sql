@@ -28,7 +28,8 @@ alter table "public"."global_article_metadata_options" enable row level security
     "impact" text,
     "image_url" text,
     "published_at" timestamp with time zone not null,
-    "created_at" timestamp with time zone not null default now()
+    "created_at" timestamp with time zone not null default now(),
+    "search_vector" tsvector generated always as (to_tsvector('english'::regconfig, ((COALESCE(title, ''::text) || ' '::text) || COALESCE(summary, ''::text)))) stored
       );
 
 
@@ -108,6 +109,8 @@ alter table "public"."user_settings" enable row level security;
 CREATE UNIQUE INDEX global_article_metadata_options_pkey ON public.global_article_metadata_options USING btree (field, name);
 
 CREATE UNIQUE INDEX global_articles_pkey ON public.global_articles USING btree (id);
+
+CREATE INDEX global_articles_search_vector_idx ON public.global_articles USING gin (search_vector);
 
 CREATE INDEX global_articles_title_trgm_idx ON public.global_articles USING gin (title public.gin_trgm_ops);
 
@@ -208,74 +211,36 @@ end;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.search_articles_by_title_fuzzy(query_text text, match_count integer DEFAULT 3)
- RETURNS SETOF public.global_articles
- LANGUAGE sql
- STABLE
-AS $function$
-  select ga.*
-  from global_articles ga
-  where length(trim(query_text)) >= 3
-    and (
-      ga.title ilike '%' || trim(query_text) || '%'
-      or lower(trim(query_text)) <% lower(ga.title)
-    )
-  order by
-    case
-      when ga.title ilike '%' || trim(query_text) || '%' then 1
-      else 0
-    end desc,
-    word_similarity(lower(trim(query_text)), lower(ga.title)) desc,
-    similarity(lower(ga.title), lower(trim(query_text))) desc,
-    ga.published_at desc
-  limit greatest(match_count, 1);
-$function$
-;
-
 CREATE OR REPLACE FUNCTION public.search_articles_feed_page(query_text text DEFAULT NULL::text, topic_filters text[] DEFAULT NULL::text[], type_filters text[] DEFAULT NULL::text[], coverage_filters text[] DEFAULT NULL::text[], duration_filters text[] DEFAULT NULL::text[], impact_filters text[] DEFAULT NULL::text[], page_size integer DEFAULT 10, page_offset integer DEFAULT 0)
  RETURNS TABLE(id uuid, feed_title text, title text, url text, summary text, topic text, type text, coverage text, duration text, impact text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone, total_count bigint)
  LANGUAGE sql
  STABLE
 AS $function$
   with normalized as (
-    select nullif(trim(query_text), '') as q
+    select
+      nullif(trim(query_text), '') as q,
+      case
+        when length(nullif(trim(query_text), '')) >= 3
+          then websearch_to_tsquery('english', nullif(trim(query_text), ''))
+        else null
+      end as tsq
   ),
   filtered as (
-    select ga.*, n.q
+    select ga.*, n.q, n.tsq
     from global_articles ga
     cross join normalized n
     where
       (
         n.q is null
         or length(n.q) < 3
-        or ga.title ilike '%' || n.q || '%'
+        or (n.tsq is not null and ga.search_vector @@ n.tsq)
         or lower(n.q) <% lower(ga.title)
       )
-      and (
-        topic_filters is null
-        or cardinality(topic_filters) = 0
-        or ga.topic = any(topic_filters)
-      )
-      and (
-        type_filters is null
-        or cardinality(type_filters) = 0
-        or ga.type = any(type_filters)
-      )
-      and (
-        coverage_filters is null
-        or cardinality(coverage_filters) = 0
-        or ga.coverage = any(coverage_filters)
-      )
-      and (
-        duration_filters is null
-        or cardinality(duration_filters) = 0
-        or ga.duration = any(duration_filters)
-      )
-      and (
-        impact_filters is null
-        or cardinality(impact_filters) = 0
-        or ga.impact = any(impact_filters)
-      )
+      and (topic_filters is null or cardinality(topic_filters) = 0 or ga.topic = any(topic_filters))
+      and (type_filters is null or cardinality(type_filters) = 0 or ga.type = any(type_filters))
+      and (coverage_filters is null or cardinality(coverage_filters) = 0 or ga.coverage = any(coverage_filters))
+      and (duration_filters is null or cardinality(duration_filters) = 0 or ga.duration = any(duration_filters))
+      and (impact_filters is null or cardinality(impact_filters) = 0 or ga.impact = any(impact_filters))
   ),
   ranked as (
     select
@@ -294,22 +259,15 @@ AS $function$
       filtered.created_at,
       count(*) over() as total_count,
       case
-        when filtered.q is not null
-          and length(filtered.q) >= 3
-          and filtered.title ilike '%' || filtered.q || '%'
-          then 1
+        when filtered.tsq is not null and filtered.search_vector @@ filtered.tsq
+          then ts_rank(filtered.search_vector, filtered.tsq)
         else 0
-      end as exact_match_rank,
+      end as fts_rank,
       case
         when filtered.q is not null and length(filtered.q) >= 3
           then word_similarity(lower(filtered.q), lower(filtered.title))
         else 0
-      end as word_similarity_rank,
-      case
-        when filtered.q is not null and length(filtered.q) >= 3
-          then similarity(lower(filtered.title), lower(filtered.q))
-        else 0
-      end as trigram_similarity_rank
+      end as trgm_rank
     from filtered
   )
   select
@@ -329,9 +287,8 @@ AS $function$
     ranked.total_count
   from ranked
   order by
-    exact_match_rank desc,
-    word_similarity_rank desc,
-    trigram_similarity_rank desc,
+    fts_rank desc,
+    trgm_rank desc,
     published_at desc
   limit greatest(page_size, 1)
   offset greatest(page_offset, 0);
