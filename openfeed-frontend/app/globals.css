@@ -1,4 +1,50 @@
 @import "tailwindcss";
+
 @plugin "daisyui" {
-    themes: light --default, black;
+  themes: light --default, black;
+}
+
+/* ── Warm light theme ──────────────────────────────────────────────────────
+   Shifts DaisyUI's default cool-white palette to warmer off-white tones.
+   All other components inherit from these tokens automatically.
+   ───────────────────────────────────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  --color-base-100: oklch(98.2% 0.004 75);    /* warm off-white background */
+  --color-base-200: oklch(95.5% 0.006 75);    /* subtle surface */
+  --color-base-300: oklch(89.5% 0.010 75);    /* borders, dividers */
+  --color-base-content: oklch(18.5% 0.012 75); /* warm near-black text */
+}
+
+/* ── Component classes ─────────────────────────────────────────────────────
+   Single source of truth for recurring UI patterns.
+   Use these instead of writing raw Tailwind strings in components.
+   ───────────────────────────────────────────────────────────────────────── */
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply cursor-pointer rounded-xs bg-base-content px-5 py-2.5 text-sm font-medium text-base-100 transition-opacity hover:opacity-80 disabled:opacity-40;
+  }
+  .btn-secondary {
+    @apply cursor-pointer rounded-xs border border-base-300 px-5 py-2.5 text-sm transition-colors hover:bg-base-200 disabled:opacity-40;
+  }
+  .btn-text {
+    @apply cursor-pointer text-sm text-base-content/60 transition-colors hover:text-base-content hover:underline underline-offset-2 disabled:opacity-40;
+  }
+
+  /* Inputs */
+  .input-field {
+    @apply input rounded-xs w-full text-sm focus:outline-none disabled:opacity-50;
+  }
+
+  /* Typography */
+  .text-muted {
+    @apply text-sm text-base-content/50;
+  }
+  .heading-page {
+    @apply text-4xl font-semibold tracking-tight md:text-5xl;
+  }
+  .heading-modal {
+    @apply text-lg font-semibold;
+  }
 }

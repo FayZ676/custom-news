@@ -54,11 +54,11 @@ export function NewsItemCard({
             {title}
           </h2>
           {summary && (
-            <p className="text-sm text-neutral-500 line-clamp-2 sm:line-clamp-3">
+            <p className="text-muted line-clamp-2 sm:line-clamp-3">
               {summary}
             </p>
           )}
-          {meta && <span className="text-sm text-neutral-500">{meta}</span>}
+          {meta && <span className="text-muted">{meta}</span>}
         </div>
       </div>
     </li>

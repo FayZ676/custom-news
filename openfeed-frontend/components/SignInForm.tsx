@@ -40,7 +40,7 @@ export default function SignInForm() {
         placeholder="Email"
         required
         disabled={loading}
-        className="input input-bordered rounded-none w-full focus:outline-none disabled:opacity-50"
+        className="input-field"
       />
       <input
         type="password"
@@ -48,13 +48,13 @@ export default function SignInForm() {
         placeholder="Password"
         required
         disabled={loading}
-        className="input input-bordered w-full rounded-none focus:outline-none disabled:opacity-50"
+        className="input w-full rounded-xs focus:outline-none disabled:opacity-50"
       />
       {error && <p className="text-error text-sm text-center">{error}</p>}
       <button
         type="submit"
         disabled={loading}
-        className="btn btn-neutral rounded-none w-full mt-2"
+        className="btn-primary w-full mt-2"
       >
         {loading ? (
           <>

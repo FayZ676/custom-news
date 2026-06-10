@@ -13,9 +13,9 @@ const Modal = forwardRef<HTMLDialogElement, ModalProps>(
       <dialog
         ref={ref}
         onClose={onClose}
-        className="modal modal-bottom sm:modal-middle rounded-none"
+        className="modal modal-bottom sm:modal-middle rounded-xs"
       >
-        <div className="modal-box rounded-none">
+        <div className="modal-box rounded-xs">
           <form method="dialog">
             <button className="btn btn-ghost btn-sm btn-circle absolute right-2 top-2 focus:outline-none">
               ✕

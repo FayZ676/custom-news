@@ -90,7 +90,7 @@ export const SettingsModal = forwardRef<
     return (
       <Modal ref={dialogRef}>
         <div className="flex flex-col gap-4">
-          <h3 className="text-xl font-semibold pr-6">Settings</h3>
+          <h3 className="heading-modal pr-6">Settings</h3>
 
           {status === "loading" && (
             <p className="text-sm">Fetching your settings…</p>
@@ -103,11 +103,11 @@ export const SettingsModal = forwardRef<
           )}
 
           {status === "loaded" && (
-            <div className="flex flex-col gap-4 divide-y divide-neutral-400">
+            <div className="flex flex-col gap-4 divide-y divide-base-300">
               <div>
                 <button
                   onClick={handleToggleNotifications}
-                  className="cursor-pointer hover:font-bold hover:underline pb-3"
+                  className="btn-text pb-3"
                 >
                   Email Notifications ({emailNotification ? "On" : "Off"})
                 </button>
@@ -115,7 +115,7 @@ export const SettingsModal = forwardRef<
               <div>
                 <button
                   onClick={handleToggleTheme}
-                  className="cursor-pointer hover:font-bold hover:underline pb-3"
+                  className="btn-text pb-3"
                 >
                   Theme ({colorTheme === "cupcake" ? "Light" : "Dark"})
                 </button>
@@ -127,7 +127,7 @@ export const SettingsModal = forwardRef<
                     await handleSignOut();
                   }}
                   disabled={signingOut}
-                  className="cursor-pointer hover:font-bold hover:underline disabled:opacity-50 pb-3"
+                  className="btn-text pb-3"
                 >
                   {signingOut ? "Signing out…" : "Sign Out"}
                 </button>

@@ -35,11 +35,11 @@ export function Footer({
 
   return (
     <footer className="text-sm">
-      <div className="flex flex-col gap-4 divide-y divide-neutral-400">
+      <div className="flex flex-col gap-4 divide-y divide-base-300">
         <div>
           <button
             onClick={() => feedbackModalRef.current?.open()}
-            className="cursor-pointer hover:font-bold hover:underline pb-3"
+            className="btn-text pb-3"
           >
             Send Feedback
           </button>
@@ -47,12 +47,12 @@ export function Footer({
         <div>
           <button
             onClick={() => settingsModalRef.current?.open()}
-            className="cursor-pointer hover:font-bold hover:underline pb-3"
+            className="btn-text pb-3"
           >
             Settings
           </button>
         </div>
-        <span className="italic">{userEmail}</span>
+        <span className="text-muted italic">{userEmail}</span>
       </div>
 
       <FeedbackModal ref={feedbackModalRef} userEmail={userEmail} />

@@ -57,7 +57,7 @@ export const FeedbackModal = forwardRef<
   return (
     <Modal ref={dialogRef}>
       <div className="flex flex-col gap-4">
-        <h3 className="text-xl font-semibold pr-6">Send Feedback</h3>
+        <h3 className="heading-modal pr-6">Send Feedback</h3>
 
         {status === "success" ? (
           <p className="text-sm">Thanks for your feedback!</p>
@@ -80,7 +80,7 @@ export const FeedbackModal = forwardRef<
             <button
               type="submit"
               disabled={status === "loading"}
-              className="cursor-pointer font-bold underline disabled:opacity-50 pb-3 ml-auto"
+              className="btn-text ml-auto"
             >
               {status === "loading" ? "Sending…" : "Submit"}
             </button>

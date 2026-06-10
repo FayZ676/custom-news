@@ -54,15 +54,15 @@ export function Banner({ date, feeds }: BannerProps) {
 export function BannerSkeleton() {
   return (
     <div className="flex flex-col gap-1">
-      <hr className="border-neutral-300 border-t" />
+      <hr className="border-base-300border-t" />
       <div className="grid grid-cols-[1fr_3fr_1fr] items-center">
         <div className="skeleton h-4 w-24 rounded" />
         <div className="skeleton h-4 w-48 rounded mx-auto" />
         <div className="skeleton h-4 w-24 rounded ml-auto" />
       </div>
-      <hr className="border-neutral-300 border-t-2" />
+      <hr className="border-base-300border-t-2" />
       <div className="skeleton h-5 w-full rounded" />
-      <hr className="border-neutral-300 border-t" />
+      <hr className="border-base-300border-t" />
     </div>
   );
 }
