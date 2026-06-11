@@ -5,8 +5,8 @@ import {
   MetadataOptionsByField,
 } from "@/lib/supabase/queries/global_article_metadata_options";
 
-import FilterSheet from "./FilterSheet";
-import type { FilterSheetHandle } from "./FilterSheet";
+import FilterModal from "./FilterModal";
+import type { FilterModalHandle } from "./FilterModal";
 
 interface SearchFilterBarProps {
   metadataOptions: MetadataOptionsByField;
@@ -16,7 +16,7 @@ interface SearchFilterBarProps {
     nextOptions: string[],
   ) => Promise<void>;
   onSearchQueryChange: (query: string) => void;
-  onFilterSheetClose: () => void;
+  onFilterModalClose: () => void;
 }
 
 export default function SearchFilterBar({
@@ -24,9 +24,9 @@ export default function SearchFilterBar({
   activeMetadataFilters,
   onChangeFieldOptions,
   onSearchQueryChange,
-  onFilterSheetClose,
+  onFilterModalClose,
 }: SearchFilterBarProps) {
-  const filterSheetRef = useRef<FilterSheetHandle>(null);
+  const filterModalRef = useRef<FilterModalHandle>(null);
   const [searchValue, setSearchValue] = useState("");
 
   const totalFilters = useMemo(
@@ -63,7 +63,7 @@ export default function SearchFilterBar({
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-base-100 border-b border-base-300 px-5 py-2.5">
+    <div className="sticky top-0 z-30 bg-base-100 border-b border-base-300 py-2">
       <div className="flex items-center justify-between gap-2.5">
         <div className="flex-1">
           <input
@@ -78,16 +78,14 @@ export default function SearchFilterBar({
 
         <div className="relative shrink-0">
           <button
-            onClick={() => filterSheetRef.current?.open()}
-            className="inline-flex items-center gap-2 rounded-sm bg-base-200 border-none cursor-pointer px-3 h-9.5"
+            onClick={() => filterModalRef.current?.open()}
+            className="btn-secondary"
           >
-            <span className="text-[11px] uppercase tracking-[0.08em] text-base-content/80">
-              Filters
-            </span>
+            <span className="uppercase tracking-[0.08em]">Filters</span>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path
                 d="M2 4h12M5 8h6M7 12h2"
-                stroke="#888"
+                stroke="currentColor"
                 strokeWidth="1.4"
                 strokeLinecap="round"
               />
@@ -101,13 +99,13 @@ export default function SearchFilterBar({
         </div>
       </div>
 
-      <FilterSheet
-        ref={filterSheetRef}
+      <FilterModal
+        ref={filterModalRef}
         metadataOptions={metadataOptions}
         activeMetadataFilters={activeMetadataFilters}
         onToggleFieldOption={handleToggleFieldOption}
         onClearField={handleClearField}
-        onClose={onFilterSheetClose}
+        onClose={onFilterModalClose}
       />
     </div>
   );

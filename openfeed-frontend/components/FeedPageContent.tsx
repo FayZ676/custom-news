@@ -45,7 +45,7 @@ export function FeedPageContent({
     useState<MetadataOptionsByField>(initialMetadataFilters);
   const [hasPendingFilterChanges, setHasPendingFilterChanges] = useState(false);
   const [pendingFilterSaveCount, setPendingFilterSaveCount] = useState(0);
-  const [refreshOnFilterSheetClose, setRefreshOnFilterSheetClose] =
+  const [refreshOnFilterModalClose, setRefreshOnFilterModalClose] =
     useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchPage, setSearchPage] = useState(1);
@@ -61,15 +61,15 @@ export function FeedPageContent({
   }, [initialMetadataFilters]);
 
   useEffect(() => {
-    if (!refreshOnFilterSheetClose || pendingFilterSaveCount > 0) {
+    if (!refreshOnFilterModalClose || pendingFilterSaveCount > 0) {
       return;
     }
 
     setHasPendingFilterChanges(false);
-    setRefreshOnFilterSheetClose(false);
+    setRefreshOnFilterModalClose(false);
     setSearchPage(1);
     router.refresh();
-  }, [pendingFilterSaveCount, refreshOnFilterSheetClose, router]);
+  }, [pendingFilterSaveCount, refreshOnFilterModalClose, router]);
 
   const handleChangeFieldOptions = useCallback(
     async (field: ArticleMetadataField, nextOptions: string[]) => {
@@ -93,9 +93,9 @@ export function FeedPageContent({
     [activeMetadataFilters, onChangeMetadataOptions],
   );
 
-  const handleFilterSheetClose = useCallback(() => {
+  const handleFilterModalClose = useCallback(() => {
     if (!hasPendingFilterChanges) return;
-    setRefreshOnFilterSheetClose(true);
+    setRefreshOnFilterModalClose(true);
   }, [hasPendingFilterChanges]);
 
   const handleSearchQueryChange = useCallback(async (query: string) => {
@@ -184,11 +184,11 @@ export function FeedPageContent({
         activeMetadataFilters={activeMetadataFilters}
         onChangeFieldOptions={handleChangeFieldOptions}
         onSearchQueryChange={handleSearchQueryChange}
-        onFilterSheetClose={handleFilterSheetClose}
+        onFilterModalClose={handleFilterModalClose}
       />
       <div className="pt-4">
         {isSearching && isSearchActive ? (
-          <p className="text-sm italic text-neutral-500">Searching...</p>
+          <p className="text-secondary italic">Searching...</p>
         ) : (
           <ViewFeed
             articles={displayedArticles}

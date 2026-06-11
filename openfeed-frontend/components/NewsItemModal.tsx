@@ -97,12 +97,12 @@ export const NewsItemModal = forwardRef<
     <Modal ref={dialogRef} onClose={onClose}>
       {selectedItem && (
         <div className="flex flex-col gap-4">
-          <h3 className="text-xl font-semibold pr-6">
+          <h3 className="heading-modal pr-6">
             {toTitleCase(selectedItem.title)}
           </h3>
 
           {(selectedItem.feedTitle || selectedItem.publishedAt) && (
-            <p className="text-sm text-neutral-500">
+            <p className="text-muted">
               {selectedItem.feedTitle}
               {selectedItem.feedTitle && selectedItem.publishedAt && " · "}
               {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
@@ -125,38 +125,32 @@ export const NewsItemModal = forwardRef<
             <p className="text-base leading-relaxed">{selectedItem.summary}</p>
           )}
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex items-center justify-between pt-2 border-t border-base-300">
             <a
               href={selectedItem.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-bold underline"
+              className="btn-secondary"
             >
               Read full article →
             </a>
-          </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-neutral-700">
-            <div />
-
-            <div className="flex items-center gap-1">
-              <button
-                className="p-1.5 disabled:opacity-50 cursor-pointer text-base-content/60 hover:text-base-content transition-colors"
-                onClick={handleCopy}
-                disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
-                aria-label={
-                  copyState === "copied"
-                    ? "Copied to clipboard"
-                    : "Copy share link"
-                }
-              >
-                {copyState === "copied" ? (
-                  <ClipboardCheck size={18} className="text-success" />
-                ) : (
-                  <Copy size={18} />
-                )}
-              </button>
-            </div>
+            <button
+              className="p-1.5 disabled:opacity-50 cursor-pointer text-base-content/60 hover:text-base-content transition-colors"
+              onClick={handleCopy}
+              disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
+              aria-label={
+                copyState === "copied"
+                  ? "Copied to clipboard"
+                  : "Copy share link"
+              }
+            >
+              {copyState === "copied" ? (
+                <ClipboardCheck size={18} className="text-success" />
+              ) : (
+                <Copy size={18} />
+              )}
+            </button>
           </div>
         </div>
       )}

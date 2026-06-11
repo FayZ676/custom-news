@@ -2,9 +2,14 @@ import type { Metadata } from "next";
 
 import { Analytics } from "@vercel/analytics/next";
 
-import { Lora } from "next/font/google";
+import { Geist, Lora } from "next/font/google";
 
 import "./globals.css";
+
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+});
 
 const lora = Lora({
   variable: "--font-lora",
@@ -67,7 +72,8 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${lora.className} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
+        className={`${geist.variable} ${lora.variable} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
+        style={{ fontFamily: "var(--font-geist)" }}
       >
         {children}
         <Analytics />

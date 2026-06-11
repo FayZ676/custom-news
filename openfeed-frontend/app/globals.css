@@ -4,47 +4,108 @@
   themes: light --default, black;
 }
 
-/* ── Warm light theme ──────────────────────────────────────────────────────
-   Shifts DaisyUI's default cool-white palette to warmer off-white tones.
-   All other components inherit from these tokens automatically.
+/* ── Design Tokens ──────────────────────────────────────────────────────────
+   Single source of truth for every visual decision.
+   All aesthetic properties in the app trace back here.
+   Never use raw values in components — always reference a token.
+   ───────────────────────────────────────────────────────────────────────── */
+/* Font tokens live on body so they share scope with Next.js font variables
+   (--font-geist, --font-lora), which Next.js also injects on body. */
+body {
+  --font-sans: var(--font-geist);
+  --font-serif: var(--font-lora);
+}
+
+:root {
+
+  /* Radius
+     md for most UI, lg for cards/modals. */
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* Shadows — warm-tinted, never cool grey */
+  --shadow-sm: 0 1px 3px oklch(18% 0.012 75 / 0.06);
+  --shadow-md: 0 2px 8px oklch(18% 0.012 75 / 0.08);
+
+  /* Motion — one curve, two speeds */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+}
+
+/* ── Color palette ──────────────────────────────────────────────────────────
+   Warm off-white surfaces with softened text contrast.
    ───────────────────────────────────────────────────────────────────────── */
 :root,
 [data-theme="light"] {
   --color-base-100: oklch(98.2% 0.004 75);    /* warm off-white background */
   --color-base-200: oklch(95.5% 0.006 75);    /* subtle surface */
   --color-base-300: oklch(89.5% 0.010 75);    /* borders, dividers */
-  --color-base-content: oklch(18.5% 0.012 75); /* warm near-black text */
+  --color-base-content: oklch(32% 0.014 75);  /* softened warm charcoal text */
 }
 
-/* ── Component classes ─────────────────────────────────────────────────────
-   Single source of truth for recurring UI patterns.
-   Use these instead of writing raw Tailwind strings in components.
+/* ── Component classes ──────────────────────────────────────────────────────
+   Reusable UI patterns built from tokens.
+   Use these in components — never write raw values inline.
    ───────────────────────────────────────────────────────────────────────── */
 @layer components {
-  /* Buttons */
+  /* Buttons
+     Primary: strong CTA — filled dark.
+     Secondary: everything else interactive — subtle fill, no border, scales to any size.
+     Text: utility/nav links — no chrome. */
   .btn-primary {
-    @apply cursor-pointer rounded-xs bg-base-content px-5 py-2.5 text-sm font-medium text-base-100 transition-opacity hover:opacity-80 disabled:opacity-40;
+    font-family: var(--font-sans);
+    border-radius: var(--radius-md);
+    transition: opacity var(--duration-fast) var(--ease);
+    @apply inline-flex items-center justify-center cursor-pointer bg-base-content px-5 py-2.5 text-sm font-medium text-base-100 disabled:opacity-40 hover:opacity-80 active:opacity-70;
   }
   .btn-secondary {
-    @apply cursor-pointer rounded-xs border border-base-300 px-5 py-2.5 text-sm transition-colors hover:bg-base-200 disabled:opacity-40;
+    font-family: var(--font-sans);
+    border-radius: var(--radius-md);
+    border: none;
+    transition: all var(--duration-fast) var(--ease);
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm cursor-pointer select-none whitespace-nowrap bg-base-200 text-base-content/70 font-medium hover:bg-base-300 hover:text-base-content active:opacity-70 disabled:opacity-40 disabled:pointer-events-none;
+  }
+  .btn-secondary[data-active="true"] {
+    @apply bg-base-content text-base-100;
   }
   .btn-text {
-    @apply cursor-pointer text-sm text-base-content/60 transition-colors hover:text-base-content hover:underline underline-offset-2 disabled:opacity-40;
+    font-family: var(--font-sans);
+    transition: color var(--duration-fast) var(--ease);
+    @apply cursor-pointer text-sm text-base-content/50 underline-offset-2 disabled:opacity-40 hover:text-base-content hover:underline;
   }
 
   /* Inputs */
   .input-field {
-    @apply input rounded-xs w-full text-sm focus:outline-none disabled:opacity-50;
+    font-family: var(--font-sans);
+    border-radius: var(--radius-md);
+    @apply input w-full text-sm focus:outline-none disabled:opacity-50;
   }
 
   /* Typography */
-  .text-muted {
+  .text-body {
+    font-family: var(--font-sans);
+    @apply text-sm text-base-content/70;
+  }
+  .text-secondary {
+    font-family: var(--font-sans);
     @apply text-sm text-base-content/50;
   }
+  .text-muted {
+    font-family: var(--font-sans);
+    @apply text-xs text-base-content/50;
+  }
   .heading-page {
+    font-family: var(--font-sans);
     @apply text-4xl font-semibold tracking-tight md:text-5xl;
   }
   .heading-modal {
+    font-family: var(--font-serif);
     @apply text-lg font-semibold;
+  }
+  /* Article headlines — the one place serif lives */
+  .heading-article {
+    font-family: var(--font-serif);
+    @apply text-xl font-semibold leading-snug tracking-tight;
   }
 }

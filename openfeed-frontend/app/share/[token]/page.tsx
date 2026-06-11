@@ -33,7 +33,7 @@ function ArticleView({ article }: { article: Tables<"global_articles"> }) {
       <h1 className="text-2xl font-semibold">{toTitleCase(article.title)}</h1>
 
       {(article.feed_title || article.published_at) && (
-        <p className="text-sm text-neutral-500">
+        <p className="text-secondary">
           {article.feed_title}
           {article.feed_title && article.published_at && " · "}
           {article.published_at && timeAgo(article.published_at)}

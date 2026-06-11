@@ -45,7 +45,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
 
   if (articles.length === 0) {
     return (
-      <p className="text-sm italic text-neutral-500">
+      <p className="text-secondary italic">
         {emptyStateMessage ?? "No articles available right now."}
       </p>
     );
@@ -66,7 +66,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
         ))}
         {articlesWithImages.length > 0 && articlesWithoutImages.length > 0 && (
           <li aria-hidden="true" className="py-1">
-            <hr className="border-t border-neutral-800" />
+            <hr className="border-t border-base-300" />
           </li>
         )}
         {articlesWithoutImages.map((article) => (

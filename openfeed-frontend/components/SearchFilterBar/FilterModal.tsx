@@ -9,7 +9,7 @@ import {
 import Chip from "./Chip";
 import SectionLabel from "./SectionLabel";
 
-interface FilterSheetProps {
+interface FilterModalProps {
   metadataOptions: MetadataOptionsByField;
   activeMetadataFilters: MetadataOptionsByField;
   onToggleFieldOption: (field: ArticleMetadataField, name: string) => void;
@@ -17,11 +17,11 @@ interface FilterSheetProps {
   onClose: () => void;
 }
 
-export interface FilterSheetHandle {
+export interface FilterModalHandle {
   open: () => void;
 }
 
-const FilterSheet = forwardRef<FilterSheetHandle, FilterSheetProps>(
+const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
   (
     {
       metadataOptions,
@@ -45,12 +45,7 @@ const FilterSheet = forwardRef<FilterSheetHandle, FilterSheetProps>(
         <div className="w-full max-w-97.5 -mx-6 px-5 pb-8 pt-0 max-h-[80vh] flex flex-col">
           {/* Header */}
           <div className="px-5 pt-4 pb-3">
-            <span
-              className="text-lg font-bold text-base-content"
-              style={{ fontFamily: "Georgia, serif" }}
-            >
-              Filters
-            </span>
+            <span className="heading-modal">Filters</span>
           </div>
 
           <div className="overflow-y-auto flex-1">
@@ -102,6 +97,6 @@ const FilterSheet = forwardRef<FilterSheetHandle, FilterSheetProps>(
   },
 );
 
-FilterSheet.displayName = "FilterSheet";
+FilterModal.displayName = "FilterModal";
 
-export default FilterSheet;
+export default FilterModal;

@@ -50,11 +50,11 @@ export function NewsItemCard({
           </div>
         )}
         <div className="flex flex-col gap-2">
-          <h2 className="text-lg sm:text-xl hover:underline font-semibold leading-tight">
+          <h2 className="heading-article hover:underline">
             {title}
           </h2>
           {summary && (
-            <p className="text-muted line-clamp-2 sm:line-clamp-3">
+            <p className="text-body line-clamp-2 sm:line-clamp-3">
               {summary}
             </p>
           )}

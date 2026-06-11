@@ -13,7 +13,7 @@ export function LandingPage() {
         <Link href="/feed" className="btn-primary">
           Open Feed
         </Link>
-        <Link href="/auth/signin" className="btn-secondary">
+        <Link href="/auth/signin" className="btn-primary">
           Sign In
         </Link>
       </div>

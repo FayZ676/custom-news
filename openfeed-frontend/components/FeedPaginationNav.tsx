@@ -56,7 +56,7 @@ export function FeedPaginationNav({
               type="button"
               onClick={() => onPageChange?.(currentPage - 1)}
               aria-label="Go to previous page"
-              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+              className="btn-secondary"
             >
               <span aria-hidden="true">&larr;</span>
             </button>
@@ -64,15 +64,15 @@ export function FeedPaginationNav({
             <Link
               href={prevHref}
               aria-label="Go to previous page"
-              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+              className="btn-secondary"
             >
               <span aria-hidden="true">&larr;</span>
             </Link>
           )
         ) : (
-          <span className="h-9 min-w-9 shrink-0 px-2 border border-base-300/60 bg-base-200/40 text-base-content/30 inline-flex items-center justify-center text-sm font-medium cursor-not-allowed">
+          <button disabled aria-label="Go to previous page" className="btn-secondary">
             <span aria-hidden="true">&larr;</span>
-          </span>
+          </button>
         )}
 
         <div
@@ -88,14 +88,10 @@ export function FeedPaginationNav({
                   key={pageNumber}
                   type="button"
                   onClick={() => onPageChange?.(pageNumber)}
-                  data-page-active={isCurrent ? "true" : undefined}
+                  data-active={isCurrent ? "true" : undefined}
                   aria-current={isCurrent ? "page" : undefined}
                   aria-label={`Go to page ${pageNumber}`}
-                  className={`h-9 min-w-9 px-2 border inline-flex items-center justify-center text-sm transition-colors ${
-                    isCurrent
-                      ? "border-base-content bg-base-content text-base-100 font-semibold"
-                      : "border-base-300/70 bg-base-100 hover:bg-base-200/60"
-                  }`}
+                  className="btn-secondary"
                 >
                   {pageNumber}
                 </button>
@@ -103,14 +99,10 @@ export function FeedPaginationNav({
                 <Link
                   key={pageNumber}
                   href={buildPageHref(pageNumber)}
-                  data-page-active={isCurrent ? "true" : undefined}
+                  data-active={isCurrent ? "true" : undefined}
                   aria-current={isCurrent ? "page" : undefined}
                   aria-label={`Go to page ${pageNumber}`}
-                  className={`h-9 min-w-9 px-2 border inline-flex items-center justify-center text-sm transition-colors ${
-                    isCurrent
-                      ? "border-base-content bg-base-content text-base-100 font-semibold"
-                      : "border-base-300/70 bg-base-100 hover:bg-base-200/60"
-                  }`}
+                  className="btn-secondary"
                 >
                   {pageNumber}
                 </Link>
@@ -125,7 +117,7 @@ export function FeedPaginationNav({
               type="button"
               onClick={() => onPageChange?.(currentPage + 1)}
               aria-label="Go to next page"
-              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+              className="btn-secondary"
             >
               <span aria-hidden="true">&rarr;</span>
             </button>
@@ -133,15 +125,15 @@ export function FeedPaginationNav({
             <Link
               href={nextHref}
               aria-label="Go to next page"
-              className="h-9 min-w-9 shrink-0 px-2 border border-base-300/70 bg-base-100 hover:bg-base-200/60 transition-colors inline-flex items-center justify-center text-sm font-medium"
+              className="btn-secondary"
             >
               <span aria-hidden="true">&rarr;</span>
             </Link>
           )
         ) : (
-          <span className="h-9 min-w-9 shrink-0 px-2 border border-base-300/60 bg-base-200/40 text-base-content/30 inline-flex items-center justify-center text-sm font-medium cursor-not-allowed">
+          <button disabled aria-label="Go to next page" className="btn-secondary">
             <span aria-hidden="true">&rarr;</span>
-          </span>
+          </button>
         )}
       </div>
     </nav>
