@@ -52,7 +52,7 @@ export function Footer({
             Settings
           </button>
         </div>
-        <span className="text-muted italic">{userEmail}</span>
+        <span className="btn-text italic">{userEmail}</span>
       </div>
 
       <FeedbackModal ref={feedbackModalRef} userEmail={userEmail} />
