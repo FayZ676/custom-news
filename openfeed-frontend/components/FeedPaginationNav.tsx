@@ -31,7 +31,7 @@ export function FeedPaginationNav({
               type="button"
               onClick={() => onPageChange?.(currentPage - 1)}
               aria-label="Go to previous page"
-              className="btn-secondary"
+              className="btn-soft"
             >
               <ChevronLeft size={16} aria-hidden="true" />
             </button>
@@ -39,7 +39,7 @@ export function FeedPaginationNav({
             <Link
               href={buildPageHref(currentPage - 1)}
               aria-label="Go to previous page"
-              className="btn-secondary"
+              className="btn-soft"
             >
               <ChevronLeft size={16} aria-hidden="true" />
             </Link>
@@ -48,7 +48,7 @@ export function FeedPaginationNav({
           <button
             disabled
             aria-label="Go to previous page"
-            className="btn-secondary"
+            className="btn-soft"
           >
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
@@ -64,7 +64,7 @@ export function FeedPaginationNav({
               type="button"
               onClick={() => onPageChange?.(currentPage + 1)}
               aria-label="Go to next page"
-              className="btn-secondary"
+              className="btn-soft"
             >
               <ChevronRight size={16} aria-hidden="true" />
             </button>
@@ -72,7 +72,7 @@ export function FeedPaginationNav({
             <Link
               href={buildPageHref(currentPage + 1)}
               aria-label="Go to next page"
-              className="btn-secondary"
+              className="btn-soft"
             >
               <ChevronRight size={16} aria-hidden="true" />
             </Link>
@@ -81,7 +81,7 @@ export function FeedPaginationNav({
           <button
             disabled
             aria-label="Go to next page"
-            className="btn-secondary"
+            className="btn-soft"
           >
             <ChevronRight size={16} aria-hidden="true" />
           </button>

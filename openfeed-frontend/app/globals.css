@@ -42,6 +42,8 @@ body {
   --color-base-200: oklch(95.5% 0.006 75);    /* subtle surface */
   --color-base-300: oklch(89.5% 0.010 75);    /* borders, dividers */
   --color-base-content: oklch(32% 0.014 75);  /* softened warm charcoal text */
+  --color-error: oklch(55% 0.22 27);          /* clear red, not pinkish */
+  --color-error-content: oklch(97% 0.02 27);
 }
 
 /* ── Component classes ──────────────────────────────────────────────────────
@@ -59,14 +61,14 @@ body {
     transition: opacity var(--duration-fast) var(--ease);
     @apply inline-flex items-center justify-center cursor-pointer bg-base-content px-5 py-2.5 text-sm font-medium text-base-100 disabled:opacity-40 hover:opacity-80 active:opacity-70;
   }
-  .btn-secondary {
+  .btn-soft {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
     border: none;
     transition: all var(--duration-fast) var(--ease);
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm cursor-pointer select-none whitespace-nowrap bg-base-200 text-base-content/70 font-medium hover:bg-base-300 hover:text-base-content active:opacity-70 disabled:opacity-40 disabled:pointer-events-none;
   }
-  .btn-secondary[data-active="true"] {
+  .btn-soft[data-active="true"] {
     @apply bg-base-content text-base-100;
   }
   .btn-text {
@@ -87,7 +89,7 @@ body {
     font-family: var(--font-sans);
     @apply text-sm text-base-content/70;
   }
-  .text-secondary {
+  .text-subtle {
     font-family: var(--font-sans);
     @apply text-sm text-base-content/50;
   }

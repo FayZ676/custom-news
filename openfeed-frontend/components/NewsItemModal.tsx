@@ -130,13 +130,13 @@ export const NewsItemModal = forwardRef<
               href={selectedItem.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-secondary"
+              className="btn-soft"
             >
               Read full article <ArrowUpRight size={16} />
             </a>
 
             <button
-              className="btn-secondary disabled:opacity-50"
+              className="btn-soft disabled:opacity-50"
               onClick={handleCopy}
               disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
               aria-label={

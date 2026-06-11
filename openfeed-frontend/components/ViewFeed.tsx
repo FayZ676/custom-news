@@ -45,7 +45,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
 
   if (articles.length === 0) {
     return (
-      <p className="text-secondary italic">
+      <p className="text-subtle italic">
         {emptyStateMessage ?? "No articles available right now."}
       </p>
     );

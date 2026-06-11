@@ -80,7 +80,7 @@ export default function SearchFilterBar({
         <div className="relative shrink-0">
           <button
             onClick={() => filterModalRef.current?.open()}
-            className="btn-secondary h-9.5"
+            className="btn-soft h-9.5"
           >
             <span className="hidden sm:inline">Filters</span>
             <TextAlignEnd size={16} />

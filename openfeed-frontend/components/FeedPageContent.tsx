@@ -188,7 +188,7 @@ export function FeedPageContent({
       />
       <div className="">
         {isSearching && isSearchActive ? (
-          <p className="text-secondary italic">Searching...</p>
+          <p className="text-subtle italic">Searching...</p>
         ) : (
           <ViewFeed
             articles={displayedArticles}

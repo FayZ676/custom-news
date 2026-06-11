@@ -4,7 +4,7 @@ type Variant = "primary" | "secondary" | "text";
 
 const variants: Record<Variant, string> = {
   primary: "btn-primary",
-  secondary: "btn-secondary",
+  secondary: "btn-soft",
   text: "btn-text",
 };
 
