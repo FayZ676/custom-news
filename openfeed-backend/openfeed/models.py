@@ -79,7 +79,8 @@ class Article(BaseModel):
     def clean_html_fields(cls, v: str) -> str | None:
         if v is None:
             return None
-        return _strip_invisible(_strip_html(v)) or None
+        cleaned = _strip_invisible(_strip_html(v))
+        return cleaned if cleaned and len(cleaned.split()) >= 5 else None
 
     @property
     def image_url(self) -> str | None:
