@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface FeedPaginationNavProps {
   currentPage: number;
@@ -20,37 +20,15 @@ export function FeedPaginationNav({
   onPageChange,
 }: FeedPaginationNavProps) {
   const isControlled = Boolean(onPageChange);
-  const numberStripRef = useRef<HTMLDivElement>(null);
-  const prevHref = buildPageHref(currentPage - 1);
-  const nextHref = buildPageHref(currentPage + 1);
-  const pages = useMemo(
-    () => Array.from({ length: totalPages }, (_, index) => index + 1),
-    [totalPages],
-  );
-
-  useEffect(() => {
-    const strip = numberStripRef.current;
-    if (!strip) return;
-
-    const activePage = strip.querySelector<HTMLElement>(
-      '[data-page-active="true"]',
-    );
-    if (!activePage) return;
-
-    activePage.scrollIntoView({
-      block: "nearest",
-      inline: "center",
-      behavior: "auto",
-    });
-  }, [currentPage, totalPages]);
+  const hasPrevPage = currentPage > 1;
 
   return (
     <nav
       aria-label="Feed pagination"
       className="mt-8 border-t border-base-300 pt-5"
     >
-      <div className="flex items-center justify-center gap-2">
-        {currentPage > 1 ? (
+      <div className="flex items-center justify-center gap-4">
+        {hasPrevPage ? (
           isControlled ? (
             <button
               type="button"
@@ -58,58 +36,26 @@ export function FeedPaginationNav({
               aria-label="Go to previous page"
               className="btn-secondary"
             >
-              <span aria-hidden="true">&larr;</span>
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
           ) : (
             <Link
-              href={prevHref}
+              href={buildPageHref(currentPage - 1)}
               aria-label="Go to previous page"
               className="btn-secondary"
             >
-              <span aria-hidden="true">&larr;</span>
+              <ChevronLeft size={16} aria-hidden="true" />
             </Link>
           )
         ) : (
           <button disabled aria-label="Go to previous page" className="btn-secondary">
-            <span aria-hidden="true">&larr;</span>
+            <ChevronLeft size={16} aria-hidden="true" />
           </button>
         )}
 
-        <div
-          ref={numberStripRef}
-          className="max-w-[60vw] overflow-x-auto overscroll-x-contain pb-1"
-        >
-          <div className="flex items-center gap-1.5 min-w-max">
-            {pages.map((pageNumber) => {
-              const isCurrent = pageNumber === currentPage;
-
-              return isControlled ? (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  onClick={() => onPageChange?.(pageNumber)}
-                  data-active={isCurrent ? "true" : undefined}
-                  aria-current={isCurrent ? "page" : undefined}
-                  aria-label={`Go to page ${pageNumber}`}
-                  className="btn-secondary"
-                >
-                  {pageNumber}
-                </button>
-              ) : (
-                <Link
-                  key={pageNumber}
-                  href={buildPageHref(pageNumber)}
-                  data-active={isCurrent ? "true" : undefined}
-                  aria-current={isCurrent ? "page" : undefined}
-                  aria-label={`Go to page ${pageNumber}`}
-                  className="btn-secondary"
-                >
-                  {pageNumber}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+        <span className="text-sm tabular-nums">
+          Page {currentPage} of {totalPages}
+        </span>
 
         {hasNextPage ? (
           isControlled ? (
@@ -119,20 +65,20 @@ export function FeedPaginationNav({
               aria-label="Go to next page"
               className="btn-secondary"
             >
-              <span aria-hidden="true">&rarr;</span>
+              <ChevronRight size={16} aria-hidden="true" />
             </button>
           ) : (
             <Link
-              href={nextHref}
+              href={buildPageHref(currentPage + 1)}
               aria-label="Go to next page"
               className="btn-secondary"
             >
-              <span aria-hidden="true">&rarr;</span>
+              <ChevronRight size={16} aria-hidden="true" />
             </Link>
           )
         ) : (
           <button disabled aria-label="Go to next page" className="btn-secondary">
-            <span aria-hidden="true">&rarr;</span>
+            <ChevronRight size={16} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -143,15 +89,9 @@ export function FeedPaginationNav({
 export function FeedPaginationNavSkeleton() {
   return (
     <nav aria-label="Feed pagination loading" className="mt-8" aria-busy="true">
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex items-center justify-center gap-4">
         <div className="skeleton h-9 w-9 rounded" />
-        <div className="flex items-center gap-1.5">
-          <div className="skeleton h-9 w-9 rounded" />
-          <div className="skeleton h-9 w-9 rounded" />
-          <div className="skeleton h-9 w-9 rounded" />
-          <div className="skeleton h-9 w-9 rounded" />
-          <div className="skeleton h-9 w-9 rounded" />
-        </div>
+        <div className="skeleton h-4 w-24 rounded" />
         <div className="skeleton h-9 w-9 rounded" />
       </div>
     </nav>
