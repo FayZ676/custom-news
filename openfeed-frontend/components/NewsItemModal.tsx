@@ -125,7 +125,7 @@ export const NewsItemModal = forwardRef<
             <p className="text-base leading-relaxed">{selectedItem.summary}</p>
           )}
 
-          <div className="flex items-center justify-between pt-2 border-t border-base-300">
+          <div className="flex items-center justify-between pt-2">
             <a
               href={selectedItem.url}
               target="_blank"
