@@ -15,6 +15,10 @@ from typing import (
 
 from pydantic import BaseModel, Field, Json
 
+# The generator references this type but never defines it; tsvector values
+# arrive as their text representation over PostgREST.
+PgCatalogTsvector: TypeAlias = str
+
 NetRequestStatus: TypeAlias = Literal["PENDING", "SUCCESS", "ERROR"]
 
 RealtimeEqualityOp: TypeAlias = Literal["eq", "neq", "lt", "lte", "gt", "gte", "in"]
@@ -60,6 +64,7 @@ class PublicGlobalArticles(BaseModel):
     coverage: Optional[str] = Field(alias="coverage")
     created_at: datetime.datetime = Field(alias="created_at")
     duration: Optional[str] = Field(alias="duration")
+    embedding: Optional[list[Any]] = Field(alias="embedding")
     feed_title: str = Field(alias="feed_title")
     id: uuid.UUID = Field(alias="id")
     image_url: Optional[str] = Field(alias="image_url")
@@ -76,6 +81,7 @@ class PublicGlobalArticlesInsert(TypedDict):
     coverage: NotRequired[Annotated[Optional[str], Field(alias="coverage")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     duration: NotRequired[Annotated[Optional[str], Field(alias="duration")]]
+    embedding: NotRequired[Annotated[Optional[list[Any]], Field(alias="embedding")]]
     feed_title: Annotated[str, Field(alias="feed_title")]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
@@ -92,6 +98,7 @@ class PublicGlobalArticlesUpdate(TypedDict):
     coverage: NotRequired[Annotated[Optional[str], Field(alias="coverage")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
     duration: NotRequired[Annotated[Optional[str], Field(alias="duration")]]
+    embedding: NotRequired[Annotated[Optional[list[Any]], Field(alias="embedding")]]
     feed_title: NotRequired[Annotated[str, Field(alias="feed_title")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]

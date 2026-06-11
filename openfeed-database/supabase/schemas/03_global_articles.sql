@@ -15,6 +15,7 @@ create table "global_articles" (
     "image_url" text,
     "published_at" timestamptz not null,
     "created_at" timestamptz not null default now(),
+    "embedding" vector(512),
     "search_vector" tsvector generated always as (
         to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, ''))
     ) stored
@@ -35,6 +36,7 @@ create index global_articles_search_vector_idx
 
 create or replace function search_articles_feed_page(
   query_text text default null,
+  query_embedding vector(512) default null,
   topic_filters text[] default null,
   type_filters text[] default null,
   coverage_filters text[] default null,
@@ -62,9 +64,18 @@ returns table (
 language sql
 stable
 as $$
+  -- Hybrid search: full-text, trigram, and semantic retrievers each produce a
+  -- ranked candidate list; results are merged with Reciprocal Rank Fusion
+  -- (score = sum of 1 / (60 + rank)). Ranks are scale-free, so no
+  -- cross-retriever score normalization is needed. Any retriever can be
+  -- absent (short query, null embedding) and the fusion degrades gracefully.
   with normalized as (
     select
-      nullif(trim(query_text), '') as q,
+      case
+        when length(nullif(trim(query_text), '')) >= 3
+          then nullif(trim(query_text), '')
+        else null
+      end as q,
       case
         when length(nullif(trim(query_text), '')) >= 3
           then websearch_to_tsquery('english', nullif(trim(query_text), ''))
@@ -72,70 +83,68 @@ as $$
       end as tsq
   ),
   filtered as (
-    select ga.*, n.q, n.tsq
+    select ga.*
     from global_articles ga
-    cross join normalized n
     where
-      (
-        n.q is null
-        or length(n.q) < 3
-        or (n.tsq is not null and ga.search_vector @@ n.tsq)
-        or lower(n.q) <% lower(ga.title)
-      )
-      and (topic_filters is null or cardinality(topic_filters) = 0 or ga.topic = any(topic_filters))
+      (topic_filters is null or cardinality(topic_filters) = 0 or ga.topic = any(topic_filters))
       and (type_filters is null or cardinality(type_filters) = 0 or ga.type = any(type_filters))
       and (coverage_filters is null or cardinality(coverage_filters) = 0 or ga.coverage = any(coverage_filters))
       and (duration_filters is null or cardinality(duration_filters) = 0 or ga.duration = any(duration_filters))
       and (impact_filters is null or cardinality(impact_filters) = 0 or ga.impact = any(impact_filters))
   ),
-  ranked as (
+  fts_hits as (
+    select f.id, row_number() over (order by ts_rank(f.search_vector, n.tsq) desc) as rank
+    from filtered f, normalized n
+    where n.tsq is not null and f.search_vector @@ n.tsq
+    order by rank
+    limit 100
+  ),
+  trgm_hits as (
+    select f.id, row_number() over (order by word_similarity(lower(n.q), lower(f.title)) desc) as rank
+    from filtered f, normalized n
+    where n.q is not null and lower(n.q) <% lower(f.title)
+    order by rank
+    limit 100
+  ),
+  vec_hits as (
+    select f.id, row_number() over (order by f.embedding <=> query_embedding) as rank
+    from filtered f, normalized n
+    where n.q is not null and query_embedding is not null and f.embedding is not null
+    order by rank
+    limit 100
+  ),
+  fused as (
     select
-      filtered.id,
-      filtered.feed_title,
-      filtered.title,
-      filtered.url,
-      filtered.summary,
-      filtered.topic,
-      filtered.type,
-      filtered.coverage,
-      filtered.duration,
-      filtered.impact,
-      filtered.image_url,
-      filtered.published_at,
-      filtered.created_at,
-      count(*) over() as total_count,
-      case
-        when filtered.tsq is not null and filtered.search_vector @@ filtered.tsq
-          then ts_rank(filtered.search_vector, filtered.tsq)
-        else 0
-      end as fts_rank,
-      case
-        when filtered.q is not null and length(filtered.q) >= 3
-          then word_similarity(lower(filtered.q), lower(filtered.title))
-        else 0
-      end as trgm_rank
-    from filtered
+      id,
+      coalesce(1.0 / (60 + fts.rank), 0)
+        + coalesce(1.0 / (60 + trgm.rank), 0)
+        + coalesce(1.0 / (60 + vec.rank), 0) as rrf_score
+    from fts_hits fts
+    full outer join trgm_hits trgm using (id)
+    full outer join vec_hits vec using (id)
   )
   select
-    ranked.id,
-    ranked.feed_title,
-    ranked.title,
-    ranked.url,
-    ranked.summary,
-    ranked.topic,
-    ranked.type,
-    ranked.coverage,
-    ranked.duration,
-    ranked.impact,
-    ranked.image_url,
-    ranked.published_at,
-    ranked.created_at,
-    ranked.total_count
-  from ranked
+    f.id,
+    f.feed_title,
+    f.title,
+    f.url,
+    f.summary,
+    f.topic,
+    f.type,
+    f.coverage,
+    f.duration,
+    f.impact,
+    f.image_url,
+    f.published_at,
+    f.created_at,
+    count(*) over () as total_count
+  from filtered f
+  cross join normalized n
+  left join fused fu on fu.id = f.id
+  where n.q is null or fu.id is not null
   order by
-    fts_rank desc,
-    trgm_rank desc,
-    published_at desc
+    fu.rrf_score desc nulls last,
+    f.published_at desc
   limit greatest(page_size, 1)
   offset greatest(page_offset, 0);
 $$;

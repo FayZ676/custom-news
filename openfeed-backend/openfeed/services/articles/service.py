@@ -37,14 +37,13 @@ def fetch_articles(db: Client):
             seen_urls.add(article.link)
             unique_found_articles.append((feed_title, article))
 
-    article_metadata = enricher.enrich_articles(
-        [str(article) for _, article in unique_found_articles],
-        article_metadata_options,
-    )
+    article_texts = [str(article) for _, article in unique_found_articles]
+    article_metadata = enricher.enrich_articles(article_texts, article_metadata_options)
+    article_embeddings = enricher.embed_articles(article_texts)
     articles: list[PublicGlobalArticles] = [
-        article.to_db_schema(feed_title, metadata)
-        for (feed_title, article), metadata in zip(
-            unique_found_articles, article_metadata
+        article.to_db_schema(feed_title, metadata, embedding)
+        for (feed_title, article), metadata, embedding in zip(
+            unique_found_articles, article_metadata, article_embeddings
         )
     ]
 

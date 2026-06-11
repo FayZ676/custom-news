@@ -20,6 +20,22 @@ interface UnifiedFeedPageParams {
 
 const MIN_SEARCH_QUERY_LENGTH = 3;
 
+async function embedQuery(query: string): Promise<number[] | null> {
+  try {
+    const response = await fetch("/api/search/embedding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query }),
+    });
+    if (!response.ok) return null;
+    const { embedding } = await response.json();
+    return Array.isArray(embedding) ? embedding : null;
+  } catch {
+    // Semantic retrieval is best-effort; search degrades to lexical-only.
+    return null;
+  }
+}
+
 export async function getArticles(
   supabase: SupabaseClient<Database>,
 ): Promise<GlobalArticle[]> {
@@ -54,11 +70,13 @@ export async function getUnifiedFeedPage(
   const normalizedQuery = queryText?.trim() ?? "";
   const activeQuery =
     normalizedQuery.length >= MIN_SEARCH_QUERY_LENGTH ? normalizedQuery : null;
+  const queryEmbedding = activeQuery ? await embedQuery(activeQuery) : null;
 
   const { data, error } = await (supabase as any).rpc(
     "search_articles_feed_page",
     {
       query_text: activeQuery,
+      query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
       topic_filters:
         metadataFilters?.topic && metadataFilters.topic.length > 0
           ? metadataFilters.topic

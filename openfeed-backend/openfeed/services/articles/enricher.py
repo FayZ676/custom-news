@@ -25,6 +25,11 @@ class ArticleEnricher:
             model="gpt-5.4-mini",
         )
 
+    def embed_articles(self, articles: list[str]) -> list[list[float]]:
+        if not articles:
+            return []
+        return self._embedding_client.embed(articles).embeddings
+
     def enrich_articles(
         self,
         articles: list[str],

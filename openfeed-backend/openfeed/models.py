@@ -104,6 +104,7 @@ class Article(BaseModel):
         self,
         feed_title: str,
         metadata: ArticleMetadata,
+        embedding: list[float] | None = None,
     ) -> PublicGlobalArticles:
         return PublicGlobalArticles(
             published_at=self.published,
@@ -119,4 +120,6 @@ class Article(BaseModel):
             impact=metadata.impact,
             type=metadata.type,
             topic=metadata.topic,
+            embedding=embedding,
+            search_vector=None,
         )

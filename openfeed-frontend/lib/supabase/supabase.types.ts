@@ -57,6 +57,7 @@ export type Database = {
           coverage: string | null;
           created_at: string;
           duration: string | null;
+          embedding: string | null;
           feed_title: string;
           id: string;
           image_url: string | null;
@@ -73,6 +74,7 @@ export type Database = {
           coverage?: string | null;
           created_at?: string;
           duration?: string | null;
+          embedding?: string | null;
           feed_title: string;
           id?: string;
           image_url?: string | null;
@@ -89,6 +91,7 @@ export type Database = {
           coverage?: string | null;
           created_at?: string;
           duration?: string | null;
+          embedding?: string | null;
           feed_title?: string;
           id?: string;
           image_url?: string | null;
@@ -272,6 +275,7 @@ export type Database = {
           impact_filters?: string[];
           page_offset?: number;
           page_size?: number;
+          query_embedding?: string;
           query_text?: string;
           topic_filters?: string[];
           type_filters?: string[];

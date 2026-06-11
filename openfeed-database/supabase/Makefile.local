@@ -33,5 +33,6 @@ gen_types_ts:
 
 gen_types_py:
 	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/db/models.py
+	perl -i -pe 's/^from pydantic import (.*)$$/from pydantic import $$1\n\n# The generator references this type but never defines it; tsvector values\n# arrive as their text representation over PostgREST.\nPgCatalogTsvector: TypeAlias = str/' ../../openfeed-backend/openfeed/db/models.py
 
 init: snapshot reset_db deploy gen_types_py gen_types_ts restore_snapshot

@@ -35,8 +35,9 @@ def get_global_article_urls(db: Client) -> list[str]:
 
 
 def insert_global_articles(db: Client, articles: list[PublicGlobalArticles]):
+    # search_vector is a generated column; Postgres rejects explicit values.
     db.table("global_articles").insert(
-        [a.model_dump(mode="json") for a in articles]
+        [a.model_dump(mode="json", exclude={"search_vector"}) for a in articles]
     ).execute()
 
 
