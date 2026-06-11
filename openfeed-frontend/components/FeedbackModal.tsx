@@ -57,7 +57,7 @@ export const FeedbackModal = forwardRef<
   return (
     <Modal ref={dialogRef}>
       <div className="flex flex-col gap-4">
-        <h3 className="heading-modal pr-6">Send Feedback</h3>
+        <h3 className="heading-modal">Send Feedback</h3>
 
         {status === "success" ? (
           <p className="text-sm">Thanks for your feedback!</p>

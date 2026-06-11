@@ -9,24 +9,25 @@ interface ModalProps {
 
 const Modal = forwardRef<HTMLDialogElement, ModalProps>(
   ({ children, onClose }, ref) => {
+    function handleBackdropClick(e: React.MouseEvent<HTMLDialogElement>) {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.close();
+      }
+    }
+
     return (
       <dialog
         ref={ref}
         onClose={onClose}
-        className="modal modal-bottom sm:modal-middle rounded-xs"
+        onClick={handleBackdropClick}
+        className="fixed inset-0 m-0 p-0 w-full h-full max-w-none max-h-none open:flex items-end sm:items-center justify-center open:bg-black/40 backdrop:hidden z-999 overflow-hidden"
       >
-        <div className="modal-box rounded-xs">
-          <form method="dialog">
-            <button className="btn btn-ghost btn-sm btn-circle absolute right-2 top-2 focus:outline-none">
-              ✕
-            </button>
-          </form>
-
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="w-full sm:w-11/12 sm:max-w-lg max-h-[calc(100vh-5em)] overflow-y-auto p-6 bg-base-100 shadow-2xl rounded-t-lg sm:rounded-lg"
+        >
           {children}
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button>close</button>
-        </form>
       </dialog>
     );
   },

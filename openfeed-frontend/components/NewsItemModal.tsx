@@ -97,7 +97,7 @@ export const NewsItemModal = forwardRef<
     <Modal ref={dialogRef} onClose={onClose}>
       {selectedItem && (
         <div className="flex flex-col gap-4">
-          <h3 className="heading-modal pr-6">
+          <h3 className="heading-modal">
             {toTitleCase(selectedItem.title)}
           </h3>
 

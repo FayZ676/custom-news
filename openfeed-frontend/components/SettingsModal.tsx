@@ -90,7 +90,7 @@ export const SettingsModal = forwardRef<
     return (
       <Modal ref={dialogRef}>
         <div className="flex flex-col gap-4">
-          <h3 className="heading-modal pr-6">Settings</h3>
+          <h3 className="heading-modal">Settings</h3>
 
           {status === "loading" && (
             <p className="text-sm">Fetching your settings…</p>
