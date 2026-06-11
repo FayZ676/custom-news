@@ -80,7 +80,6 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
                         <Chip
                           key={optionName}
                           label={optionName}
-                          variant="solid"
                           active={selected.includes(optionName)}
                           onTap={() => onToggleFieldOption(field, optionName)}
                         />
