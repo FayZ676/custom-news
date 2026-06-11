@@ -34,7 +34,7 @@ export function Footer({
   const settingsModalRef = useRef<SettingsModalHandle>(null);
 
   return (
-    <footer className="text-sm">
+    <footer className="text-sm pt-4">
       <div className="flex flex-col gap-4 divide-y divide-base-300">
         <div>
           <button

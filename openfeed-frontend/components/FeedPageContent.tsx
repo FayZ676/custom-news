@@ -186,7 +186,7 @@ export function FeedPageContent({
         onSearchQueryChange={handleSearchQueryChange}
         onFilterModalClose={handleFilterModalClose}
       />
-      <div className="pt-4">
+      <div className="">
         {isSearching && isSearchActive ? (
           <p className="text-secondary italic">Searching...</p>
         ) : (

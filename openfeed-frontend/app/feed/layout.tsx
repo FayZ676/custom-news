@@ -56,7 +56,7 @@ export default function FeedLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 flex-1">
+    <div className="flex flex-col flex-1">
       <div className="flex justify-center">
         <ThemedLogo />
       </div>

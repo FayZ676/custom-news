@@ -63,7 +63,7 @@ export default function SearchFilterBar({
   };
 
   return (
-    <div className="sticky top-0 z-30 bg-base-100 border-b border-base-300 py-2">
+    <div className="sticky top-0 z-30 bg-base-100 border-b border-base-300 py-4">
       <div className="flex items-center justify-between gap-2.5">
         <div className="flex-1">
           <input

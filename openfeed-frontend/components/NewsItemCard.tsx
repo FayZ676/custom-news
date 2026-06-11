@@ -27,7 +27,10 @@ export function NewsItemCard({
   const opacityClass = isRead ? "opacity-50" : "";
 
   return (
-    <li className={`cursor-pointer ${opacityClass}`} onClick={onClick}>
+    <li
+      className={`cursor-pointer py-4 border-b border-base-300 last:border-b-0 last:pb-0 ${opacityClass}`}
+      onClick={onClick}
+    >
       <div
         className={
           hasImage

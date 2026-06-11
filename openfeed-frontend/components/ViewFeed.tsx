@@ -53,33 +53,37 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
 
   return (
     <section className="flex flex-col gap-4">
-      <ol className="flex flex-col gap-4">
-        {articlesWithImages.map((article) => (
-          <NewsItemCard
-            key={article.id}
-            title={toTitleCase(article.title)}
-            imageUrl={article.image_url}
-            summary={article.summary}
-            meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
-            onClick={() => openModal(article)}
-          />
-        ))}
-        {articlesWithImages.length > 0 && articlesWithoutImages.length > 0 && (
-          <li aria-hidden="true" className="py-1">
-            <hr className="border-t border-base-300" />
-          </li>
-        )}
-        {articlesWithoutImages.map((article) => (
-          <NewsItemCard
-            key={article.id}
-            title={toTitleCase(article.title)}
-            imageUrl={article.image_url}
-            summary={article.summary}
-            meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
-            onClick={() => openModal(article)}
-          />
-        ))}
-      </ol>
+      {articlesWithImages.length > 0 && (
+        <ol className="flex flex-col">
+          {articlesWithImages.map((article) => (
+            <NewsItemCard
+              key={article.id}
+              title={toTitleCase(article.title)}
+              imageUrl={article.image_url}
+              summary={article.summary}
+              meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+              onClick={() => openModal(article)}
+            />
+          ))}
+        </ol>
+      )}
+      {articlesWithImages.length > 0 && articlesWithoutImages.length > 0 && (
+        <hr className="border-t border-base-300" />
+      )}
+      {articlesWithoutImages.length > 0 && (
+        <ol className="flex flex-col">
+          {articlesWithoutImages.map((article) => (
+            <NewsItemCard
+              key={article.id}
+              title={toTitleCase(article.title)}
+              imageUrl={article.image_url}
+              summary={article.summary}
+              meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+              onClick={() => openModal(article)}
+            />
+          ))}
+        </ol>
+      )}
 
       <NewsItemModal ref={modalRef} />
     </section>
