@@ -23,10 +23,7 @@ export function FeedPaginationNav({
   const hasPrevPage = currentPage > 1;
 
   return (
-    <nav
-      aria-label="Feed pagination"
-      className="mt-8 pt-5"
-    >
+    <nav aria-label="Feed pagination" className="py-4">
       <div className="flex items-center justify-center gap-4">
         {hasPrevPage ? (
           isControlled ? (
@@ -48,7 +45,11 @@ export function FeedPaginationNav({
             </Link>
           )
         ) : (
-          <button disabled aria-label="Go to previous page" className="btn-secondary">
+          <button
+            disabled
+            aria-label="Go to previous page"
+            className="btn-secondary"
+          >
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
         )}
@@ -77,7 +78,11 @@ export function FeedPaginationNav({
             </Link>
           )
         ) : (
-          <button disabled aria-label="Go to next page" className="btn-secondary">
+          <button
+            disabled
+            aria-label="Go to next page"
+            className="btn-secondary"
+          >
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         )}
@@ -88,7 +93,7 @@ export function FeedPaginationNav({
 
 export function FeedPaginationNavSkeleton() {
   return (
-    <nav aria-label="Feed pagination loading" className="mt-8" aria-busy="true">
+    <nav aria-label="Feed pagination loading" aria-busy="true">
       <div className="flex items-center justify-center gap-4">
         <div className="skeleton h-9 w-9 rounded" />
         <div className="skeleton h-4 w-24 rounded" />
