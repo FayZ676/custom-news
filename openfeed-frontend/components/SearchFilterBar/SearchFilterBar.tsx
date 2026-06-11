@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { TextAlignEnd } from "lucide-react";
 
 import {
   ArticleMetadataField,
@@ -79,17 +80,10 @@ export default function SearchFilterBar({
         <div className="relative shrink-0">
           <button
             onClick={() => filterModalRef.current?.open()}
-            className="btn-secondary"
+            className="btn-secondary h-9.5"
           >
-            <span className="uppercase tracking-[0.08em]">Filters</span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M2 4h12M5 8h6M7 12h2"
-                stroke="currentColor"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-              />
-            </svg>
+            <span className="hidden sm:inline">Filters</span>
+            <TextAlignEnd size={16} />
           </button>
           {totalFilters > 0 && (
             <span className="absolute -top-1 -right-1 bg-error text-error-content rounded-full w-3.75 h-3.75 text-[8px] flex items-center justify-center font-semibold pointer-events-none">
