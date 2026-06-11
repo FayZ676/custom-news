@@ -102,7 +102,7 @@ export const NewsItemModal = forwardRef<
           </h3>
 
           {selectedItem.imageUrl && (
-            <div className="relative w-full aspect-video">
+            <div className="relative w-full aspect-video rounded-sm overflow-hidden">
               <Image
                 src={selectedItem.imageUrl}
                 alt="Article image"
