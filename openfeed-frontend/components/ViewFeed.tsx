@@ -52,7 +52,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
   }
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col">
       {articlesWithImages.length > 0 && (
         <ol className="flex flex-col">
           {articlesWithImages.map((article) => (
@@ -67,10 +67,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
           ))}
         </ol>
       )}
-      {articlesWithImages.length > 0 && articlesWithoutImages.length > 0 && (
-        <hr className="border-t border-base-300" />
-      )}
-      {articlesWithoutImages.length > 0 && (
+{articlesWithoutImages.length > 0 && (
         <ol className="flex flex-col">
           {articlesWithoutImages.map((article) => (
             <NewsItemCard

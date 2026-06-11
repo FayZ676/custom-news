@@ -28,7 +28,7 @@ export function NewsItemCard({
 
   return (
     <li
-      className={`cursor-pointer py-4 border-b border-base-300 last:border-b-0 last:pb-0 ${opacityClass}`}
+      className={`cursor-pointer py-4 border-b border-base-300 ${opacityClass}`}
       onClick={onClick}
     >
       <div
