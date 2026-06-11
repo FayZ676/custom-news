@@ -3,7 +3,7 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
 
-import { Copy, ClipboardCheck } from "lucide-react";
+import { ArrowUpRight, Clipboard, ClipboardCheck } from "lucide-react";
 
 import Modal from "@/components/Modal";
 import { useShareLink } from "@/components/ShareLinkContext";
@@ -101,14 +101,6 @@ export const NewsItemModal = forwardRef<
             {toTitleCase(selectedItem.title)}
           </h3>
 
-          {(selectedItem.feedTitle || selectedItem.publishedAt) && (
-            <p className="text-muted">
-              {selectedItem.feedTitle}
-              {selectedItem.feedTitle && selectedItem.publishedAt && " · "}
-              {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
-            </p>
-          )}
-
           {selectedItem.imageUrl && (
             <div className="relative w-full aspect-video">
               <Image
@@ -119,6 +111,14 @@ export const NewsItemModal = forwardRef<
                 className="object-cover"
               />
             </div>
+          )}
+
+          {(selectedItem.feedTitle || selectedItem.publishedAt) && (
+            <p className="text-muted">
+              {selectedItem.feedTitle}
+              {selectedItem.feedTitle && selectedItem.publishedAt && " · "}
+              {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
+            </p>
           )}
 
           {selectedItem.summary && (
@@ -132,11 +132,11 @@ export const NewsItemModal = forwardRef<
               rel="noopener noreferrer"
               className="btn-secondary"
             >
-              Read full article →
+              Read full article <ArrowUpRight size={16} />
             </a>
 
             <button
-              className="p-1.5 disabled:opacity-50 cursor-pointer text-base-content/60 hover:text-base-content transition-colors"
+              className="btn-secondary disabled:opacity-50"
               onClick={handleCopy}
               disabled={copyState !== "idle" || isPreparingShare || !shareUrl}
               aria-label={
@@ -148,7 +148,7 @@ export const NewsItemModal = forwardRef<
               {copyState === "copied" ? (
                 <ClipboardCheck size={18} className="text-success" />
               ) : (
-                <Copy size={18} />
+                <Clipboard size={18} />
               )}
             </button>
           </div>
