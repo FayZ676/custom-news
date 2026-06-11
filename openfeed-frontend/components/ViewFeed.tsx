@@ -25,9 +25,9 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
   const articlesWithImages = articles.filter((article) =>
     hasRenderableImage(article.image_url),
   );
-  const articlesWithoutImages = articles.filter(
-    (article) => !hasRenderableImage(article.image_url),
-  );
+  const articlesWithoutImages = articles
+    .filter((article) => !hasRenderableImage(article.image_url))
+    .sort((a, b) => (a.summary ? 0 : 1) - (b.summary ? 0 : 1));
 
   function openModal(article: GlobalArticle) {
     const item: NewsItemArticle = {
