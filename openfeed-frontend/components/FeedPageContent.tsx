@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
-import { FeedPaginationNav } from "@/components/FeedPaginationNav";
 import { ViewFeed } from "@/components/ViewFeed";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
+  getDigestFeed,
   getUnifiedFeedPage,
   GlobalArticle,
 } from "@/lib/supabase/queries/global_articles";
@@ -16,12 +16,10 @@ import {
   MetadataOptionsByField,
 } from "@/lib/supabase/queries/global_article_metadata_options";
 
+const DIGEST_SIZE = 10;
+
 interface FeedPageContentProps {
   articles: GlobalArticle[];
-  currentPage: number;
-  hasNextPage: boolean;
-  totalPages: number;
-  pageSize: number;
   metadataOptions: MetadataOptionsByField;
   initialMetadataFilters: MetadataOptionsByField;
   onChangeMetadataOptions: (
@@ -31,11 +29,7 @@ interface FeedPageContentProps {
 }
 
 export function FeedPageContent({
-  articles,
-  currentPage,
-  hasNextPage,
-  totalPages,
-  pageSize,
+  articles: initialArticles,
   metadataOptions,
   initialMetadataFilters,
   onChangeMetadataOptions,
@@ -47,29 +41,58 @@ export function FeedPageContent({
   const [pendingFilterSaveCount, setPendingFilterSaveCount] = useState(0);
   const [refreshOnFilterModalClose, setRefreshOnFilterModalClose] =
     useState(false);
+  const [digestArticles, setDigestArticles] =
+    useState<GlobalArticle[]>(initialArticles);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchPage, setSearchPage] = useState(1);
   const [searchArticles, setSearchArticles] = useState<GlobalArticle[]>([]);
-  const [searchTotalPages, setSearchTotalPages] = useState(1);
-  const [searchHasNextPage, setSearchHasNextPage] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRequestIdRef = useRef(0);
+  const activeMetadataFiltersRef = useRef(activeMetadataFilters);
   const isSearchActive = searchQuery.length >= 3;
+
+  useEffect(() => {
+    setDigestArticles(initialArticles);
+  }, [initialArticles]);
+
+  useEffect(() => {
+    activeMetadataFiltersRef.current = activeMetadataFilters;
+  }, [activeMetadataFilters]);
 
   useEffect(() => {
     setActiveMetadataFilters(initialMetadataFilters);
   }, [initialMetadataFilters]);
 
+  // Refresh digest on filter save
   useEffect(() => {
     if (!refreshOnFilterModalClose || pendingFilterSaveCount > 0) {
       return;
     }
-
     setHasPendingFilterChanges(false);
     setRefreshOnFilterModalClose(false);
-    setSearchPage(1);
     router.refresh();
   }, [pendingFilterSaveCount, refreshOnFilterModalClose, router]);
+
+  // Subscribe to new article ingestions and silently refresh the digest
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    const channel = supabase
+      .channel("digest-refresh")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "global_articles" },
+        () => {
+          void getDigestFeed(supabase, {
+            metadataFilters: activeMetadataFiltersRef.current,
+            feedSize: DIGEST_SIZE,
+          }).then(setDigestArticles);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleChangeFieldOptions = useCallback(
     async (field: ArticleMetadataField, nextOptions: string[]) => {
@@ -78,7 +101,6 @@ export function FeedPageContent({
         ...current,
         [field]: nextOptions,
       }));
-      setSearchPage(1);
       setHasPendingFilterChanges(true);
       setPendingFilterSaveCount((count) => count + 1);
       try {
@@ -98,16 +120,11 @@ export function FeedPageContent({
     setRefreshOnFilterModalClose(true);
   }, [hasPendingFilterChanges]);
 
-  const handleSearchQueryChange = useCallback(async (query: string) => {
+  const handleSearchQueryChange = useCallback((query: string) => {
     setSearchQuery(query);
-    setSearchPage(1);
-
     if (query.length < 3) {
       setSearchArticles([]);
-      setSearchTotalPages(1);
-      setSearchHasNextPage(false);
       setIsSearching(false);
-      return;
     }
   }, []);
 
@@ -124,21 +141,16 @@ export function FeedPageContent({
       try {
         const supabase = createBrowserSupabaseClient();
         const result = await getUnifiedFeedPage(supabase, {
-          page: searchPage,
-          pageSize,
+          page: 1,
+          pageSize: DIGEST_SIZE,
           metadataFilters: activeMetadataFilters,
           queryText: searchQuery,
         });
-
         if (searchRequestIdRef.current !== currentRequestId) return;
         setSearchArticles(result.articles);
-        setSearchTotalPages(result.totalPages);
-        setSearchHasNextPage(result.hasNextPage);
       } catch {
         if (searchRequestIdRef.current !== currentRequestId) return;
         setSearchArticles([]);
-        setSearchTotalPages(1);
-        setSearchHasNextPage(false);
       } finally {
         if (searchRequestIdRef.current === currentRequestId) {
           setIsSearching(false);
@@ -147,35 +159,9 @@ export function FeedPageContent({
     };
 
     void run();
-  }, [
-    activeMetadataFilters,
-    isSearchActive,
-    pageSize,
-    searchPage,
-    searchQuery,
-  ]);
+  }, [activeMetadataFilters, isSearchActive, searchQuery]);
 
-  const displayedArticles = isSearchActive ? searchArticles : articles;
-  const displayedCurrentPage = isSearchActive ? searchPage : currentPage;
-  const displayedHasNextPage = isSearchActive ? searchHasNextPage : hasNextPage;
-  const displayedTotalPages = isSearchActive ? searchTotalPages : totalPages;
-
-  const handleSearchPageChange = useCallback(
-    (nextPage: number) => {
-      setSearchPage((current) => {
-        if (
-          nextPage < 1 ||
-          nextPage > searchTotalPages ||
-          nextPage === current
-        ) {
-          return current;
-        }
-
-        return nextPage;
-      });
-    },
-    [searchTotalPages],
-  );
+  const displayedArticles = isSearchActive ? searchArticles : digestArticles;
 
   return (
     <>
@@ -196,12 +182,6 @@ export function FeedPageContent({
           />
         )}
       </div>
-      <FeedPaginationNav
-        currentPage={displayedCurrentPage}
-        hasNextPage={displayedHasNextPage}
-        totalPages={displayedTotalPages}
-        onPageChange={isSearchActive ? handleSearchPageChange : undefined}
-      />
     </>
   );
 }

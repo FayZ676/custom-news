@@ -11,6 +11,11 @@ export interface PaginatedArticles {
   totalPages: number;
 }
 
+interface DigestFeedParams {
+  metadataFilters?: MetadataOptionsByField;
+  feedSize?: number;
+}
+
 interface UnifiedFeedPageParams {
   page: number;
   pageSize: number;
@@ -46,6 +51,38 @@ export async function getArticles(
 
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function getDigestFeed(
+  supabase: SupabaseClient<Database>,
+  { metadataFilters, feedSize = 10 }: DigestFeedParams,
+): Promise<GlobalArticle[]> {
+  const { data, error } = await (supabase as any).rpc("get_digest_feed", {
+    topic_filters:
+      metadataFilters?.topic && metadataFilters.topic.length > 0
+        ? metadataFilters.topic
+        : null,
+    type_filters:
+      metadataFilters?.type && metadataFilters.type.length > 0
+        ? metadataFilters.type
+        : null,
+    coverage_filters:
+      metadataFilters?.coverage && metadataFilters.coverage.length > 0
+        ? metadataFilters.coverage
+        : null,
+    duration_filters:
+      metadataFilters?.duration && metadataFilters.duration.length > 0
+        ? metadataFilters.duration
+        : null,
+    impact_filters:
+      metadataFilters?.impact && metadataFilters.impact.length > 0
+        ? metadataFilters.impact
+        : null,
+    feed_size: Math.max(1, feedSize),
+  });
+
+  if (error) throw new Error(error.message);
+  return (data as GlobalArticle[]) ?? [];
 }
 
 export async function getArticlesPage(

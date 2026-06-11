@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getArticlesPage } from "@/lib/supabase/queries/global_articles";
+import { getDigestFeed } from "@/lib/supabase/queries/global_articles";
 import {
   groupMetadataOptionsByField,
   getGlobalArticleMetadataOptions,
@@ -19,11 +19,10 @@ import {
 import { FeedPageContent } from "@/components/FeedPageContent";
 import { ViewFeedSkeleton } from "@/components/ViewFeed";
 import { ShareLinkProvider } from "@/components/ShareLinkContext";
-import { FeedPaginationNavSkeleton } from "@/components/FeedPaginationNav";
 
-const PAGE_SIZE = 10;
+const DIGEST_SIZE = 10;
 
-async function ViewFeedContent({ currentPage }: { currentPage: number }) {
+async function ViewFeedContent() {
   const supabase = await createClient();
   const { userId } = await getAuthenticatedUser();
 
@@ -34,16 +33,10 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   const metadataOptions = groupMetadataOptionsByField(globalMetadataOptions);
   const initialMetadataFilters = groupUserMetadataByField(userMetadataRows);
 
-  const {
-    articles: feedArticles,
-    hasNextPage,
-    totalPages,
-  } = await getArticlesPage(
-    supabase,
-    currentPage,
-    PAGE_SIZE,
-    initialMetadataFilters,
-  );
+  const articles = await getDigestFeed(supabase, {
+    metadataFilters: initialMetadataFilters,
+    feedSize: DIGEST_SIZE,
+  });
 
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
   const handleChangeMetadataOptions = changeMetadataOptionsAction.bind(
@@ -54,11 +47,7 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   return (
     <ShareLinkProvider handleCreateShareLink={handleCreateShareLink}>
       <FeedPageContent
-        articles={feedArticles}
-        currentPage={currentPage}
-        hasNextPage={hasNextPage}
-        totalPages={totalPages}
-        pageSize={PAGE_SIZE}
+        articles={articles}
         metadataOptions={metadataOptions}
         initialMetadataFilters={initialMetadataFilters}
         onChangeMetadataOptions={handleChangeMetadataOptions}
@@ -67,26 +56,10 @@ async function ViewFeedContent({ currentPage }: { currentPage: number }) {
   );
 }
 
-export default async function FeedPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string }>;
-}) {
-  const { page } = await searchParams;
-  const parsedPage = Number.parseInt(page ?? "1", 10);
-  const currentPage =
-    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-
+export default async function FeedPage() {
   return (
-    <Suspense
-      fallback={
-        <>
-          <ViewFeedSkeleton />
-          <FeedPaginationNavSkeleton />
-        </>
-      }
-    >
-      <ViewFeedContent currentPage={currentPage} />
+    <Suspense fallback={<ViewFeedSkeleton />}>
+      <ViewFeedContent />
     </Suspense>
   );
 }
