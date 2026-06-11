@@ -80,7 +80,7 @@ class Article(BaseModel):
         if v is None:
             return None
         cleaned = _strip_invisible(_strip_html(v))
-        return cleaned if cleaned and len(cleaned.split()) >= 5 else None
+        return cleaned[:500] if cleaned and len(cleaned.split()) >= 5 else None
 
     @property
     def image_url(self) -> str | None:
