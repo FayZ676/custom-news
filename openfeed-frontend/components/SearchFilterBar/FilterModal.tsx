@@ -42,13 +42,10 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
 
     return (
       <Modal ref={dialogRef} onClose={onClose}>
-        <div className="w-full max-w-97.5 -mx-6 px-5 pb-8 pt-0 max-h-[80vh] flex flex-col">
-          {/* Header */}
-          <div className="px-5 pt-4 pb-3">
-            <span className="heading-modal">Filters</span>
-          </div>
+        <div className="flex flex-col gap-4">
+          <span className="heading-modal">Filters</span>
 
-          <div className="overflow-y-auto flex-1">
+          <div className="flex flex-col gap-7">
             {(
               [
                 "topic",
@@ -63,7 +60,7 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
               const label = field[0].toUpperCase() + field.slice(1);
 
               return (
-                <div key={field} className="mb-7">
+                <div key={field}>
                   <SectionLabel
                     onClear={() => onClearField(field)}
                     showClear={selected.length > 0}
