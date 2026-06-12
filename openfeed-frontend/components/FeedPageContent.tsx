@@ -26,7 +26,7 @@ interface FeedPageContentProps {
   interests: UserInterest[];
   userId: string;
   onChangeMetadataOptions: (
-    field: ArticleMetadataField,
+    field: "topic",
     optionNames: string[],
   ) => Promise<void>;
 }
@@ -72,6 +72,10 @@ export function FeedPageContent({
       const prevFilters = activeMetadataFilters;
       setActiveMetadataFilters((current) => ({ ...current, [field]: nextOptions }));
       setSearchPage(1);
+      // Only topic selections are persisted; the database constrains
+      // user_article_metadata_options to field = 'topic'. Other fields are
+      // session-only filters applied client-side.
+      if (field !== "topic") return;
       setHasPendingFilterChanges(true);
       setPendingFilterSaveCount((count) => count + 1);
       try {

@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
-import { ArticleMetadataField } from "@/lib/supabase/queries/global_article_metadata_options";
 import {
   addUserArticleMetadataOption,
   getUserArticleMetadataOptions,
@@ -42,7 +41,7 @@ export async function removeInterestAction(
 
 export async function changeMetadataOptionsAction(
   userId: string,
-  field: ArticleMetadataField,
+  field: "topic",
   nextOptionNames: string[],
 ): Promise<void> {
   const supabase = await createClient();
