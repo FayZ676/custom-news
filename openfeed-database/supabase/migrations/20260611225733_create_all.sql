@@ -29,6 +29,7 @@ alter table "public"."global_article_metadata_options" enable row level security
     "image_url" text,
     "published_at" timestamp with time zone not null,
     "created_at" timestamp with time zone not null default now(),
+    "embedding" public.vector(512),
     "search_vector" tsvector generated always as (to_tsvector('english'::regconfig, ((COALESCE(title, ''::text) || ' '::text) || COALESCE(summary, ''::text)))) stored
       );
 
@@ -96,6 +97,28 @@ alter table "public"."global_share_links" enable row level security;
 alter table "public"."user_article_metadata_options" enable row level security;
 
 
+  create table "public"."user_interests" (
+    "id" uuid not null default gen_random_uuid(),
+    "user_id" uuid not null,
+    "interest_text" text not null,
+    "embedding" public.vector(512),
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."user_interests" enable row level security;
+
+
+  create table "public"."user_seen_articles" (
+    "user_id" uuid not null,
+    "article_id" uuid not null,
+    "seen_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."user_seen_articles" enable row level security;
+
+
   create table "public"."user_settings" (
     "user_id" uuid not null,
     "email_notification" boolean not null default true,
@@ -136,6 +159,14 @@ CREATE INDEX user_article_metadata_options_user_id_field_idx ON public.user_arti
 
 CREATE INDEX user_article_metadata_options_user_id_idx ON public.user_article_metadata_options USING btree (user_id);
 
+CREATE UNIQUE INDEX user_interests_pkey ON public.user_interests USING btree (id);
+
+CREATE INDEX user_interests_user_id_idx ON public.user_interests USING btree (user_id);
+
+CREATE UNIQUE INDEX user_seen_articles_pkey ON public.user_seen_articles USING btree (user_id, article_id);
+
+CREATE INDEX user_seen_articles_user_id_idx ON public.user_seen_articles USING btree (user_id);
+
 CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user_id);
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
@@ -153,6 +184,10 @@ alter table "public"."global_settings" add constraint "global_settings_pkey" PRI
 alter table "public"."global_share_links" add constraint "global_share_links_pkey" PRIMARY KEY using index "global_share_links_pkey";
 
 alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_pkey" PRIMARY KEY using index "user_article_metadata_options_pkey";
+
+alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
+
+alter table "public"."user_seen_articles" add constraint "user_seen_articles_pkey" PRIMARY KEY using index "user_seen_articles_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
 
@@ -188,9 +223,25 @@ alter table "public"."user_article_metadata_options" add constraint "user_articl
 
 alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_field_name_fkey";
 
+alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_topic_only" CHECK ((field = 'topic'::text)) not valid;
+
+alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_topic_only";
+
 alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_user_id_fkey";
+
+alter table "public"."user_interests" add constraint "user_interests_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_interests" validate constraint "user_interests_user_id_fkey";
+
+alter table "public"."user_seen_articles" add constraint "user_seen_articles_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.global_articles(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_seen_articles" validate constraint "user_seen_articles_article_id_fkey";
+
+alter table "public"."user_seen_articles" add constraint "user_seen_articles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_seen_articles" validate constraint "user_seen_articles_user_id_fkey";
 
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
@@ -211,14 +262,71 @@ end;
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.search_articles_feed_page(query_text text DEFAULT NULL::text, topic_filters text[] DEFAULT NULL::text[], type_filters text[] DEFAULT NULL::text[], coverage_filters text[] DEFAULT NULL::text[], duration_filters text[] DEFAULT NULL::text[], impact_filters text[] DEFAULT NULL::text[], page_size integer DEFAULT 10, page_offset integer DEFAULT 0)
+CREATE OR REPLACE FUNCTION public.get_curated_feed(p_user_id uuid, p_interest_embeddings text[], p_topic_filters text[] DEFAULT NULL::text[], p_page_size integer DEFAULT 10)
+ RETURNS TABLE(id uuid, feed_title text, title text, url text, summary text, topic text, type text, coverage text, duration text, impact text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone)
+ LANGUAGE sql
+ STABLE
+AS $function$
+  -- For each interest embedding, rank unseen candidate articles by semantic
+  -- similarity. An article's final rank is its best rank across all
+  -- interests, which interleaves each interest's strongest matches.
+  -- Summing scores across interests (e.g. RRF) is deliberately avoided: on a
+  -- small corpus it favors articles that are mediocre matches for every
+  -- interest over exact matches for a single one.
+  with candidates as (
+    select ga.*
+    from global_articles ga
+    where
+      ga.embedding is not null
+      and not exists (
+        select 1 from user_seen_articles usa
+        where usa.user_id = p_user_id and usa.article_id = ga.id
+      )
+      and (p_topic_filters is null or cardinality(p_topic_filters) = 0 or ga.topic = any(p_topic_filters))
+  ),
+  interest_ranks as (
+    select
+      c.id,
+      row_number() over (
+        partition by t.emb_idx
+        order by c.embedding <=> t.emb::vector(512)
+      ) as rank
+    from candidates c
+    cross join unnest(p_interest_embeddings) with ordinality as t(emb, emb_idx)
+  ),
+  best as (
+    select id, min(rank) as best_rank
+    from interest_ranks
+    group by id
+  )
+  select
+    c.id, c.feed_title, c.title, c.url, c.summary,
+    c.topic, c.type, c.coverage, c.duration, c.impact,
+    c.image_url, c.published_at, c.created_at
+  from candidates c
+  join best b on b.id = c.id
+  order by b.best_rank asc, c.published_at desc
+  limit least(p_page_size, 10);
+$function$
+;
+
+CREATE OR REPLACE FUNCTION public.search_articles_feed_page(query_text text DEFAULT NULL::text, query_embedding public.vector DEFAULT NULL::public.vector, topic_filters text[] DEFAULT NULL::text[], type_filters text[] DEFAULT NULL::text[], coverage_filters text[] DEFAULT NULL::text[], duration_filters text[] DEFAULT NULL::text[], impact_filters text[] DEFAULT NULL::text[], page_size integer DEFAULT 10, page_offset integer DEFAULT 0)
  RETURNS TABLE(id uuid, feed_title text, title text, url text, summary text, topic text, type text, coverage text, duration text, impact text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone, total_count bigint)
  LANGUAGE sql
  STABLE
 AS $function$
+  -- Hybrid search: full-text, trigram, and semantic retrievers each produce a
+  -- ranked candidate list; results are merged with Reciprocal Rank Fusion
+  -- (score = sum of 1 / (60 + rank)). Ranks are scale-free, so no
+  -- cross-retriever score normalization is needed. Any retriever can be
+  -- absent (short query, null embedding) and the fusion degrades gracefully.
   with normalized as (
     select
-      nullif(trim(query_text), '') as q,
+      case
+        when length(nullif(trim(query_text), '')) >= 3
+          then nullif(trim(query_text), '')
+        else null
+      end as q,
       case
         when length(nullif(trim(query_text), '')) >= 3
           then websearch_to_tsquery('english', nullif(trim(query_text), ''))
@@ -226,70 +334,68 @@ AS $function$
       end as tsq
   ),
   filtered as (
-    select ga.*, n.q, n.tsq
+    select ga.*
     from global_articles ga
-    cross join normalized n
     where
-      (
-        n.q is null
-        or length(n.q) < 3
-        or (n.tsq is not null and ga.search_vector @@ n.tsq)
-        or lower(n.q) <% lower(ga.title)
-      )
-      and (topic_filters is null or cardinality(topic_filters) = 0 or ga.topic = any(topic_filters))
+      (topic_filters is null or cardinality(topic_filters) = 0 or ga.topic = any(topic_filters))
       and (type_filters is null or cardinality(type_filters) = 0 or ga.type = any(type_filters))
       and (coverage_filters is null or cardinality(coverage_filters) = 0 or ga.coverage = any(coverage_filters))
       and (duration_filters is null or cardinality(duration_filters) = 0 or ga.duration = any(duration_filters))
       and (impact_filters is null or cardinality(impact_filters) = 0 or ga.impact = any(impact_filters))
   ),
-  ranked as (
+  fts_hits as (
+    select f.id, row_number() over (order by ts_rank(f.search_vector, n.tsq) desc) as rank
+    from filtered f, normalized n
+    where n.tsq is not null and f.search_vector @@ n.tsq
+    order by rank
+    limit 100
+  ),
+  trgm_hits as (
+    select f.id, row_number() over (order by word_similarity(lower(n.q), lower(f.title)) desc) as rank
+    from filtered f, normalized n
+    where n.q is not null and lower(n.q) <% lower(f.title)
+    order by rank
+    limit 100
+  ),
+  vec_hits as (
+    select f.id, row_number() over (order by f.embedding <=> query_embedding) as rank
+    from filtered f, normalized n
+    where n.q is not null and query_embedding is not null and f.embedding is not null
+    order by rank
+    limit 100
+  ),
+  fused as (
     select
-      filtered.id,
-      filtered.feed_title,
-      filtered.title,
-      filtered.url,
-      filtered.summary,
-      filtered.topic,
-      filtered.type,
-      filtered.coverage,
-      filtered.duration,
-      filtered.impact,
-      filtered.image_url,
-      filtered.published_at,
-      filtered.created_at,
-      count(*) over() as total_count,
-      case
-        when filtered.tsq is not null and filtered.search_vector @@ filtered.tsq
-          then ts_rank(filtered.search_vector, filtered.tsq)
-        else 0
-      end as fts_rank,
-      case
-        when filtered.q is not null and length(filtered.q) >= 3
-          then word_similarity(lower(filtered.q), lower(filtered.title))
-        else 0
-      end as trgm_rank
-    from filtered
+      id,
+      coalesce(1.0 / (60 + fts.rank), 0)
+        + coalesce(1.0 / (60 + trgm.rank), 0)
+        + coalesce(1.0 / (60 + vec.rank), 0) as rrf_score
+    from fts_hits fts
+    full outer join trgm_hits trgm using (id)
+    full outer join vec_hits vec using (id)
   )
   select
-    ranked.id,
-    ranked.feed_title,
-    ranked.title,
-    ranked.url,
-    ranked.summary,
-    ranked.topic,
-    ranked.type,
-    ranked.coverage,
-    ranked.duration,
-    ranked.impact,
-    ranked.image_url,
-    ranked.published_at,
-    ranked.created_at,
-    ranked.total_count
-  from ranked
+    f.id,
+    f.feed_title,
+    f.title,
+    f.url,
+    f.summary,
+    f.topic,
+    f.type,
+    f.coverage,
+    f.duration,
+    f.impact,
+    f.image_url,
+    f.published_at,
+    f.created_at,
+    count(*) over () as total_count
+  from filtered f
+  cross join normalized n
+  left join fused fu on fu.id = f.id
+  where n.q is null or fu.id is not null
   order by
-    fts_rank desc,
-    trgm_rank desc,
-    published_at desc
+    fu.rrf_score desc nulls last,
+    f.published_at desc
   limit greatest(page_size, 1)
   offset greatest(page_offset, 0);
 $function$
@@ -603,6 +709,90 @@ grant truncate on table "public"."user_article_metadata_options" to "service_rol
 
 grant update on table "public"."user_article_metadata_options" to "service_role";
 
+grant delete on table "public"."user_interests" to "anon";
+
+grant insert on table "public"."user_interests" to "anon";
+
+grant references on table "public"."user_interests" to "anon";
+
+grant select on table "public"."user_interests" to "anon";
+
+grant trigger on table "public"."user_interests" to "anon";
+
+grant truncate on table "public"."user_interests" to "anon";
+
+grant update on table "public"."user_interests" to "anon";
+
+grant delete on table "public"."user_interests" to "authenticated";
+
+grant insert on table "public"."user_interests" to "authenticated";
+
+grant references on table "public"."user_interests" to "authenticated";
+
+grant select on table "public"."user_interests" to "authenticated";
+
+grant trigger on table "public"."user_interests" to "authenticated";
+
+grant truncate on table "public"."user_interests" to "authenticated";
+
+grant update on table "public"."user_interests" to "authenticated";
+
+grant delete on table "public"."user_interests" to "service_role";
+
+grant insert on table "public"."user_interests" to "service_role";
+
+grant references on table "public"."user_interests" to "service_role";
+
+grant select on table "public"."user_interests" to "service_role";
+
+grant trigger on table "public"."user_interests" to "service_role";
+
+grant truncate on table "public"."user_interests" to "service_role";
+
+grant update on table "public"."user_interests" to "service_role";
+
+grant delete on table "public"."user_seen_articles" to "anon";
+
+grant insert on table "public"."user_seen_articles" to "anon";
+
+grant references on table "public"."user_seen_articles" to "anon";
+
+grant select on table "public"."user_seen_articles" to "anon";
+
+grant trigger on table "public"."user_seen_articles" to "anon";
+
+grant truncate on table "public"."user_seen_articles" to "anon";
+
+grant update on table "public"."user_seen_articles" to "anon";
+
+grant delete on table "public"."user_seen_articles" to "authenticated";
+
+grant insert on table "public"."user_seen_articles" to "authenticated";
+
+grant references on table "public"."user_seen_articles" to "authenticated";
+
+grant select on table "public"."user_seen_articles" to "authenticated";
+
+grant trigger on table "public"."user_seen_articles" to "authenticated";
+
+grant truncate on table "public"."user_seen_articles" to "authenticated";
+
+grant update on table "public"."user_seen_articles" to "authenticated";
+
+grant delete on table "public"."user_seen_articles" to "service_role";
+
+grant insert on table "public"."user_seen_articles" to "service_role";
+
+grant references on table "public"."user_seen_articles" to "service_role";
+
+grant select on table "public"."user_seen_articles" to "service_role";
+
+grant trigger on table "public"."user_seen_articles" to "service_role";
+
+grant truncate on table "public"."user_seen_articles" to "service_role";
+
+grant update on table "public"."user_seen_articles" to "service_role";
+
 grant delete on table "public"."user_settings" to "anon";
 
 grant insert on table "public"."user_settings" to "anon";
@@ -711,6 +901,26 @@ using ((expires_at > now()));
 
   create policy "Users can manage their own metadata options"
   on "public"."user_article_metadata_options"
+  as permissive
+  for all
+  to authenticated
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
+  create policy "Users can manage their own interests"
+  on "public"."user_interests"
+  as permissive
+  for all
+  to authenticated
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
+
+
+
+  create policy "Users can manage their own seen articles"
+  on "public"."user_seen_articles"
   as permissive
   for all
   to authenticated

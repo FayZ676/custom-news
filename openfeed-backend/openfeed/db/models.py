@@ -216,6 +216,42 @@ class PublicUserArticleMetadataOptionsUpdate(TypedDict):
     name: NotRequired[Annotated[str, Field(alias="name")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
 
+class PublicUserInterests(BaseModel):
+    created_at: datetime.datetime = Field(alias="created_at")
+    embedding: Optional[list[Any]] = Field(alias="embedding")
+    id: uuid.UUID = Field(alias="id")
+    interest_text: str = Field(alias="interest_text")
+    user_id: uuid.UUID = Field(alias="user_id")
+
+class PublicUserInterestsInsert(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    embedding: NotRequired[Annotated[Optional[list[Any]], Field(alias="embedding")]]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    interest_text: Annotated[str, Field(alias="interest_text")]
+    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
+
+class PublicUserInterestsUpdate(TypedDict):
+    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
+    embedding: NotRequired[Annotated[Optional[list[Any]], Field(alias="embedding")]]
+    id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
+    interest_text: NotRequired[Annotated[str, Field(alias="interest_text")]]
+    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
+
+class PublicUserSeenArticles(BaseModel):
+    article_id: uuid.UUID = Field(alias="article_id")
+    seen_at: datetime.datetime = Field(alias="seen_at")
+    user_id: uuid.UUID = Field(alias="user_id")
+
+class PublicUserSeenArticlesInsert(TypedDict):
+    article_id: Annotated[uuid.UUID, Field(alias="article_id")]
+    seen_at: NotRequired[Annotated[datetime.datetime, Field(alias="seen_at")]]
+    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
+
+class PublicUserSeenArticlesUpdate(TypedDict):
+    article_id: NotRequired[Annotated[uuid.UUID, Field(alias="article_id")]]
+    seen_at: NotRequired[Annotated[datetime.datetime, Field(alias="seen_at")]]
+    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
+
 class PublicUserSettings(BaseModel):
     color_theme: str = Field(alias="color_theme")
     email_notification: bool = Field(alias="email_notification")

@@ -1,14 +1,13 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import {
-  ArticleMetadataField,
   MetadataOptionsByField,
 } from "@/lib/supabase/queries/global_article_metadata_options";
 import { Database } from "@/lib/supabase/supabase.types";
 
 export interface UserArticleMetadataOption {
   user_id: string;
-  field: ArticleMetadataField;
+  field: "topic";
   name: string;
   created_at: string;
 }
@@ -21,7 +20,7 @@ export async function getUserArticleMetadataOptions(
     .from("user_article_metadata_options")
     .select("user_id, field, name, created_at")
     .eq("user_id", userId)
-    .order("field", { ascending: true })
+    .eq("field", "topic")
     .order("name", { ascending: true });
 
   if (error) throw new Error(error.message);
@@ -31,7 +30,7 @@ export async function getUserArticleMetadataOptions(
 export async function addUserArticleMetadataOption(
   supabase: SupabaseClient<Database>,
   userId: string,
-  field: ArticleMetadataField,
+  field: "topic",
   name: string,
 ): Promise<void> {
   const { error } = await (supabase as any)
@@ -48,7 +47,7 @@ export async function addUserArticleMetadataOption(
 export async function removeUserArticleMetadataOption(
   supabase: SupabaseClient<Database>,
   userId: string,
-  field: ArticleMetadataField,
+  field: "topic",
   name: string,
 ): Promise<void> {
   const { error } = await (supabase as any)
@@ -73,7 +72,7 @@ export function groupUserMetadataByField(
   };
 
   for (const row of rows) {
-    grouped[row.field].push(row.name);
+    grouped.topic.push(row.name);
   }
 
   return grouped;

@@ -1,6 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { MetadataOptionsByField } from "@/lib/supabase/queries/global_article_metadata_options";
+import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import { markArticlesAsSeen } from "@/lib/supabase/queries/user_seen_articles";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
 export type GlobalArticle = Tables<"global_articles">;
@@ -114,6 +116,47 @@ export async function getUnifiedFeedPage(
     hasNextPage: page < totalPages,
     totalPages,
   };
+}
+
+function toVectorString(raw: unknown): string | null {
+  if (Array.isArray(raw)) return JSON.stringify(raw);
+  if (typeof raw === "string" && raw.startsWith("[")) return raw;
+  return null;
+}
+
+export async function getCuratedFeed(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  interests: UserInterest[],
+  topicFilters?: string[],
+): Promise<GlobalArticle[]> {
+  const embeddingStrings = interests
+    .map((i) => toVectorString(i.embedding))
+    .filter((e): e is string => e !== null);
+
+  if (embeddingStrings.length === 0) return [];
+
+  const { data, error } = await (supabase as any).rpc("get_curated_feed", {
+    p_user_id: userId,
+    p_interest_embeddings: embeddingStrings,
+    p_topic_filters:
+      topicFilters && topicFilters.length > 0 ? topicFilters : null,
+    p_page_size: 10,
+  });
+
+  if (error) throw new Error(error.message);
+
+  const articles = (data as GlobalArticle[] | null) ?? [];
+
+  if (articles.length > 0) {
+    await markArticlesAsSeen(
+      supabase,
+      userId,
+      articles.map((a) => a.id),
+    );
+  }
+
+  return articles;
 }
 
 export async function getArticleById(

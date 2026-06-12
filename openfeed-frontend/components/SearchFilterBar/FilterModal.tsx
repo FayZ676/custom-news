@@ -5,6 +5,8 @@ import {
   ArticleMetadataField,
   MetadataOptionsByField,
 } from "@/lib/supabase/queries/global_article_metadata_options";
+import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import { InterestsManager } from "@/components/InterestsManager";
 
 import Chip from "./Chip";
 import SectionLabel from "./SectionLabel";
@@ -12,8 +14,11 @@ import SectionLabel from "./SectionLabel";
 interface FilterModalProps {
   metadataOptions: MetadataOptionsByField;
   activeMetadataFilters: MetadataOptionsByField;
+  interests: UserInterest[];
+  userId: string;
   onToggleFieldOption: (field: ArticleMetadataField, name: string) => void;
   onClearField: (field: ArticleMetadataField) => void;
+  onInterestsChange: () => void;
   onClose: () => void;
 }
 
@@ -26,8 +31,11 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
     {
       metadataOptions,
       activeMetadataFilters,
+      interests,
+      userId,
       onToggleFieldOption,
       onClearField,
+      onInterestsChange,
       onClose,
     },
     ref,
@@ -40,52 +48,51 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
       },
     }));
 
+    const topicOptions = metadataOptions.topic;
+    const selectedTopics = activeMetadataFilters.topic;
+
     return (
       <Modal ref={dialogRef} onClose={onClose}>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
           <span className="heading-modal">Filters</span>
 
-          <div className="flex flex-col gap-7">
-            {(
-              [
-                "topic",
-                "type",
-                "coverage",
-                "duration",
-                "impact",
-              ] as ArticleMetadataField[]
-            ).map((field) => {
-              const options = metadataOptions[field];
-              const selected = activeMetadataFilters[field];
-              const label = field[0].toUpperCase() + field.slice(1);
+          <div className="flex flex-col gap-2">
+            <SectionLabel
+              onClear={() => {}}
+              showClear={false}
+            >
+              Your Interests
+            </SectionLabel>
+            <InterestsManager
+              userId={userId}
+              initialInterests={interests}
+              onInterestsChange={onInterestsChange}
+            />
+          </div>
 
-              return (
-                <div key={field}>
-                  <SectionLabel
-                    onClear={() => onClearField(field)}
-                    showClear={selected.length > 0}
-                  >
-                    {label}
-                  </SectionLabel>
-                  {options.length === 0 ? (
-                    <p className="text-[11px] text-base-content/30 m-0">
-                      No options available.
-                    </p>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {options.map((optionName) => (
-                        <Chip
-                          key={optionName}
-                          label={optionName}
-                          active={selected.includes(optionName)}
-                          onTap={() => onToggleFieldOption(field, optionName)}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          <div>
+            <SectionLabel
+              onClear={() => onClearField("topic")}
+              showClear={selectedTopics.length > 0}
+            >
+              Topic
+            </SectionLabel>
+            {topicOptions.length === 0 ? (
+              <p className="text-[11px] text-base-content/30 m-0">
+                No options available.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {topicOptions.map((optionName) => (
+                  <Chip
+                    key={optionName}
+                    label={optionName}
+                    active={selectedTopics.includes(optionName)}
+                    onTap={() => onToggleFieldOption("topic", optionName)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </Modal>

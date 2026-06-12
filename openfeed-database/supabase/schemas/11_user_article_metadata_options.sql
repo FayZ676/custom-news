@@ -7,7 +7,9 @@ create table "user_article_metadata_options" (
 	constraint "user_article_metadata_options_field_name_fkey"
 		foreign key (field, name)
 		references "global_article_metadata_options" (field, name)
-		on delete cascade
+		on delete cascade,
+	constraint "user_article_metadata_options_topic_only"
+		check (field = 'topic')
 );
 
 create index on "user_article_metadata_options" (user_id);

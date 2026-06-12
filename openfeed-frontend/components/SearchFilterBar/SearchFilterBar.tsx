@@ -5,6 +5,7 @@ import {
   ArticleMetadataField,
   MetadataOptionsByField,
 } from "@/lib/supabase/queries/global_article_metadata_options";
+import { UserInterest } from "@/lib/supabase/queries/user_interests";
 
 import FilterModal from "./FilterModal";
 import type { FilterModalHandle } from "./FilterModal";
@@ -12,31 +13,33 @@ import type { FilterModalHandle } from "./FilterModal";
 interface SearchFilterBarProps {
   metadataOptions: MetadataOptionsByField;
   activeMetadataFilters: MetadataOptionsByField;
+  interests: UserInterest[];
+  userId: string;
   onChangeFieldOptions: (
     field: ArticleMetadataField,
     nextOptions: string[],
   ) => Promise<void>;
   onSearchQueryChange: (query: string) => void;
   onFilterModalClose: () => void;
+  onInterestsChange: () => void;
 }
 
 export default function SearchFilterBar({
   metadataOptions,
   activeMetadataFilters,
+  interests,
+  userId,
   onChangeFieldOptions,
   onSearchQueryChange,
   onFilterModalClose,
+  onInterestsChange,
 }: SearchFilterBarProps) {
   const filterModalRef = useRef<FilterModalHandle>(null);
   const [searchValue, setSearchValue] = useState("");
 
-  const totalFilters = useMemo(
-    () =>
-      Object.values(activeMetadataFilters).reduce(
-        (total, values) => total + values.length,
-        0,
-      ),
-    [activeMetadataFilters],
+  const totalTopicFilters = useMemo(
+    () => activeMetadataFilters.topic.length,
+    [activeMetadataFilters.topic],
   );
 
   useEffect(() => {
@@ -85,9 +88,9 @@ export default function SearchFilterBar({
             <span className="hidden sm:inline">Filters</span>
             <TextAlignEnd size={16} />
           </button>
-          {totalFilters > 0 && (
+          {totalTopicFilters > 0 && (
             <span className="absolute -top-1 -right-1 bg-error text-error-content rounded-full w-3.75 h-3.75 text-[8px] flex items-center justify-center font-semibold pointer-events-none">
-              {totalFilters}
+              {totalTopicFilters}
             </span>
           )}
         </div>
@@ -97,8 +100,11 @@ export default function SearchFilterBar({
         ref={filterModalRef}
         metadataOptions={metadataOptions}
         activeMetadataFilters={activeMetadataFilters}
+        interests={interests}
+        userId={userId}
         onToggleFieldOption={handleToggleFieldOption}
         onClearField={handleClearField}
+        onInterestsChange={onInterestsChange}
         onClose={onFilterModalClose}
       />
     </div>

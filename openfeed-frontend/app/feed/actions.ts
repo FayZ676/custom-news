@@ -8,6 +8,11 @@ import {
   getUserArticleMetadataOptions,
   removeUserArticleMetadataOption,
 } from "@/lib/supabase/queries/user_article_metadata_options";
+import {
+  addUserInterest,
+  removeUserInterest,
+  UserInterest,
+} from "@/lib/supabase/queries/user_interests";
 
 export async function createShareLinkAction(
   userId: string,
@@ -16,6 +21,23 @@ export async function createShareLinkAction(
 ): Promise<string> {
   const supabase = await createClient();
   return createShareLink(supabase, userId, contentType, contentId);
+}
+
+export async function addInterestAction(
+  userId: string,
+  interestText: string,
+  embedding: number[] | null,
+): Promise<UserInterest> {
+  const supabase = await createClient();
+  return addUserInterest(supabase, userId, interestText, embedding);
+}
+
+export async function removeInterestAction(
+  userId: string,
+  interestId: string,
+): Promise<void> {
+  const supabase = await createClient();
+  return removeUserInterest(supabase, userId, interestId);
 }
 
 export async function changeMetadataOptionsAction(
