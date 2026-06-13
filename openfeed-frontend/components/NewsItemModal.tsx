@@ -21,6 +21,8 @@ export type NewsItemArticle = {
   sourceName?: string | null;
   publishedAt?: string | null;
   imageUrl?: string | null;
+  // Live search results are ephemeral and have no persisted id to share.
+  shareable?: boolean;
 };
 
 export type NewsItem = NewsItemArticle;
@@ -89,7 +91,7 @@ export const NewsItemModal = forwardRef<
       setCopyState("idle");
       setShareUrl(null);
       dialogRef.current?.showModal();
-      void prepareShareUrl(item);
+      if (item.shareable !== false) void prepareShareUrl(item);
     },
   }));
 
@@ -135,6 +137,7 @@ export const NewsItemModal = forwardRef<
               Read full article <ArrowUpRight size={16} />
             </a>
 
+            {selectedItem.shareable !== false && (
             <button
               className="btn-soft disabled:opacity-50"
               onClick={handleCopy}
@@ -151,6 +154,7 @@ export const NewsItemModal = forwardRef<
                 <Clipboard size={18} />
               )}
             </button>
+            )}
           </div>
         </div>
       )}

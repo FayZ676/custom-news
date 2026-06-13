@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { UserArticle } from "@/lib/supabase/queries/user_articles";
+import { FeedArticle } from "@/lib/newsSearch";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 import {
@@ -14,11 +14,17 @@ import { SectionArticleSkeleton } from "@/components/SectionArticles";
 import { NewsItemCard } from "@/components/NewsItemCard";
 
 interface ViewFeedProps {
-  articles: UserArticle[];
+  articles: FeedArticle[];
   emptyStateMessage?: string;
+  // Live search results have no persisted id and cannot be shared.
+  shareable?: boolean;
 }
 
-export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
+export function ViewFeed({
+  articles,
+  emptyStateMessage,
+  shareable = true,
+}: ViewFeedProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
   const hasRenderableImage = (imageUrl?: string | null) =>
     imageUrl?.startsWith("https://") ?? false;
@@ -29,7 +35,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
     .filter((article) => !hasRenderableImage(article.image_url))
     .sort((a, b) => (a.summary ? 0 : 1) - (b.summary ? 0 : 1));
 
-  function openModal(article: UserArticle) {
+  function openModal(article: FeedArticle) {
     const item: NewsItemArticle = {
       type: "article",
       id: article.id,
@@ -39,6 +45,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
       sourceName: article.source_name,
       publishedAt: article.published_at,
       imageUrl: article.image_url,
+      shareable,
     };
     modalRef.current?.open(item);
   }

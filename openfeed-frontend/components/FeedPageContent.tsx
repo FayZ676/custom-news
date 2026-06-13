@@ -4,20 +4,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
-import { FeedPaginationNav } from "@/components/FeedPaginationNav";
 import { ViewFeed } from "@/components/ViewFeed";
-import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { UserArticle } from "@/lib/supabase/queries/user_articles";
 import {
-  getUnifiedFeedPage,
-  UserArticle,
-} from "@/lib/supabase/queries/user_articles";
+  FeedArticle,
+  MIN_SEARCH_QUERY_LENGTH,
+  searchLatestNews,
+} from "@/lib/newsSearch";
 import {
   ArticleMetadataField,
   MetadataOptionsByField,
 } from "@/lib/supabase/queries/global_article_metadata_options";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
-
-const PAGE_SIZE = 10;
 
 interface FeedPageContentProps {
   articles: UserArticle[];
@@ -47,13 +45,10 @@ export function FeedPageContent({
   const [refreshOnFilterModalClose, setRefreshOnFilterModalClose] =
     useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchPage, setSearchPage] = useState(1);
-  const [searchArticles, setSearchArticles] = useState<UserArticle[]>([]);
-  const [searchTotalPages, setSearchTotalPages] = useState(1);
-  const [searchHasNextPage, setSearchHasNextPage] = useState(false);
+  const [searchArticles, setSearchArticles] = useState<FeedArticle[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchRequestIdRef = useRef(0);
-  const isSearchActive = searchQuery.length >= 3;
+  const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
 
   useEffect(() => {
     setActiveMetadataFilters(initialMetadataFilters);
@@ -63,7 +58,6 @@ export function FeedPageContent({
     if (!refreshOnFilterModalClose || pendingFilterSaveCount > 0) return;
     setHasPendingFilterChanges(false);
     setRefreshOnFilterModalClose(false);
-    setSearchPage(1);
     router.refresh();
   }, [pendingFilterSaveCount, refreshOnFilterModalClose, router]);
 
@@ -71,7 +65,6 @@ export function FeedPageContent({
     async (field: ArticleMetadataField, nextOptions: string[]) => {
       const prevFilters = activeMetadataFilters;
       setActiveMetadataFilters((current) => ({ ...current, [field]: nextOptions }));
-      setSearchPage(1);
       // Only topic selections are persisted; the database constrains
       // user_article_metadata_options to field = 'topic'. Other fields are
       // session-only filters applied client-side.
@@ -97,15 +90,15 @@ export function FeedPageContent({
 
   const handleSearchQueryChange = useCallback(async (query: string) => {
     setSearchQuery(query);
-    setSearchPage(1);
-    if (query.length < 3) {
+    if (query.length < MIN_SEARCH_QUERY_LENGTH) {
       setSearchArticles([]);
-      setSearchTotalPages(1);
-      setSearchHasNextPage(false);
       setIsSearching(false);
     }
   }, []);
 
+  // Live search hits NewsData.io directly (via /api/search/news) for fresh
+  // articles matching the query, independent of the user's persisted feed.
+  // Metadata filters don't apply: these results aren't enriched.
   useEffect(() => {
     if (!isSearchActive) return;
 
@@ -115,41 +108,19 @@ export function FeedPageContent({
 
     const run = async () => {
       try {
-        const supabase = createBrowserSupabaseClient();
-        const result = await getUnifiedFeedPage(supabase, {
-          page: searchPage,
-          pageSize: PAGE_SIZE,
-          metadataFilters: activeMetadataFilters,
-          queryText: searchQuery,
-        });
+        const articles = await searchLatestNews(searchQuery);
         if (searchRequestIdRef.current !== currentRequestId) return;
-        setSearchArticles(result.articles);
-        setSearchTotalPages(result.totalPages);
-        setSearchHasNextPage(result.hasNextPage);
+        setSearchArticles(articles);
       } catch {
         if (searchRequestIdRef.current !== currentRequestId) return;
         setSearchArticles([]);
-        setSearchTotalPages(1);
-        setSearchHasNextPage(false);
       } finally {
         if (searchRequestIdRef.current === currentRequestId) setIsSearching(false);
       }
     };
 
     void run();
-  }, [activeMetadataFilters, isSearchActive, searchPage, searchQuery]);
-
-  const handleSearchPageChange = useCallback(
-    (nextPage: number) => {
-      setSearchPage((current) => {
-        if (nextPage < 1 || nextPage > searchTotalPages || nextPage === current) {
-          return current;
-        }
-        return nextPage;
-      });
-    },
-    [searchTotalPages],
-  );
+  }, [isSearchActive, searchQuery]);
 
   const displayedArticles = isSearchActive ? searchArticles : articles;
 
@@ -171,6 +142,7 @@ export function FeedPageContent({
         ) : (
           <ViewFeed
             articles={displayedArticles}
+            shareable={!isSearchActive}
             emptyStateMessage={
               isSearchActive
                 ? "No matches found."
@@ -179,14 +151,6 @@ export function FeedPageContent({
           />
         )}
       </div>
-      {isSearchActive && (
-        <FeedPaginationNav
-          currentPage={searchPage}
-          hasNextPage={searchHasNextPage}
-          totalPages={searchTotalPages}
-          onPageChange={handleSearchPageChange}
-        />
-      )}
     </>
   );
 }
