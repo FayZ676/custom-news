@@ -12,6 +12,13 @@ import {
   searchLatestNews,
 } from "@/lib/newsSearch";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import { refreshUserArticlesAction } from "@/app/feed/actions";
+
+// A per-user refresh runs in the backend (NewsData fetch + embeddings), so a
+// freshly built feed lands empty for a few seconds. Poll a bounded number of
+// times before settling on the normal empty state.
+const FEED_POLL_INTERVAL_MS = 5000;
+const MAX_FEED_POLLS = 12;
 
 interface FeedPageContentProps {
   articles: UserArticle[];
@@ -31,6 +38,8 @@ export function FeedPageContent({
   const searchRequestIdRef = useRef(0);
   const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
 
+  const [pollCount, setPollCount] = useState(0);
+
   const handleSearchQueryChange = useCallback(async (query: string) => {
     setSearchQuery(query);
     if (query.length < MIN_SEARCH_QUERY_LENGTH) {
@@ -38,6 +47,28 @@ export function FeedPageContent({
       setIsSearching(false);
     }
   }, []);
+
+  // Changing interests rebuilds the feed in the backend; trigger the refresh
+  // and restart polling so the new articles appear without a manual reload.
+  const handleInterestsChange = useCallback(() => {
+    void refreshUserArticlesAction();
+    setPollCount(0);
+    router.refresh();
+  }, [router]);
+
+  // While the feed is empty (e.g. right after onboarding), the backend refresh
+  // is likely still in flight — re-fetch on an interval until articles arrive.
+  const isFeedEmpty = articles.length === 0;
+  const isBuildingFeed = isFeedEmpty && !isSearchActive && pollCount < MAX_FEED_POLLS;
+
+  useEffect(() => {
+    if (!isBuildingFeed) return;
+    const timer = setTimeout(() => {
+      setPollCount((count) => count + 1);
+      router.refresh();
+    }, FEED_POLL_INTERVAL_MS);
+    return () => clearTimeout(timer);
+  }, [isBuildingFeed, pollCount, router]);
 
   // Live search hits NewsData.io directly (via /api/search/news) for fresh
   // articles matching the query, independent of the user's persisted feed.
@@ -72,7 +103,7 @@ export function FeedPageContent({
         onSearchQueryChange={handleSearchQueryChange}
         interests={interests}
         userId={userId}
-        onInterestsChange={() => router.refresh()}
+        onInterestsChange={handleInterestsChange}
       />
       <div>
         {isSearching && isSearchActive ? (
@@ -84,7 +115,9 @@ export function FeedPageContent({
             emptyStateMessage={
               isSearchActive
                 ? "No matches found."
-                : "You're all caught up. Check back later."
+                : isBuildingFeed
+                  ? "Putting together your feed — this can take a moment…"
+                  : "You're all caught up. Check back later."
             }
           />
         )}

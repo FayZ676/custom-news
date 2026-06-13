@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 from openfeed.db.client import Client
 from openfeed.db.models import PublicUserArticles, PublicUserInterests
 from openfeed.db.queries.user_articles import get_user_articles, replace_user_articles
-from openfeed.db.queries.user_interests import get_all_user_interests
+from openfeed.db.queries.user_interests import (
+    get_all_user_interests,
+    get_user_interests,
+)
 from openfeed.clients.newsdata import NewsDataArticle, get_latest_articles
 from openfeed.clients.openai_client import OpenAIClient
 
@@ -30,6 +33,19 @@ def refresh_user_articles(db: Client):
             logger.exception("Failed to refresh articles for user %s", user_id)
 
     logger.info("Refreshed articles for %d users", len(interests_by_user))
+
+
+def refresh_articles_for_user(db: Client, user_id: uuid.UUID):
+    """Refresh a single user's articles immediately.
+
+    The hourly cron refreshes every user, but a user who just changed their
+    interests (e.g. while onboarding) would otherwise face an empty feed until
+    the next run. The app triggers this to populate their feed right away."""
+    interests = get_user_interests(db, user_id)
+    if not interests:
+        logger.info("No interests for user %s; nothing to refresh", user_id)
+        return
+    _refresh_articles_for_user(db, user_id, interests)
 
 
 def _refresh_articles_for_user(

@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
+import { requestUserArticlesRefresh } from "@/lib/supabase/queries/user_articles";
 import {
   addUserInterest,
   removeUserInterest,
@@ -32,4 +33,11 @@ export async function removeInterestAction(
 ): Promise<void> {
   const supabase = await createClient();
   return removeUserInterest(supabase, userId, interestId);
+}
+
+// Kick off an immediate refresh of the caller's feed after their interests
+// change, so they don't have to wait for the hourly cron to populate articles.
+export async function refreshUserArticlesAction(): Promise<void> {
+  const supabase = await createClient();
+  return requestUserArticlesRefresh(supabase);
 }

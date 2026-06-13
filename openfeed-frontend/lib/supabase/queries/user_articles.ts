@@ -40,6 +40,16 @@ async function embedQuery(query: string): Promise<number[] | null> {
   }
 }
 
+// Ask the backend to refetch this user's articles for their current interests
+// right away, instead of waiting for the hourly cron. Fire-and-forget: the RPC
+// queues an HTTP request to the backend (via pg_net) and returns immediately.
+export async function requestUserArticlesRefresh(
+  supabase: SupabaseClient<Database>,
+): Promise<void> {
+  const { error } = await (supabase as any).rpc("request_user_articles_refresh");
+  if (error) throw new Error(error.message);
+}
+
 export async function getUserArticles(
   supabase: SupabaseClient<Database>,
   userId: string,
