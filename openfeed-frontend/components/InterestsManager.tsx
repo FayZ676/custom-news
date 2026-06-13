@@ -14,7 +14,6 @@ const MAX_INTERESTS = 7;
 interface InterestsManagerProps {
   userId: string;
   initialInterests: UserInterest[];
-  onInterestsChange?: () => void;
   onInterestAdded?: (interestText: string) => void | Promise<void>;
   onInterestRemoved?: () => void | Promise<void>;
 }
@@ -37,7 +36,6 @@ async function fetchEmbedding(text: string): Promise<number[] | null> {
 export function InterestsManager({
   userId,
   initialInterests,
-  onInterestsChange,
   onInterestAdded,
   onInterestRemoved,
 }: InterestsManagerProps) {
@@ -59,11 +57,7 @@ export function InterestsManager({
       const saved = await addInterestAction(userId, text, embedding);
       setInterests((prev) => [...prev, saved]);
       setInputValue("");
-      if (onInterestAdded) {
-        await onInterestAdded(text);
-      } else {
-        onInterestsChange?.();
-      }
+      await onInterestAdded?.(text);
     } finally {
       setIsAdding(false);
       inputRef.current?.focus();
@@ -73,11 +67,7 @@ export function InterestsManager({
   const handleRemove = async (interestId: string) => {
     setInterests((prev) => prev.filter((i) => i.id !== interestId));
     await removeInterestAction(userId, interestId);
-    if (onInterestRemoved) {
-      await onInterestRemoved();
-    } else {
-      onInterestsChange?.();
-    }
+    await onInterestRemoved?.();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

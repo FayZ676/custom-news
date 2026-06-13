@@ -10,7 +10,6 @@ interface SearchFilterBarProps {
   interests: UserInterest[];
   userId: string;
   onSearchQueryChange: (query: string) => void;
-  onInterestsChange: () => void;
   onInterestAdded: (interestText: string) => void | Promise<void>;
   onInterestRemoved: () => void | Promise<void>;
 }
@@ -19,7 +18,6 @@ export default function SearchFilterBar({
   interests,
   userId,
   onSearchQueryChange,
-  onInterestsChange,
   onInterestAdded,
   onInterestRemoved,
 }: SearchFilterBarProps) {
@@ -63,7 +61,6 @@ export default function SearchFilterBar({
         ref={filterModalRef}
         interests={interests}
         userId={userId}
-        onInterestsChange={onInterestsChange}
         onInterestAdded={onInterestAdded}
         onInterestRemoved={onInterestRemoved}
       />

@@ -100,7 +100,6 @@ export function FeedPageContent({
         onSearchQueryChange={handleSearchQueryChange}
         interests={interests}
         userId={userId}
-        onInterestsChange={() => router.refresh()}
         onInterestAdded={handleInterestAdded}
         onInterestRemoved={handleInterestRemoved}
       />
