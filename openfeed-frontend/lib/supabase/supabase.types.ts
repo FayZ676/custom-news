@@ -34,24 +34,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      global_article_metadata_options: {
-        Row: {
-          description: string
-          field: string
-          name: string
-        }
-        Insert: {
-          description: string
-          field: string
-          name: string
-        }
-        Update: {
-          description?: string
-          field?: string
-          name?: string
-        }
-        Relationships: []
-      }
       global_emails: {
         Row: {
           created_at: string
@@ -127,87 +109,43 @@ export type Database = {
         }
         Relationships: []
       }
-      user_article_metadata_options: {
-        Row: {
-          created_at: string
-          field: string
-          name: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          field: string
-          name: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          field?: string
-          name?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_article_metadata_options_field_name_fkey"
-            columns: ["field", "name"]
-            isOneToOne: false
-            referencedRelation: "global_article_metadata_options"
-            referencedColumns: ["field", "name"]
-          },
-        ]
-      }
       user_articles: {
         Row: {
-          coverage: string | null
           created_at: string
-          duration: string | null
           embedding: string | null
           id: string
           image_url: string | null
-          impact: string | null
           published_at: string
           search_vector: unknown
           source_name: string
           summary: string | null
           title: string
-          topic: string | null
-          type: string | null
           url: string
           user_id: string
         }
         Insert: {
-          coverage?: string | null
           created_at?: string
-          duration?: string | null
           embedding?: string | null
           id?: string
           image_url?: string | null
-          impact?: string | null
           published_at: string
           search_vector?: unknown
           source_name: string
           summary?: string | null
           title: string
-          topic?: string | null
-          type?: string | null
           url: string
           user_id: string
         }
         Update: {
-          coverage?: string | null
           created_at?: string
-          duration?: string | null
           embedding?: string | null
           id?: string
           image_url?: string | null
-          impact?: string | null
           published_at?: string
           search_vector?: unknown
           source_name?: string
           summary?: string | null
           title?: string
-          topic?: string | null
-          type?: string | null
           url?: string
           user_id?: string
         }
@@ -266,47 +204,32 @@ export type Database = {
       get_shared_article: {
         Args: { p_token: string }
         Returns: {
-          coverage: string
           created_at: string
-          duration: string
           id: string
           image_url: string
-          impact: string
           published_at: string
           source_name: string
           summary: string
           title: string
-          topic: string
-          type: string
           url: string
         }[]
       }
       search_articles_feed_page: {
         Args: {
-          coverage_filters?: string[]
-          duration_filters?: string[]
-          impact_filters?: string[]
           page_offset?: number
           page_size?: number
           query_embedding?: string
           query_text?: string
-          topic_filters?: string[]
-          type_filters?: string[]
         }
         Returns: {
-          coverage: string
           created_at: string
-          duration: string
           id: string
           image_url: string
-          impact: string
           published_at: string
           source_name: string
           summary: string
           title: string
-          topic: string
           total_count: number
-          type: string
           url: string
         }[]
       }

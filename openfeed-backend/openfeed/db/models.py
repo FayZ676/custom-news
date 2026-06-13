@@ -45,21 +45,6 @@ AuthOauthResponseType: TypeAlias = Literal["code"]
 
 AuthOauthClientType: TypeAlias = Literal["public", "confidential"]
 
-class PublicGlobalArticleMetadataOptions(BaseModel):
-    description: str = Field(alias="description")
-    field: str = Field(alias="field")
-    name: str = Field(alias="name")
-
-class PublicGlobalArticleMetadataOptionsInsert(TypedDict):
-    description: Annotated[str, Field(alias="description")]
-    field: Annotated[str, Field(alias="field")]
-    name: Annotated[str, Field(alias="name")]
-
-class PublicGlobalArticleMetadataOptionsUpdate(TypedDict):
-    description: NotRequired[Annotated[str, Field(alias="description")]]
-    field: NotRequired[Annotated[str, Field(alias="field")]]
-    name: NotRequired[Annotated[str, Field(alias="name")]]
-
 class PublicGlobalEmails(BaseModel):
     created_at: datetime.datetime = Field(alias="created_at")
     email_text: str = Field(alias="email_text")
@@ -126,75 +111,42 @@ class PublicGlobalShareLinksUpdate(TypedDict):
     expires_at: NotRequired[Annotated[datetime.datetime, Field(alias="expires_at")]]
     token: NotRequired[Annotated[uuid.UUID, Field(alias="token")]]
 
-class PublicUserArticleMetadataOptions(BaseModel):
-    created_at: datetime.datetime = Field(alias="created_at")
-    field: str = Field(alias="field")
-    name: str = Field(alias="name")
-    user_id: uuid.UUID = Field(alias="user_id")
-
-class PublicUserArticleMetadataOptionsInsert(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    field: Annotated[str, Field(alias="field")]
-    name: Annotated[str, Field(alias="name")]
-    user_id: Annotated[uuid.UUID, Field(alias="user_id")]
-
-class PublicUserArticleMetadataOptionsUpdate(TypedDict):
-    created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    field: NotRequired[Annotated[str, Field(alias="field")]]
-    name: NotRequired[Annotated[str, Field(alias="name")]]
-    user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
-
 class PublicUserArticles(BaseModel):
-    coverage: Optional[str] = Field(alias="coverage")
     created_at: datetime.datetime = Field(alias="created_at")
-    duration: Optional[str] = Field(alias="duration")
     embedding: Optional[list[Any]] = Field(alias="embedding")
     id: uuid.UUID = Field(alias="id")
     image_url: Optional[str] = Field(alias="image_url")
-    impact: Optional[str] = Field(alias="impact")
     published_at: datetime.datetime = Field(alias="published_at")
     search_vector: Optional[PgCatalogTsvector] = Field(alias="search_vector")
     source_name: str = Field(alias="source_name")
     summary: Optional[str] = Field(alias="summary")
     title: str = Field(alias="title")
-    topic: Optional[str] = Field(alias="topic")
-    type: Optional[str] = Field(alias="type")
     url: str = Field(alias="url")
     user_id: uuid.UUID = Field(alias="user_id")
 
 class PublicUserArticlesInsert(TypedDict):
-    coverage: NotRequired[Annotated[Optional[str], Field(alias="coverage")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    duration: NotRequired[Annotated[Optional[str], Field(alias="duration")]]
     embedding: NotRequired[Annotated[Optional[list[Any]], Field(alias="embedding")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
-    impact: NotRequired[Annotated[Optional[str], Field(alias="impact")]]
     published_at: Annotated[datetime.datetime, Field(alias="published_at")]
     search_vector: NotRequired[Annotated[Optional[PgCatalogTsvector], Field(alias="search_vector")]]
     source_name: Annotated[str, Field(alias="source_name")]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
     title: Annotated[str, Field(alias="title")]
-    topic: NotRequired[Annotated[Optional[str], Field(alias="topic")]]
-    type: NotRequired[Annotated[Optional[str], Field(alias="type")]]
     url: Annotated[str, Field(alias="url")]
     user_id: Annotated[uuid.UUID, Field(alias="user_id")]
 
 class PublicUserArticlesUpdate(TypedDict):
-    coverage: NotRequired[Annotated[Optional[str], Field(alias="coverage")]]
     created_at: NotRequired[Annotated[datetime.datetime, Field(alias="created_at")]]
-    duration: NotRequired[Annotated[Optional[str], Field(alias="duration")]]
     embedding: NotRequired[Annotated[Optional[list[Any]], Field(alias="embedding")]]
     id: NotRequired[Annotated[uuid.UUID, Field(alias="id")]]
     image_url: NotRequired[Annotated[Optional[str], Field(alias="image_url")]]
-    impact: NotRequired[Annotated[Optional[str], Field(alias="impact")]]
     published_at: NotRequired[Annotated[datetime.datetime, Field(alias="published_at")]]
     search_vector: NotRequired[Annotated[Optional[PgCatalogTsvector], Field(alias="search_vector")]]
     source_name: NotRequired[Annotated[str, Field(alias="source_name")]]
     summary: NotRequired[Annotated[Optional[str], Field(alias="summary")]]
     title: NotRequired[Annotated[str, Field(alias="title")]]
-    topic: NotRequired[Annotated[Optional[str], Field(alias="topic")]]
-    type: NotRequired[Annotated[Optional[str], Field(alias="type")]]
     url: NotRequired[Annotated[str, Field(alias="url")]]
     user_id: NotRequired[Annotated[uuid.UUID, Field(alias="user_id")]]
 

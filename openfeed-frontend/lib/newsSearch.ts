@@ -1,7 +1,6 @@
-// Live search results come straight from NewsData.io and are intentionally
-// un-enriched: no metadata tags, read-state, or share links. This is the
-// subset of fields the feed cards/modal render, and UserArticle structurally
-// satisfies it so both flow through the same ViewFeed.
+// Live search results come straight from NewsData.io with no read-state or
+// share links. This is the subset of fields the feed cards/modal render, and
+// UserArticle structurally satisfies it so both flow through the same ViewFeed.
 export interface FeedArticle {
   id: string;
   title: string;

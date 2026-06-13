@@ -5,16 +5,6 @@ create extension if not exists "pg_trgm" with schema "public";
 create extension if not exists "vector" with schema "public";
 
 
-  create table "public"."global_article_metadata_options" (
-    "field" text not null,
-    "name" text not null,
-    "description" text not null
-      );
-
-
-alter table "public"."global_article_metadata_options" enable row level security;
-
-
   create table "public"."global_emails" (
     "id" uuid not null default gen_random_uuid(),
     "email_text" text not null,
@@ -52,17 +42,6 @@ alter table "public"."global_settings" enable row level security;
 alter table "public"."global_share_links" enable row level security;
 
 
-  create table "public"."user_article_metadata_options" (
-    "user_id" uuid not null,
-    "field" text not null,
-    "name" text not null,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."user_article_metadata_options" enable row level security;
-
-
   create table "public"."user_articles" (
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
@@ -70,11 +49,6 @@ alter table "public"."user_article_metadata_options" enable row level security;
     "title" text not null,
     "url" text not null,
     "summary" text,
-    "topic" text,
-    "type" text,
-    "coverage" text,
-    "duration" text,
-    "impact" text,
     "image_url" text,
     "published_at" timestamp with time zone not null,
     "created_at" timestamp with time zone not null default now(),
@@ -108,8 +82,6 @@ alter table "public"."user_interests" enable row level security;
 
 alter table "public"."user_settings" enable row level security;
 
-CREATE UNIQUE INDEX global_article_metadata_options_pkey ON public.global_article_metadata_options USING btree (field, name);
-
 CREATE UNIQUE INDEX global_emails_pkey ON public.global_emails USING btree (id);
 
 CREATE UNIQUE INDEX global_settings_pkey ON public.global_settings USING btree (id);
@@ -117,12 +89,6 @@ CREATE UNIQUE INDEX global_settings_pkey ON public.global_settings USING btree (
 CREATE UNIQUE INDEX global_settings_singleton ON public.global_settings USING btree (singleton);
 
 CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING btree (token);
-
-CREATE UNIQUE INDEX user_article_metadata_options_pkey ON public.user_article_metadata_options USING btree (user_id, field, name);
-
-CREATE INDEX user_article_metadata_options_user_id_field_idx ON public.user_article_metadata_options USING btree (user_id, field);
-
-CREATE INDEX user_article_metadata_options_user_id_idx ON public.user_article_metadata_options USING btree (user_id);
 
 CREATE UNIQUE INDEX user_articles_pkey ON public.user_articles USING btree (id);
 
@@ -142,25 +108,17 @@ CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
 
-alter table "public"."global_article_metadata_options" add constraint "global_article_metadata_options_pkey" PRIMARY KEY using index "global_article_metadata_options_pkey";
-
 alter table "public"."global_emails" add constraint "global_emails_pkey" PRIMARY KEY using index "global_emails_pkey";
 
 alter table "public"."global_settings" add constraint "global_settings_pkey" PRIMARY KEY using index "global_settings_pkey";
 
 alter table "public"."global_share_links" add constraint "global_share_links_pkey" PRIMARY KEY using index "global_share_links_pkey";
 
-alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_pkey" PRIMARY KEY using index "user_article_metadata_options_pkey";
-
 alter table "public"."user_articles" add constraint "user_articles_pkey" PRIMARY KEY using index "user_articles_pkey";
 
 alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
-
-alter table "public"."global_article_metadata_options" add constraint "global_article_metadata_options_field_check" CHECK ((field = ANY (ARRAY['topic'::text, 'type'::text, 'coverage'::text, 'duration'::text, 'impact'::text]))) not valid;
-
-alter table "public"."global_article_metadata_options" validate constraint "global_article_metadata_options_field_check";
 
 alter table "public"."global_settings" add constraint "global_settings_singleton" UNIQUE using index "global_settings_singleton";
 
@@ -175,18 +133,6 @@ alter table "public"."global_share_links" validate constraint "global_share_link
 alter table "public"."global_share_links" add constraint "global_share_links_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) not valid;
 
 alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
-
-alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_field_name_fkey" FOREIGN KEY (field, name) REFERENCES public.global_article_metadata_options(field, name) ON DELETE CASCADE not valid;
-
-alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_field_name_fkey";
-
-alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_topic_only" CHECK ((field = 'topic'::text)) not valid;
-
-alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_topic_only";
-
-alter table "public"."user_article_metadata_options" add constraint "user_article_metadata_options_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_article_metadata_options" validate constraint "user_article_metadata_options_user_id_fkey";
 
 alter table "public"."user_articles" add constraint "user_articles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
@@ -218,14 +164,13 @@ $function$
 ;
 
 CREATE OR REPLACE FUNCTION public.get_shared_article(p_token uuid)
- RETURNS TABLE(id uuid, source_name text, title text, url text, summary text, topic text, type text, coverage text, duration text, impact text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone)
+ RETURNS TABLE(id uuid, source_name text, title text, url text, summary text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone)
  LANGUAGE sql
  STABLE SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
   select
     ua.id, ua.source_name, ua.title, ua.url, ua.summary,
-    ua.topic, ua.type, ua.coverage, ua.duration, ua.impact,
     ua.image_url, ua.published_at, ua.created_at
   from global_share_links sl
   join user_articles ua on ua.id::text = sl.content_id
@@ -235,8 +180,8 @@ AS $function$
 $function$
 ;
 
-CREATE OR REPLACE FUNCTION public.search_articles_feed_page(query_text text DEFAULT NULL::text, query_embedding public.vector DEFAULT NULL::public.vector, topic_filters text[] DEFAULT NULL::text[], type_filters text[] DEFAULT NULL::text[], coverage_filters text[] DEFAULT NULL::text[], duration_filters text[] DEFAULT NULL::text[], impact_filters text[] DEFAULT NULL::text[], page_size integer DEFAULT 10, page_offset integer DEFAULT 0)
- RETURNS TABLE(id uuid, source_name text, title text, url text, summary text, topic text, type text, coverage text, duration text, impact text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone, total_count bigint)
+CREATE OR REPLACE FUNCTION public.search_articles_feed_page(query_text text DEFAULT NULL::text, query_embedding public.vector DEFAULT NULL::public.vector, page_size integer DEFAULT 10, page_offset integer DEFAULT 0)
+ RETURNS TABLE(id uuid, source_name text, title text, url text, summary text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone, total_count bigint)
  LANGUAGE sql
  STABLE
 AS $function$
@@ -264,12 +209,6 @@ AS $function$
   filtered as (
     select ua.*
     from user_articles ua
-    where
-      (topic_filters is null or cardinality(topic_filters) = 0 or ua.topic = any(topic_filters))
-      and (type_filters is null or cardinality(type_filters) = 0 or ua.type = any(type_filters))
-      and (coverage_filters is null or cardinality(coverage_filters) = 0 or ua.coverage = any(coverage_filters))
-      and (duration_filters is null or cardinality(duration_filters) = 0 or ua.duration = any(duration_filters))
-      and (impact_filters is null or cardinality(impact_filters) = 0 or ua.impact = any(impact_filters))
   ),
   fts_hits as (
     select f.id, row_number() over (order by ts_rank(f.search_vector, n.tsq) desc) as rank
@@ -308,11 +247,6 @@ AS $function$
     f.title,
     f.url,
     f.summary,
-    f.topic,
-    f.type,
-    f.coverage,
-    f.duration,
-    f.impact,
     f.image_url,
     f.published_at,
     f.created_at,
@@ -342,48 +276,6 @@ begin
 end;
 $function$
 ;
-
-grant delete on table "public"."global_article_metadata_options" to "anon";
-
-grant insert on table "public"."global_article_metadata_options" to "anon";
-
-grant references on table "public"."global_article_metadata_options" to "anon";
-
-grant select on table "public"."global_article_metadata_options" to "anon";
-
-grant trigger on table "public"."global_article_metadata_options" to "anon";
-
-grant truncate on table "public"."global_article_metadata_options" to "anon";
-
-grant update on table "public"."global_article_metadata_options" to "anon";
-
-grant delete on table "public"."global_article_metadata_options" to "authenticated";
-
-grant insert on table "public"."global_article_metadata_options" to "authenticated";
-
-grant references on table "public"."global_article_metadata_options" to "authenticated";
-
-grant select on table "public"."global_article_metadata_options" to "authenticated";
-
-grant trigger on table "public"."global_article_metadata_options" to "authenticated";
-
-grant truncate on table "public"."global_article_metadata_options" to "authenticated";
-
-grant update on table "public"."global_article_metadata_options" to "authenticated";
-
-grant delete on table "public"."global_article_metadata_options" to "service_role";
-
-grant insert on table "public"."global_article_metadata_options" to "service_role";
-
-grant references on table "public"."global_article_metadata_options" to "service_role";
-
-grant select on table "public"."global_article_metadata_options" to "service_role";
-
-grant trigger on table "public"."global_article_metadata_options" to "service_role";
-
-grant truncate on table "public"."global_article_metadata_options" to "service_role";
-
-grant update on table "public"."global_article_metadata_options" to "service_role";
 
 grant delete on table "public"."global_emails" to "anon";
 
@@ -510,48 +402,6 @@ grant trigger on table "public"."global_share_links" to "service_role";
 grant truncate on table "public"."global_share_links" to "service_role";
 
 grant update on table "public"."global_share_links" to "service_role";
-
-grant delete on table "public"."user_article_metadata_options" to "anon";
-
-grant insert on table "public"."user_article_metadata_options" to "anon";
-
-grant references on table "public"."user_article_metadata_options" to "anon";
-
-grant select on table "public"."user_article_metadata_options" to "anon";
-
-grant trigger on table "public"."user_article_metadata_options" to "anon";
-
-grant truncate on table "public"."user_article_metadata_options" to "anon";
-
-grant update on table "public"."user_article_metadata_options" to "anon";
-
-grant delete on table "public"."user_article_metadata_options" to "authenticated";
-
-grant insert on table "public"."user_article_metadata_options" to "authenticated";
-
-grant references on table "public"."user_article_metadata_options" to "authenticated";
-
-grant select on table "public"."user_article_metadata_options" to "authenticated";
-
-grant trigger on table "public"."user_article_metadata_options" to "authenticated";
-
-grant truncate on table "public"."user_article_metadata_options" to "authenticated";
-
-grant update on table "public"."user_article_metadata_options" to "authenticated";
-
-grant delete on table "public"."user_article_metadata_options" to "service_role";
-
-grant insert on table "public"."user_article_metadata_options" to "service_role";
-
-grant references on table "public"."user_article_metadata_options" to "service_role";
-
-grant select on table "public"."user_article_metadata_options" to "service_role";
-
-grant trigger on table "public"."user_article_metadata_options" to "service_role";
-
-grant truncate on table "public"."user_article_metadata_options" to "service_role";
-
-grant update on table "public"."user_article_metadata_options" to "service_role";
 
 grant delete on table "public"."user_articles" to "anon";
 
@@ -680,15 +530,6 @@ grant truncate on table "public"."user_settings" to "service_role";
 grant update on table "public"."user_settings" to "service_role";
 
 
-  create policy "global_article_metadata_options_select_policy"
-  on "public"."global_article_metadata_options"
-  as permissive
-  for select
-  to anon, authenticated
-using (true);
-
-
-
   create policy "global_emails_allow_all"
   on "public"."global_emails"
   as permissive
@@ -722,16 +563,6 @@ with check ((auth.uid() IS NOT NULL));
   for select
   to public
 using ((expires_at > now()));
-
-
-
-  create policy "Users can manage their own metadata options"
-  on "public"."user_article_metadata_options"
-  as permissive
-  for all
-  to authenticated
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
 
 
 

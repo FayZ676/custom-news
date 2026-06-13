@@ -8,11 +8,6 @@ create table "user_articles" (
     "title" text not null,
     "url" text not null,
     "summary" text,
-    "topic" text,
-    "type" text,
-    "coverage" text,
-    "duration" text,
-    "impact" text,
     "image_url" text,
     "published_at" timestamptz not null,
     "created_at" timestamptz not null default now(),
@@ -42,11 +37,6 @@ create index user_articles_search_vector_idx
 create or replace function search_articles_feed_page(
   query_text text default null,
   query_embedding vector(512) default null,
-  topic_filters text[] default null,
-  type_filters text[] default null,
-  coverage_filters text[] default null,
-  duration_filters text[] default null,
-  impact_filters text[] default null,
   page_size int default 10,
   page_offset int default 0
 )
@@ -56,11 +46,6 @@ returns table (
   title text,
   url text,
   summary text,
-  topic text,
-  type text,
-  coverage text,
-  duration text,
-  impact text,
   image_url text,
   published_at timestamptz,
   created_at timestamptz,
@@ -93,12 +78,6 @@ as $$
   filtered as (
     select ua.*
     from user_articles ua
-    where
-      (topic_filters is null or cardinality(topic_filters) = 0 or ua.topic = any(topic_filters))
-      and (type_filters is null or cardinality(type_filters) = 0 or ua.type = any(type_filters))
-      and (coverage_filters is null or cardinality(coverage_filters) = 0 or ua.coverage = any(coverage_filters))
-      and (duration_filters is null or cardinality(duration_filters) = 0 or ua.duration = any(duration_filters))
-      and (impact_filters is null or cardinality(impact_filters) = 0 or ua.impact = any(impact_filters))
   ),
   fts_hits as (
     select f.id, row_number() over (order by ts_rank(f.search_vector, n.tsq) desc) as rank
@@ -137,11 +116,6 @@ as $$
     f.title,
     f.url,
     f.summary,
-    f.topic,
-    f.type,
-    f.coverage,
-    f.duration,
-    f.impact,
     f.image_url,
     f.published_at,
     f.created_at,

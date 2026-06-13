@@ -6,14 +6,10 @@ from datetime import datetime, timezone
 
 from openfeed.db.client import Client
 from openfeed.db.models import PublicUserArticles, PublicUserInterests
-from openfeed.db.queries.global_article_metadata_options import (
-    get_global_article_metadata_options,
-    GlobalArticleMetadataOption,
-)
 from openfeed.db.queries.user_articles import get_user_articles, replace_user_articles
 from openfeed.db.queries.user_interests import get_all_user_interests
 from openfeed.clients.newsdata import NewsDataArticle, get_latest_articles
-from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
+from openfeed.services.articles.enricher import ArticleEnricher
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +19,13 @@ enricher = ArticleEnricher()
 def refresh_user_articles(db: Client):
     """Run every user's interest queries against NewsData.io and replace each
     user's articles with the results."""
-    metadata_options = get_global_article_metadata_options(db)
     interests_by_user: dict[uuid.UUID, list[PublicUserInterests]] = defaultdict(list)
     for interest in get_all_user_interests(db):
         interests_by_user[interest.user_id].append(interest)
 
     for user_id, interests in interests_by_user.items():
         try:
-            _refresh_articles_for_user(db, user_id, interests, metadata_options)
+            _refresh_articles_for_user(db, user_id, interests)
         except Exception:
             logger.exception("Failed to refresh articles for user %s", user_id)
 
@@ -41,25 +36,21 @@ def _refresh_articles_for_user(
     db: Client,
     user_id: uuid.UUID,
     interests: list[PublicUserInterests],
-    metadata_options: dict[str, list[GlobalArticleMetadataOption]],
 ):
     found = _query_articles(interests)
 
     # Hourly queries mostly return the same articles; carry existing rows over
-    # (keeping their id, enrichment, and embedding) and only enrich new URLs.
+    # (keeping their id and embedding) and only embed new URLs.
     existing_by_url = {a.url: a for a in get_user_articles(db, user_id)}
     carried_over = [existing_by_url[url] for url in found if url in existing_by_url]
     new_articles = [a for url, a in found.items() if url not in existing_by_url]
 
     article_texts = [str(a) for a in new_articles]
-    article_metadata = enricher.enrich_articles(article_texts, metadata_options)
     article_embeddings = enricher.embed_articles(article_texts)
 
     articles = carried_over + [
-        _to_db_schema(user_id, article, metadata, embedding)
-        for article, metadata, embedding in zip(
-            new_articles, article_metadata, article_embeddings
-        )
+        _to_db_schema(user_id, article, embedding)
+        for article, embedding in zip(new_articles, article_embeddings)
     ]
     replace_user_articles(db, user_id, articles)
     logger.info(
@@ -88,7 +79,6 @@ def _query_articles(
 def _to_db_schema(
     user_id: uuid.UUID,
     article: NewsDataArticle,
-    metadata: ArticleMetadata,
     embedding: list[float] | None,
 ) -> PublicUserArticles:
     return PublicUserArticles(
@@ -101,11 +91,6 @@ def _to_db_schema(
         image_url=article.image_url,
         published_at=article.published,
         created_at=datetime.now(timezone.utc),
-        topic=metadata.topic,
-        type=metadata.type,
-        coverage=metadata.coverage,
-        duration=metadata.duration,
-        impact=metadata.impact,
         embedding=embedding,
         search_vector=None,
     )

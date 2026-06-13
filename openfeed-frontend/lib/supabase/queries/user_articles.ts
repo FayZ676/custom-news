@@ -1,6 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { MetadataOptionsByField } from "@/lib/supabase/queries/global_article_metadata_options";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
 export type UserArticle = Tables<"user_articles">;
@@ -20,7 +19,6 @@ export interface PaginatedArticles {
 interface UnifiedFeedPageParams {
   page: number;
   pageSize: number;
-  metadataFilters?: MetadataOptionsByField;
   queryText?: string;
 }
 
@@ -45,19 +43,12 @@ async function embedQuery(query: string): Promise<number[] | null> {
 export async function getUserArticles(
   supabase: SupabaseClient<Database>,
   userId: string,
-  topicFilters?: string[],
 ): Promise<UserArticle[]> {
-  let query = supabase
+  const { data, error } = await supabase
     .from("user_articles")
     .select("*")
     .eq("user_id", userId)
     .order("published_at", { ascending: false });
-
-  if (topicFilters && topicFilters.length > 0) {
-    query = query.in("topic", topicFilters);
-  }
-
-  const { data, error } = await query;
 
   if (error) throw new Error(error.message);
   return data;
@@ -65,7 +56,7 @@ export async function getUserArticles(
 
 export async function getUnifiedFeedPage(
   supabase: SupabaseClient<Database>,
-  { page, pageSize, metadataFilters, queryText }: UnifiedFeedPageParams,
+  { page, pageSize, queryText }: UnifiedFeedPageParams,
 ): Promise<PaginatedArticles> {
   const start = (page - 1) * pageSize;
 
@@ -80,26 +71,6 @@ export async function getUnifiedFeedPage(
     {
       query_text: activeQuery,
       query_embedding: queryEmbedding ? JSON.stringify(queryEmbedding) : null,
-      topic_filters:
-        metadataFilters?.topic && metadataFilters.topic.length > 0
-          ? metadataFilters.topic
-          : null,
-      type_filters:
-        metadataFilters?.type && metadataFilters.type.length > 0
-          ? metadataFilters.type
-          : null,
-      coverage_filters:
-        metadataFilters?.coverage && metadataFilters.coverage.length > 0
-          ? metadataFilters.coverage
-          : null,
-      duration_filters:
-        metadataFilters?.duration && metadataFilters.duration.length > 0
-          ? metadataFilters.duration
-          : null,
-      impact_filters:
-        metadataFilters?.impact && metadataFilters.impact.length > 0
-          ? metadataFilters.impact
-          : null,
       page_size: Math.max(1, pageSize),
       page_offset: Math.max(0, start),
     },

@@ -29,11 +29,6 @@ returns table (
   title text,
   url text,
   summary text,
-  topic text,
-  type text,
-  coverage text,
-  duration text,
-  impact text,
   image_url text,
   published_at timestamptz,
   created_at timestamptz
@@ -45,7 +40,6 @@ set search_path = public
 as $$
   select
     ua.id, ua.source_name, ua.title, ua.url, ua.summary,
-    ua.topic, ua.type, ua.coverage, ua.duration, ua.impact,
     ua.image_url, ua.published_at, ua.created_at
   from global_share_links sl
   join user_articles ua on ua.id::text = sl.content_id
