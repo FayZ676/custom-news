@@ -8,10 +8,9 @@ import {
   removeUserInterest,
   UserInterest,
 } from "@/lib/supabase/queries/user_interests";
-import {
-  ingestArticlesForInterests,
-  rebuildArticlesForInterests,
-} from "@/lib/articles/ingest";
+import { ingestArticlesForInterests } from "@/lib/articles/ingest";
+import { deleteAllUserArticles } from "@/lib/supabase/queries/user_articles";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function createShareLinkAction(
   userId: string,
@@ -50,7 +49,8 @@ export async function ingestForInterestAction(
 export async function rebuildFeedAction(userId: string): Promise<void> {
   const supabase = await createClient();
   const interests = await getUserInterests(supabase, userId);
-  await rebuildArticlesForInterests(
+  await deleteAllUserArticles(createServiceRoleClient(), userId);
+  await ingestArticlesForInterests(
     userId,
     interests.map((i) => i.interest_text),
   );
