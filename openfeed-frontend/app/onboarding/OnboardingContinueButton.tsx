@@ -16,8 +16,6 @@ export default function OnboardingContinueButton({
   const handleClick = async () => {
     setIsLoading(true);
     try {
-      // Populate the feed before navigating so the user never lands on an empty
-      // "You're all caught up" feed. Best-effort: navigate regardless of outcome.
       await refreshArticlesAction(userId);
     } finally {
       router.push("/feed");

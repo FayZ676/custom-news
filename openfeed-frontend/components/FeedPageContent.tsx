@@ -33,9 +33,6 @@ export function FeedPageContent({
   const searchRequestIdRef = useRef(0);
   const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
 
-  // When a new interest is added from the feed, fetch and store its articles
-  // before refreshing, blocking the feed with a skeleton so the user sees the
-  // update land rather than a stale or empty list.
   const handleInterestAdded = useCallback(
     async (interestText: string) => {
       setIsUpdatingFeed(true);

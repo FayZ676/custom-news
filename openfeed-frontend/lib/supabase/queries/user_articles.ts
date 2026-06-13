@@ -4,9 +4,6 @@ import { Database, Tables } from "@/lib/supabase/supabase.types";
 
 export type UserArticle = Tables<"user_articles">;
 
-// Fields needed to persist a freshly-fetched article for a user. Mirrors the
-// display columns plus the optional semantic-search embedding; id/created_at
-// are DB-defaulted and search_vector is a generated column.
 export interface NewUserArticle {
   source_name: string;
   title: string;
@@ -67,11 +64,6 @@ export async function getUserArticles(
   return data;
 }
 
-// Persists newly-fetched articles for a user. Requires a service-role client:
-// user_articles has only a SELECT RLS policy, so an authenticated user session
-// cannot insert its own rows (the backend writes them with the service role
-// too). Duplicate (user_id, url) rows are ignored, matching the table's unique
-// constraint, so re-ingesting the same interest is a no-op.
 export async function insertUserArticles(
   supabase: SupabaseClient<Database>,
   userId: string,

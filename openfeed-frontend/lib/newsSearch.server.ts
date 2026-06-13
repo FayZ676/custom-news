@@ -2,12 +2,6 @@ import "server-only";
 
 import { FeedArticle } from "@/lib/newsSearch";
 
-// Server-only NewsData.io fetch shared by the live-search route
-// (app/api/search/news) and the feed ingestion path (lib/articles/ingest).
-// Mirrors the backend's openfeed.clients.newsdata.get_latest_articles: query
-// NewsData.io's /latest endpoint for fresh articles matching the search term.
-// The API key stays server-side; the browser never calls NewsData directly.
-// First page of results only.
 const LATEST_URL = "https://newsdata.io/api/1/latest";
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -20,7 +14,6 @@ interface NewsDataResult {
   pubDate?: string;
 }
 
-// NewsData returns pubDate as a naive "YYYY-MM-DD HH:MM:SS" in UTC.
 function toIsoUtc(pubDate: string): string {
   return `${pubDate.replace(" ", "T")}Z`;
 }
@@ -30,8 +23,6 @@ function toFeedArticle(result: NewsDataResult): FeedArticle | null {
     return null;
   }
   return {
-    // No DB id exists for live results; the URL keys the card and is never
-    // shareable (ViewFeed disables sharing while searching).
     id: result.link,
     title: result.title,
     summary: result.description ?? null,
@@ -42,8 +33,6 @@ function toFeedArticle(result: NewsDataResult): FeedArticle | null {
   };
 }
 
-// Returns the latest articles matching a query, or [] on any failure (network,
-// non-2xx, malformed payload). Callers decide how to surface an empty result.
 export async function fetchLatestNewsArticles(
   query: string,
 ): Promise<FeedArticle[]> {

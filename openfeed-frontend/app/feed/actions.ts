@@ -28,8 +28,6 @@ export async function addInterestAction(
   return addUserInterest(supabase, userId, interestText, embedding);
 }
 
-// Fetches and stores articles for all of the user's interests. Used at the end
-// of onboarding so the feed is already populated when the user arrives.
 export async function refreshArticlesAction(userId: string): Promise<void> {
   const supabase = await createClient();
   const interests = await getUserInterests(supabase, userId);
@@ -39,8 +37,6 @@ export async function refreshArticlesAction(userId: string): Promise<void> {
   );
 }
 
-// Fetches and stores articles for a single newly-added interest. Keeps the
-// post-add ingest scoped (and fast) when a user adds one interest at a time.
 export async function ingestForInterestAction(
   userId: string,
   interestText: string,
