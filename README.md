@@ -15,14 +15,14 @@ OpenFeed gathers articles from across the web and ranks them by what matters to 
 
 Most apps and websites show you everything in reverse chronological order — newest first, regardless of whether it's relevant to you. Finding what actually matters means scrolling through a lot of noise.
 
-OpenFeed is different. You describe your **interests** in plain language — *"AI research"*, *"climate policy"*, *"indie game development"* — and every hour OpenFeed runs each of them as a search against [NewsData.io](https://newsdata.io)'s worldwide news index and rebuilds your feed from the results. Your interests are the only thing that decides what shows up.
+OpenFeed is different. You describe your **interests** in plain language — *"AI research"*, *"climate policy"*, *"indie game development"* — and once a day OpenFeed runs each of them as a search against [NewsData.io](https://newsdata.io)'s worldwide news index and rebuilds your feed from the results. Your interests are the only thing that decides what shows up.
 
 ---
 
 ## How it works
 
 1. **Describe your interests** — write them however you like, in your own words.
-2. **OpenFeed searches the news** — every hour, each interest is run as a query against NewsData.io and your feed is replaced with the freshest matches.
+2. **OpenFeed searches the news** — once a day, each interest is run as a query against NewsData.io and your feed is replaced with the freshest matches.
 3. **Read what matters** — articles are categorized automatically so you can filter and search within your feed.
 
 ---
@@ -42,7 +42,7 @@ OpenFeed is designed to run entirely on free tiers:
 
 - **Frontend** — deployed to Vercel (free hobby plan)
 - **Database** — hosted on Supabase (free plan)
-- **Embeddings** — powered by OpenAI at a few dollars per month at most
+- **News** — fetched from NewsData.io (free plan)
 
 Whether you self-host or use the managed service, OpenFeed puts you in control of your news feed.
 

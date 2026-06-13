@@ -1,8 +1,8 @@
 # OpenFeed Frontend
 
-The NextJS application that powers the OpenFeed user interface — authentication, feed browsing, interest management, and ranked article display.
+The NextJS application that powers the OpenFeed user interface — authentication, feed browsing, interest management, and article display.
 
-🚀 **Deploying the frontend is as simple as connecting your GitHub repo to Vercel and pasting in two environment variables.** No configuration needed beyond that.
+🚀 **Deploying the frontend is as simple as connecting your GitHub repo to Vercel and pasting in a few environment variables.** No configuration needed beyond that.
 
 ---
 
@@ -69,12 +69,13 @@ npm run dev
 
 ## Environment Variables
 
-You'll need two environment variables — both come from your Supabase project settings.
-
 | Variable                               | Where to find it                                                                                                  |
 | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`             | Your Supabase project URL, found in [project settings](https://supabase.com/dashboard/project/_/settings/api)     |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Your Supabase publishable key, found in [project settings](https://supabase.com/dashboard/project/_/settings/api) |
+| `SUPABASE_SERVICE_ROLE_KEY`            | Your Supabase service role key, found in [project settings](https://supabase.com/dashboard/project/_/settings/api) |
+| `NEWSDATA_API_KEY`                     | Your [NewsData.io](https://newsdata.io) API key — used to fetch articles                                          |
+| `CRON_SECRET`                          | Any random secret string — guards the daily ingestion cron route (`/api/cron/ingest`)                            |
 
 **For local development** — copy `.env.local.example` to `.env.local` and fill in your values.
 
@@ -84,4 +85,4 @@ You'll need two environment variables — both come from your Supabase project s
 
 ## How it works
 
-OpenFeed's frontend is a NextJS app that connects to your Supabase project for everything — authentication, data storage, and ranked article queries. Articles are fetched and ranked automatically in Supabase, so the frontend simply reads and displays what's already there.
+OpenFeed's frontend is a NextJS app that connects to your Supabase project for authentication and data storage. A daily [Vercel cron job](https://vercel.com/docs/cron-jobs) (`/api/cron/ingest`, configured in `vercel.json`) runs each user's interest queries against NewsData.io and refreshes their stored articles, so the feed simply reads and displays what's already there.

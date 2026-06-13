@@ -112,7 +112,6 @@ export type Database = {
       user_articles: {
         Row: {
           created_at: string
-          embedding: string | null
           id: string
           image_url: string | null
           published_at: string
@@ -125,7 +124,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          embedding?: string | null
           id?: string
           image_url?: string | null
           published_at: string
@@ -138,7 +136,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          embedding?: string | null
           id?: string
           image_url?: string | null
           published_at?: string
@@ -154,21 +151,18 @@ export type Database = {
       user_interests: {
         Row: {
           created_at: string
-          embedding: string | null
           id: string
           interest_text: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          embedding?: string | null
           id?: string
           interest_text: string
           user_id: string
         }
         Update: {
           created_at?: string
-          embedding?: string | null
           id?: string
           interest_text?: string
           user_id?: string
@@ -211,25 +205,6 @@ export type Database = {
           source_name: string
           summary: string
           title: string
-          url: string
-        }[]
-      }
-      search_articles_feed_page: {
-        Args: {
-          page_offset?: number
-          page_size?: number
-          query_embedding?: string
-          query_text?: string
-        }
-        Returns: {
-          created_at: string
-          id: string
-          image_url: string
-          published_at: string
-          source_name: string
-          summary: string
-          title: string
-          total_count: number
           url: string
         }[]
       }

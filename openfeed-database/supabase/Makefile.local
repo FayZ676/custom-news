@@ -1,9 +1,7 @@
-include ../.env
-
 PG_CONN = postgresql://postgres:postgres@localhost:54322/postgres
 SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
 
-# user_articles is not snapshotted: it is replaced wholesale by the hourly
+# user_articles is not snapshotted: it is replaced wholesale by the daily
 # NewsData.io refresh, so the next refresh repopulates it.
 snapshot:
 	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
@@ -12,11 +10,6 @@ snapshot:
 restore_snapshot:
 	psql "$(PG_CONN)" -c "TRUNCATE public.user_settings CASCADE;" \
 		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
-
-refresh_articles:
-	curl -i --location --request POST '$(BACKEND_URL)/user/articles' \
-		--header 'x-api-key: $(BACKEND_API_KEY)' \
-		--header 'Content-Type: application/json';
 
 reset_db:
 	supabase stop --no-backup \
@@ -30,8 +23,4 @@ deploy:
 gen_types_ts:
 	supabase gen types typescript --local > ../../openfeed-frontend/lib/supabase/supabase.types.ts
 
-gen_types_py:
-	supabase gen types --lang=python --local > ../../openfeed-backend/openfeed/db/models.py
-	perl -i -pe 's/^from pydantic import (.*)$$/from pydantic import $$1\n\n# The generator references this type but never defines it; tsvector values\n# arrive as their text representation over PostgREST.\nPgCatalogTsvector: TypeAlias = str/' ../../openfeed-backend/openfeed/db/models.py
-
-init: snapshot reset_db deploy gen_types_py gen_types_ts restore_snapshot
+init: snapshot reset_db deploy gen_types_ts restore_snapshot

@@ -18,21 +18,6 @@ interface InterestsManagerProps {
   onInterestRemoved?: () => void | Promise<void>;
 }
 
-async function fetchEmbedding(text: string): Promise<number[] | null> {
-  try {
-    const res = await fetch("/api/search/embedding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: text }),
-    });
-    if (!res.ok) return null;
-    const { embedding } = await res.json();
-    return Array.isArray(embedding) ? embedding : null;
-  } catch {
-    return null;
-  }
-}
-
 export function InterestsManager({
   userId,
   initialInterests,
@@ -53,8 +38,7 @@ export function InterestsManager({
 
     setIsAdding(true);
     try {
-      const embedding = await fetchEmbedding(text);
-      const saved = await addInterestAction(userId, text, embedding);
+      const saved = await addInterestAction(userId, text);
       setInterests((prev) => [...prev, saved]);
       setInputValue("");
       await onInterestAdded?.(text);

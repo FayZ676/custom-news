@@ -24,10 +24,9 @@ export async function createShareLinkAction(
 export async function addInterestAction(
   userId: string,
   interestText: string,
-  embedding: number[] | null,
 ): Promise<UserInterest> {
   const supabase = await createClient();
-  return addUserInterest(supabase, userId, interestText, embedding);
+  return addUserInterest(supabase, userId, interestText);
 }
 
 export async function refreshArticlesAction(userId: string): Promise<void> {

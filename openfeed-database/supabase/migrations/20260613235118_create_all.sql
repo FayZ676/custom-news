@@ -1,8 +1,4 @@
-drop extension if exists "pg_cron";
-
 create extension if not exists "pg_trgm" with schema "public";
-
-create extension if not exists "vector" with schema "public";
 
 
   create table "public"."global_emails" (
@@ -52,7 +48,6 @@ alter table "public"."global_share_links" enable row level security;
     "image_url" text,
     "published_at" timestamp with time zone not null,
     "created_at" timestamp with time zone not null default now(),
-    "embedding" public.vector(512),
     "search_vector" tsvector generated always as (to_tsvector('english'::regconfig, ((COALESCE(title, ''::text) || ' '::text) || COALESCE(summary, ''::text)))) stored
       );
 
@@ -64,7 +59,6 @@ alter table "public"."user_articles" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
     "interest_text" text not null,
-    "embedding" public.vector(512),
     "created_at" timestamp with time zone not null default now()
       );
 
@@ -177,89 +171,6 @@ AS $function$
   where sl.token = p_token
     and sl.content_type = 'article'
     and sl.expires_at > now();
-$function$
-;
-
-CREATE OR REPLACE FUNCTION public.search_articles_feed_page(query_text text DEFAULT NULL::text, query_embedding public.vector DEFAULT NULL::public.vector, page_size integer DEFAULT 10, page_offset integer DEFAULT 0)
- RETURNS TABLE(id uuid, source_name text, title text, url text, summary text, image_url text, published_at timestamp with time zone, created_at timestamp with time zone, total_count bigint)
- LANGUAGE sql
- STABLE
-AS $function$
-  -- Runs with invoker rights: RLS on user_articles scopes every retriever to
-  -- the calling user's own rows.
-  --
-  -- Hybrid search: full-text, trigram, and semantic retrievers each produce a
-  -- ranked candidate list; results are merged with Reciprocal Rank Fusion
-  -- (score = sum of 1 / (60 + rank)). Ranks are scale-free, so no
-  -- cross-retriever score normalization is needed. Any retriever can be
-  -- absent (short query, null embedding) and the fusion degrades gracefully.
-  with normalized as (
-    select
-      case
-        when length(nullif(trim(query_text), '')) >= 3
-          then nullif(trim(query_text), '')
-        else null
-      end as q,
-      case
-        when length(nullif(trim(query_text), '')) >= 3
-          then websearch_to_tsquery('english', nullif(trim(query_text), ''))
-        else null
-      end as tsq
-  ),
-  filtered as (
-    select ua.*
-    from user_articles ua
-  ),
-  fts_hits as (
-    select f.id, row_number() over (order by ts_rank(f.search_vector, n.tsq) desc) as rank
-    from filtered f, normalized n
-    where n.tsq is not null and f.search_vector @@ n.tsq
-    order by rank
-    limit 100
-  ),
-  trgm_hits as (
-    select f.id, row_number() over (order by word_similarity(lower(n.q), lower(f.title)) desc) as rank
-    from filtered f, normalized n
-    where n.q is not null and lower(n.q) <% lower(f.title)
-    order by rank
-    limit 100
-  ),
-  vec_hits as (
-    select f.id, row_number() over (order by f.embedding <=> query_embedding) as rank
-    from filtered f, normalized n
-    where n.q is not null and query_embedding is not null and f.embedding is not null
-    order by rank
-    limit 100
-  ),
-  fused as (
-    select
-      id,
-      coalesce(1.0 / (60 + fts.rank), 0)
-        + coalesce(1.0 / (60 + trgm.rank), 0)
-        + coalesce(1.0 / (60 + vec.rank), 0) as rrf_score
-    from fts_hits fts
-    full outer join trgm_hits trgm using (id)
-    full outer join vec_hits vec using (id)
-  )
-  select
-    f.id,
-    f.source_name,
-    f.title,
-    f.url,
-    f.summary,
-    f.image_url,
-    f.published_at,
-    f.created_at,
-    count(*) over () as total_count
-  from filtered f
-  cross join normalized n
-  left join fused fu on fu.id = f.id
-  where n.q is null or fu.id is not null
-  order by
-    fu.rrf_score desc nulls last,
-    f.published_at desc
-  limit greatest(page_size, 1)
-  offset greatest(page_offset, 0);
 $function$
 ;
 

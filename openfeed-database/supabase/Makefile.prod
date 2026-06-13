@@ -3,7 +3,7 @@ include ../.env.prod
 PG_CONN = postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres
 SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
 
-# user_articles is not snapshotted: it is replaced wholesale by the hourly
+# user_articles is not snapshotted: it is replaced wholesale by the daily
 # NewsData.io refresh, so the next refresh repopulates it.
 snapshot:
 	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
@@ -12,11 +12,6 @@ snapshot:
 restore_snapshot:
 	psql "$(PG_CONN)" -c "TRUNCATE public.user_settings CASCADE;" \
 		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
-
-refresh_articles:
-	curl -i --location --request POST '$(BACKEND_URL)/user/articles' \
-		--header 'x-api-key: $(BACKEND_API_KEY)' \
-		--header 'Content-Type: application/json';
 
 reset:
 	supabase link --project-ref $(PROJECT_ID) \
@@ -34,15 +29,7 @@ seed:
 
 deploy:
 	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-all --yes \
-		&& supabase secrets set \
-			BACKEND_URL=$(BACKEND_URL) \
-			BACKEND_API_KEY=$(BACKEND_API_KEY) \
-		&& echo " \
-			DELETE FROM vault.secrets WHERE name IN ('backend_url', 'backend_api_key'); \
-			SELECT vault.create_secret('$(BACKEND_URL)', 'backend_url'); \
-			SELECT vault.create_secret('$(BACKEND_API_KEY)', 'backend_api_key'); \
-		" | psql "$(PG_CONN)"
+		&& supabase db push --include-all --yes
 
 update:
 	supabase link --project-ref $(PROJECT_ID) \

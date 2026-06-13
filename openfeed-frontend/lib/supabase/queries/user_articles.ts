@@ -11,14 +11,10 @@ export interface NewUserArticle {
   summary: string | null;
   image_url: string | null;
   published_at: string;
-  embedding: number[] | null;
 }
 
 // The get_shared_article RPC returns only the display columns.
-export type SharedArticle = Omit<
-  UserArticle,
-  "user_id" | "embedding" | "search_vector"
->;
+export type SharedArticle = Omit<UserArticle, "user_id" | "search_vector">;
 
 export async function getUserArticles(
   supabase: SupabaseClient<Database>,
@@ -49,7 +45,6 @@ export async function insertUserArticles(
     summary: article.summary,
     image_url: article.image_url,
     published_at: article.published_at,
-    embedding: article.embedding ? JSON.stringify(article.embedding) : null,
   }));
 
   const { error } = await (supabase as any)
