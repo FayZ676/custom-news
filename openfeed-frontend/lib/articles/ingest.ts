@@ -5,6 +5,7 @@ import { fetchLatestNewsArticles } from "@/lib/newsSearch.server";
 import { embedTexts } from "@/lib/embeddings";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
+  deleteAllUserArticles,
   getUserArticles,
   insertUserArticles,
   NewUserArticle,
@@ -62,4 +63,13 @@ export async function ingestArticlesForInterests(
   }));
 
   await insertUserArticles(supabase, userId, rows);
+}
+
+export async function rebuildArticlesForInterests(
+  userId: string,
+  interests: string[],
+): Promise<void> {
+  const supabase = createServiceRoleClient();
+  await deleteAllUserArticles(supabase, userId);
+  await ingestArticlesForInterests(userId, interests);
 }

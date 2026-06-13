@@ -89,6 +89,18 @@ export async function insertUserArticles(
   if (error) throw new Error(error.message);
 }
 
+export async function deleteAllUserArticles(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from("user_articles")
+    .delete()
+    .eq("user_id", userId);
+
+  if (error) throw new Error(error.message);
+}
+
 export async function getUnifiedFeedPage(
   supabase: SupabaseClient<Database>,
   { page, pageSize, queryText }: UnifiedFeedPageParams,

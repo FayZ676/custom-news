@@ -16,6 +16,7 @@ interface InterestsManagerProps {
   initialInterests: UserInterest[];
   onInterestsChange?: () => void;
   onInterestAdded?: (interestText: string) => void | Promise<void>;
+  onInterestRemoved?: () => void | Promise<void>;
 }
 
 async function fetchEmbedding(text: string): Promise<number[] | null> {
@@ -38,6 +39,7 @@ export function InterestsManager({
   initialInterests,
   onInterestsChange,
   onInterestAdded,
+  onInterestRemoved,
 }: InterestsManagerProps) {
   const [interests, setInterests] = useState<UserInterest[]>(initialInterests);
   const [inputValue, setInputValue] = useState("");
@@ -71,7 +73,11 @@ export function InterestsManager({
   const handleRemove = async (interestId: string) => {
     setInterests((prev) => prev.filter((i) => i.id !== interestId));
     await removeInterestAction(userId, interestId);
-    onInterestsChange?.();
+    if (onInterestRemoved) {
+      await onInterestRemoved();
+    } else {
+      onInterestsChange?.();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

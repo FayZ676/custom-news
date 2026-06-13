@@ -8,7 +8,10 @@ import {
   removeUserInterest,
   UserInterest,
 } from "@/lib/supabase/queries/user_interests";
-import { ingestArticlesForInterests } from "@/lib/articles/ingest";
+import {
+  ingestArticlesForInterests,
+  rebuildArticlesForInterests,
+} from "@/lib/articles/ingest";
 
 export async function createShareLinkAction(
   userId: string,
@@ -42,6 +45,15 @@ export async function ingestForInterestAction(
   interestText: string,
 ): Promise<void> {
   await ingestArticlesForInterests(userId, [interestText]);
+}
+
+export async function rebuildFeedAction(userId: string): Promise<void> {
+  const supabase = await createClient();
+  const interests = await getUserInterests(supabase, userId);
+  await rebuildArticlesForInterests(
+    userId,
+    interests.map((i) => i.interest_text),
+  );
 }
 
 export async function removeInterestAction(
