@@ -1,14 +1,18 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { MetadataOptionsByField } from "@/lib/supabase/queries/global_article_metadata_options";
-import { UserInterest } from "@/lib/supabase/queries/user_interests";
-import { markArticlesAsSeen } from "@/lib/supabase/queries/user_seen_articles";
 import { Database, Tables } from "@/lib/supabase/supabase.types";
 
-export type GlobalArticle = Tables<"global_articles">;
+export type UserArticle = Tables<"user_articles">;
+
+// The get_shared_article RPC returns only the display columns.
+export type SharedArticle = Omit<
+  UserArticle,
+  "user_id" | "embedding" | "search_vector"
+>;
 
 export interface PaginatedArticles {
-  articles: GlobalArticle[];
+  articles: UserArticle[];
   hasNextPage: boolean;
   totalPages: number;
 }
@@ -38,29 +42,25 @@ async function embedQuery(query: string): Promise<number[] | null> {
   }
 }
 
-export async function getArticles(
+export async function getUserArticles(
   supabase: SupabaseClient<Database>,
-): Promise<GlobalArticle[]> {
-  const { data, error } = await supabase
-    .from("global_articles")
+  userId: string,
+  topicFilters?: string[],
+): Promise<UserArticle[]> {
+  let query = supabase
+    .from("user_articles")
     .select("*")
+    .eq("user_id", userId)
     .order("published_at", { ascending: false });
+
+  if (topicFilters && topicFilters.length > 0) {
+    query = query.in("topic", topicFilters);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw new Error(error.message);
   return data;
-}
-
-export async function getArticlesPage(
-  supabase: SupabaseClient<Database>,
-  page: number,
-  pageSize: number,
-  metadataFilters?: MetadataOptionsByField,
-): Promise<PaginatedArticles> {
-  return getUnifiedFeedPage(supabase, {
-    page,
-    pageSize,
-    metadataFilters,
-  });
 }
 
 export async function getUnifiedFeedPage(
@@ -74,6 +74,7 @@ export async function getUnifiedFeedPage(
     normalizedQuery.length >= MIN_SEARCH_QUERY_LENGTH ? normalizedQuery : null;
   const queryEmbedding = activeQuery ? await embedQuery(activeQuery) : null;
 
+  // RLS on user_articles scopes the search to the caller's own rows.
   const { data, error } = await (supabase as any).rpc(
     "search_articles_feed_page",
     {
@@ -107,7 +108,7 @@ export async function getUnifiedFeedPage(
   if (error) throw new Error(error.message);
 
   const rows =
-    (data as Array<GlobalArticle & { total_count: number | null }>) ?? [];
+    (data as Array<UserArticle & { total_count: number | null }>) ?? [];
   const totalCount = rows[0]?.total_count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / Math.max(pageSize, 1)));
 
@@ -118,57 +119,17 @@ export async function getUnifiedFeedPage(
   };
 }
 
-function toVectorString(raw: unknown): string | null {
-  if (Array.isArray(raw)) return JSON.stringify(raw);
-  if (typeof raw === "string" && raw.startsWith("[")) return raw;
-  return null;
-}
-
-export async function getCuratedFeed(
+export async function getSharedArticle(
   supabase: SupabaseClient<Database>,
-  userId: string,
-  interests: UserInterest[],
-  topicFilters?: string[],
-): Promise<GlobalArticle[]> {
-  const embeddingStrings = interests
-    .map((i) => toVectorString(i.embedding))
-    .filter((e): e is string => e !== null);
-
-  if (embeddingStrings.length === 0) return [];
-
-  const { data, error } = await (supabase as any).rpc("get_curated_feed", {
-    p_user_id: userId,
-    p_interest_embeddings: embeddingStrings,
-    p_topic_filters:
-      topicFilters && topicFilters.length > 0 ? topicFilters : null,
-    p_page_size: 10,
-  });
-
-  if (error) throw new Error(error.message);
-
-  const articles = (data as GlobalArticle[] | null) ?? [];
-
-  if (articles.length > 0) {
-    await markArticlesAsSeen(
-      supabase,
-      userId,
-      articles.map((a) => a.id),
-    );
-  }
-
-  return articles;
-}
-
-export async function getArticleById(
-  supabase: SupabaseClient<Database>,
-  id: string,
-): Promise<GlobalArticle | null> {
-  const { data, error } = await supabase
-    .from("global_articles")
-    .select("*")
-    .eq("id", id)
+  token: string,
+): Promise<SharedArticle | null> {
+  // Security-definer RPC: a valid share token grants read access to the
+  // single linked article, which RLS would otherwise hide from anonymous
+  // visitors.
+  const { data, error } = await (supabase as any)
+    .rpc("get_shared_article", { p_token: token })
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data;
+  return (data as SharedArticle | null) ?? null;
 }

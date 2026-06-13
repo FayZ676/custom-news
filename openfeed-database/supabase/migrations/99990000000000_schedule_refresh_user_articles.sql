@@ -2,13 +2,15 @@
 create extension if not exists pg_net;
 create extension if not exists pg_cron;
 
--- schedule delete-articles to run once a day
+-- schedule the per-user article refresh to run every hour: the backend runs
+-- every user's interest queries against NewsData.io and replaces each user's
+-- articles with the results
 select cron.schedule(
-  'delete_articles',
-  '0 0 * * *',
+  'refresh_user_articles',
+  '0 * * * *',
   $$
-    select net.http_delete(
-      url := (select decrypted_secret from vault.decrypted_secrets where name = 'backend_url') || '/global/articles',
+    select net.http_post(
+      url := (select decrypted_secret from vault.decrypted_secrets where name = 'backend_url') || '/user/articles',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
         'x-api-key', (select decrypted_secret from vault.decrypted_secrets where name = 'backend_api_key')

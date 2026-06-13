@@ -15,17 +15,15 @@ OpenFeed gathers articles from across the web and ranks them by what matters to 
 
 Most apps and websites show you everything in reverse chronological order — newest first, regardless of whether it's relevant to you. Finding what actually matters means scrolling through a lot of noise.
 
-OpenFeed is different. You start by subscribing to **categories** — curated collections of news sources organized by topic, like Technology, Science, or Finance. Then you describe your **interests** in plain language — *"AI research"*, *"climate policy"*, *"indie game development"* — and OpenFeed automatically ranks every article from your subscribed categories by how relevant it is to what you care about. The most relevant news rises to the top, without you lifting a finger.
-
-Categories control what comes in. Interests control what rises to the top.
+OpenFeed is different. You describe your **interests** in plain language — *"AI research"*, *"climate policy"*, *"indie game development"* — and every hour OpenFeed runs each of them as a search against [NewsData.io](https://newsdata.io)'s worldwide news index and rebuilds your feed from the results. Your interests are the only thing that decides what shows up.
 
 ---
 
 ## How it works
 
-1. **Subscribe to categories** — choose from a curated catalog of topics. Every news source within a category is automatically included.
-2. **Describe your interests** — write them however you like, in your own words. These are used to rank articles from your subscribed categories by relevance.
-3. **Read what matters** — your feed is automatically ranked by relevance to your interests, updated every hour.
+1. **Describe your interests** — write them however you like, in your own words.
+2. **OpenFeed searches the news** — every hour, each interest is run as a query against NewsData.io and your feed is replaced with the freshest matches.
+3. **Read what matters** — articles are categorized automatically so you can filter and search within your feed.
 
 ---
 
@@ -34,7 +32,7 @@ Categories control what comes in. Interests control what rises to the top.
 **Hosted version** — the easiest way to get started. No setup required.
 👉 [Coming soon / link to hosted version]
 
-**Self-host** — deploy your own instance in minutes, for free. You'll need a [Supabase](https://supabase.com) account and a [Vercel](https://vercel.com) account — both have free plans that are more than enough to run OpenFeed.
+**Self-host** — deploy your own instance in minutes, for free. You'll need a [Supabase](https://supabase.com) account, a [Vercel](https://vercel.com) account, and a [NewsData.io](https://newsdata.io) API key — all have free plans that are more than enough to run OpenFeed.
 
 ---
 
@@ -67,4 +65,4 @@ OpenFeed is fully open source. You can inspect the code, contribute, suggest new
 
 ## Contributing
 
-Interested in contributing? A great place to start is expanding the catalog — the more sources OpenFeed supports, the more useful it becomes for everyone. See the [database README](./openfeed-database/README.md) for details on how sources are managed.
+Interested in contributing? Pull requests are welcome — see the [database README](./openfeed-database/README.md) and [frontend README](./openfeed-frontend/README.md) to get a development environment running.

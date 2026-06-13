@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getCuratedFeed } from "@/lib/supabase/queries/global_articles";
+import { getUserArticles } from "@/lib/supabase/queries/user_articles";
 import {
   groupMetadataOptionsByField,
   getGlobalArticleMetadataOptions,
@@ -39,10 +39,9 @@ async function ViewFeedContent() {
   const metadataOptions = groupMetadataOptionsByField(globalMetadataOptions);
   const initialMetadataFilters = groupUserMetadataByField(userMetadataRows);
 
-  const feedArticles = await getCuratedFeed(
+  const feedArticles = await getUserArticles(
     supabase,
     userId,
-    interests,
     initialMetadataFilters.topic.length > 0
       ? initialMetadataFilters.topic
       : undefined,

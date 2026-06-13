@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { GlobalArticle } from "@/lib/supabase/queries/global_articles";
+import { UserArticle } from "@/lib/supabase/queries/user_articles";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 import {
@@ -14,7 +14,7 @@ import { SectionArticleSkeleton } from "@/components/SectionArticles";
 import { NewsItemCard } from "@/components/NewsItemCard";
 
 interface ViewFeedProps {
-  articles: GlobalArticle[];
+  articles: UserArticle[];
   emptyStateMessage?: string;
 }
 
@@ -29,14 +29,14 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
     .filter((article) => !hasRenderableImage(article.image_url))
     .sort((a, b) => (a.summary ? 0 : 1) - (b.summary ? 0 : 1));
 
-  function openModal(article: GlobalArticle) {
+  function openModal(article: UserArticle) {
     const item: NewsItemArticle = {
       type: "article",
       id: article.id,
       title: article.title,
       summary: article.summary,
       url: article.url,
-      feedTitle: article.feed_title,
+      sourceName: article.source_name,
       publishedAt: article.published_at,
       imageUrl: article.image_url,
     };
@@ -61,7 +61,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
               title={toTitleCase(article.title)}
               imageUrl={article.image_url}
               summary={article.summary}
-              meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+              meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
               onClick={() => openModal(article)}
             />
           ))}
@@ -75,7 +75,7 @@ export function ViewFeed({ articles, emptyStateMessage }: ViewFeedProps) {
               title={toTitleCase(article.title)}
               imageUrl={article.image_url}
               summary={article.summary}
-              meta={`${timeAgo(article.published_at)} · ${article.feed_title}`}
+              meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
               onClick={() => openModal(article)}
             />
           ))}

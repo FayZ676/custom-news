@@ -9,8 +9,8 @@ import { ViewFeed } from "@/components/ViewFeed";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import {
   getUnifiedFeedPage,
-  GlobalArticle,
-} from "@/lib/supabase/queries/global_articles";
+  UserArticle,
+} from "@/lib/supabase/queries/user_articles";
 import {
   ArticleMetadataField,
   MetadataOptionsByField,
@@ -20,7 +20,7 @@ import { UserInterest } from "@/lib/supabase/queries/user_interests";
 const PAGE_SIZE = 10;
 
 interface FeedPageContentProps {
-  articles: GlobalArticle[];
+  articles: UserArticle[];
   metadataOptions: MetadataOptionsByField;
   initialMetadataFilters: MetadataOptionsByField;
   interests: UserInterest[];
@@ -48,7 +48,7 @@ export function FeedPageContent({
     useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchPage, setSearchPage] = useState(1);
-  const [searchArticles, setSearchArticles] = useState<GlobalArticle[]>([]);
+  const [searchArticles, setSearchArticles] = useState<UserArticle[]>([]);
   const [searchTotalPages, setSearchTotalPages] = useState(1);
   const [searchHasNextPage, setSearchHasNextPage] = useState(false);
   const [isSearching, setIsSearching] = useState(false);

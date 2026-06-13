@@ -52,68 +52,6 @@ export type Database = {
         }
         Relationships: []
       }
-      global_articles: {
-        Row: {
-          coverage: string | null
-          created_at: string
-          duration: string | null
-          embedding: string | null
-          feed_title: string
-          id: string
-          image_url: string | null
-          impact: string | null
-          published_at: string
-          search_vector: unknown
-          summary: string | null
-          title: string
-          topic: string | null
-          type: string | null
-          url: string
-        }
-        Insert: {
-          coverage?: string | null
-          created_at?: string
-          duration?: string | null
-          embedding?: string | null
-          feed_title: string
-          id?: string
-          image_url?: string | null
-          impact?: string | null
-          published_at: string
-          search_vector?: unknown
-          summary?: string | null
-          title: string
-          topic?: string | null
-          type?: string | null
-          url: string
-        }
-        Update: {
-          coverage?: string | null
-          created_at?: string
-          duration?: string | null
-          embedding?: string | null
-          feed_title?: string
-          id?: string
-          image_url?: string | null
-          impact?: string | null
-          published_at?: string
-          search_vector?: unknown
-          summary?: string | null
-          title?: string
-          topic?: string | null
-          type?: string | null
-          url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "global_articles_feed_title_fkey"
-            columns: ["feed_title"]
-            isOneToOne: false
-            referencedRelation: "global_feeds"
-            referencedColumns: ["title"]
-          },
-        ]
-      }
       global_emails: {
         Row: {
           created_at: string
@@ -129,30 +67,6 @@ export type Database = {
           created_at?: string
           email_text?: string
           id?: string
-        }
-        Relationships: []
-      }
-      global_feeds: {
-        Row: {
-          created_at: string
-          description: string
-          id: string
-          title: string
-          url: string
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          id?: string
-          title: string
-          url: string
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          id?: string
-          title?: string
-          url?: string
         }
         Relationships: []
       }
@@ -242,6 +156,63 @@ export type Database = {
           },
         ]
       }
+      user_articles: {
+        Row: {
+          coverage: string | null
+          created_at: string
+          duration: string | null
+          embedding: string | null
+          id: string
+          image_url: string | null
+          impact: string | null
+          published_at: string
+          search_vector: unknown
+          source_name: string
+          summary: string | null
+          title: string
+          topic: string | null
+          type: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          coverage?: string | null
+          created_at?: string
+          duration?: string | null
+          embedding?: string | null
+          id?: string
+          image_url?: string | null
+          impact?: string | null
+          published_at: string
+          search_vector?: unknown
+          source_name: string
+          summary?: string | null
+          title: string
+          topic?: string | null
+          type?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          coverage?: string | null
+          created_at?: string
+          duration?: string | null
+          embedding?: string | null
+          id?: string
+          image_url?: string | null
+          impact?: string | null
+          published_at?: string
+          search_vector?: unknown
+          source_name?: string
+          summary?: string | null
+          title?: string
+          topic?: string | null
+          type?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_interests: {
         Row: {
           created_at: string
@@ -265,32 +236,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      user_seen_articles: {
-        Row: {
-          article_id: string
-          seen_at: string
-          user_id: string
-        }
-        Insert: {
-          article_id: string
-          seen_at?: string
-          user_id: string
-        }
-        Update: {
-          article_id?: string
-          seen_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_seen_articles_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "global_articles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_settings: {
         Row: {
@@ -318,22 +263,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_curated_feed: {
-        Args: {
-          p_interest_embeddings: string[]
-          p_page_size?: number
-          p_topic_filters?: string[]
-          p_user_id: string
-        }
+      get_shared_article: {
+        Args: { p_token: string }
         Returns: {
           coverage: string
           created_at: string
           duration: string
-          feed_title: string
           id: string
           image_url: string
           impact: string
           published_at: string
+          source_name: string
           summary: string
           title: string
           topic: string
@@ -357,11 +297,11 @@ export type Database = {
           coverage: string
           created_at: string
           duration: string
-          feed_title: string
           id: string
           image_url: string
           impact: string
           published_at: string
+          source_name: string
           summary: string
           title: string
           topic: string

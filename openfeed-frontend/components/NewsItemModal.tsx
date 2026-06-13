@@ -18,7 +18,7 @@ export type NewsItemArticle = {
   title: string;
   summary?: string | null;
   url: string;
-  feedTitle?: string | null;
+  sourceName?: string | null;
   publishedAt?: string | null;
   imageUrl?: string | null;
 };
@@ -113,10 +113,10 @@ export const NewsItemModal = forwardRef<
             </div>
           )}
 
-          {(selectedItem.feedTitle || selectedItem.publishedAt) && (
+          {(selectedItem.sourceName || selectedItem.publishedAt) && (
             <p className="text-muted">
-              {selectedItem.feedTitle}
-              {selectedItem.feedTitle && selectedItem.publishedAt && " · "}
+              {selectedItem.sourceName}
+              {selectedItem.sourceName && selectedItem.publishedAt && " · "}
               {selectedItem.publishedAt && timeAgo(selectedItem.publishedAt)}
             </p>
           )}

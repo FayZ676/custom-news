@@ -1,11 +1,12 @@
 create extension if not exists vector;
 create extension if not exists pg_trgm;
 
-create table "global_articles" (
+create table "user_articles" (
     "id" uuid primary key default gen_random_uuid(),
-    "feed_title" text not null references global_feeds(title) on delete cascade,
+    "user_id" uuid not null references auth.users(id) on delete cascade,
+    "source_name" text not null,
     "title" text not null,
-    "url" text not null unique,
+    "url" text not null,
     "summary" text,
     "topic" text,
     "type" text,
@@ -18,21 +19,25 @@ create table "global_articles" (
     "embedding" vector(512),
     "search_vector" tsvector generated always as (
         to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, ''))
-    ) stored
+    ) stored,
+    unique ("user_id", "url")
 );
 
-alter table "global_articles" enable row level security;
+alter table "user_articles" enable row level security;
 
-create policy "global_articles_select_policy"
-  on "global_articles" for select
-  to anon, authenticated
-  using (true);
+create policy "user_articles_select_policy"
+  on "user_articles" for select
+  to authenticated
+  using (auth.uid() = user_id);
 
-create index if not exists global_articles_title_trgm_idx
-  on global_articles using gin (title gin_trgm_ops);
+create index if not exists user_articles_user_id_idx
+  on user_articles (user_id);
 
-create index global_articles_search_vector_idx
-  on global_articles using gin (search_vector);
+create index if not exists user_articles_title_trgm_idx
+  on user_articles using gin (title gin_trgm_ops);
+
+create index user_articles_search_vector_idx
+  on user_articles using gin (search_vector);
 
 create or replace function search_articles_feed_page(
   query_text text default null,
@@ -47,7 +52,7 @@ create or replace function search_articles_feed_page(
 )
 returns table (
   id uuid,
-  feed_title text,
+  source_name text,
   title text,
   url text,
   summary text,
@@ -64,6 +69,9 @@ returns table (
 language sql
 stable
 as $$
+  -- Runs with invoker rights: RLS on user_articles scopes every retriever to
+  -- the calling user's own rows.
+  --
   -- Hybrid search: full-text, trigram, and semantic retrievers each produce a
   -- ranked candidate list; results are merged with Reciprocal Rank Fusion
   -- (score = sum of 1 / (60 + rank)). Ranks are scale-free, so no
@@ -83,14 +91,14 @@ as $$
       end as tsq
   ),
   filtered as (
-    select ga.*
-    from global_articles ga
+    select ua.*
+    from user_articles ua
     where
-      (topic_filters is null or cardinality(topic_filters) = 0 or ga.topic = any(topic_filters))
-      and (type_filters is null or cardinality(type_filters) = 0 or ga.type = any(type_filters))
-      and (coverage_filters is null or cardinality(coverage_filters) = 0 or ga.coverage = any(coverage_filters))
-      and (duration_filters is null or cardinality(duration_filters) = 0 or ga.duration = any(duration_filters))
-      and (impact_filters is null or cardinality(impact_filters) = 0 or ga.impact = any(impact_filters))
+      (topic_filters is null or cardinality(topic_filters) = 0 or ua.topic = any(topic_filters))
+      and (type_filters is null or cardinality(type_filters) = 0 or ua.type = any(type_filters))
+      and (coverage_filters is null or cardinality(coverage_filters) = 0 or ua.coverage = any(coverage_filters))
+      and (duration_filters is null or cardinality(duration_filters) = 0 or ua.duration = any(duration_filters))
+      and (impact_filters is null or cardinality(impact_filters) = 0 or ua.impact = any(impact_filters))
   ),
   fts_hits as (
     select f.id, row_number() over (order by ts_rank(f.search_vector, n.tsq) desc) as rank
@@ -125,7 +133,7 @@ as $$
   )
   select
     f.id,
-    f.feed_title,
+    f.source_name,
     f.title,
     f.url,
     f.summary,

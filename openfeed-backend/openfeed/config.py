@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     backend_api_key: str
+    newsdata_api_key: str
     openai_api_key: str
     resend_api_key: str
     resend_from_email: str

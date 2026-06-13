@@ -1,79 +1,111 @@
 import logging
+import uuid
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone, timedelta
-
-import pytimeparse
+from datetime import datetime, timezone
 
 from openfeed.db.client import Client
-from openfeed.db.queries.global_articles import (
-    insert_global_articles,
-    get_global_article_urls,
-    delete_global_articles,
-)
+from openfeed.db.models import PublicUserArticles, PublicUserInterests
 from openfeed.db.queries.global_article_metadata_options import (
     get_global_article_metadata_options,
+    GlobalArticleMetadataOption,
 )
-from openfeed.models import Article
-from openfeed.clients.feed_parser import get_articles
-from openfeed.db.queries.global_feeds import get_global_feeds
-from openfeed.db.queries.global_settings import get_global_settings
-from openfeed.db.models import PublicGlobalArticles
-from openfeed.services.articles.enricher import ArticleEnricher
+from openfeed.db.queries.user_articles import get_user_articles, replace_user_articles
+from openfeed.db.queries.user_interests import get_all_user_interests
+from openfeed.clients.newsdata import NewsDataArticle, get_latest_articles
+from openfeed.services.articles.enricher import ArticleEnricher, ArticleMetadata
 
 logger = logging.getLogger(__name__)
 
 enricher = ArticleEnricher()
 
 
-def fetch_articles(db: Client):
-    global_settings = get_global_settings(db)
-    article_metadata_options = get_global_article_metadata_options(db)
-    seen_urls = set(get_global_article_urls(db))
-    feed_articles = _fetch_feed_articles(get_global_feeds(db))
-    unique_found_articles: list[tuple[str, Article]] = []
-    cutoff = datetime.now(timezone.utc) - _parse_ttl(global_settings.article_ttl)
-    for feed_title, article in feed_articles:
-        if article.link not in seen_urls and article.published >= cutoff:
-            seen_urls.add(article.link)
-            unique_found_articles.append((feed_title, article))
+def refresh_user_articles(db: Client):
+    """Run every user's interest queries against NewsData.io and replace each
+    user's articles with the results."""
+    metadata_options = get_global_article_metadata_options(db)
+    interests_by_user: dict[uuid.UUID, list[PublicUserInterests]] = defaultdict(list)
+    for interest in get_all_user_interests(db):
+        interests_by_user[interest.user_id].append(interest)
 
-    article_texts = [str(article) for _, article in unique_found_articles]
-    article_metadata = enricher.enrich_articles(article_texts, article_metadata_options)
+    for user_id, interests in interests_by_user.items():
+        try:
+            _refresh_articles_for_user(db, user_id, interests, metadata_options)
+        except Exception:
+            logger.exception("Failed to refresh articles for user %s", user_id)
+
+    logger.info("Refreshed articles for %d users", len(interests_by_user))
+
+
+def _refresh_articles_for_user(
+    db: Client,
+    user_id: uuid.UUID,
+    interests: list[PublicUserInterests],
+    metadata_options: dict[str, list[GlobalArticleMetadataOption]],
+):
+    found = _query_articles(interests)
+
+    # Hourly queries mostly return the same articles; carry existing rows over
+    # (keeping their id, enrichment, and embedding) and only enrich new URLs.
+    existing_by_url = {a.url: a for a in get_user_articles(db, user_id)}
+    carried_over = [existing_by_url[url] for url in found if url in existing_by_url]
+    new_articles = [a for url, a in found.items() if url not in existing_by_url]
+
+    article_texts = [str(a) for a in new_articles]
+    article_metadata = enricher.enrich_articles(article_texts, metadata_options)
     article_embeddings = enricher.embed_articles(article_texts)
-    articles: list[PublicGlobalArticles] = [
-        article.to_db_schema(feed_title, metadata, embedding)
-        for (feed_title, article), metadata, embedding in zip(
-            unique_found_articles, article_metadata, article_embeddings
+
+    articles = carried_over + [
+        _to_db_schema(user_id, article, metadata, embedding)
+        for article, metadata, embedding in zip(
+            new_articles, article_metadata, article_embeddings
         )
     ]
-
-    if articles:
-        insert_global_articles(db, articles)
-
-    logger.info("Fetched and inserted %d new articles", len(articles))
-
-    return articles
-
-
-def _fetch_feed_articles(feeds) -> list[tuple[str, Article]]:
-    def _fetch_feed(feed) -> list[tuple[str, Article]]:
-        return [(feed.title, article) for article in get_articles(feed.url)]
-
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        results = executor.map(_fetch_feed, feeds)
-
-    return [pair for feed_result in results for pair in feed_result]
+    replace_user_articles(db, user_id, articles)
+    logger.info(
+        "Refreshed %d articles (%d new) for user %s",
+        len(articles),
+        len(new_articles),
+        user_id,
+    )
 
 
-def delete_old_articles(db: Client):
-    global_settings = get_global_settings(db)
-    ttl = _parse_ttl(global_settings.article_ttl)
-    delete_global_articles(db, ttl)
-    logger.info("Deleted articles older than %s", global_settings.article_ttl)
+def _query_articles(
+    interests: list[PublicUserInterests],
+) -> dict[str, NewsDataArticle]:
+    """Run each interest as a NewsData query, deduplicated by article URL."""
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        results = executor.map(
+            lambda interest: get_latest_articles(interest.interest_text), interests
+        )
+    found: dict[str, NewsDataArticle] = {}
+    for articles in results:
+        for article in articles:
+            found.setdefault(article.link, article)
+    return found
 
 
-def _parse_ttl(article_ttl: str) -> timedelta:
-    seconds = pytimeparse.parse(article_ttl)
-    if seconds is None:
-        raise ValueError(f"Unable to parse TTL string: {article_ttl!r}")
-    return timedelta(seconds=seconds)
+def _to_db_schema(
+    user_id: uuid.UUID,
+    article: NewsDataArticle,
+    metadata: ArticleMetadata,
+    embedding: list[float] | None,
+) -> PublicUserArticles:
+    return PublicUserArticles(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        source_name=article.source_name,
+        title=article.title,
+        url=article.link,
+        summary=article.description,
+        image_url=article.image_url,
+        published_at=article.published,
+        created_at=datetime.now(timezone.utc),
+        topic=metadata.topic,
+        type=metadata.type,
+        coverage=metadata.coverage,
+        duration=metadata.duration,
+        impact=metadata.impact,
+        embedding=embedding,
+        search_vector=None,
+    )

@@ -6,9 +6,10 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { Tables } from "@/lib/supabase/supabase.types";
-import { getArticleById } from "@/lib/supabase/queries/global_articles";
-import { getShareLinkByToken } from "@/lib/supabase/queries/global_share_links";
+import {
+  getSharedArticle,
+  SharedArticle,
+} from "@/lib/supabase/queries/user_articles";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 const isUuid = (value: string): boolean =>
@@ -18,24 +19,20 @@ const isUuid = (value: string): boolean =>
 
 const resolveSharedArticle = async (
   token: string,
-): Promise<Tables<"global_articles"> | null> => {
+): Promise<SharedArticle | null> => {
   const supabase = await createClient();
-  const shareLink = await getShareLinkByToken(supabase, token);
-
-  if (!shareLink || shareLink.content_type !== "article") return null;
-
-  return getArticleById(supabase, shareLink.content_id);
+  return getSharedArticle(supabase, token);
 };
 
-function ArticleView({ article }: { article: Tables<"global_articles"> }) {
+function ArticleView({ article }: { article: SharedArticle }) {
   return (
     <article className="flex flex-col gap-4">
       <h1 className="text-2xl font-semibold">{toTitleCase(article.title)}</h1>
 
-      {(article.feed_title || article.published_at) && (
+      {(article.source_name || article.published_at) && (
         <p className="text-subtle">
-          {article.feed_title}
-          {article.feed_title && article.published_at && " · "}
+          {article.source_name}
+          {article.source_name && article.published_at && " · "}
           {article.published_at && timeAgo(article.published_at)}
         </p>
       )}

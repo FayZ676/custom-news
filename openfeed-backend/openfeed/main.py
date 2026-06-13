@@ -7,7 +7,7 @@ from fastapi import FastAPI, Depends, BackgroundTasks
 
 from openfeed.auth import verify_api_key
 from openfeed.db.client import Client, client
-from openfeed.services.articles.service import fetch_articles, delete_old_articles
+from openfeed.services.articles.service import refresh_user_articles
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,16 +44,11 @@ def _run_with_logging(name: str, fn, *args) -> None:
         logger.exception("Background task '%s' failed", name)
 
 
-# TODO: Break this up into separate endpoints.
-@app.post("/global/articles", status_code=202)
-def global_articles_update(background_tasks: BackgroundTasks):
-    logger.info("POST /global/articles - accepted, processing in background")
+@app.post("/user/articles", status_code=202)
+def user_articles_refresh(background_tasks: BackgroundTasks):
+    logger.info("POST /user/articles - accepted, processing in background")
     db = get_db()
-    background_tasks.add_task(_run_with_logging, "fetch_articles", fetch_articles, db)
+    background_tasks.add_task(
+        _run_with_logging, "refresh_user_articles", refresh_user_articles, db
+    )
     return Response(status_code=202)
-
-
-@app.delete("/global/articles", status_code=202)
-def global_articles_delete():
-    logger.info("DELETE /global/articles - deleting old articles")
-    return delete_old_articles(get_db())

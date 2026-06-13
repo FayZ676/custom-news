@@ -112,12 +112,10 @@ All commands are run from the `supabase/` directory.
 
 ### Local commands
 
-| Command                                 | What it does                                                                      |
-| --------------------------------------- | --------------------------------------------------------------------------------- |
-| `make -f Makefile.local init`           | Sets up your local database from scratch and fetches an initial batch of articles |
-| `make -f Makefile.local fetch_articles` | Manually triggers an article refresh on your local instance                       |
-| `make -f Makefile.local functions_test` | Runs the test suite to check everything is working                                |
-| `make -f Makefile.local inspect_feeds`  | Checks all RSS feeds and saves a report to `content.txt`                          |
+| Command                                   | What it does                                                |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `make -f Makefile.local init`             | Sets up your local database from scratch                     |
+| `make -f Makefile.local refresh_articles` | Manually triggers an article refresh on your local instance |
 
 ### Production commands
 
@@ -130,10 +128,8 @@ All commands are run from the `supabase/` directory.
 
 ## How it works
 
-Behind the scenes, OpenFeed uses three functions that run automatically:
+Behind the scenes, a scheduled job keeps every feed fresh:
 
-| Function         | What it does                                                                                  |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| `fetch_articles` | Runs every hour — checks all RSS feeds for new articles and updates your feed                 |
-| `parse_feed`     | Reads a single RSS feed and extracts the articles from it                                     |
-| `embed`          | Uses OpenAI to understand the meaning of articles and interest queries so they can be matched |
+| Job                     | What it does                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| `refresh_user_articles` | Runs every hour — runs each user's interest queries against NewsData.io and replaces their articles |
