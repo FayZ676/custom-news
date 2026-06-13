@@ -8,6 +8,7 @@ interface FilterModalProps {
   interests: UserInterest[];
   userId: string;
   onInterestsChange: () => void;
+  onInterestAdded: (interestText: string) => void | Promise<void>;
 }
 
 export interface FilterModalHandle {
@@ -15,7 +16,7 @@ export interface FilterModalHandle {
 }
 
 const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
-  ({ interests, userId, onInterestsChange }, ref) => {
+  ({ interests, userId, onInterestsChange, onInterestAdded }, ref) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -32,6 +33,7 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
             userId={userId}
             initialInterests={interests}
             onInterestsChange={onInterestsChange}
+            onInterestAdded={onInterestAdded}
           />
         </div>
       </Modal>

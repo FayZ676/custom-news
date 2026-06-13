@@ -15,6 +15,11 @@ interface InterestsManagerProps {
   userId: string;
   initialInterests: UserInterest[];
   onInterestsChange?: () => void;
+  // Called after a new interest is persisted. The feed uses this to fetch and
+  // store articles for the interest while showing a loading state. When omitted
+  // (e.g. onboarding, where ingestion runs once on "Start reading"), adding an
+  // interest just updates the list.
+  onInterestAdded?: (interestText: string) => void | Promise<void>;
 }
 
 async function fetchEmbedding(text: string): Promise<number[] | null> {
@@ -36,6 +41,7 @@ export function InterestsManager({
   userId,
   initialInterests,
   onInterestsChange,
+  onInterestAdded,
 }: InterestsManagerProps) {
   const [interests, setInterests] = useState<UserInterest[]>(initialInterests);
   const [inputValue, setInputValue] = useState("");
@@ -55,7 +61,13 @@ export function InterestsManager({
       const saved = await addInterestAction(userId, text, embedding);
       setInterests((prev) => [...prev, saved]);
       setInputValue("");
-      onInterestsChange?.();
+      if (onInterestAdded) {
+        // The feed handles its own refresh after ingesting articles for the new
+        // interest, so don't also fire onInterestsChange here.
+        await onInterestAdded(text);
+      } else {
+        onInterestsChange?.();
+      }
     } finally {
       setIsAdding(false);
       inputRef.current?.focus();
