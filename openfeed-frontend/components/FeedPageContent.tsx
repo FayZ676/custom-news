@@ -12,7 +12,10 @@ import {
   searchLatestNews,
 } from "@/lib/newsSearch";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
-import { ingestForInterestAction } from "@/app/feed/actions";
+import {
+  ingestForInterestAction,
+  rebuildFeedAction,
+} from "@/app/feed/actions";
 
 interface FeedPageContentProps {
   articles: UserArticle[];
@@ -45,6 +48,16 @@ export function FeedPageContent({
     },
     [router, userId],
   );
+
+  const handleInterestRemoved = useCallback(async () => {
+    setIsUpdatingFeed(true);
+    try {
+      await rebuildFeedAction(userId);
+      router.refresh();
+    } finally {
+      setIsUpdatingFeed(false);
+    }
+  }, [router, userId]);
 
   const handleSearchQueryChange = useCallback(async (query: string) => {
     setSearchQuery(query);
@@ -87,8 +100,8 @@ export function FeedPageContent({
         onSearchQueryChange={handleSearchQueryChange}
         interests={interests}
         userId={userId}
-        onInterestsChange={() => router.refresh()}
         onInterestAdded={handleInterestAdded}
+        onInterestRemoved={handleInterestRemoved}
       />
       <div>
         {isUpdatingFeed ? (

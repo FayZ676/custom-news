@@ -63,3 +63,4 @@ export async function ingestArticlesForInterests(
 
   await insertUserArticles(supabase, userId, rows);
 }
+
