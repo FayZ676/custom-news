@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
@@ -32,31 +32,26 @@ export function FeedPageContent({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchArticles, setSearchArticles] = useState<FeedArticle[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [isUpdatingFeed, setIsUpdatingFeed] = useState(false);
+  const [isAddingInterest, startAddingInterest] = useTransition();
+  const [isRemovingInterest, startRemovingInterest] = useTransition();
   const searchRequestIdRef = useRef(0);
   const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
 
   const handleInterestAdded = useCallback(
     async (interestText: string) => {
-      setIsUpdatingFeed(true);
-      try {
+      startAddingInterest(async () => {
         await ingestForInterestAction(userId, interestText);
         router.refresh();
-      } finally {
-        setIsUpdatingFeed(false);
-      }
+      });
     },
     [router, userId],
   );
 
   const handleInterestRemoved = useCallback(async () => {
-    setIsUpdatingFeed(true);
-    try {
+    startRemovingInterest(async () => {
       await rebuildFeedAction(userId);
       router.refresh();
-    } finally {
-      setIsUpdatingFeed(false);
-    }
+    });
   }, [router, userId]);
 
   const handleSearchQueryChange = useCallback(async (query: string) => {
@@ -93,6 +88,7 @@ export function FeedPageContent({
   }, [isSearchActive, searchQuery]);
 
   const displayedArticles = isSearchActive ? searchArticles : articles;
+  const isUpdatingFeed = isAddingInterest || isRemovingInterest;
 
   return (
     <>
