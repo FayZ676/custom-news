@@ -9,11 +9,11 @@ from openfeed.db.models import PublicUserArticles, PublicUserInterests
 from openfeed.db.queries.user_articles import get_user_articles, replace_user_articles
 from openfeed.db.queries.user_interests import get_all_user_interests
 from openfeed.clients.newsdata import NewsDataArticle, get_latest_articles
-from openfeed.services.articles.enricher import ArticleEnricher
+from openfeed.clients.openai_client import OpenAIClient
 
 logger = logging.getLogger(__name__)
 
-enricher = ArticleEnricher()
+embedding_client = OpenAIClient(model="gpt-5.4-mini")
 
 
 def refresh_user_articles(db: Client):
@@ -46,7 +46,9 @@ def _refresh_articles_for_user(
     new_articles = [a for url, a in found.items() if url not in existing_by_url]
 
     article_texts = [str(a) for a in new_articles]
-    article_embeddings = enricher.embed_articles(article_texts)
+    article_embeddings = (
+        embedding_client.embed(article_texts).embeddings if article_texts else []
+    )
 
     articles = carried_over + [
         _to_db_schema(user_id, article, embedding)
