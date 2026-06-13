@@ -4,9 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 import {
   addUserInterest,
+  getUserInterests,
   removeUserInterest,
   UserInterest,
 } from "@/lib/supabase/queries/user_interests";
+import { ingestArticlesForInterests } from "@/lib/articles/ingest";
 
 export async function createShareLinkAction(
   userId: string,
@@ -24,6 +26,22 @@ export async function addInterestAction(
 ): Promise<UserInterest> {
   const supabase = await createClient();
   return addUserInterest(supabase, userId, interestText, embedding);
+}
+
+export async function refreshArticlesAction(userId: string): Promise<void> {
+  const supabase = await createClient();
+  const interests = await getUserInterests(supabase, userId);
+  await ingestArticlesForInterests(
+    userId,
+    interests.map((i) => i.interest_text),
+  );
+}
+
+export async function ingestForInterestAction(
+  userId: string,
+  interestText: string,
+): Promise<void> {
+  await ingestArticlesForInterests(userId, [interestText]);
 }
 
 export async function removeInterestAction(

@@ -11,6 +11,7 @@ interface SearchFilterBarProps {
   userId: string;
   onSearchQueryChange: (query: string) => void;
   onInterestsChange: () => void;
+  onInterestAdded: (interestText: string) => void | Promise<void>;
 }
 
 export default function SearchFilterBar({
@@ -18,6 +19,7 @@ export default function SearchFilterBar({
   userId,
   onSearchQueryChange,
   onInterestsChange,
+  onInterestAdded,
 }: SearchFilterBarProps) {
   const filterModalRef = useRef<FilterModalHandle>(null);
   const [searchValue, setSearchValue] = useState("");
@@ -60,6 +62,7 @@ export default function SearchFilterBar({
         interests={interests}
         userId={userId}
         onInterestsChange={onInterestsChange}
+        onInterestAdded={onInterestAdded}
       />
     </div>
   );

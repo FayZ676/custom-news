@@ -1,16 +1,34 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function OnboardingContinueButton() {
+import { refreshArticlesAction } from "@/app/feed/actions";
+
+export default function OnboardingContinueButton({
+  userId,
+}: {
+  userId: string;
+}) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleClick = async () => {
+    setIsLoading(true);
+    try {
+      await refreshArticlesAction(userId);
+    } finally {
+      router.push("/feed");
+    }
+  };
 
   return (
     <button
-      onClick={() => router.push("/feed")}
-      className="btn-soft"
+      onClick={() => void handleClick()}
+      disabled={isLoading}
+      className="btn-soft disabled:opacity-50"
     >
-      Start reading
+      {isLoading ? "Setting up your feed…" : "Start reading"}
     </button>
   );
 }

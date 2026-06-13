@@ -29,7 +29,7 @@ async function OnboardingContent() {
 
       <InterestsManager userId={userId} initialInterests={interests} />
 
-      <OnboardingContinueButton />
+      <OnboardingContinueButton userId={userId} />
     </div>
   );
 }

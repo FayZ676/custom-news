@@ -15,6 +15,7 @@ interface InterestsManagerProps {
   userId: string;
   initialInterests: UserInterest[];
   onInterestsChange?: () => void;
+  onInterestAdded?: (interestText: string) => void | Promise<void>;
 }
 
 async function fetchEmbedding(text: string): Promise<number[] | null> {
@@ -36,6 +37,7 @@ export function InterestsManager({
   userId,
   initialInterests,
   onInterestsChange,
+  onInterestAdded,
 }: InterestsManagerProps) {
   const [interests, setInterests] = useState<UserInterest[]>(initialInterests);
   const [inputValue, setInputValue] = useState("");
@@ -55,7 +57,11 @@ export function InterestsManager({
       const saved = await addInterestAction(userId, text, embedding);
       setInterests((prev) => [...prev, saved]);
       setInputValue("");
-      onInterestsChange?.();
+      if (onInterestAdded) {
+        await onInterestAdded(text);
+      } else {
+        onInterestsChange?.();
+      }
     } finally {
       setIsAdding(false);
       inputRef.current?.focus();

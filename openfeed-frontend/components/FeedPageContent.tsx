@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
-import { ViewFeed } from "@/components/ViewFeed";
+import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 import { UserArticle } from "@/lib/supabase/queries/user_articles";
 import {
   FeedArticle,
@@ -12,6 +12,7 @@ import {
   searchLatestNews,
 } from "@/lib/newsSearch";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import { ingestForInterestAction } from "@/app/feed/actions";
 
 interface FeedPageContentProps {
   articles: UserArticle[];
@@ -28,8 +29,22 @@ export function FeedPageContent({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchArticles, setSearchArticles] = useState<FeedArticle[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isUpdatingFeed, setIsUpdatingFeed] = useState(false);
   const searchRequestIdRef = useRef(0);
   const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
+
+  const handleInterestAdded = useCallback(
+    async (interestText: string) => {
+      setIsUpdatingFeed(true);
+      try {
+        await ingestForInterestAction(userId, interestText);
+        router.refresh();
+      } finally {
+        setIsUpdatingFeed(false);
+      }
+    },
+    [router, userId],
+  );
 
   const handleSearchQueryChange = useCallback(async (query: string) => {
     setSearchQuery(query);
@@ -73,9 +88,15 @@ export function FeedPageContent({
         interests={interests}
         userId={userId}
         onInterestsChange={() => router.refresh()}
+        onInterestAdded={handleInterestAdded}
       />
       <div>
-        {isSearching && isSearchActive ? (
+        {isUpdatingFeed ? (
+          <>
+            <p className="text-subtle italic mb-4">Updating feed…</p>
+            <ViewFeedSkeleton />
+          </>
+        ) : isSearching && isSearchActive ? (
           <p className="text-subtle italic">Searching...</p>
         ) : (
           <ViewFeed
