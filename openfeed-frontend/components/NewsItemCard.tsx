@@ -31,38 +31,35 @@ export function NewsItemCard({
       className={`cursor-pointer py-4 border-b border-base-300 ${opacityClass}`}
       onClick={onClick}
     >
+      <h2 className="heading-article hover:underline">{title}</h2>
       {hasImage ? (
-        <div className="grid grid-cols-[1fr_2fr] gap-3 sm:grid-cols-[144px_1fr] sm:gap-x-5 sm:gap-y-2 sm:items-start">
-          <div className="relative aspect-4/3 overflow-hidden rounded-sm sm:row-span-2">
+        <div className="mt-3 grid grid-cols-[108px_1fr] gap-4 items-start">
+          <div className="relative aspect-square overflow-hidden rounded-sm">
             {!isLoaded && <div className="skeleton absolute inset-0" />}
             <Image
               src={safeImageUrl!}
               alt="Thumbnail"
               fill
-              sizes="(min-width: 640px) 144px, 33vw"
+              sizes="108px"
               loading="lazy"
               className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setIsLoaded(true)}
             />
           </div>
-          <h2 className="heading-article hover:underline">{title}</h2>
           {(meta || summary) && (
-            <div className="col-span-2 sm:col-span-1 flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {meta && <span className="text-muted">{meta}</span>}
-              {summary && (
-                <p className="text-body line-clamp-2 sm:line-clamp-3">{summary}</p>
-              )}
+              {summary && <p className="text-body line-clamp-2">{summary}</p>}
             </div>
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          <h2 className="heading-article hover:underline">{title}</h2>
-          {meta && <span className="text-muted">{meta}</span>}
-          {summary && (
-            <p className="text-body line-clamp-2 sm:line-clamp-3">{summary}</p>
-          )}
-        </div>
+        (meta || summary) && (
+          <div className="mt-2 flex flex-col gap-1">
+            {meta && <span className="text-muted">{meta}</span>}
+            {summary && <p className="text-body line-clamp-2">{summary}</p>}
+          </div>
+        )
       )}
     </li>
   );
