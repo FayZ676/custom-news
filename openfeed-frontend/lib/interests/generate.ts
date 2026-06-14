@@ -3,31 +3,25 @@ import "server-only";
 import { llmClient } from "@/lib/llm/client";
 import {
   NextQuestionResultSchema,
-  NEWSDATA_CATEGORIES,
   type NextQuestionResult,
   type RefineAnswer,
 } from "@/lib/interests/refine";
 
 const MAX_QUESTIONS = 3;
 
-const SYSTEM_PROMPT = `You help users refine a news interest into a precise query for the News Data io API.
+const SYSTEM_PROMPT = `You help users refine a news interest by understanding what they actually care about.
 
-Your goal: ask targeted multiple-choice questions that will help narrow the interest into the most relevant news articles. Each option you generate carries an "effects" object — the exact News Data io query params that option contributes.
-
-News Data io params you can use in effects:
-- q: full-text boolean query (supports AND, OR, NOT, "exact phrase")
-- qInTitle: same syntax but only searches headlines
-- category: one of: ${NEWSDATA_CATEGORIES.join(", ")}
-- country: ISO 3166-1 alpha-2 codes, comma-separated (e.g. "us,gb")
-- timeframe: hours back as a number string (e.g. "24" = last 24 hours, "72" = last 3 days)
+Your goal: ask targeted multiple-choice questions that surface the user's intent — which angle, sub-topic, region, recency, or perspective matters to them. A separate step later turns the full conversation into a search query, so you do NOT need to map answers to query params. Just ask the questions that best clarify the interest.
 
 Rules:
 - Emit { done: false, question: {...} } when you have a useful question to ask.
 - Emit { done: true, question: null } when you have enough info (or after ${MAX_QUESTIONS} questions).
-- Always include a neutral "Any / all of the above" option with all-null effects so the user can skip.
+- Always include a neutral "Any / no preference" option so the user can skip the question.
 - Keep options to 3–5 choices.
 - Make prompts concise and conversational — one line each.
-- IDs should be short slugs like "funding", "tech-news", "us-only".`;
+- Options are plain labels — short, human-readable phrases.
+- IDs should be short slugs like "funding", "tech-news", "us-only".
+- The user may also type their own free-text answer instead of picking an option; take any prior free-text answers into account when choosing the next question.`;
 
 function buildUserPrompt(interest: string, history: RefineAnswer[]): string {
   if (history.length === 0) {
@@ -36,11 +30,12 @@ function buildUserPrompt(interest: string, history: RefineAnswer[]): string {
 
   const historyText = history
     .map((a) => {
-      const labels = a.question.options
+      const parts = a.question.options
         .filter((o) => a.selectedOptionIds.includes(o.id))
-        .map((o) => o.label)
-        .join(", ");
-      return `Q: ${a.question.prompt}\nA: ${labels}`;
+        .map((o) => o.label);
+      if (a.freeText?.trim()) parts.push(a.freeText.trim());
+      const answer = parts.length > 0 ? parts.join(", ") : "(no preference)";
+      return `Q: ${a.question.prompt}\nA: ${answer}`;
     })
     .join("\n\n");
 

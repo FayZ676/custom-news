@@ -9,7 +9,7 @@ import {
   addInterestAction,
   removeInterestAction,
 } from "@/app/feed/actions";
-import { InterestRefiner } from "@/components/InterestRefiner";
+import { MCQFlow } from "@/components/MCQFlow";
 
 const MAX_INTERESTS = 7;
 
@@ -123,7 +123,7 @@ export function InterestsManager({
       )}
 
       {pendingInterest && !isAdding && (
-        <InterestRefiner
+        <MCQFlow
           rawInterest={pendingInterest}
           onComplete={handleRefinerComplete}
           onSkip={handleRefinerSkip}
