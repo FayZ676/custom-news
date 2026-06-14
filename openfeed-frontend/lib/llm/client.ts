@@ -29,7 +29,7 @@ const openai = new OpenAI({
 const openAiLlmClient: LlmClient = {
   async completeStructured({ schema, schemaName, system, user }) {
     const completion = await openai.chat.completions.parse({
-      model: process.env.LLM_MODEL ?? "gpt-4o-mini",
+      model: process.env.LLM_MODEL ?? "gpt-5.4-mini",
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
