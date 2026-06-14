@@ -10,7 +10,7 @@ interface SearchFilterBarProps {
   interests: UserInterest[];
   userId: string;
   onSearchQueryChange: (query: string) => void;
-  onInterestAdded: (interestText: string) => void | Promise<void>;
+  onInterestAdded: (interest: UserInterest) => void | Promise<void>;
   onInterestRemoved: () => void | Promise<void>;
 }
 

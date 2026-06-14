@@ -1,13 +1,12 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 
 import Modal from "@/components/Modal";
-import { UserInterest } from "@/lib/supabase/queries/user_interests";
-import { InterestsManager } from "@/components/InterestsManager";
+import { UserInterest } from "@/lib/supabase/queries/user_interests";import { InterestsManager } from "@/components/InterestsManager";
 
 interface FilterModalProps {
   interests: UserInterest[];
   userId: string;
-  onInterestAdded: (interestText: string) => void | Promise<void>;
+  onInterestAdded: (interest: UserInterest) => void | Promise<void>;
   onInterestRemoved: () => void | Promise<void>;
 }
 

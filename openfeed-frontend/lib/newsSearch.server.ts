@@ -1,6 +1,7 @@
 import "server-only";
 
 import { FeedArticle } from "@/lib/newsSearch";
+import type { NewsQueryParams } from "@/lib/interests/refine";
 
 const LATEST_URL = "https://newsdata.io/api/1/latest";
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -34,18 +35,20 @@ function toFeedArticle(result: NewsDataResult): FeedArticle | null {
 }
 
 export async function fetchLatestNewsArticles(
-  query: string,
+  params: NewsQueryParams,
 ): Promise<FeedArticle[]> {
-  const params = new URLSearchParams({
-    apikey: process.env.NEWSDATA_API_KEY ?? "",
-    q: query.trim(),
-    language: "en",
-    removeduplicate: "1",
-  });
+  const urlParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== "") {
+      urlParams.set(key, value);
+    }
+  }
+  if (!urlParams.has("language")) urlParams.set("language", "en");
+  if (!urlParams.has("removeduplicate")) urlParams.set("removeduplicate", "1");
 
   let response: Response;
   try {
-    response = await fetch(`${LATEST_URL}?${params}`, {
+    response = await fetch(`${LATEST_URL}?${urlParams}`, {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch {
@@ -61,4 +64,11 @@ export async function fetchLatestNewsArticles(
   return results
     .map(toFeedArticle)
     .filter((article): article is FeedArticle => article !== null);
+}
+
+export async function fetchLatestNewsForQuery(
+  query: string,
+): Promise<FeedArticle[]> {
+  const apiKey = process.env.NEWSDATA_API_KEY ?? "";
+  return fetchLatestNewsArticles({ apikey: apiKey, q: query });
 }

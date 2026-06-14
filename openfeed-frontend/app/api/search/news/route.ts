@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { MIN_SEARCH_QUERY_LENGTH } from "@/lib/newsSearch";
-import { fetchLatestNewsArticles } from "@/lib/newsSearch.server";
+import { fetchLatestNewsForQuery } from "@/lib/newsSearch.server";
 
 export async function POST(request: Request) {
   const { query } = await request.json().catch(() => ({}));
@@ -9,6 +9,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "query is too short" }, { status: 400 });
   }
 
-  const articles = await fetchLatestNewsArticles(query);
+  const articles = await fetchLatestNewsForQuery(query);
   return NextResponse.json({ articles });
 }

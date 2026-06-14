@@ -59,6 +59,7 @@ alter table "public"."user_articles" enable row level security;
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
     "interest_text" text not null,
+    "query_payload" jsonb,
     "created_at" timestamp with time zone not null default now()
       );
 

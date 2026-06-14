@@ -15,9 +15,16 @@ export async function GET(request: Request) {
 
   let succeeded = 0;
   let failed = 0;
-  for (const { userId, interestTexts } of users) {
+  for (const { userId, interests } of users) {
+    const userInterests = interests.map((i, idx) => ({
+      id: String(idx),
+      user_id: userId,
+      interest_text: i.interestText,
+      query_payload: i.queryPayload,
+      created_at: new Date().toISOString(),
+    }));
     try {
-      await ingestArticlesForInterests(userId, interestTexts);
+      await ingestArticlesForInterests(userId, userInterests);
       succeeded += 1;
     } catch (error) {
       failed += 1;

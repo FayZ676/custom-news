@@ -12,10 +12,7 @@ import {
   searchLatestNews,
 } from "@/lib/newsSearch";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
-import {
-  ingestForInterestAction,
-  rebuildFeedAction,
-} from "@/app/feed/actions";
+import { ingestForInterestAction, rebuildFeedAction } from "@/app/feed/actions";
 
 interface FeedPageContentProps {
   articles: UserArticle[];
@@ -38,9 +35,9 @@ export function FeedPageContent({
   const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
 
   const handleInterestAdded = useCallback(
-    async (interestText: string) => {
+    async (interest: UserInterest) => {
       startAddingInterest(async () => {
-        await ingestForInterestAction(userId, interestText);
+        await ingestForInterestAction(userId, interest);
         router.refresh();
       });
     },
@@ -62,8 +59,6 @@ export function FeedPageContent({
     }
   }, []);
 
-  // Live search hits NewsData.io directly (via /api/search/news) for fresh
-  // articles matching the query, independent of the user's persisted feed.
   useEffect(() => {
     if (!isSearchActive) return;
 
@@ -80,7 +75,8 @@ export function FeedPageContent({
         if (searchRequestIdRef.current !== currentRequestId) return;
         setSearchArticles([]);
       } finally {
-        if (searchRequestIdRef.current === currentRequestId) setIsSearching(false);
+        if (searchRequestIdRef.current === currentRequestId)
+          setIsSearching(false);
       }
     };
 

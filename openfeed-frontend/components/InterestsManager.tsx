@@ -4,17 +4,19 @@ import { useRef, useState } from "react";
 import { X } from "lucide-react";
 
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import { type NewsQueryPayload } from "@/lib/interests/refine";
 import {
   addInterestAction,
   removeInterestAction,
 } from "@/app/feed/actions";
+import { InterestRefiner } from "@/components/InterestRefiner";
 
 const MAX_INTERESTS = 7;
 
 interface InterestsManagerProps {
   userId: string;
   initialInterests: UserInterest[];
-  onInterestAdded?: (interestText: string) => void | Promise<void>;
+  onInterestAdded?: (interest: UserInterest) => void | Promise<void>;
   onInterestRemoved?: () => void | Promise<void>;
 }
 
@@ -27,25 +29,41 @@ export function InterestsManager({
   const [interests, setInterests] = useState<UserInterest[]>(initialInterests);
   const [inputValue, setInputValue] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [pendingInterest, setPendingInterest] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const canAdd =
-    inputValue.trim().length > 0 && interests.length < MAX_INTERESTS && !isAdding;
+    inputValue.trim().length > 0 && interests.length < MAX_INTERESTS && !isAdding && !pendingInterest;
 
-  const handleAdd = async () => {
-    const text = inputValue.trim();
-    if (!text || interests.length >= MAX_INTERESTS) return;
-
+  const commitInterest = async (text: string, payload: NewsQueryPayload | null) => {
     setIsAdding(true);
     try {
-      const saved = await addInterestAction(userId, text);
+      const saved = await addInterestAction(userId, text, payload);
       setInterests((prev) => [...prev, saved]);
       setInputValue("");
-      await onInterestAdded?.(text);
+      await onInterestAdded?.(saved);
     } finally {
       setIsAdding(false);
+      setPendingInterest(null);
       inputRef.current?.focus();
     }
+  };
+
+  const handleAdd = () => {
+    const text = inputValue.trim();
+    if (!text || interests.length >= MAX_INTERESTS) return;
+    setPendingInterest(text);
+    setInputValue("");
+  };
+
+  const handleRefinerComplete = (payload: NewsQueryPayload) => {
+    if (!pendingInterest) return;
+    void commitInterest(pendingInterest, payload);
+  };
+
+  const handleRefinerSkip = () => {
+    if (!pendingInterest) return;
+    void commitInterest(pendingInterest, null);
   };
 
   const handleRemove = async (interestId: string) => {
@@ -57,7 +75,7 @@ export function InterestsManager({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      void handleAdd();
+      handleAdd();
     }
   };
 
@@ -78,7 +96,7 @@ export function InterestsManager({
         </div>
       )}
 
-      {interests.length < MAX_INTERESTS && (
+      {interests.length < MAX_INTERESTS && !pendingInterest && (
         <div className="flex items-center gap-2">
           <input
             ref={inputRef}
@@ -95,7 +113,7 @@ export function InterestsManager({
             className="flex-1 rounded-sm bg-base-200 border border-base-300 px-3 h-9.5 text-sm text-base-content placeholder:text-base-content/45 focus:outline-none focus:ring-1 focus:ring-base-content/35 disabled:opacity-50"
           />
           <button
-            onClick={() => void handleAdd()}
+            onClick={handleAdd}
             disabled={!canAdd}
             className="btn-soft h-9.5 shrink-0"
           >
@@ -104,7 +122,19 @@ export function InterestsManager({
         </div>
       )}
 
-      {interests.length >= MAX_INTERESTS && (
+      {pendingInterest && !isAdding && (
+        <InterestRefiner
+          rawInterest={pendingInterest}
+          onComplete={handleRefinerComplete}
+          onSkip={handleRefinerSkip}
+        />
+      )}
+
+      {isAdding && (
+        <p className="text-sm text-base-content/50">Adding &ldquo;{pendingInterest}&rdquo;…</p>
+      )}
+
+      {interests.length >= MAX_INTERESTS && !pendingInterest && (
         <p className="text-[11px] text-base-content/40">
           Maximum of {MAX_INTERESTS} interests reached.
         </p>
