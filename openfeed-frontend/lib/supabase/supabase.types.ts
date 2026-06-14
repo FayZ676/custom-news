@@ -172,6 +172,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_sources: {
+        Row: {
+          created_at: string;
+          id: string;
+          source_key: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          source_key: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          source_key?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       user_settings: {
         Row: {
           color_theme: string;

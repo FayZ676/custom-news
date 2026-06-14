@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getUserArticles } from "@/lib/supabase/queries/user_articles";
 import { getUserInterests } from "@/lib/supabase/queries/user_interests";
+import { getUserSourceKeys } from "@/lib/supabase/queries/user_sources";
 import { createShareLinkAction } from "@/app/feed/actions";
 
 import { FeedPageContent } from "@/components/FeedPageContent";
@@ -22,6 +23,7 @@ async function ViewFeedContent() {
   }
 
   const feedArticles = await getUserArticles(supabase, userId);
+  const subscribedSourceKeys = await getUserSourceKeys(supabase, userId);
 
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
 
@@ -30,6 +32,7 @@ async function ViewFeedContent() {
       <FeedPageContent
         articles={feedArticles}
         interests={interests}
+        subscribedSourceKeys={subscribedSourceKeys}
         userId={userId}
       />
     </ShareLinkProvider>

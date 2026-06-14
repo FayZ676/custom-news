@@ -9,17 +9,21 @@ import type { FilterModalHandle } from "./FilterModal";
 interface SearchFilterBarProps {
   interests: UserInterest[];
   userId: string;
+  subscribedSourceKeys: string[];
   onSearchQueryChange: (query: string) => void;
   onInterestAdded: (interest: UserInterest) => void | Promise<void>;
   onInterestRemoved: () => void | Promise<void>;
+  onSourcesChanged: () => void | Promise<void>;
 }
 
 export default function SearchFilterBar({
   interests,
   userId,
+  subscribedSourceKeys,
   onSearchQueryChange,
   onInterestAdded,
   onInterestRemoved,
+  onSourcesChanged,
 }: SearchFilterBarProps) {
   const filterModalRef = useRef<FilterModalHandle>(null);
   const [searchValue, setSearchValue] = useState("");
@@ -61,8 +65,10 @@ export default function SearchFilterBar({
         ref={filterModalRef}
         interests={interests}
         userId={userId}
+        subscribedSourceKeys={subscribedSourceKeys}
         onInterestAdded={onInterestAdded}
         onInterestRemoved={onInterestRemoved}
+        onSourcesChanged={onSourcesChanged}
       />
     </div>
   );

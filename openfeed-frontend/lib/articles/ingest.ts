@@ -1,34 +1,38 @@
 import "server-only";
 
 import { FeedArticle } from "@/lib/newsSearch";
-import { fetchLatestNewsArticles } from "@/lib/newsSearch.server";
+import { searchProviders } from "@/lib/providers/search.server";
+import type { FeedCache } from "@/lib/providers/rss";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   getUserArticles,
   insertUserArticles,
   NewUserArticle,
 } from "@/lib/supabase/queries/user_articles";
-import { payloadToParams, type NewsQueryPayload } from "@/lib/interests/refine";
+import type { NewsQueryPayload } from "@/lib/interests/refine";
 import type { UserInterest } from "@/lib/supabase/queries/user_interests";
 
-const API_KEY = process.env.NEWSDATA_API_KEY ?? "";
-
-function interestToParams(interest: UserInterest) {
-  const payload: NewsQueryPayload = interest.query_payload ?? {
-    q: interest.interest_text,
-    qInTitle: null,
-    category: null,
-    country: null,
-    timeframe: null,
-  };
-  return payloadToParams(payload, API_KEY);
+function interestToPayload(interest: UserInterest): NewsQueryPayload {
+  return (
+    interest.query_payload ?? {
+      q: interest.interest_text,
+      qInTitle: null,
+      category: null,
+      country: null,
+      timeframe: null,
+    }
+  );
 }
 
 async function fetchUniqueArticlesForInterests(
   interests: UserInterest[],
+  subscribedKeys: string[],
+  cache: FeedCache,
 ): Promise<FeedArticle[]> {
   const resultsByInterest = await Promise.all(
-    interests.map((interest) => fetchLatestNewsArticles(interestToParams(interest))),
+    interests.map((interest) =>
+      searchProviders(interestToPayload(interest), subscribedKeys, cache),
+    ),
   );
 
   const articlesByUrl = new Map<string, FeedArticle>();
@@ -43,13 +47,19 @@ async function fetchUniqueArticlesForInterests(
 export async function ingestArticlesForInterests(
   userId: string,
   interests: UserInterest[],
+  subscribedKeys: string[] = [],
+  cache: FeedCache = new Map(),
 ): Promise<void> {
   const valid = interests.filter(
     (i) => i.interest_text.trim().length > 0 || i.query_payload?.q,
   );
   if (valid.length === 0) return;
 
-  const found = await fetchUniqueArticlesForInterests(valid);
+  const found = await fetchUniqueArticlesForInterests(
+    valid,
+    subscribedKeys,
+    cache,
+  );
   if (found.length === 0) return;
 
   const supabase = createServiceRoleClient();

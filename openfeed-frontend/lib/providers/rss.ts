@@ -1,0 +1,150 @@
+import "server-only";
+
+import { XMLParser } from "fast-xml-parser";
+
+import type { FeedArticle } from "@/lib/newsSearch";
+import { matchesQuery } from "@/lib/interests/match";
+import type { NewsQueryPayload } from "@/lib/interests/refine";
+import type { FeedDefinition, Provider } from "@/lib/providers/types";
+
+const REQUEST_TIMEOUT_MS = 30_000;
+
+// Caches parsed feed articles by URL for the duration of a single run (e.g. one
+// cron invocation) so a feed shared across a user's interests — and across
+// users — is fetched and parsed only once.
+export type FeedCache = Map<string, Promise<FeedArticle[]>>;
+
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+});
+
+// The XML parser emits untyped trees; treat every element as a loose record.
+type XmlNode = Record<string, unknown>;
+
+function asArray<T>(value: T | T[] | undefined | null): T[] {
+  if (value === undefined || value === null) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function asNodes(value: unknown): XmlNode[] {
+  return asArray(value as XmlNode | XmlNode[] | undefined);
+}
+
+// Text nodes may arrive as a plain string, or as an object when the element
+// also carries attributes / CDATA.
+function text(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return String(value);
+  if (value && typeof value === "object" && "#text" in value) {
+    return text((value as { "#text": unknown })["#text"]);
+  }
+  return "";
+}
+
+function toIso(value: unknown): string {
+  const raw = text(value);
+  const parsed = raw ? Date.parse(raw) : NaN;
+  return Number.isNaN(parsed)
+    ? new Date().toISOString()
+    : new Date(parsed).toISOString();
+}
+
+// Atom <link> can be a string, a single object, or an array of objects with
+// rel/href attributes. Prefer the alternate (canonical) link.
+function pickLink(link: unknown): string {
+  if (typeof link === "string") return link.trim();
+  const links = asNodes(link);
+  const alternate =
+    links.find((l) => l["@_rel"] === "alternate") ?? links[0];
+  if (!alternate) return "";
+  return text(alternate["@_href"] ?? alternate["#text"]);
+}
+
+function pickImage(item: XmlNode): string | null {
+  const enclosure = asNodes(item.enclosure).find((e) =>
+    text(e["@_type"]).startsWith("image"),
+  );
+  const media = item["media:content"] ?? item["media:thumbnail"];
+  const mediaUrl = asNodes(media)[0]?.["@_url"];
+  const url = text(enclosure?.["@_url"]) || text(mediaUrl);
+  return url || null;
+}
+
+function itemToFeedArticle(item: XmlNode, sourceName: string): FeedArticle | null {
+  const title = text(item.title);
+  const url = pickLink(item.link) || text(item.id) || text(item.guid);
+  if (!title || !url) return null;
+
+  const summary =
+    text(item.description) ||
+    text(item.summary) ||
+    text(item["content:encoded"]) ||
+    text(item.content);
+
+  return {
+    id: url,
+    title,
+    summary: summary || null,
+    url,
+    source_name: sourceName,
+    published_at: toIso(item.pubDate ?? item.published ?? item.updated),
+    image_url: pickImage(item),
+  };
+}
+
+function parseFeed(xml: string, sourceName: string): FeedArticle[] {
+  const parsed = parser.parse(xml) as XmlNode;
+  const channel = (parsed.rss as XmlNode)?.channel as XmlNode | undefined;
+  const feed = parsed.feed as XmlNode | undefined;
+
+  const rssItems = asNodes(channel?.item);
+  const items = rssItems.length > 0 ? rssItems : asNodes(feed?.entry);
+
+  return items
+    .map((item) => itemToFeedArticle(item, sourceName))
+    .filter((article): article is FeedArticle => article !== null);
+}
+
+// Fetches + parses a feed into FeedArticles (unfiltered), memoised per run.
+// Failure-isolated: any network/parse error resolves to [] so one bad feed can
+// never break ingestion or search.
+export function fetchFeedOnce(
+  def: FeedDefinition,
+  cache: FeedCache,
+): Promise<FeedArticle[]> {
+  const cached = cache.get(def.feedUrl);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    try {
+      const response = await fetch(def.feedUrl, {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        headers: { "user-agent": "OpenFeed/1.0 (+rss)" },
+      });
+      if (!response.ok) return [];
+      const xml = await response.text();
+      return parseFeed(xml, def.label);
+    } catch {
+      return [];
+    }
+  })();
+
+  cache.set(def.feedUrl, promise);
+  return promise;
+}
+
+// Wraps a curated RSS feed as a Provider: fetch (once per run) then filter the
+// feed's items against the interest payload via the shared boolean matcher.
+export function createRssProvider(
+  def: FeedDefinition,
+  cache: FeedCache,
+): Provider {
+  return {
+    key: def.key,
+    async search(payload: NewsQueryPayload) {
+      const articles = await fetchFeedOnce(def, cache);
+      return articles.filter((article) => matchesQuery(payload, article));
+    },
+  };
+}

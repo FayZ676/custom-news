@@ -17,12 +17,14 @@ import { ingestForInterestAction, rebuildFeedAction } from "@/app/feed/actions";
 interface FeedPageContentProps {
   articles: UserArticle[];
   interests: UserInterest[];
+  subscribedSourceKeys: string[];
   userId: string;
 }
 
 export function FeedPageContent({
   articles,
   interests,
+  subscribedSourceKeys,
   userId,
 }: FeedPageContentProps) {
   const router = useRouter();
@@ -31,6 +33,7 @@ export function FeedPageContent({
   const [isSearching, setIsSearching] = useState(false);
   const [isAddingInterest, startAddingInterest] = useTransition();
   const [isRemovingInterest, startRemovingInterest] = useTransition();
+  const [isUpdatingSources, startUpdatingSources] = useTransition();
   const searchRequestIdRef = useRef(0);
   const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
 
@@ -46,6 +49,15 @@ export function FeedPageContent({
 
   const handleInterestRemoved = useCallback(async () => {
     startRemovingInterest(async () => {
+      await rebuildFeedAction(userId);
+      router.refresh();
+    });
+  }, [router, userId]);
+
+  // Subscribing/unsubscribing changes which providers feed the user's articles,
+  // so rebuild the feed against the new source set (mirrors interest removal).
+  const handleSourcesChanged = useCallback(async () => {
+    startUpdatingSources(async () => {
       await rebuildFeedAction(userId);
       router.refresh();
     });
@@ -84,7 +96,8 @@ export function FeedPageContent({
   }, [isSearchActive, searchQuery]);
 
   const displayedArticles = isSearchActive ? searchArticles : articles;
-  const isUpdatingFeed = isAddingInterest || isRemovingInterest;
+  const isUpdatingFeed =
+    isAddingInterest || isRemovingInterest || isUpdatingSources;
 
   return (
     <>
@@ -92,8 +105,10 @@ export function FeedPageContent({
         onSearchQueryChange={handleSearchQueryChange}
         interests={interests}
         userId={userId}
+        subscribedSourceKeys={subscribedSourceKeys}
         onInterestAdded={handleInterestAdded}
         onInterestRemoved={handleInterestRemoved}
+        onSourcesChanged={handleSourcesChanged}
       />
       <div>
         {isUpdatingFeed ? (
