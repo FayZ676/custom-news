@@ -2,16 +2,20 @@ include ../.env.prod
 
 PG_CONN = postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres
 SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
+FEEDBACK_SNAPSHOT = /tmp/_user_feedback_snapshot.csv
 
 # user_articles is not snapshotted: it is replaced wholesale by the daily
 # NewsData.io refresh, so the next refresh repopulates it.
 snapshot:
 	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_feedback TO '$(FEEDBACK_SNAPSHOT)' CSV HEADER" \
 		&& echo "Snapshot saved to /tmp/"
 
 restore_snapshot:
 	psql "$(PG_CONN)" -c "TRUNCATE public.user_settings CASCADE;" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER"
+		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "TRUNCATE public.user_feedback CASCADE;" \
+		&& psql "$(PG_CONN)" -c "\copy public.user_feedback FROM '$(FEEDBACK_SNAPSHOT)' CSV HEADER"
 
 reset:
 	supabase link --project-ref $(PROJECT_ID) \

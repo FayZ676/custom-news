@@ -18,6 +18,7 @@ alter table "public"."global_emails" enable row level security;
     "clustering_window_hours" integer not null default 72,
     "max_match_count" integer not null,
     "cluster_significance_threshold" real not null default 0.6,
+    "admin_email" text not null,
     "singleton" boolean not null default true
       );
 
@@ -53,6 +54,17 @@ alter table "public"."global_share_links" enable row level security;
 
 
 alter table "public"."user_articles" enable row level security;
+
+
+  create table "public"."user_feedback" (
+    "id" uuid not null default gen_random_uuid(),
+    "user_email" text,
+    "message" text not null,
+    "created_at" timestamp with time zone not null default now()
+      );
+
+
+alter table "public"."user_feedback" enable row level security;
 
 
   create table "public"."user_interests" (
@@ -95,6 +107,8 @@ CREATE INDEX user_articles_user_id_idx ON public.user_articles USING btree (user
 
 CREATE UNIQUE INDEX user_articles_user_id_url_key ON public.user_articles USING btree (user_id, url);
 
+CREATE UNIQUE INDEX user_feedback_pkey ON public.user_feedback USING btree (id);
+
 CREATE UNIQUE INDEX user_interests_pkey ON public.user_interests USING btree (id);
 
 CREATE INDEX user_interests_user_id_idx ON public.user_interests USING btree (user_id);
@@ -110,6 +124,8 @@ alter table "public"."global_settings" add constraint "global_settings_pkey" PRI
 alter table "public"."global_share_links" add constraint "global_share_links_pkey" PRIMARY KEY using index "global_share_links_pkey";
 
 alter table "public"."user_articles" add constraint "user_articles_pkey" PRIMARY KEY using index "user_articles_pkey";
+
+alter table "public"."user_feedback" add constraint "user_feedback_pkey" PRIMARY KEY using index "user_feedback_pkey";
 
 alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
 
@@ -357,6 +373,48 @@ grant truncate on table "public"."user_articles" to "service_role";
 
 grant update on table "public"."user_articles" to "service_role";
 
+grant delete on table "public"."user_feedback" to "anon";
+
+grant insert on table "public"."user_feedback" to "anon";
+
+grant references on table "public"."user_feedback" to "anon";
+
+grant select on table "public"."user_feedback" to "anon";
+
+grant trigger on table "public"."user_feedback" to "anon";
+
+grant truncate on table "public"."user_feedback" to "anon";
+
+grant update on table "public"."user_feedback" to "anon";
+
+grant delete on table "public"."user_feedback" to "authenticated";
+
+grant insert on table "public"."user_feedback" to "authenticated";
+
+grant references on table "public"."user_feedback" to "authenticated";
+
+grant select on table "public"."user_feedback" to "authenticated";
+
+grant trigger on table "public"."user_feedback" to "authenticated";
+
+grant truncate on table "public"."user_feedback" to "authenticated";
+
+grant update on table "public"."user_feedback" to "authenticated";
+
+grant delete on table "public"."user_feedback" to "service_role";
+
+grant insert on table "public"."user_feedback" to "service_role";
+
+grant references on table "public"."user_feedback" to "service_role";
+
+grant select on table "public"."user_feedback" to "service_role";
+
+grant trigger on table "public"."user_feedback" to "service_role";
+
+grant truncate on table "public"."user_feedback" to "service_role";
+
+grant update on table "public"."user_feedback" to "service_role";
+
 grant delete on table "public"."user_interests" to "anon";
 
 grant insert on table "public"."user_interests" to "anon";
@@ -484,6 +542,15 @@ using ((expires_at > now()));
   for select
   to authenticated
 using ((auth.uid() = user_id));
+
+
+
+  create policy "user_feedback_insert_authenticated"
+  on "public"."user_feedback"
+  as permissive
+  for insert
+  to authenticated
+with check (true);
 
 
 
