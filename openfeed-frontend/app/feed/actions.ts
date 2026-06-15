@@ -9,7 +9,10 @@ import {
   UserInterest,
 } from "@/lib/supabase/queries/user_interests";
 import { ingestArticlesForInterests } from "@/lib/articles/ingest";
-import { deleteAllUserArticles } from "@/lib/supabase/queries/user_articles";
+import {
+  deleteAllUserArticles,
+  deleteUserArticlesBySourceKey,
+} from "@/lib/supabase/queries/user_articles";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   addUserSource,
@@ -86,6 +89,7 @@ export async function unsubscribeSourceAction(
 ): Promise<void> {
   const supabase = await createClient();
   await removeUserSource(supabase, userId, sourceKey);
+  await deleteUserArticlesBySourceKey(createServiceRoleClient(), userId, sourceKey);
 }
 
 export async function removeInterestAction(
@@ -93,5 +97,5 @@ export async function removeInterestAction(
   interestId: string,
 ): Promise<void> {
   const supabase = await createClient();
-  return removeUserInterest(supabase, userId, interestId);
+  await removeUserInterest(supabase, userId, interestId);
 }

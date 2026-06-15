@@ -59,6 +59,8 @@ alter table "public"."global_sources" enable row level security;
     "image_url" text,
     "published_at" timestamp with time zone not null,
     "created_at" timestamp with time zone not null default now(),
+    "interest_id" uuid,
+    "source_key" text,
     "search_vector" tsvector generated always as (to_tsvector('english'::regconfig, ((COALESCE(title, ''::text) || ' '::text) || COALESCE(summary, ''::text)))) stored
       );
 
@@ -162,6 +164,14 @@ alter table "public"."global_share_links" validate constraint "global_share_link
 alter table "public"."global_share_links" add constraint "global_share_links_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) not valid;
 
 alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
+
+alter table "public"."user_articles" add constraint "user_articles_interest_id_fkey" FOREIGN KEY (interest_id) REFERENCES public.user_interests(id) ON DELETE CASCADE not valid;
+
+alter table "public"."user_articles" validate constraint "user_articles_interest_id_fkey";
+
+alter table "public"."user_articles" add constraint "user_articles_source_key_fkey" FOREIGN KEY (source_key) REFERENCES public.global_sources(key) ON DELETE SET NULL not valid;
+
+alter table "public"."user_articles" validate constraint "user_articles_source_key_fkey";
 
 alter table "public"."user_articles" add constraint "user_articles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 

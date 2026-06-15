@@ -45,7 +45,7 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
       <Modal ref={dialogRef}>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
-            <span className="heading-modal">Your Interests</span>
+            <span className="heading-modal">Key Words</span>
             <InterestsManager
               userId={userId}
               initialInterests={interests}
@@ -55,7 +55,7 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
           </div>
 
           <div className="flex flex-col gap-4">
-            <span className="heading-modal">Sources</span>
+            <span className="heading-modal">Additional Sources</span>
             <SourcesManager
               userId={userId}
               sources={sources}

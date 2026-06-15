@@ -58,7 +58,7 @@ export default function SearchFilterBar({
             onClick={() => filterModalRef.current?.open()}
             className="btn-soft h-9.5"
           >
-            <span className="hidden sm:inline">Interests</span>
+            <span className="hidden sm:inline">Filters</span>
             <TextAlignEnd size={16} />
           </button>
         </div>

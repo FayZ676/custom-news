@@ -70,6 +70,7 @@ function pickImage(item: XmlNode): string | null {
 function itemToFeedArticle(
   item: XmlNode,
   sourceName: string,
+  sourceKey: string,
 ): FeedArticle | null {
   const title = text(item.title);
   const url = pickLink(item.link) || text(item.id) || text(item.guid);
@@ -88,12 +89,13 @@ function itemToFeedArticle(
     summary: summary || null,
     url,
     source_name: sourceName,
+    source_key: sourceKey,
     published_at: toIso(item.pubDate ?? item.published ?? item.updated),
     image_url: pickImage(item),
   };
 }
 
-function parseFeed(xml: string, sourceName: string): FeedArticle[] {
+function parseFeed(xml: string, sourceName: string, sourceKey: string): FeedArticle[] {
   const parsed = parser.parse(xml) as XmlNode;
   const channel = (parsed.rss as XmlNode)?.channel as XmlNode | undefined;
   const feed = parsed.feed as XmlNode | undefined;
@@ -102,7 +104,7 @@ function parseFeed(xml: string, sourceName: string): FeedArticle[] {
   const items = rssItems.length > 0 ? rssItems : asNodes(feed?.entry);
 
   return items
-    .map((item) => itemToFeedArticle(item, sourceName))
+    .map((item) => itemToFeedArticle(item, sourceName, sourceKey))
     .filter((article): article is FeedArticle => article !== null);
 }
 
@@ -121,7 +123,7 @@ export function fetchFeedOnce(
       });
       if (!response.ok) return [];
       const xml = await response.text();
-      return parseFeed(xml, def.label);
+      return parseFeed(xml, def.label, def.key);
     } catch {
       return [];
     }

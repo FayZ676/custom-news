@@ -1,6 +1,6 @@
 import "server-only";
 
-import { FeedArticle } from "@/lib/newsSearch";
+import type { FeedArticle } from "@/lib/newsSearch";
 import { searchProviders } from "@/lib/providers/search.server";
 import type { FeedCache } from "@/lib/providers/rss";
 import type { FeedDefinition } from "@/lib/providers/types";
@@ -25,21 +25,25 @@ function interestToPayload(interest: UserInterest): NewsQueryPayload {
   );
 }
 
+type AttributedArticle = FeedArticle & { interest_id: string };
+
 async function fetchUniqueArticlesForInterests(
   interests: UserInterest[],
   subscribedFeeds: FeedDefinition[],
   cache: FeedCache,
-): Promise<FeedArticle[]> {
+): Promise<AttributedArticle[]> {
   const resultsByInterest = await Promise.all(
     interests.map((interest) =>
       searchProviders(interestToPayload(interest), subscribedFeeds, cache),
     ),
   );
 
-  const articlesByUrl = new Map<string, FeedArticle>();
-  for (const articles of resultsByInterest) {
-    for (const article of articles) {
-      if (!articlesByUrl.has(article.url)) articlesByUrl.set(article.url, article);
+  const articlesByUrl = new Map<string, AttributedArticle>();
+  for (let i = 0; i < resultsByInterest.length; i++) {
+    for (const article of resultsByInterest[i]) {
+      if (!articlesByUrl.has(article.url)) {
+        articlesByUrl.set(article.url, { ...article, interest_id: interests[i].id });
+      }
     }
   }
   return [...articlesByUrl.values()];
@@ -77,6 +81,8 @@ export async function ingestArticlesForInterests(
     summary: article.summary,
     image_url: article.image_url,
     published_at: article.published_at,
+    interest_id: article.interest_id,
+    source_key: article.source_key ?? null,
   }));
 
   await insertUserArticles(supabase, userId, rows);
