@@ -1,13 +1,19 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 
 import Modal from "@/components/Modal";
-import { UserInterest } from "@/lib/supabase/queries/user_interests";import { InterestsManager } from "@/components/InterestsManager";
+import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import type { FeedDefinition } from "@/lib/providers/types";
+import { InterestsManager } from "@/components/InterestsManager";
+import { SourcesManager } from "@/components/SourcesManager";
 
 interface FilterModalProps {
   interests: UserInterest[];
   userId: string;
+  sources: FeedDefinition[];
+  subscribedSourceKeys: string[];
   onInterestAdded: (interest: UserInterest) => void | Promise<void>;
   onInterestRemoved: () => void | Promise<void>;
+  onSourcesChanged: () => void | Promise<void>;
 }
 
 export interface FilterModalHandle {
@@ -16,7 +22,15 @@ export interface FilterModalHandle {
 
 const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
   (
-    { interests, userId, onInterestAdded, onInterestRemoved },
+    {
+      interests,
+      userId,
+      sources,
+      subscribedSourceKeys,
+      onInterestAdded,
+      onInterestRemoved,
+      onSourcesChanged,
+    },
     ref,
   ) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -30,13 +44,26 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
     return (
       <Modal ref={dialogRef}>
         <div className="flex flex-col gap-6">
-          <span className="heading-modal">Your Interests</span>
-          <InterestsManager
-            userId={userId}
-            initialInterests={interests}
-            onInterestAdded={onInterestAdded}
-            onInterestRemoved={onInterestRemoved}
-          />
+          <div className="flex flex-col gap-4">
+            <span className="heading-modal">Key Words</span>
+            <InterestsManager
+              userId={userId}
+              initialInterests={interests}
+              onInterestAdded={onInterestAdded}
+              onInterestRemoved={onInterestRemoved}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <span className="heading-modal">Additional Sources</span>
+            <SourcesManager
+              userId={userId}
+              sources={sources}
+              initialSubscribedKeys={subscribedSourceKeys}
+              onSourceSubscribed={onSourcesChanged}
+              onSourceUnsubscribed={onSourcesChanged}
+            />
+          </div>
         </div>
       </Modal>
     );

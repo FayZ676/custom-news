@@ -11,6 +11,8 @@ export interface NewUserArticle {
   summary: string | null;
   image_url: string | null;
   published_at: string;
+  interest_id: string | null;
+  source_key: string | null;
 }
 
 // The get_shared_article RPC returns only the display columns.
@@ -45,11 +47,28 @@ export async function insertUserArticles(
     summary: article.summary,
     image_url: article.image_url,
     published_at: article.published_at,
+    interest_id: article.interest_id,
+    source_key: article.source_key,
   }));
 
   const { error } = await (supabase as any)
     .from("user_articles")
     .upsert(rows, { onConflict: "user_id,url", ignoreDuplicates: true });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteUserArticlesBySourceKey(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  sourceKey: string,
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from("user_articles")
+    .delete()
+    .eq("user_id", userId)
+    .eq("source_key", sourceKey)
+    .is("interest_id", null);
 
   if (error) throw new Error(error.message);
 }

@@ -10,6 +10,8 @@ create table "user_articles" (
     "image_url" text,
     "published_at" timestamptz not null,
     "created_at" timestamptz not null default now(),
+    "interest_id" uuid references user_interests(id) on delete cascade,
+    "source_key" text references global_sources(key) on delete set null,
     "search_vector" tsvector generated always as (
         to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, ''))
     ) stored,

@@ -65,10 +65,3 @@ export async function fetchLatestNewsArticles(
     .map(toFeedArticle)
     .filter((article): article is FeedArticle => article !== null);
 }
-
-export async function fetchLatestNewsForQuery(
-  query: string,
-): Promise<FeedArticle[]> {
-  const apiKey = process.env.NEWSDATA_API_KEY ?? "";
-  return fetchLatestNewsArticles({ apikey: apiKey, q: query });
-}

@@ -109,6 +109,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      global_sources: {
+        Row: {
+          created_at: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Insert: {
+          created_at?: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Update: {
+          created_at?: string;
+          feed_url?: string;
+          key?: string;
+          label?: string;
+        };
+        Relationships: [];
+      };
       user_articles: {
         Row: {
           created_at: string;
@@ -192,6 +213,35 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      user_sources: {
+        Row: {
+          created_at: string;
+          id: string;
+          source_key: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          source_key: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          source_key?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_sources_source_key_fkey";
+            columns: ["source_key"];
+            isOneToOne: false;
+            referencedRelation: "global_sources";
+            referencedColumns: ["key"];
+          },
+        ];
       };
     };
     Views: {
