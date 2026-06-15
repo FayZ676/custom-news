@@ -172,7 +172,7 @@ export type Database = {
         };
         Relationships: [];
       };
-      sources: {
+      global_sources: {
         Row: {
           created_at: string;
           feed_url: string;
@@ -217,7 +217,7 @@ export type Database = {
             foreignKeyName: "user_sources_source_key_fkey";
             columns: ["source_key"];
             isOneToOne: false;
-            referencedRelation: "sources";
+            referencedRelation: "global_sources";
             referencedColumns: ["key"];
           },
         ];

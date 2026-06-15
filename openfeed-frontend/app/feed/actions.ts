@@ -16,7 +16,7 @@ import {
   getUserSourceKeys,
   removeUserSource,
 } from "@/lib/supabase/queries/user_sources";
-import { getSourcesByKeys } from "@/lib/supabase/queries/sources";
+import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
 import type { FeedDefinition } from "@/lib/providers/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/supabase.types";
@@ -27,7 +27,7 @@ async function getSubscribedFeeds(
   userId: string,
 ): Promise<FeedDefinition[]> {
   const keys = await getUserSourceKeys(supabase, userId);
-  return getSourcesByKeys(supabase, keys);
+  return getGlobalSourcesByKeys(supabase, keys);
 }
 
 export async function createShareLinkAction(

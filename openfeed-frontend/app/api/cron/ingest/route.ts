@@ -6,7 +6,7 @@ import type { FeedDefinition } from "@/lib/providers/types";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { getAllInterestsByUser } from "@/lib/supabase/queries/user_interests";
 import { getAllSourceKeysByUser } from "@/lib/supabase/queries/user_sources";
-import { getSourceMap } from "@/lib/supabase/queries/sources";
+import { getGlobalSourceMap } from "@/lib/supabase/queries/global_sources";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
   const supabase = createServiceRoleClient();
   const users = await getAllInterestsByUser(supabase);
   const sourceKeysByUser = await getAllSourceKeysByUser(supabase);
-  const sourceMap = await getSourceMap(supabase);
+  const sourceMap = await getGlobalSourceMap(supabase);
 
   const feedCache: FeedCache = new Map();
 
