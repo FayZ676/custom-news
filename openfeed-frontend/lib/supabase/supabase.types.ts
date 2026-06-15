@@ -54,6 +54,7 @@ export type Database = {
       };
       global_settings: {
         Row: {
+          admin_email: string;
           article_ttl: string;
           cluster_significance_threshold: number;
           clustering_window_hours: number;
@@ -63,6 +64,7 @@ export type Database = {
           singleton: boolean;
         };
         Insert: {
+          admin_email: string;
           article_ttl: string;
           cluster_significance_threshold?: number;
           clustering_window_hours?: number;
@@ -72,6 +74,7 @@ export type Database = {
           singleton?: boolean;
         };
         Update: {
+          admin_email?: string;
           article_ttl?: string;
           cluster_significance_threshold?: number;
           clustering_window_hours?: number;
@@ -109,13 +112,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      global_sources: {
+        Row: {
+          created_at: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Insert: {
+          created_at?: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Update: {
+          created_at?: string;
+          feed_url?: string;
+          key?: string;
+          label?: string;
+        };
+        Relationships: [];
+      };
       user_articles: {
         Row: {
           created_at: string;
           id: string;
           image_url: string | null;
+          interest_id: string | null;
           published_at: string;
           search_vector: unknown;
+          source_key: string | null;
           source_name: string;
           summary: string | null;
           title: string;
@@ -126,8 +152,10 @@ export type Database = {
           created_at?: string;
           id?: string;
           image_url?: string | null;
+          interest_id?: string | null;
           published_at: string;
           search_vector?: unknown;
+          source_key?: string | null;
           source_name: string;
           summary?: string | null;
           title: string;
@@ -138,13 +166,51 @@ export type Database = {
           created_at?: string;
           id?: string;
           image_url?: string | null;
+          interest_id?: string | null;
           published_at?: string;
           search_vector?: unknown;
+          source_key?: string | null;
           source_name?: string;
           summary?: string | null;
           title?: string;
           url?: string;
           user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_articles_interest_id_fkey";
+            columns: ["interest_id"];
+            isOneToOne: false;
+            referencedRelation: "user_interests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_articles_source_key_fkey";
+            columns: ["source_key"];
+            isOneToOne: false;
+            referencedRelation: "global_sources";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      user_feedback: {
+        Row: {
+          created_at: string;
+          id: string;
+          message: string;
+          user_email: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          message: string;
+          user_email?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          message?: string;
+          user_email?: string | null;
         };
         Relationships: [];
       };
@@ -192,6 +258,35 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      user_sources: {
+        Row: {
+          created_at: string;
+          id: string;
+          source_key: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          source_key: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          source_key?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_sources_source_key_fkey";
+            columns: ["source_key"];
+            isOneToOne: false;
+            referencedRelation: "global_sources";
+            referencedColumns: ["key"];
+          },
+        ];
       };
     };
     Views: {
