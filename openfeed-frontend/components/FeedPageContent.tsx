@@ -12,11 +12,13 @@ import {
   searchLatestNews,
 } from "@/lib/newsSearch";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import type { FeedDefinition } from "@/lib/providers/types";
 import { ingestForInterestAction, rebuildFeedAction } from "@/app/feed/actions";
 
 interface FeedPageContentProps {
   articles: UserArticle[];
   interests: UserInterest[];
+  sources: FeedDefinition[];
   subscribedSourceKeys: string[];
   userId: string;
 }
@@ -24,6 +26,7 @@ interface FeedPageContentProps {
 export function FeedPageContent({
   articles,
   interests,
+  sources,
   subscribedSourceKeys,
   userId,
 }: FeedPageContentProps) {
@@ -54,8 +57,6 @@ export function FeedPageContent({
     });
   }, [router, userId]);
 
-  // Subscribing/unsubscribing changes which providers feed the user's articles,
-  // so rebuild the feed against the new source set (mirrors interest removal).
   const handleSourcesChanged = useCallback(async () => {
     startUpdatingSources(async () => {
       await rebuildFeedAction(userId);
@@ -105,6 +106,7 @@ export function FeedPageContent({
         onSearchQueryChange={handleSearchQueryChange}
         interests={interests}
         userId={userId}
+        sources={sources}
         subscribedSourceKeys={subscribedSourceKeys}
         onInterestAdded={handleInterestAdded}
         onInterestRemoved={handleInterestRemoved}

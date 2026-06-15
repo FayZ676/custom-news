@@ -2,12 +2,14 @@ import { forwardRef, useImperativeHandle, useRef } from "react";
 
 import Modal from "@/components/Modal";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import type { FeedDefinition } from "@/lib/providers/types";
 import { InterestsManager } from "@/components/InterestsManager";
 import { SourcesManager } from "@/components/SourcesManager";
 
 interface FilterModalProps {
   interests: UserInterest[];
   userId: string;
+  sources: FeedDefinition[];
   subscribedSourceKeys: string[];
   onInterestAdded: (interest: UserInterest) => void | Promise<void>;
   onInterestRemoved: () => void | Promise<void>;
@@ -23,6 +25,7 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
     {
       interests,
       userId,
+      sources,
       subscribedSourceKeys,
       onInterestAdded,
       onInterestRemoved,
@@ -55,6 +58,7 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
             <span className="heading-modal">Sources</span>
             <SourcesManager
               userId={userId}
+              sources={sources}
               initialSubscribedKeys={subscribedSourceKeys}
               onSourceSubscribed={onSourcesChanged}
               onSourceUnsubscribed={onSourcesChanged}

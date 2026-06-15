@@ -3,6 +3,7 @@ import "server-only";
 import { FeedArticle } from "@/lib/newsSearch";
 import { searchProviders } from "@/lib/providers/search.server";
 import type { FeedCache } from "@/lib/providers/rss";
+import type { FeedDefinition } from "@/lib/providers/types";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   getUserArticles,
@@ -26,12 +27,12 @@ function interestToPayload(interest: UserInterest): NewsQueryPayload {
 
 async function fetchUniqueArticlesForInterests(
   interests: UserInterest[],
-  subscribedKeys: string[],
+  subscribedFeeds: FeedDefinition[],
   cache: FeedCache,
 ): Promise<FeedArticle[]> {
   const resultsByInterest = await Promise.all(
     interests.map((interest) =>
-      searchProviders(interestToPayload(interest), subscribedKeys, cache),
+      searchProviders(interestToPayload(interest), subscribedFeeds, cache),
     ),
   );
 
@@ -47,7 +48,7 @@ async function fetchUniqueArticlesForInterests(
 export async function ingestArticlesForInterests(
   userId: string,
   interests: UserInterest[],
-  subscribedKeys: string[] = [],
+  subscribedFeeds: FeedDefinition[] = [],
   cache: FeedCache = new Map(),
 ): Promise<void> {
   const valid = interests.filter(
@@ -57,7 +58,7 @@ export async function ingestArticlesForInterests(
 
   const found = await fetchUniqueArticlesForInterests(
     valid,
-    subscribedKeys,
+    subscribedFeeds,
     cache,
   );
   if (found.length === 0) return;

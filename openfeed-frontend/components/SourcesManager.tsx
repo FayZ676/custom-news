@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Plus } from "lucide-react";
 
-import { EXTRA_FEEDS } from "@/lib/providers/feeds";
+import type { FeedDefinition } from "@/lib/providers/types";
 import {
   subscribeSourceAction,
   unsubscribeSourceAction,
@@ -11,6 +11,7 @@ import {
 
 interface SourcesManagerProps {
   userId: string;
+  sources: FeedDefinition[];
   initialSubscribedKeys: string[];
   onSourceSubscribed?: () => void | Promise<void>;
   onSourceUnsubscribed?: () => void | Promise<void>;
@@ -18,6 +19,7 @@ interface SourcesManagerProps {
 
 export function SourcesManager({
   userId,
+  sources,
   initialSubscribedKeys,
   onSourceSubscribed,
   onSourceUnsubscribed,
@@ -32,7 +34,6 @@ export function SourcesManager({
     const isSubscribed = subscribed.has(key);
     setPendingKey(key);
 
-    // Optimistic update, mirroring InterestsManager.
     setSubscribed((prev) => {
       const next = new Set(prev);
       if (isSubscribed) next.delete(key);
@@ -56,19 +57,19 @@ export function SourcesManager({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-1.5">
-        {EXTRA_FEEDS.map((feed) => {
-          const isSubscribed = subscribed.has(feed.key);
+        {sources.map((source) => {
+          const isSubscribed = subscribed.has(source.key);
           return (
             <button
-              key={feed.key}
-              onClick={() => void toggle(feed.key)}
-              disabled={pendingKey === feed.key}
+              key={source.key}
+              onClick={() => void toggle(source.key)}
+              disabled={pendingKey === source.key}
               className={`btn-soft flex items-center gap-1 ${
                 isSubscribed ? "" : "opacity-60"
               }`}
               aria-pressed={isSubscribed}
             >
-              {feed.label}
+              {source.label}
               {isSubscribed ? (
                 <Check size={12} className="opacity-60" />
               ) : (

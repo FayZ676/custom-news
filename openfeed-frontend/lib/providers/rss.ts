@@ -9,9 +9,6 @@ import type { FeedDefinition, Provider } from "@/lib/providers/types";
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
-// Caches parsed feed articles by URL for the duration of a single run (e.g. one
-// cron invocation) so a feed shared across a user's interests — and across
-// users — is fetched and parsed only once.
 export type FeedCache = Map<string, Promise<FeedArticle[]>>;
 
 const parser = new XMLParser({
@@ -19,7 +16,6 @@ const parser = new XMLParser({
   attributeNamePrefix: "@_",
 });
 
-// The XML parser emits untyped trees; treat every element as a loose record.
 type XmlNode = Record<string, unknown>;
 
 function asArray<T>(value: T | T[] | undefined | null): T[] {
@@ -31,8 +27,6 @@ function asNodes(value: unknown): XmlNode[] {
   return asArray(value as XmlNode | XmlNode[] | undefined);
 }
 
-// Text nodes may arrive as a plain string, or as an object when the element
-// also carries attributes / CDATA.
 function text(value: unknown): string {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number") return String(value);
@@ -50,8 +44,6 @@ function toIso(value: unknown): string {
     : new Date(parsed).toISOString();
 }
 
-// Atom <link> can be a string, a single object, or an array of objects with
-// rel/href attributes. Prefer the alternate (canonical) link.
 function pickLink(link: unknown): string {
   if (typeof link === "string") return link.trim();
   const links = asNodes(link);
@@ -106,9 +98,6 @@ function parseFeed(xml: string, sourceName: string): FeedArticle[] {
     .filter((article): article is FeedArticle => article !== null);
 }
 
-// Fetches + parses a feed into FeedArticles (unfiltered), memoised per run.
-// Failure-isolated: any network/parse error resolves to [] so one bad feed can
-// never break ingestion or search.
 export function fetchFeedOnce(
   def: FeedDefinition,
   cache: FeedCache,
@@ -134,8 +123,6 @@ export function fetchFeedOnce(
   return promise;
 }
 
-// Wraps a curated RSS feed as a Provider: fetch (once per run) then filter the
-// feed's items against the interest payload via the shared boolean matcher.
 export function createRssProvider(
   def: FeedDefinition,
   cache: FeedCache,

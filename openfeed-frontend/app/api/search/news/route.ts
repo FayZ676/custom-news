@@ -4,6 +4,7 @@ import { MIN_SEARCH_QUERY_LENGTH } from "@/lib/newsSearch";
 import { searchProviders } from "@/lib/providers/search.server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserSourceKeys } from "@/lib/supabase/queries/user_sources";
+import { getSourcesByKeys } from "@/lib/supabase/queries/sources";
 
 export async function POST(request: Request) {
   const { query } = await request.json().catch(() => ({}));
@@ -11,14 +12,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "query is too short" }, { status: 400 });
   }
 
-  // Live search has no refined payload, so the raw query becomes a minimal one.
-  // It runs against NewsData.io plus the signed-in user's subscribed sources;
-  // anonymous callers fall back to NewsData.io only.
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims.sub as string | undefined;
-  const subscribedKeys = userId
-    ? await getUserSourceKeys(supabase, userId)
+  const subscribedFeeds = userId
+    ? await getSourcesByKeys(supabase, await getUserSourceKeys(supabase, userId))
     : [];
 
   const articles = await searchProviders(
@@ -29,7 +27,7 @@ export async function POST(request: Request) {
       country: null,
       timeframe: null,
     },
-    subscribedKeys,
+    subscribedFeeds,
   );
   return NextResponse.json({ articles });
 }

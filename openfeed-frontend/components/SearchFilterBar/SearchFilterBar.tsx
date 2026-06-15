@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { TextAlignEnd } from "lucide-react";
 
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import type { FeedDefinition } from "@/lib/providers/types";
 
 import FilterModal from "./FilterModal";
 import type { FilterModalHandle } from "./FilterModal";
@@ -9,6 +10,7 @@ import type { FilterModalHandle } from "./FilterModal";
 interface SearchFilterBarProps {
   interests: UserInterest[];
   userId: string;
+  sources: FeedDefinition[];
   subscribedSourceKeys: string[];
   onSearchQueryChange: (query: string) => void;
   onInterestAdded: (interest: UserInterest) => void | Promise<void>;
@@ -19,6 +21,7 @@ interface SearchFilterBarProps {
 export default function SearchFilterBar({
   interests,
   userId,
+  sources,
   subscribedSourceKeys,
   onSearchQueryChange,
   onInterestAdded,
@@ -65,6 +68,7 @@ export default function SearchFilterBar({
         ref={filterModalRef}
         interests={interests}
         userId={userId}
+        sources={sources}
         subscribedSourceKeys={subscribedSourceKeys}
         onInterestAdded={onInterestAdded}
         onInterestRemoved={onInterestRemoved}

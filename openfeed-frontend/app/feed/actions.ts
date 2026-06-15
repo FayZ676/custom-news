@@ -16,7 +16,19 @@ import {
   getUserSourceKeys,
   removeUserSource,
 } from "@/lib/supabase/queries/user_sources";
+import { getSourcesByKeys } from "@/lib/supabase/queries/sources";
+import type { FeedDefinition } from "@/lib/providers/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/supabase.types";
 import type { NewsQueryPayload } from "@/lib/interests/refine";
+
+async function getSubscribedFeeds(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<FeedDefinition[]> {
+  const keys = await getUserSourceKeys(supabase, userId);
+  return getSourcesByKeys(supabase, keys);
+}
 
 export async function createShareLinkAction(
   userId: string,
@@ -39,8 +51,8 @@ export async function addInterestAction(
 export async function refreshArticlesAction(userId: string): Promise<void> {
   const supabase = await createClient();
   const interests = await getUserInterests(supabase, userId);
-  const sourceKeys = await getUserSourceKeys(supabase, userId);
-  await ingestArticlesForInterests(userId, interests, sourceKeys);
+  const feeds = await getSubscribedFeeds(supabase, userId);
+  await ingestArticlesForInterests(userId, interests, feeds);
 }
 
 export async function ingestForInterestAction(
@@ -48,16 +60,16 @@ export async function ingestForInterestAction(
   interest: UserInterest,
 ): Promise<void> {
   const supabase = await createClient();
-  const sourceKeys = await getUserSourceKeys(supabase, userId);
-  await ingestArticlesForInterests(userId, [interest], sourceKeys);
+  const feeds = await getSubscribedFeeds(supabase, userId);
+  await ingestArticlesForInterests(userId, [interest], feeds);
 }
 
 export async function rebuildFeedAction(userId: string): Promise<void> {
   const supabase = await createClient();
   const interests = await getUserInterests(supabase, userId);
-  const sourceKeys = await getUserSourceKeys(supabase, userId);
+  const feeds = await getSubscribedFeeds(supabase, userId);
   await deleteAllUserArticles(createServiceRoleClient(), userId);
-  await ingestArticlesForInterests(userId, interests, sourceKeys);
+  await ingestArticlesForInterests(userId, interests, feeds);
 }
 
 export async function subscribeSourceAction(

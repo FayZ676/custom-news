@@ -172,6 +172,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      sources: {
+        Row: {
+          created_at: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Insert: {
+          created_at?: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Update: {
+          created_at?: string;
+          feed_url?: string;
+          key?: string;
+          label?: string;
+        };
+        Relationships: [];
+      };
       user_sources: {
         Row: {
           created_at: string;
@@ -191,7 +212,15 @@ export type Database = {
           source_key?: string;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "user_sources_source_key_fkey";
+            columns: ["source_key"];
+            isOneToOne: false;
+            referencedRelation: "sources";
+            referencedColumns: ["key"];
+          },
+        ];
       };
       user_settings: {
         Row: {

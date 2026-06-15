@@ -1,7 +1,7 @@
 create table "user_sources" (
 	"id" uuid primary key default gen_random_uuid(),
 	"user_id" uuid not null references auth.users(id) on delete cascade,
-	"source_key" text not null,
+	"source_key" text not null references sources(key) on delete cascade,
 	"created_at" timestamptz not null default now(),
 	unique (user_id, source_key)
 );

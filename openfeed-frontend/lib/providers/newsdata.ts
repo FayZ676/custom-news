@@ -6,8 +6,6 @@ import type { Provider } from "@/lib/providers/types";
 
 const API_KEY = process.env.NEWSDATA_API_KEY ?? "";
 
-// The always-on base provider. Wraps the existing NewsData.io client so its
-// behaviour is unchanged — it is now just one Provider among many.
 export const newsDataProvider: Provider = {
   key: "newsdata",
   search(payload: NewsQueryPayload) {

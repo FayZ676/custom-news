@@ -5,25 +5,12 @@ import {
   type NewsQueryPayload,
 } from "@/lib/interests/refine";
 
-// ─── matchesQuery ─────────────────────────────────────────────────────────────
-// The local-filter counterpart of payloadToParams: NewsData.io evaluates a
-// NewsQueryPayload server-side, while RSS/Atom feeds (which aren't query-
-// searchable) are filtered here against the SAME payload, so an interest means
-// the same thing regardless of provider.
-//
-// liqe owns the boolean logic — AND / OR / NOT, parentheses, quoted phrases, and
-// case-insensitive substring matching across the supplied fields. We only decide
-// which fields each query sees (q -> title + summary, qInTitle -> title) and the
-// timeframe recency bound. category / country have no meaning for a fixed feed.
-
 export interface MatchableItem {
   title: string;
   summary: string | null;
   published_at?: string | null;
 }
 
-// Evaluate one query string against the given fields. A malformed query falls
-// back to a plain substring check so a source never silently returns nothing.
 function queryMatches(query: string, fields: Record<string, string>): boolean {
   try {
     return test(parse(query), fields);

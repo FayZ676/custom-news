@@ -2,31 +2,20 @@ import { SupabaseClient } from "@supabase/supabase-js";
 
 import { Database } from "@/lib/supabase/supabase.types";
 
-export type UserSource = Database["public"]["Tables"]["user_sources"]["Row"];
-
-export async function getUserSources(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-): Promise<UserSource[]> {
-  const { data, error } = await supabase
-    .from("user_sources")
-    .select("id, user_id, source_key, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
-
-  if (error) throw new Error(error.message);
-  return data ?? [];
-}
-
 export async function getUserSourceKeys(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<string[]> {
-  return (await getUserSources(supabase, userId)).map((s) => s.source_key);
+  const { data, error } = await supabase
+    .from("user_sources")
+    .select("source_key")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => row.source_key);
 }
 
-// Cron-wide fetch: subscription keys grouped by user, mirroring
-// getAllInterestsByUser.
 export async function getAllSourceKeysByUser(
   supabase: SupabaseClient<Database>,
 ): Promise<Map<string, string[]>> {
@@ -49,15 +38,12 @@ export async function addUserSource(
   supabase: SupabaseClient<Database>,
   userId: string,
   sourceKey: string,
-): Promise<UserSource> {
-  const { data, error } = await supabase
+): Promise<void> {
+  const { error } = await supabase
     .from("user_sources")
-    .insert({ user_id: userId, source_key: sourceKey })
-    .select("id, user_id, source_key, created_at")
-    .single();
+    .insert({ user_id: userId, source_key: sourceKey });
 
   if (error) throw new Error(error.message);
-  return data;
 }
 
 export async function removeUserSource(
