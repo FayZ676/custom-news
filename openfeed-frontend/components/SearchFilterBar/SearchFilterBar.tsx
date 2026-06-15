@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { TextAlignEnd } from "lucide-react";
 
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
+import type { FeedDefinition } from "@/lib/providers/types";
 
 import FilterModal from "./FilterModal";
 import type { FilterModalHandle } from "./FilterModal";
@@ -9,17 +10,23 @@ import type { FilterModalHandle } from "./FilterModal";
 interface SearchFilterBarProps {
   interests: UserInterest[];
   userId: string;
+  sources: FeedDefinition[];
+  subscribedSourceKeys: string[];
   onSearchQueryChange: (query: string) => void;
   onInterestAdded: (interest: UserInterest) => void | Promise<void>;
   onInterestRemoved: () => void | Promise<void>;
+  onSourcesChanged: () => void | Promise<void>;
 }
 
 export default function SearchFilterBar({
   interests,
   userId,
+  sources,
+  subscribedSourceKeys,
   onSearchQueryChange,
   onInterestAdded,
   onInterestRemoved,
+  onSourcesChanged,
 }: SearchFilterBarProps) {
   const filterModalRef = useRef<FilterModalHandle>(null);
   const [searchValue, setSearchValue] = useState("");
@@ -51,7 +58,7 @@ export default function SearchFilterBar({
             onClick={() => filterModalRef.current?.open()}
             className="btn-soft h-9.5"
           >
-            <span className="hidden sm:inline">Interests</span>
+            <span className="hidden sm:inline">Filters</span>
             <TextAlignEnd size={16} />
           </button>
         </div>
@@ -61,8 +68,11 @@ export default function SearchFilterBar({
         ref={filterModalRef}
         interests={interests}
         userId={userId}
+        sources={sources}
+        subscribedSourceKeys={subscribedSourceKeys}
         onInterestAdded={onInterestAdded}
         onInterestRemoved={onInterestRemoved}
+        onSourcesChanged={onSourcesChanged}
       />
     </div>
   );
