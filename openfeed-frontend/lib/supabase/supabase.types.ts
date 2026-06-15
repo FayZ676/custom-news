@@ -109,6 +109,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      global_sources: {
+        Row: {
+          created_at: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Insert: {
+          created_at?: string;
+          feed_url: string;
+          key: string;
+          label: string;
+        };
+        Update: {
+          created_at?: string;
+          feed_url?: string;
+          key?: string;
+          label?: string;
+        };
+        Relationships: [];
+      };
       user_articles: {
         Row: {
           created_at: string;
@@ -172,24 +193,24 @@ export type Database = {
         };
         Relationships: [];
       };
-      global_sources: {
+      user_settings: {
         Row: {
-          created_at: string;
-          feed_url: string;
-          key: string;
-          label: string;
+          color_theme: string;
+          email_notification: boolean;
+          timezone: string;
+          user_id: string;
         };
         Insert: {
-          created_at?: string;
-          feed_url: string;
-          key: string;
-          label: string;
+          color_theme?: string;
+          email_notification?: boolean;
+          timezone?: string;
+          user_id: string;
         };
         Update: {
-          created_at?: string;
-          feed_url?: string;
-          key?: string;
-          label?: string;
+          color_theme?: string;
+          email_notification?: boolean;
+          timezone?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -221,27 +242,6 @@ export type Database = {
             referencedColumns: ["key"];
           },
         ];
-      };
-      user_settings: {
-        Row: {
-          color_theme: string;
-          email_notification: boolean;
-          timezone: string;
-          user_id: string;
-        };
-        Insert: {
-          color_theme?: string;
-          email_notification?: boolean;
-          timezone?: string;
-          user_id: string;
-        };
-        Update: {
-          color_theme?: string;
-          email_notification?: boolean;
-          timezone?: string;
-          user_id?: string;
-        };
-        Relationships: [];
       };
     };
     Views: {

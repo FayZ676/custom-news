@@ -1,5 +1,6 @@
 import "server-only";
 
+import he from "he";
 import { XMLParser } from "fast-xml-parser";
 
 import type { FeedArticle } from "@/lib/newsSearch";
@@ -27,6 +28,10 @@ function asNodes(value: unknown): XmlNode[] {
   return asArray(value as XmlNode | XmlNode[] | undefined);
 }
 
+function cleanSummary(raw: string): string {
+  return he.decode(raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+}
+
 function text(value: unknown): string {
   if (typeof value === "string") return value.trim();
   if (typeof value === "number") return String(value);
@@ -47,8 +52,7 @@ function toIso(value: unknown): string {
 function pickLink(link: unknown): string {
   if (typeof link === "string") return link.trim();
   const links = asNodes(link);
-  const alternate =
-    links.find((l) => l["@_rel"] === "alternate") ?? links[0];
+  const alternate = links.find((l) => l["@_rel"] === "alternate") ?? links[0];
   if (!alternate) return "";
   return text(alternate["@_href"] ?? alternate["#text"]);
 }
@@ -63,16 +67,20 @@ function pickImage(item: XmlNode): string | null {
   return url || null;
 }
 
-function itemToFeedArticle(item: XmlNode, sourceName: string): FeedArticle | null {
+function itemToFeedArticle(
+  item: XmlNode,
+  sourceName: string,
+): FeedArticle | null {
   const title = text(item.title);
   const url = pickLink(item.link) || text(item.id) || text(item.guid);
   if (!title || !url) return null;
 
-  const summary =
+  const rawSummary =
     text(item.description) ||
     text(item.summary) ||
     text(item["content:encoded"]) ||
     text(item.content);
+  const summary = rawSummary ? cleanSummary(rawSummary) : "";
 
   return {
     id: url,
