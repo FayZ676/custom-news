@@ -29,7 +29,10 @@ function asNodes(value: unknown): XmlNode[] {
 }
 
 function cleanSummary(raw: string): string {
-  return he.decode(raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+  const decoded = he.decode(
+    raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+  );
+  return decoded.replace(/\s*The post\b.*?\bappeared first on\b.*$/i, "").trim();
 }
 
 function text(value: unknown): string {
