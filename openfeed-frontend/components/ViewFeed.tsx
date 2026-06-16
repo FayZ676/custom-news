@@ -48,7 +48,7 @@ export function ViewFeed({
 
   if (articles.length === 0) {
     return (
-      <p className="text-subtle italic">
+      <p className="text-subtle italic py-4">
         {emptyStateMessage ?? "No articles available right now."}
       </p>
     );
