@@ -30,6 +30,14 @@ body:has(dialog[open]) {
 
 }
 
+/* Layout widths (max-w-*)
+   4xl — body shell: outer container for all pages
+   3xl — marketing hero: landing page centered content block
+   2xl — reading column: article and share pages
+   xl  — inline text cap: long tagline/paragraph line-length limit
+   md  — focused task: onboarding (chip management needs room)
+   sm  — minimal form: sign-in                                    */
+
 /* Spacing scale (Tailwind units, 1 = 4px)
    1  — icon-label gap within compact elements
    2  — tight rows, small margins
