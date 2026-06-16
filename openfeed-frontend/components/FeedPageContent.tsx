@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { TextAlignEnd } from "lucide-react";
 
-import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
+import SearchBar from "@/components/SearchBar/SearchBar";
+import FilterModal from "@/components/SearchBar/FilterModal";
+import type { FilterModalHandle } from "@/components/SearchBar/FilterModal";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 import { UserArticle } from "@/lib/supabase/queries/user_articles";
 import {
@@ -31,6 +34,7 @@ export function FeedPageContent({
   userId,
 }: FeedPageContentProps) {
   const router = useRouter();
+  const filterModalRef = useRef<FilterModalHandle>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchArticles, setSearchArticles] = useState<FeedArticle[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -102,16 +106,28 @@ export function FeedPageContent({
 
   return (
     <>
-      <SearchFilterBar
-        onSearchQueryChange={handleSearchQueryChange}
-        interests={interests}
-        userId={userId}
-        sources={sources}
-        subscribedSourceKeys={subscribedSourceKeys}
-        onInterestAdded={handleInterestAdded}
-        onInterestRemoved={handleInterestRemoved}
-        onSourcesChanged={handleSourcesChanged}
-      />
+      <div className="sticky top-0 z-30 bg-base-100 py-4 border-b border-base-300">
+        <div className="flex justify-end mb-3">
+          <button
+            onClick={() => filterModalRef.current?.open()}
+            className="btn-soft h-9.5"
+          >
+            <span className="hidden sm:inline">Filters</span>
+            <TextAlignEnd size={16} />
+          </button>
+        </div>
+        <SearchBar onSearchQueryChange={handleSearchQueryChange} />
+        <FilterModal
+          ref={filterModalRef}
+          interests={interests}
+          userId={userId}
+          sources={sources}
+          subscribedSourceKeys={subscribedSourceKeys}
+          onInterestAdded={handleInterestAdded}
+          onInterestRemoved={handleInterestRemoved}
+          onSourcesChanged={handleSourcesChanged}
+        />
+      </div>
       <div>
         {isUpdatingFeed ? (
           <>
