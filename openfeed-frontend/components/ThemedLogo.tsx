@@ -12,7 +12,7 @@ const getCurrentTheme = () =>
   document.documentElement.dataset.theme ??
   "cupcake";
 
-export function ThemedLogo({ className }: { className?: string }) {
+export function ThemedLogo() {
   const [src, setSrc] = useState("/logo-light.svg");
 
   useLayoutEffect(() => {
@@ -38,7 +38,6 @@ export function ThemedLogo({ className }: { className?: string }) {
         width={300}
         height={300}
         loading="eager"
-        className={className}
         style={{ height: "auto" }}
         suppressHydrationWarning
       />
