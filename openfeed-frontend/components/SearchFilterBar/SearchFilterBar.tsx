@@ -40,7 +40,7 @@ export default function SearchFilterBar({
   }, [onSearchQueryChange, searchValue]);
 
   return (
-    <div className="sticky top-0 z-30 bg-base-100 py-4">
+    <div className="sticky top-0 z-30 bg-base-100 py-4 border-b border-base-300">
       <div className="flex items-center justify-between gap-2.5">
         <div className="flex-1">
           <input

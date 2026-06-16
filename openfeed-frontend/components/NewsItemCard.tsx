@@ -10,6 +10,7 @@ interface NewsItemCardProps {
   meta?: string;
   isRead?: boolean;
   onClick: () => void;
+  onImageError?: () => void;
 }
 
 export function NewsItemCard({
@@ -19,10 +20,12 @@ export function NewsItemCard({
   meta,
   isRead = false,
   onClick,
+  onImageError,
 }: NewsItemCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const safeImageUrl = imageUrl?.startsWith("https://") ? imageUrl : null;
-  const hasImage = Boolean(safeImageUrl);
+  const hasImage = Boolean(safeImageUrl) && !imageError;
 
   const opacityClass = isRead ? "opacity-50" : "";
 
@@ -44,6 +47,7 @@ export function NewsItemCard({
               loading="lazy"
               className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setIsLoaded(true)}
+              onError={() => { setImageError(true); onImageError?.(); }}
             />
           </div>
           {(meta || summary) && (

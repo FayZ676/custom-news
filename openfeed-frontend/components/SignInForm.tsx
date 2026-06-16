@@ -22,6 +22,7 @@ export default function SignInForm() {
     } catch (error) {
       if (isRedirectError(error)) throw error;
       setError("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
     }
   }
@@ -48,7 +49,7 @@ export default function SignInForm() {
         placeholder="Password"
         required
         disabled={loading}
-        className="input w-full rounded-xs focus:outline-none disabled:opacity-50"
+        className="input-field"
       />
       {error && <p className="text-error text-sm text-center">{error}</p>}
       <button

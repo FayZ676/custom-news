@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useCallback } from "react";
 
 import { FeedArticle } from "@/lib/newsSearch";
 import { timeAgo, toTitleCase } from "@/lib/utils";
@@ -16,8 +16,7 @@ import { NewsItemCard } from "@/components/NewsItemCard";
 interface ViewFeedProps {
   articles: FeedArticle[];
   emptyStateMessage?: string;
-  // Live search results have no persisted id and cannot be shared.
-  shareable?: boolean;
+  shareable?: boolean; // Live search results have no persisted id and cannot be shared.
 }
 
 export function ViewFeed({
@@ -26,13 +25,21 @@ export function ViewFeed({
   shareable = true,
 }: ViewFeedProps) {
   const modalRef = useRef<NewsItemModalHandle>(null);
-  const hasRenderableImage = (imageUrl?: string | null) =>
-    imageUrl?.startsWith("https://") ?? false;
-  const articlesWithImages = articles.filter((article) =>
-    hasRenderableImage(article.image_url),
-  );
+  const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
+
+  const markImageFailed = useCallback((id: string) => {
+    setFailedImageIds((prev) => new Set(prev).add(id));
+  }, []);
+
+  const hasRenderableImage = (article: FeedArticle) =>
+    (article.image_url?.startsWith("https://") ?? false) &&
+    !failedImageIds.has(article.id);
+
+  const articlesWithImages = articles
+    .filter(hasRenderableImage)
+    .sort((a, b) => (a.summary ? 0 : 1) - (b.summary ? 0 : 1));
   const articlesWithoutImages = articles
-    .filter((article) => !hasRenderableImage(article.image_url))
+    .filter((article) => !hasRenderableImage(article))
     .sort((a, b) => (a.summary ? 0 : 1) - (b.summary ? 0 : 1));
 
   function openModal(article: FeedArticle) {
@@ -70,11 +77,12 @@ export function ViewFeed({
               summary={article.summary}
               meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
               onClick={() => openModal(article)}
+              onImageError={() => markImageFailed(article.id)}
             />
           ))}
         </ol>
       )}
-{articlesWithoutImages.length > 0 && (
+      {articlesWithoutImages.length > 0 && (
         <ol className="flex flex-col">
           {articlesWithoutImages.map((article) => (
             <NewsItemCard
