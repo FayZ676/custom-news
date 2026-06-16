@@ -1,22 +1,18 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { FeedArticle } from "@/lib/newsSearch";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
-import {
-  NewsItemModal,
-  NewsItemModalHandle,
-  NewsItemArticle,
-} from "@/components/NewsItemModal";
 import { SectionArticleSkeleton } from "@/components/SectionArticles";
 import { NewsItemCard } from "@/components/NewsItemCard";
 
 interface ViewFeedProps {
   articles: FeedArticle[];
   emptyStateMessage?: string;
-  shareable?: boolean; // Live search results have no persisted id and cannot be shared.
+  shareable?: boolean;
 }
 
 export function ViewFeed({
@@ -24,7 +20,7 @@ export function ViewFeed({
   emptyStateMessage,
   shareable = true,
 }: ViewFeedProps) {
-  const modalRef = useRef<NewsItemModalHandle>(null);
+  const router = useRouter();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
 
   const markImageFailed = useCallback((id: string) => {
@@ -42,19 +38,12 @@ export function ViewFeed({
     .filter((article) => !hasRenderableImage(article))
     .sort((a, b) => (a.summary ? 0 : 1) - (b.summary ? 0 : 1));
 
-  function openModal(article: FeedArticle) {
-    const item: NewsItemArticle = {
-      type: "article",
-      id: article.id,
-      title: article.title,
-      summary: article.summary,
-      url: article.url,
-      sourceName: article.source_name,
-      publishedAt: article.published_at,
-      imageUrl: article.image_url,
-      shareable,
-    };
-    modalRef.current?.open(item);
+  function handleArticleClick(article: FeedArticle) {
+    if (shareable) {
+      router.push(`/feed/article/${article.id}`);
+    } else {
+      window.open(article.url, "_blank", "noopener,noreferrer");
+    }
   }
 
   if (articles.length === 0) {
@@ -76,7 +65,7 @@ export function ViewFeed({
               imageUrl={article.image_url}
               summary={article.summary}
               meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
-              onClick={() => openModal(article)}
+              onClick={() => handleArticleClick(article)}
               onImageError={() => markImageFailed(article.id)}
             />
           ))}
@@ -91,13 +80,11 @@ export function ViewFeed({
               imageUrl={article.image_url}
               summary={article.summary}
               meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
-              onClick={() => openModal(article)}
+              onClick={() => handleArticleClick(article)}
             />
           ))}
         </ol>
       )}
-
-      <NewsItemModal ref={modalRef} />
     </section>
   );
 }
