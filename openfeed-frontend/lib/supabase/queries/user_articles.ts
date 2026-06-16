@@ -85,6 +85,22 @@ export async function deleteAllUserArticles(
   if (error) throw new Error(error.message);
 }
 
+export async function getUserArticleById(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  articleId: string,
+): Promise<UserArticle | null> {
+  const { data, error } = await supabase
+    .from("user_articles")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("id", articleId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function getSharedArticle(
   supabase: SupabaseClient<Database>,
   token: string,

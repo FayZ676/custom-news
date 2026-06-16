@@ -61,14 +61,13 @@ export async function addUserInterest(
   supabase: SupabaseClient<Database>,
   userId: string,
   interestText: string,
-  queryPayload: NewsQueryPayload | null = null,
 ): Promise<UserInterest> {
   const { data, error } = await (supabase as any)
     .from("user_interests")
     .insert({
       user_id: userId,
       interest_text: interestText,
-      query_payload: queryPayload,
+      query_payload: null,
     })
     .select("id, user_id, interest_text, query_payload, created_at")
     .single();

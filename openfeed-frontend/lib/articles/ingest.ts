@@ -14,15 +14,13 @@ import type { NewsQueryPayload } from "@/lib/interests/refine";
 import type { UserInterest } from "@/lib/supabase/queries/user_interests";
 
 function interestToPayload(interest: UserInterest): NewsQueryPayload {
-  return (
-    interest.query_payload ?? {
-      q: interest.interest_text,
-      qInTitle: null,
-      category: null,
-      country: null,
-      timeframe: null,
-    }
-  );
+  return {
+    q: interest.interest_text,
+    qInTitle: null,
+    category: null,
+    country: null,
+    timeframe: null,
+  };
 }
 
 type AttributedArticle = FeedArticle & { interest_id: string };

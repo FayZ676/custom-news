@@ -4,12 +4,10 @@ import { useRef, useState } from "react";
 import { X } from "lucide-react";
 
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
-import { type NewsQueryPayload } from "@/lib/interests/refine";
 import {
   addInterestAction,
   removeInterestAction,
 } from "@/app/feed/actions";
-import { MCQFlow } from "@/components/MCQFlow";
 
 const MAX_INTERESTS = 7;
 
@@ -29,41 +27,24 @@ export function InterestsManager({
   const [interests, setInterests] = useState<UserInterest[]>(initialInterests);
   const [inputValue, setInputValue] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [pendingInterest, setPendingInterest] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const canAdd =
-    inputValue.trim().length > 0 && interests.length < MAX_INTERESTS && !isAdding && !pendingInterest;
+    inputValue.trim().length > 0 && interests.length < MAX_INTERESTS && !isAdding;
 
-  const commitInterest = async (text: string, payload: NewsQueryPayload | null) => {
+  const handleAdd = async () => {
+    const text = inputValue.trim();
+    if (!text || interests.length >= MAX_INTERESTS) return;
     setIsAdding(true);
+    setInputValue("");
     try {
-      const saved = await addInterestAction(userId, text, payload);
+      const saved = await addInterestAction(userId, text);
       setInterests((prev) => [...prev, saved]);
-      setInputValue("");
       await onInterestAdded?.(saved);
     } finally {
       setIsAdding(false);
-      setPendingInterest(null);
       inputRef.current?.focus();
     }
-  };
-
-  const handleAdd = () => {
-    const text = inputValue.trim();
-    if (!text || interests.length >= MAX_INTERESTS) return;
-    setPendingInterest(text);
-    setInputValue("");
-  };
-
-  const handleRefinerComplete = (payload: NewsQueryPayload) => {
-    if (!pendingInterest) return;
-    void commitInterest(pendingInterest, payload);
-  };
-
-  const handleRefinerSkip = () => {
-    if (!pendingInterest) return;
-    void commitInterest(pendingInterest, null);
   };
 
   const handleRemove = async (interestId: string) => {
@@ -75,7 +56,7 @@ export function InterestsManager({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleAdd();
+      void handleAdd();
     }
   };
 
@@ -96,7 +77,7 @@ export function InterestsManager({
         </div>
       )}
 
-      {interests.length < MAX_INTERESTS && !pendingInterest && (
+      {interests.length < MAX_INTERESTS && (
         <div className="flex items-center gap-2">
           <input
             ref={inputRef}
@@ -113,7 +94,7 @@ export function InterestsManager({
             className="flex-1 rounded-sm bg-base-200 border border-base-300 px-3 h-9.5 text-sm text-base-content placeholder:text-base-content-4 focus:outline-none focus:ring-1 focus:ring-base-content/35 disabled:opacity-50"
           />
           <button
-            onClick={handleAdd}
+            onClick={() => void handleAdd()}
             disabled={!canAdd}
             className="btn-soft h-9.5 shrink-0"
           >
@@ -122,19 +103,7 @@ export function InterestsManager({
         </div>
       )}
 
-      {pendingInterest && !isAdding && (
-        <MCQFlow
-          rawInterest={pendingInterest}
-          onComplete={handleRefinerComplete}
-          onSkip={handleRefinerSkip}
-        />
-      )}
-
-      {isAdding && (
-        <p className="text-sm text-base-content-3">Adding &ldquo;{pendingInterest}&rdquo;…</p>
-      )}
-
-      {interests.length >= MAX_INTERESTS && !pendingInterest && (
+      {interests.length >= MAX_INTERESTS && (
         <p className="text-[11px] text-base-content-4">
           Maximum of {MAX_INTERESTS} interests reached.
         </p>

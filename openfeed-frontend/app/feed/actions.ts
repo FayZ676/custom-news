@@ -23,7 +23,6 @@ import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
 import type { FeedDefinition } from "@/lib/providers/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/supabase.types";
-import type { NewsQueryPayload } from "@/lib/interests/refine";
 
 async function getSubscribedFeeds(
   supabase: SupabaseClient<Database>,
@@ -45,10 +44,9 @@ export async function createShareLinkAction(
 export async function addInterestAction(
   userId: string,
   interestText: string,
-  queryPayload: NewsQueryPayload | null = null,
 ): Promise<UserInterest> {
   const supabase = await createClient();
-  return addUserInterest(supabase, userId, interestText, queryPayload);
+  return addUserInterest(supabase, userId, interestText);
 }
 
 export async function refreshArticlesAction(userId: string): Promise<void> {

@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-// ─── Zod schemas (source of truth) ───────────────────────────────────────────
-// Strict Structured Outputs requires: root is object, all fields required,
-// additionalProperties:false, optional fields as .nullable() not .optional().
-
 export const NEWSDATA_CATEGORIES = [
   "business",
   "crime",
@@ -32,41 +28,9 @@ export const NewsQueryPayloadSchema = z.object({
   timeframe: z.string().nullable(),
 });
 
-export const RefinementOptionSchema = z.object({
-  id: z.string(),
-  label: z.string(),
-});
-
-export const RefinementQuestionSchema = z.object({
-  id: z.string(),
-  prompt: z.string(),
-  multiSelect: z.boolean(),
-  options: z.array(RefinementOptionSchema),
-});
-
-export const NextQuestionResultSchema = z.object({
-  done: z.boolean(),
-  question: RefinementQuestionSchema.nullable(),
-});
-
 export type NewsQueryPayload = z.infer<typeof NewsQueryPayloadSchema>;
-export type RefinementOption = z.infer<typeof RefinementOptionSchema>;
-export type RefinementQuestion = z.infer<typeof RefinementQuestionSchema>;
-export type NextQuestionResult = z.infer<typeof NextQuestionResultSchema>;
-
-export type RefineAnswer = {
-  question: RefinementQuestion;
-  selectedOptionIds: string[];
-  freeText?: string;
-};
 
 // ─── normalizeNewsQueryPayload (pure) ─────────────────────────────────────────
-// Enforces NewsData.io constraints regardless of where the payload came from
-// (LLM output or stored Supabase payloads), so we never build an invalid query:
-// - q / qInTitle / qInMeta are mutually exclusive — only one allowed per request.
-// - each query string maxes at 512 characters.
-// - timeframe is 1–48 hours, or 1–2880 minutes ("<n>m").
-// - country allows up to 5 comma-separated ISO 3166-1 alpha-2 codes.
 
 const MAX_QUERY_LENGTH = 512;
 const MAX_TIMEFRAME_HOURS = 48;
@@ -118,7 +82,6 @@ export function normalizeNewsQueryPayload(
   const qInTitle = cleanQueryString(payload.qInTitle);
 
   return {
-    // Mutual exclusivity: keep q when both are set (q is the primary field).
     q,
     qInTitle: q ? null : qInTitle,
     category: payload.category,
@@ -128,8 +91,6 @@ export function normalizeNewsQueryPayload(
 }
 
 // ─── payloadToParams (pure, client-safe) ──────────────────────────────────────
-// Converts a NewsQueryPayload to URLSearchParams-ready key/value pairs.
-// Callers must inject apikey; this layer handles the structural mapping.
 
 export type NewsQueryParams = Record<string, string>;
 
