@@ -9,7 +9,7 @@ export default function SignInPage() {
           <hr className="border-t w-full" />
           <ThemedLogo />
           <hr className="border-t-2 w-full" />
-          <p className="text-sm italic text-base-content/60 text-center">
+          <p className="text-sm italic text-base-content-2 text-center">
             Sign in to read your personalised newspaper.
           </p>
         </div>

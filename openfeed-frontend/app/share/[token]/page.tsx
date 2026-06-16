@@ -144,7 +144,7 @@ async function SharePageContent({
         <ArticleView article={article} />
       </section>
 
-      <p className="text-sm text-base-content/60 text-center">
+      <p className="text-sm text-base-content-2 text-center">
         <Link href="/auth/signin" className="underline font-semibold">
           Visit The Latest Times
         </Link>

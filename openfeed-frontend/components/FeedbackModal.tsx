@@ -28,7 +28,9 @@ export const FeedbackModal = forwardRef<
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const message = (e.currentTarget.elements.namedItem("message") as HTMLTextAreaElement).value;
+    const message = (
+      e.currentTarget.elements.namedItem("message") as HTMLTextAreaElement
+    ).value;
 
     setStatus("success");
 
@@ -36,11 +38,13 @@ export const FeedbackModal = forwardRef<
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, userEmail }),
-    }).then((res) => {
-      if (!res.ok) console.error("Feedback submission failed");
-    }).catch((err) => {
-      console.error("Feedback submission error:", err);
-    });
+    })
+      .then((res) => {
+        if (!res.ok) console.error("Feedback submission failed");
+      })
+      .catch((err) => {
+        console.error("Feedback submission error:", err);
+      });
   }
 
   return (
@@ -60,10 +64,7 @@ export const FeedbackModal = forwardRef<
               className="textarea textarea-bordered w-full resize-none text-sm"
             />
 
-            <button
-              type="submit"
-              className="btn-text ml-auto"
-            >
+            <button type="submit" className="btn-soft ml-auto">
               Submit
             </button>
           </form>

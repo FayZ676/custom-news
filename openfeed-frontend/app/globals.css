@@ -4,62 +4,46 @@
   themes: light --default, black;
 }
 
-/* ── Design Tokens ──────────────────────────────────────────────────────────
-   Single source of truth for every visual decision.
-   All aesthetic properties in the app trace back here.
-   Never use raw values in components — always reference a token.
-   ───────────────────────────────────────────────────────────────────────── */
-/* Font tokens live on body so they share scope with Next.js font variables
-   (--font-geist, --font-lora), which Next.js also injects on body. */
+/* base-content scale: blended equivalents of base-content at 70/50/40% alpha.
+   Defined in @theme (not :root) so Tailwind generates text-/bg- utility classes. */
+@theme {
+  --color-base-content-2: oklch(52% 0.011 75);
+  --color-base-content-3: oklch(65% 0.009 75);
+  --color-base-content-4: oklch(72% 0.008 75);
+}
+
+/* Next.js injects --font-geist / --font-lora on body, so tokens live here too */
 body {
   --font-sans: var(--font-geist);
   --font-serif: var(--font-lora);
 }
 
-/* Lock background scroll while any modal dialog is open */
 body:has(dialog[open]) {
   overflow: hidden;
 }
 
 :root {
-
-  /* Radius
-     md for most UI, lg for cards/modals. */
   --radius-md: 6px;
   --radius-lg: 10px;
-
-  /* Shadows — warm-tinted, never cool grey */
   --shadow-sm: 0 1px 3px oklch(18% 0.012 75 / 0.06);
   --shadow-md: 0 2px 8px oklch(18% 0.012 75 / 0.08);
-
-  /* Motion — one curve, two speeds */
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 120ms;
   --duration-base: 200ms;
 }
 
-/* ── Color palette ──────────────────────────────────────────────────────────
-   Warm off-white surfaces with softened text contrast.
-   ───────────────────────────────────────────────────────────────────────── */
+/* Warm off-white palette */
 :root,
 [data-theme="light"] {
-  --color-base-100: oklch(98.2% 0.004 75);    /* warm off-white background */
-  --color-base-200: oklch(95.5% 0.006 75);    /* subtle surface */
-  --color-base-300: oklch(89.5% 0.010 75);    /* borders, dividers */
-  --color-base-content: oklch(32% 0.014 75);  /* softened warm charcoal text */
-  --color-error: oklch(55% 0.22 27);          /* clear red, not pinkish */
+  --color-base-100: oklch(98.2% 0.004 75);
+  --color-base-200: oklch(95.5% 0.006 75);
+  --color-base-300: oklch(89.5% 0.010 75);
+  --color-base-content: oklch(32% 0.014 75);
+  --color-error: oklch(55% 0.22 27);
   --color-error-content: oklch(97% 0.02 27);
 }
 
-/* ── Component classes ──────────────────────────────────────────────────────
-   Reusable UI patterns built from tokens.
-   Use these in components — never write raw values inline.
-   ───────────────────────────────────────────────────────────────────────── */
 @layer components {
-  /* Buttons
-     Primary: strong CTA — filled dark.
-     Secondary: everything else interactive — subtle fill, no border, scales to any size.
-     Text: utility/nav links — no chrome. */
   .btn-primary {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
@@ -71,7 +55,7 @@ body:has(dialog[open]) {
     border-radius: var(--radius-md);
     border: none;
     transition: all var(--duration-fast) var(--ease);
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm cursor-pointer select-none whitespace-nowrap bg-base-200 text-base-content/70 font-medium hover:bg-base-300 hover:text-base-content active:opacity-70 disabled:opacity-40 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm cursor-pointer select-none whitespace-nowrap bg-base-200 text-base-content-2 font-medium hover:bg-base-300 hover:text-base-content active:opacity-70 disabled:opacity-40 disabled:pointer-events-none;
   }
   .btn-soft[data-active="true"] {
     @apply bg-base-content text-base-100;
@@ -79,28 +63,24 @@ body:has(dialog[open]) {
   .btn-text {
     font-family: var(--font-sans);
     transition: color var(--duration-fast) var(--ease);
-    @apply cursor-pointer text-sm text-base-content/50 underline-offset-2 disabled:opacity-40 hover:text-base-content hover:underline;
+    @apply cursor-pointer text-sm text-base-content-3 underline-offset-2 disabled:opacity-40 hover:text-base-content hover:underline;
   }
-
-  /* Inputs */
   .input-field {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
     @apply input w-full text-sm focus:outline-none disabled:opacity-50;
   }
-
-  /* Typography */
   .text-body {
     font-family: var(--font-sans);
-    @apply text-sm text-base-content/70;
+    @apply text-sm text-base-content-2;
   }
   .text-subtle {
     font-family: var(--font-sans);
-    @apply text-sm text-base-content/50;
+    @apply text-sm text-base-content-3;
   }
   .text-muted {
     font-family: var(--font-sans);
-    @apply text-xs text-base-content/50;
+    @apply text-xs text-base-content-3;
   }
   .heading-page {
     font-family: var(--font-sans);
@@ -110,7 +90,6 @@ body:has(dialog[open]) {
     font-family: var(--font-serif);
     @apply text-lg font-semibold;
   }
-  /* Article headlines — the one place serif lives */
   .heading-article {
     font-family: var(--font-serif);
     @apply text-xl font-semibold leading-snug tracking-tight;

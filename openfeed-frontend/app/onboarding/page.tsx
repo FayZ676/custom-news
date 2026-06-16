@@ -21,7 +21,7 @@ async function OnboardingContent() {
     <div className="flex flex-col gap-8 max-w-md mx-auto pt-16">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">What are you interested in?</h1>
-        <p className="text-base-content/60 text-sm">
+        <p className="text-base-content-2 text-sm">
           Add a few topics to get a curated feed of articles tailored to you.
           You can always update these later.
         </p>

@@ -6,7 +6,7 @@ export function LandingPage() {
       <h1 className="heading-page">
         The Latest Times
       </h1>
-      <p className="max-w-xl text-base-content/70">
+      <p className="max-w-xl text-base-content-2">
         A simple, personalized news feed.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">

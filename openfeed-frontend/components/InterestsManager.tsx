@@ -90,7 +90,7 @@ export function InterestsManager({
               className="btn-soft flex items-center gap-1"
             >
               {interest.interest_text}
-              <X size={12} className="opacity-60" />
+              <X size={12} className="text-base-content-3" />
             </button>
           ))}
         </div>
@@ -110,7 +110,7 @@ export function InterestsManager({
                 : "Add another interest..."
             }
             disabled={isAdding}
-            className="flex-1 rounded-sm bg-base-200 border border-base-300 px-3 h-9.5 text-sm text-base-content placeholder:text-base-content/45 focus:outline-none focus:ring-1 focus:ring-base-content/35 disabled:opacity-50"
+            className="flex-1 rounded-sm bg-base-200 border border-base-300 px-3 h-9.5 text-sm text-base-content placeholder:text-base-content-4 focus:outline-none focus:ring-1 focus:ring-base-content/35 disabled:opacity-50"
           />
           <button
             onClick={handleAdd}
@@ -131,11 +131,11 @@ export function InterestsManager({
       )}
 
       {isAdding && (
-        <p className="text-sm text-base-content/50">Adding &ldquo;{pendingInterest}&rdquo;…</p>
+        <p className="text-sm text-base-content-3">Adding &ldquo;{pendingInterest}&rdquo;…</p>
       )}
 
       {interests.length >= MAX_INTERESTS && !pendingInterest && (
-        <p className="text-[11px] text-base-content/40">
+        <p className="text-[11px] text-base-content-4">
           Maximum of {MAX_INTERESTS} interests reached.
         </p>
       )}

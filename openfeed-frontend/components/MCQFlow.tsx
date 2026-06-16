@@ -203,7 +203,7 @@ export function MCQFlow({ rawInterest, onComplete, onSkip }: MCQFlowProps) {
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-base-300 bg-base-200/40 p-4">
       <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-base-content/50">
+        <div className="flex items-center gap-2 text-base-content-3">
           <button
             type="button"
             onClick={goBack}
@@ -230,21 +230,21 @@ export function MCQFlow({ rawInterest, onComplete, onSkip }: MCQFlowProps) {
           type="button"
           onClick={onSkip}
           aria-label="Skip refinement"
-          className="cursor-pointer rounded p-0.5 text-base-content/50 hover:text-base-content"
+          className="cursor-pointer rounded p-0.5 text-base-content-3 hover:text-base-content"
         >
           <X size={18} />
         </button>
       </header>
 
       {phase === "loading" && (
-        <div className="flex items-center gap-2 py-6 text-sm text-base-content/50">
+        <div className="flex items-center gap-2 py-6 text-sm text-base-content-3">
           <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-base-content/30 border-t-base-content/70" />
           Thinking…
         </div>
       )}
 
       {phase === "finalizing" && (
-        <div className="flex items-center gap-2 py-6 text-sm text-base-content/50">
+        <div className="flex items-center gap-2 py-6 text-sm text-base-content-3">
           <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-base-content/30 border-t-base-content/70" />
           Building your feed…
         </div>
@@ -268,7 +268,7 @@ export function MCQFlow({ rawInterest, onComplete, onSkip }: MCQFlowProps) {
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-medium transition-colors ${
                       selected
                         ? "border-base-content bg-base-content text-base-100"
-                        : "border-base-300 text-base-content/60"
+                        : "border-base-300 text-base-content-2"
                     }`}
                   >
                     {selected && cur.question.multiSelect ? (
@@ -286,7 +286,7 @@ export function MCQFlow({ rawInterest, onComplete, onSkip }: MCQFlowProps) {
           </div>
 
           <div className="flex items-center gap-3 border-t border-base-300 pt-3">
-            <Pencil size={15} className="shrink-0 text-base-content/40" />
+            <Pencil size={15} className="shrink-0 text-base-content-4" />
             <input
               type="text"
               value={cur.freeText}
@@ -300,7 +300,7 @@ export function MCQFlow({ rawInterest, onComplete, onSkip }: MCQFlowProps) {
                 }
               }}
               placeholder="Type your answer..."
-              className="flex-1 bg-transparent text-sm text-base-content placeholder:text-base-content/45 focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-base-content placeholder:text-base-content-4 focus:outline-none"
             />
           </div>
         </>

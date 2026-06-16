@@ -71,16 +71,16 @@ export function SourcesManager({
             >
               {source.label}
               {isSubscribed ? (
-                <Check size={12} className="opacity-60" />
+                <Check size={12} className="text-base-content-3" />
               ) : (
-                <Plus size={12} className="opacity-60" />
+                <Plus size={12} className="text-base-content-3" />
               )}
             </button>
           );
         })}
       </div>
 
-      <p className="text-[11px] text-base-content/40">
+      <p className="text-[11px] text-base-content-4">
         These sources are searched with your interests, just like the default
         news service. Want another source? Use “Send Feedback” below.
       </p>
