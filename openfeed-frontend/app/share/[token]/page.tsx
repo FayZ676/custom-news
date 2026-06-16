@@ -140,7 +140,7 @@ async function SharePageContent({
         </Link>
       </div>
 
-      <section className="border border-base-300 p-5">
+      <section className="border border-base-300 p-6">
         <ArticleView article={article} />
       </section>
 

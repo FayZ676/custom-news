@@ -63,7 +63,7 @@ export function InterestsManager({
   return (
     <div className="flex flex-col gap-3">
       {interests.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {interests.map((interest) => (
             <button
               key={interest.id}

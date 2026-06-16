@@ -29,7 +29,7 @@ export default async function ArticlePage({
     <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full py-6 px-4">
       <Link
         href="/feed"
-        className="flex items-center gap-1.5 text-muted hover:text-base-content transition-colors w-fit"
+        className="flex items-center gap-2 text-muted hover:text-base-content transition-colors w-fit"
       >
         <ArrowLeft size={16} />
         <span className="text-sm">Back to feed</span>

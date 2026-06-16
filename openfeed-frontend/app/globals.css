@@ -7,9 +7,9 @@
 /* base-content scale: blended equivalents of base-content at 70/50/40% alpha.
    Defined in @theme (not :root) so Tailwind generates text-/bg- utility classes. */
 @theme {
-  --color-base-content-2: oklch(52% 0.011 75);
-  --color-base-content-3: oklch(65% 0.009 75);
-  --color-base-content-4: oklch(72% 0.008 75);
+  --color-base-content-2: oklch(52% 0.011 75); /* body copy and secondary paragraph text */
+  --color-base-content-3: oklch(65% 0.009 75); /* de-emphasised text and icons (metadata, small UI icons) */
+  --color-base-content-4: oklch(72% 0.008 75); /* input placeholders and small hint/notice text */
 }
 
 /* Next.js injects --font-geist / --font-lora on body, so tokens live here too */
@@ -23,33 +23,42 @@ body:has(dialog[open]) {
 }
 
 :root {
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --shadow-sm: 0 1px 3px oklch(18% 0.012 75 / 0.06);
-  --shadow-md: 0 2px 8px oklch(18% 0.012 75 / 0.08);
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 120ms;
-  --duration-base: 200ms;
+  --radius-md: 6px; /* buttons, inputs */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1); /* spring-like easing for all transitions */
+  --duration-fast: 120ms; /* micro-interactions: hover/active state changes */
+  --duration-base: 200ms; /* standard transitions: panel open/close, reveals */
+
 }
+
+/* Spacing scale (Tailwind units, 1 = 4px)
+   1  — icon-label gap within compact elements
+   2  — tight rows, small margins
+   3  — form stacks, input/button padding
+   4  — primary gap: lists, card rows, page sections
+   6  — section separation, modal padding
+   8  — major layout sections
+   16 — page-level (hero padding, nav clearance)        */
 
 /* Warm off-white palette */
 :root,
 [data-theme="light"] {
-  --color-base-100: oklch(98.2% 0.004 75);
-  --color-base-200: oklch(95.5% 0.006 75);
-  --color-base-300: oklch(89.5% 0.010 75);
-  --color-base-content: oklch(32% 0.014 75);
-  --color-error: oklch(55% 0.22 27);
-  --color-error-content: oklch(97% 0.02 27);
+  --color-base-100: oklch(98.2% 0.004 75); /* lightest surface — page background and modal panels */
+  --color-base-200: oklch(95.5% 0.006 75); /* recessed surface — input fields and secondary button backgrounds */
+  --color-base-300: oklch(89.5% 0.010 75); /* borders, dividers, hover fills on surfaces */
+  --color-base-content: oklch(32% 0.014 75); /* primary text */
+  --color-error: oklch(55% 0.22 27);         /* destructive actions, error states */
+  --color-error-content: oklch(97% 0.02 27); /* text placed on error-colored backgrounds */
 }
 
 @layer components {
+  /* filled CTA button — sign in, landing page CTAs */
   .btn-primary {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
     transition: opacity var(--duration-fast) var(--ease);
-    @apply inline-flex items-center justify-center cursor-pointer bg-base-content px-5 py-2.5 text-sm font-medium text-base-100 disabled:opacity-40 hover:opacity-80 active:opacity-70;
+    @apply inline-flex items-center justify-center cursor-pointer bg-base-content px-6 py-3 text-sm font-medium text-base-100 disabled:opacity-40 hover:opacity-80 active:opacity-70;
   }
+  /* medium-emphasis button — everything that isn't a primary CTA (filters, add, pagination, source toggles, etc.) */
   .btn-soft {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
@@ -57,39 +66,48 @@ body:has(dialog[open]) {
     transition: all var(--duration-fast) var(--ease);
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm cursor-pointer select-none whitespace-nowrap bg-base-200 text-base-content-2 font-medium hover:bg-base-300 hover:text-base-content active:opacity-70 disabled:opacity-40 disabled:pointer-events-none;
   }
+  /* toggled-on state for btn-soft — e.g. an active filter chip */
   .btn-soft[data-active="true"] {
     @apply bg-base-content text-base-100;
   }
+  /* ghost text button — footer nav links and settings list actions */
   .btn-text {
     font-family: var(--font-sans);
     transition: color var(--duration-fast) var(--ease);
     @apply cursor-pointer text-sm text-base-content-3 underline-offset-2 disabled:opacity-40 hover:text-base-content hover:underline;
   }
+  /* standard text input — search fields, form inputs */
   .input-field {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
     @apply input w-full text-sm focus:outline-none disabled:opacity-50;
   }
+  /* default paragraph / body copy */
   .text-body {
     font-family: var(--font-sans);
     @apply text-sm text-base-content-2;
   }
+  /* empty state and status messages (always rendered italic at callsites) */
   .text-subtle {
     font-family: var(--font-sans);
     @apply text-sm text-base-content-3;
   }
+  /* fine print — timestamps, counts, labels that should recede */
   .text-muted {
     font-family: var(--font-sans);
     @apply text-xs text-base-content-3;
   }
+  /* large hero title (sans-serif) — landing page h1 */
   .heading-page {
     font-family: var(--font-sans);
     @apply text-4xl font-semibold tracking-tight md:text-5xl;
   }
+  /* modal or panel title (serif) */
   .heading-modal {
     font-family: var(--font-serif);
     @apply text-lg font-semibold;
   }
+  /* article title (serif) — news card h2 and article detail page h1 */
   .heading-article {
     font-family: var(--font-serif);
     @apply text-xl font-semibold leading-snug tracking-tight;

@@ -56,7 +56,7 @@ export function SourcesManager({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {sources.map((source) => {
           const isSubscribed = subscribed.has(source.key);
           return (
