@@ -5,12 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 
 const getLogoSrc = (theme: string) =>
-  theme === "cupcake" ? "/logo-light.svg" : "/logo-dark.svg";
+  theme !== "dark" ? "/logo-light.svg" : "/logo-dark.svg";
 
 const getCurrentTheme = () =>
   localStorage.getItem("color-theme") ??
   document.documentElement.dataset.theme ??
-  "cupcake";
+  "light";
 
 export function ThemedLogo() {
   const [src, setSrc] = useState("/logo-light.svg");

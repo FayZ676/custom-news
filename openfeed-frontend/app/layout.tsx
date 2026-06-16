@@ -63,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="cupcake" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -72,7 +72,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geist.variable} ${lora.variable} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
+        className={`${geist.variable} ${lora.variable} antialiased p-4 min-h-screen flex flex-col`}
         style={{ fontFamily: "var(--font-geist)" }}
       >
         {children}

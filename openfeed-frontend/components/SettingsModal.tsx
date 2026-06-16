@@ -39,7 +39,7 @@ export const SettingsModal = forwardRef<
     type Status = "idle" | "loading" | "loaded" | "error";
     const [status, setStatus] = useState<Status>("idle");
     const [emailNotification, setEmailNotification] = useState(false);
-    const [colorTheme, setColorTheme] = useState("cupcake");
+    const [colorTheme, setColorTheme] = useState("light");
     const [signingOut, setSigningOut] = useState(false);
 
     useImperativeHandle(ref, () => ({
@@ -69,7 +69,7 @@ export const SettingsModal = forwardRef<
     }
 
     async function handleToggleTheme() {
-      const next = colorTheme === "cupcake" ? "black" : "cupcake";
+      const next = colorTheme === "light" ? "dark" : "light";
       setColorTheme(next);
       document.documentElement.dataset.theme = next;
       try {
@@ -117,7 +117,7 @@ export const SettingsModal = forwardRef<
                   onClick={handleToggleTheme}
                   className="btn-text pb-3"
                 >
-                  Theme ({colorTheme === "cupcake" ? "Light" : "Dark"})
+                  Theme ({colorTheme === "light" ? "Light" : "Dark"})
                 </button>
               </div>
               <div>

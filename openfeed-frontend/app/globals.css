@@ -1,16 +1,8 @@
 @import "tailwindcss";
 
-@plugin "daisyui" {
-  themes: light --default, black;
-}
-
-/* ── Design Tokens ──────────────────────────────────────────────────────────
-   Single source of truth for every visual decision.
-   All aesthetic properties in the app trace back here.
-   Never use raw values in components — always reference a token.
-   ───────────────────────────────────────────────────────────────────────── */
-/* Font tokens live on body so they share scope with Next.js font variables
-   (--font-geist, --font-lora), which Next.js also injects on body. */
+/* ── Font bridge ──────────────────────────────────────────────────────────────
+   next/font injects --font-geist and --font-lora on <body> via className.
+   All component CSS references var(--font-sans/serif) which inherits from here. */
 body {
   --font-sans: var(--font-geist);
   --font-serif: var(--font-lora);
@@ -21,98 +13,311 @@ body:has(dialog[open]) {
   overflow: hidden;
 }
 
-:root {
-
-  /* Radius
-     md for most UI, lg for cards/modals. */
-  --radius-md: 6px;
+/* ── Static design primitives ─────────────────────────────────────────────────
+   Registered in @theme so Tailwind generates matching utilities.
+   Radius: only --radius-lg overrides Tailwind's default (8px → 10px).
+   Shadow/motion/ease: registered here so shadow-md, ease-soft, duration-*
+   utilities emit our values. */
+@theme {
   --radius-lg: 10px;
 
-  /* Shadows — warm-tinted, never cool grey */
-  --shadow-sm: 0 1px 3px oklch(18% 0.012 75 / 0.06);
-  --shadow-md: 0 2px 8px oklch(18% 0.012 75 / 0.08);
+  /* Elevation — modal is the only elevated surface */
+  --shadow-md: 0 0 0 1px oklch(89.5% 0.010 75 / 0.35),
+               0 4px 24px oklch(18% 0.01 75 / 0.12);
 
-  /* Motion — one curve, two speeds */
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Motion */
+  --ease-soft:     cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 120ms;
   --duration-base: 200ms;
 }
 
-/* ── Color palette ──────────────────────────────────────────────────────────
-   Warm off-white surfaces with softened text contrast.
-   ───────────────────────────────────────────────────────────────────────── */
-:root,
-[data-theme="light"] {
-  --color-base-100: oklch(98.2% 0.004 75);    /* warm off-white background */
-  --color-base-200: oklch(95.5% 0.006 75);    /* subtle surface */
-  --color-base-300: oklch(89.5% 0.010 75);    /* borders, dividers */
-  --color-base-content: oklch(32% 0.014 75);  /* softened warm charcoal text */
-  --color-error: oklch(55% 0.22 27);          /* clear red, not pinkish */
-  --color-error-content: oklch(97% 0.02 27);
+/* ── Semantic color roles ─────────────────────────────────────────────────────
+   These are the ONLY values that flip when dark theme is activated.
+   Raw oklch values live here only; components reference role names. */
+:root {
+  --surface:           oklch(98.2% 0.004 75);   /* page background */
+  --surface-raised:    oklch(99.5% 0.002 75);   /* modals, cards */
+  --surface-sunken:    oklch(95.5% 0.006 75);   /* inputs, soft buttons, fills */
+  --border:            oklch(89.5% 0.010 75);   /* borders, dividers */
+  --text:              oklch(32%   0.014 75);   /* primary text, CTA fill */
+  --text-muted:        oklch(50%   0.012 75);   /* secondary body copy */
+  --text-subtle:       oklch(62%   0.010 75);   /* meta, placeholders, captions */
+  --accent:            var(--text);             /* monochrome-warm: CTA = text color */
+  --accent-foreground: var(--surface);
+  --danger:            oklch(55%   0.22  27);   /* error states */
+  --danger-foreground: oklch(97%   0.02  27);
+  --success:           oklch(58%   0.14  150);  /* copy-confirm checkmark */
+
+  /* Container widths — per-route max-width tokens; each route opts into one */
+  --container-app:   48rem;   /* feed / main app shell */
+  --container-prose: 42rem;   /* share article, landing hero */
+  --container-form:  28rem;   /* signin, onboarding */
 }
 
-/* ── Component classes ──────────────────────────────────────────────────────
-   Reusable UI patterns built from tokens.
-   Use these in components — never write raw values inline.
-   ───────────────────────────────────────────────────────────────────────── */
+/* Dark theme — structured for later promotion; values deferred */
+[data-theme="dark"] {
+  /* To be filled when promoting dark mode to first-class */
+}
+
+/* ── @theme inline ────────────────────────────────────────────────────────────
+   Maps Tailwind color utilities to runtime role vars. "inline" is required so
+   utilities emit var(--...) directly and flip at runtime when roles flip.
+   Plain @theme would freeze values at build time, breaking dark-later. */
+@theme inline {
+  /* New semantic color utilities */
+  --color-surface:           var(--surface);
+  --color-surface-raised:    var(--surface-raised);
+  --color-surface-sunken:    var(--surface-sunken);
+  --color-border:            var(--border);
+  --color-text:              var(--text);
+  --color-text-muted:        var(--text-muted);
+  --color-text-subtle:       var(--text-subtle);
+  --color-accent:            var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger:            var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-success:           var(--success);
+
+  /* ── Temporary DaisyUI-name aliases ──────────────────────────────────────────
+     Regenerates the old base-* / error / success Tailwind utilities
+     (bg-base-100, text-base-content/70, text-error, etc.) backed by our new
+     role vars. The ~37 existing component references continue working until
+     each screen is migrated in Phase 3. Delete this block in Phase 4.
+     ──────────────────────────────────────────────────────────────────────────── */
+  --color-base-100:      var(--surface);
+  --color-base-200:      var(--surface-sunken);
+  --color-base-300:      var(--border);
+  --color-base-content:  var(--text);
+  --color-error:         var(--danger);
+  --color-error-content: var(--danger-foreground);
+}
+
+/* Dark mode variant — enables dark: prefix targeting [data-theme="dark"] */
+@custom-variant dark (&:where([data-theme="dark"] *));
+
+/* ── Container max-width utilities ───────────────────────────────────────────
+   Each route opts into one of these named widths; the root body no longer
+   imposes a single max-w. */
+@utility max-w-app   { max-width: var(--container-app); }
+@utility max-w-prose { max-width: var(--container-prose); }
+@utility max-w-form  { max-width: var(--container-form); }
+
+/* ── Typography utilities ─────────────────────────────────────────────────────
+   @utility (not @layer components) so these compose with Tailwind variants.
+   Replaces the old @layer components typography classes. Line-heights are
+   tuned per role; font-size values are from the approved type scale. */
+
+@utility heading-page {
+  font-family: var(--font-sans);
+  font-size: 2.25rem;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+
+  @media (min-width: 768px) {
+    font-size: 3rem;
+  }
+}
+
+@utility heading-section {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+@utility heading-article {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+@utility heading-modal {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+@utility text-prose {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text);
+}
+
+@utility text-body {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+@utility text-subtle {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-subtle);
+}
+
+/* text-caption replaces the old .text-muted class. Renamed to avoid clashing
+   with the --text-muted color role (the old name conflated style and color). */
+@utility text-caption {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-subtle);
+}
+
+/* ── Skeleton shimmer keyframe ──────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: 150%; }
+  100% { background-position: -50%; }
+}
+
+/* ── Transitional component classes ──────────────────────────────────────────
+   Buttons: replaced by Button/IconButton primitives in Phase 2.
+   Input/textarea/skeleton/loading: transitional replacements for DaisyUI
+   classes used directly in component files. Removed screen-by-screen in
+   Phase 3 as each screen's primitive migration lands. */
 @layer components {
-  /* Buttons
-     Primary: strong CTA — filled dark.
-     Secondary: everything else interactive — subtle fill, no border, scales to any size.
-     Text: utility/nav links — no chrome. */
+  /* ── Buttons ── */
   .btn-primary {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
-    transition: opacity var(--duration-fast) var(--ease);
+    transition: opacity var(--duration-fast) var(--ease-soft);
     @apply inline-flex items-center justify-center cursor-pointer bg-base-content px-5 py-2.5 text-sm font-medium text-base-100 disabled:opacity-40 hover:opacity-80 active:opacity-70;
   }
+
   .btn-soft {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
     border: none;
-    transition: all var(--duration-fast) var(--ease);
+    transition: all var(--duration-fast) var(--ease-soft);
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm cursor-pointer select-none whitespace-nowrap bg-base-200 text-base-content/70 font-medium hover:bg-base-300 hover:text-base-content active:opacity-70 disabled:opacity-40 disabled:pointer-events-none;
   }
   .btn-soft[data-active="true"] {
     @apply bg-base-content text-base-100;
   }
+
   .btn-text {
     font-family: var(--font-sans);
-    transition: color var(--duration-fast) var(--ease);
+    transition: color var(--duration-fast) var(--ease-soft);
     @apply cursor-pointer text-sm text-base-content/50 underline-offset-2 disabled:opacity-40 hover:text-base-content hover:underline;
   }
 
-  /* Inputs */
-  .input-field {
+  /* ── Input ──
+     Replaces DaisyUI .input and the old .input-field (which used @apply input).
+     SignInForm password field uses .input directly; email field uses .input-field. */
+  .input-field,
+  .input {
     font-family: var(--font-sans);
     border-radius: var(--radius-md);
-    @apply input w-full text-sm focus:outline-none disabled:opacity-50;
+    cursor: text;
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--surface);
+    height: 2.5rem;
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    border: 1px solid color-mix(in oklab, var(--text) 20%, transparent);
+    box-shadow: 0 1px color-mix(in oklab, var(--border) 30%, transparent) inset;
+
+    &:focus,
+    &:focus-within {
+      outline: 2px solid var(--text);
+      outline-offset: 2px;
+    }
+    &:disabled,
+    &[disabled] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    &::placeholder {
+      color: color-mix(in oklab, var(--text-subtle) 70%, transparent);
+    }
+  }
+  .input-field {
+    width: 100%;
   }
 
-  /* Typography */
-  .text-body {
+  /* ── Textarea ──
+     Replaces DaisyUI .textarea and .textarea-bordered (the latter is a no-op
+     in DaisyUI v5 since .textarea already has a border). */
+  .textarea {
     font-family: var(--font-sans);
-    @apply text-sm text-base-content/70;
+    border-radius: var(--radius-md);
+    appearance: none;
+    display: block;
+    background-color: var(--surface);
+    width: 100%;
+    min-height: 5rem;
+    padding-block: 0.5rem;
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text);
+    border: 1px solid color-mix(in oklab, var(--text) 20%, transparent);
+    box-shadow: 0 1px color-mix(in oklab, var(--border) 30%, transparent) inset;
+
+    &:focus {
+      outline: 2px solid var(--text);
+      outline-offset: 2px;
+    }
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    &::placeholder {
+      color: color-mix(in oklab, var(--text-subtle) 70%, transparent);
+    }
   }
-  .text-subtle {
-    font-family: var(--font-sans);
-    @apply text-sm text-base-content/50;
+  .textarea-bordered {
+    /* no-op: border already present on .textarea */
   }
-  .text-muted {
-    font-family: var(--font-sans);
-    @apply text-xs text-base-content/50;
+
+  /* ── Skeleton ──
+     Replaces DaisyUI .skeleton across 4 component files. */
+  .skeleton {
+    border-radius: var(--radius-lg);
+    background-color: var(--border);
+    background-image: linear-gradient(
+      105deg,
+      transparent 0% 40%,
+      var(--surface) 50%,
+      transparent 60% 100%
+    );
+    background-position-x: -50%;
+    background-size: 200%;
+    animation: 1.8s ease-in-out infinite skeleton-shimmer;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation-duration: 15s;
+    }
   }
-  .heading-page {
-    font-family: var(--font-sans);
-    @apply text-4xl font-semibold tracking-tight md:text-5xl;
+
+  /* ── Loading spinner ──
+     Replaces DaisyUI .loading.loading-spinner.loading-sm in SignInForm. */
+  .loading {
+    pointer-events: none;
+    aspect-ratio: 1;
+    vertical-align: middle;
+    width: 1.5rem;
+    background-color: currentColor;
+    display: inline-block;
+    mask-image: url("data:image/svg+xml,%3Csvg width='24' height='24' stroke='black' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg transform-origin='center'%3E%3Ccircle cx='12' cy='12' r='9.5' fill='none' stroke-width='3' stroke-linecap='round'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 12 12' to='360 12 12' dur='2s' repeatCount='indefinite'/%3E%3Canimate attributeName='stroke-dasharray' values='0,150%3B42,150%3B42,150' keyTimes='0%3B0.475%3B1' dur='1.5s' repeatCount='indefinite'/%3E%3Canimate attributeName='stroke-dashoffset' values='0%3B-16%3B-59' keyTimes='0%3B0.475%3B1' dur='1.5s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/g%3E%3C/svg%3E");
+    mask-position: 50%;
+    mask-size: 100%;
+    mask-repeat: no-repeat;
   }
-  .heading-modal {
-    font-family: var(--font-serif);
-    @apply text-lg font-semibold;
+  .loading-spinner {
+    /* same mask as .loading — DaisyUI .loading-spinner is the default style */
   }
-  /* Article headlines — the one place serif lives */
-  .heading-article {
-    font-family: var(--font-serif);
-    @apply text-xl font-semibold leading-snug tracking-tight;
+  .loading-sm {
+    width: 1.25rem;
   }
 }

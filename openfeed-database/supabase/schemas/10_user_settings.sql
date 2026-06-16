@@ -2,7 +2,7 @@ create table "user_settings" (
     "user_id" uuid not null references auth.users(id) on delete cascade,
     "email_notification" boolean not null default true,
     "timezone" text not null default 'UTC',
-    "color_theme" text not null default 'cupcake',
+    "color_theme" text not null default 'light',
     primary key (user_id)
 );
 
