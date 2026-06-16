@@ -6,7 +6,7 @@ interface SearchBarProps {
 
 export default function SearchBar({
   onSearchQueryChange,
-}: SearchFilterBarProps) {
+}: SearchBarProps) {
   const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
