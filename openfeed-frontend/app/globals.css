@@ -87,8 +87,7 @@ body:has(dialog[open]) {
   /* standard text input — search fields, form inputs */
   .input-field {
     font-family: var(--font-sans);
-    border-radius: var(--radius-md);
-    @apply input w-full text-sm focus:outline-none disabled:opacity-50;
+    @apply w-full rounded-sm bg-base-200 border border-base-300 px-3 h-9.5 text-sm text-base-content placeholder:text-base-content-4 focus:outline-none focus:ring-1 focus:ring-base-content/35 disabled:opacity-50;
   }
   /* default paragraph / body copy */
   .text-body {

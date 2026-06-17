@@ -8,7 +8,6 @@ import {
 } from "@/lib/supabase/queries/user_settings";
 
 import { Footer, FooterSkeleton } from "@/components/Footer";
-import { ThemedLogo } from "@/components/ThemedLogo";
 
 // ---------------------------------------------------------------------------
 // Shared async sub-components
@@ -57,10 +56,6 @@ export default function FeedLayout({
 }) {
   return (
     <div className="flex flex-col flex-1">
-      <div className="flex justify-center">
-        <ThemedLogo />
-      </div>
-
       {children}
 
       <div className="min-h-4 flex-1" />

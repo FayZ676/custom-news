@@ -91,7 +91,7 @@ export function InterestsManager({
                 : "Add another interest..."
             }
             disabled={isAdding}
-            className="flex-1 rounded-sm bg-base-200 border border-base-300 px-3 h-9.5 text-sm text-base-content placeholder:text-base-content-4 focus:outline-none focus:ring-1 focus:ring-base-content/35 disabled:opacity-50"
+            className="input-field flex-1"
           />
           <button
             onClick={() => void handleAdd()}

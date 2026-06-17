@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 
 import { Geist, Lora } from "next/font/google";
+import { SplashScreen } from "@/components/SplashScreen";
 
 import "./globals.css";
 
@@ -75,6 +76,7 @@ export default function RootLayout({
         className={`${geist.variable} ${lora.variable} antialiased max-w-4xl mx-auto p-4 min-h-screen flex flex-col`}
         style={{ fontFamily: "var(--font-geist)" }}
       >
+        <SplashScreen />
         {children}
         <Analytics />
       </body>
