@@ -6,8 +6,10 @@ import {
   addUserInterest,
   getUserInterests,
   removeUserInterest,
+  updateUserInterest,
   UserInterest,
 } from "@/lib/supabase/queries/user_interests";
+import { NewsQueryPayload } from "@/lib/interests/refine";
 import { ingestArticlesForInterests } from "@/lib/articles/ingest";
 import {
   deleteAllUserArticles,
@@ -23,6 +25,23 @@ import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
 import type { FeedDefinition } from "@/lib/providers/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/supabase.types";
+
+function buildQueryPayload(
+  all: string[],
+  any: string[],
+  sources: string[],
+): NewsQueryPayload {
+  return {
+    q: null,
+    qInTitle: null,
+    category: null,
+    country: null,
+    timeframe: null,
+    all,
+    any,
+    sources,
+  };
+}
 
 async function getSubscribedFeeds(
   supabase: SupabaseClient<Database>,
@@ -87,7 +106,11 @@ export async function unsubscribeSourceAction(
 ): Promise<void> {
   const supabase = await createClient();
   await removeUserSource(supabase, userId, sourceKey);
-  await deleteUserArticlesBySourceKey(createServiceRoleClient(), userId, sourceKey);
+  await deleteUserArticlesBySourceKey(
+    createServiceRoleClient(),
+    userId,
+    sourceKey,
+  );
 }
 
 export async function removeInterestAction(
@@ -96,4 +119,51 @@ export async function removeInterestAction(
 ): Promise<void> {
   const supabase = await createClient();
   await removeUserInterest(supabase, userId, interestId);
+}
+
+export async function deleteQueryAction(
+  userId: string,
+  interestId: string,
+): Promise<void> {
+  const supabase = await createClient();
+  await removeUserInterest(supabase, userId, interestId);
+  await rebuildFeedAction(userId);
+}
+
+export async function saveQueryAction(
+  userId: string,
+  name: string,
+  all: string[],
+  any: string[],
+  sources: string[] = [],
+): Promise<UserInterest> {
+  const supabase = await createClient();
+  const interest = await addUserInterest(
+    supabase,
+    userId,
+    name,
+    buildQueryPayload(all, any, sources),
+  );
+  const feeds = await getSubscribedFeeds(supabase, userId);
+  await ingestArticlesForInterests(userId, [interest], feeds);
+  return interest;
+}
+
+export async function updateQueryAction(
+  userId: string,
+  interestId: string,
+  name: string,
+  all: string[],
+  any: string[],
+  sources: string[] = [],
+): Promise<void> {
+  const supabase = await createClient();
+  await updateUserInterest(
+    supabase,
+    userId,
+    interestId,
+    name,
+    buildQueryPayload(all, any, sources),
+  );
+  await rebuildFeedAction(userId);
 }

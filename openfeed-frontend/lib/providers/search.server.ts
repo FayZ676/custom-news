@@ -20,9 +20,13 @@ export async function searchProviders(
   subscribedFeeds: FeedDefinition[] = [],
   cache: FeedCache = new Map(),
 ): Promise<FeedArticle[]> {
+  const sourceFilter = payload.sources ?? [];
+  const useAll = sourceFilter.length === 0;
   const providers = [
-    newsDataProvider,
-    ...subscribedFeeds.map((feed) => createRssProvider(feed, cache)),
+    ...(useAll || sourceFilter.includes(newsDataProvider.key) ? [newsDataProvider] : []),
+    ...subscribedFeeds
+      .filter((f) => useAll || sourceFilter.includes(f.key))
+      .map((feed) => createRssProvider(feed, cache)),
   ];
 
   const resultsByProvider = await Promise.all(

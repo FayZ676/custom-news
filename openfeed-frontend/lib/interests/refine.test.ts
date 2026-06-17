@@ -12,6 +12,9 @@ const base: NewsQueryPayload = {
   category: null,
   country: null,
   timeframe: null,
+  all: [],
+  any: [],
+  sources: [],
 };
 
 describe("normalizeNewsQueryPayload", () => {

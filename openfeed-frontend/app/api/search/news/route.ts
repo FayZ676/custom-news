@@ -26,6 +26,9 @@ export async function POST(request: Request) {
       category: null,
       country: null,
       timeframe: null,
+      all: [],
+      sources: [],
+      any: [],
     },
     subscribedFeeds,
   );

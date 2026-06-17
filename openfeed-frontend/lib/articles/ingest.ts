@@ -10,16 +10,21 @@ import {
   insertUserArticles,
   NewUserArticle,
 } from "@/lib/supabase/queries/user_articles";
+import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
 import type { NewsQueryPayload } from "@/lib/interests/refine";
 import type { UserInterest } from "@/lib/supabase/queries/user_interests";
 
 function interestToPayload(interest: UserInterest): NewsQueryPayload {
+  if (interest.query_payload) return interest.query_payload;
   return {
     q: interest.interest_text,
     qInTitle: null,
     category: null,
     country: null,
     timeframe: null,
+    all: [],
+    any: [],
+    sources: [],
   };
 }
 
@@ -30,9 +35,22 @@ async function fetchUniqueArticlesForInterests(
   subscribedFeeds: FeedDefinition[],
   cache: FeedCache,
 ): Promise<AttributedArticle[]> {
+  const subscribedKeys = new Set(subscribedFeeds.map((f) => f.key));
+  const extraKeys = new Set<string>();
+  for (const interest of interests) {
+    for (const key of interest.query_payload?.sources ?? []) {
+      if (key !== "newsdata" && !subscribedKeys.has(key)) extraKeys.add(key);
+    }
+  }
+  const supabaseForSources = createServiceRoleClient();
+  const extraFeeds = extraKeys.size > 0
+    ? await getGlobalSourcesByKeys(supabaseForSources, [...extraKeys])
+    : [];
+  const allFeeds = extraFeeds.length > 0 ? [...subscribedFeeds, ...extraFeeds] : subscribedFeeds;
+
   const resultsByInterest = await Promise.all(
     interests.map((interest) =>
-      searchProviders(interestToPayload(interest), subscribedFeeds, cache),
+      searchProviders(interestToPayload(interest), allFeeds, cache),
     ),
   );
 

@@ -61,14 +61,37 @@ export async function addUserInterest(
   supabase: SupabaseClient<Database>,
   userId: string,
   interestText: string,
+  queryPayload?: NewsQueryPayload | null,
 ): Promise<UserInterest> {
   const { data, error } = await (supabase as any)
     .from("user_interests")
     .insert({
       user_id: userId,
       interest_text: interestText,
-      query_payload: null,
+      query_payload: queryPayload ?? null,
     })
+    .select("id, user_id, interest_text, query_payload, created_at")
+    .single();
+
+  if (error) throw new Error(error.message);
+  return data as UserInterest;
+}
+
+export async function updateUserInterest(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  interestId: string,
+  interestText: string,
+  queryPayload: NewsQueryPayload | null,
+): Promise<UserInterest> {
+  const { data, error } = await (supabase as any)
+    .from("user_interests")
+    .update({
+      interest_text: interestText,
+      query_payload: queryPayload,
+    })
+    .eq("user_id", userId)
+    .eq("id", interestId)
     .select("id, user_id, interest_text, query_payload, created_at")
     .single();
 

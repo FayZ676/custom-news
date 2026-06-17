@@ -26,6 +26,9 @@ export const NewsQueryPayloadSchema = z.object({
   category: z.enum(NEWSDATA_CATEGORIES).nullable(),
   country: z.string().nullable(),
   timeframe: z.string().nullable(),
+  all: z.array(z.string()).default([]),
+  any: z.array(z.string()).default([]),
+  sources: z.array(z.string()).default([]),
 });
 
 export type NewsQueryPayload = z.infer<typeof NewsQueryPayloadSchema>;
@@ -75,10 +78,20 @@ function normalizeCountry(value: string | null): string | null {
   return codes.length > 0 ? codes.join(",") : null;
 }
 
+export function buildQueryFromClauses(all: string[], any: string[]): string | null {
+  const allPart = all.length > 0 ? all.join(" AND ") : null;
+  const anyPart = any.length > 0 ? (any.length === 1 ? any[0] : `(${any.join(" OR ")})`) : null;
+  if (allPart && anyPart) return `${allPart} AND ${anyPart}`;
+  return allPart ?? anyPart ?? null;
+}
+
 export function normalizeNewsQueryPayload(
   payload: NewsQueryPayload,
 ): NewsQueryPayload {
-  const q = cleanQueryString(payload.q);
+  const all = payload.all ?? [];
+  const any = payload.any ?? [];
+  const clauseQ = buildQueryFromClauses(all, any);
+  const q = cleanQueryString(payload.q ?? clauseQ);
   const qInTitle = cleanQueryString(payload.qInTitle);
 
   return {
@@ -87,6 +100,9 @@ export function normalizeNewsQueryPayload(
     category: payload.category,
     country: normalizeCountry(payload.country),
     timeframe: normalizeTimeframe(payload.timeframe),
+    all,
+    any,
+    sources: payload.sources ?? [],
   };
 }
 

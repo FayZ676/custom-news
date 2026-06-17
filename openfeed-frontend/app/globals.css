@@ -42,8 +42,8 @@ body:has(dialog[open]) {
    1  — icon-label gap within compact elements
    2  — tight rows, small margins
    3  — form stacks, input/button padding
-   4  — primary gap: lists, card rows, page sections
-   6  — section separation, modal padding
+   4  — primary gap: lists, card rows, page sections, modal content gaps
+   6  — modal/panel shell padding
    8  — major layout sections
    16 — page-level (hero padding, nav clearance)        */
 
