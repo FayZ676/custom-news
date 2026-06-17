@@ -29,7 +29,7 @@ export default function OnboardingQueryBuilder({ userId }: { userId: string }) {
       {error && <p className="text-error text-sm text-center pt-4">{error}</p>}
       <SentenceQueryBuilder
         onSave={handleSave}
-        onBack={() => router.push("/")}
+        onBack={() => router.push("/feed")}
         isSaving={isSaving}
       />
     </>

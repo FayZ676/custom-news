@@ -34,7 +34,7 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
 
   return (
     <div
-      className="input-field flex flex-wrap gap-1.5 min-h-10.5 cursor-text"
+      className="input-field h-auto flex flex-wrap gap-1.5 min-h-10.5 py-2 cursor-text"
       onClick={() => inputRef.current?.focus()}
     >
       {tags.map((tag) => (
@@ -44,7 +44,10 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
         >
           {tag}
           <button
-            onClick={(e) => { e.stopPropagation(); onChange(tags.filter((t) => t !== tag)); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange(tags.filter((t) => t !== tag));
+            }}
             aria-label={`Remove ${tag}`}
             className="text-muted hover:text-base-content leading-none"
           >
@@ -71,7 +74,12 @@ interface SentenceQueryBuilderProps {
   initialAny?: string[];
   initialSources?: string[];
   availableSources?: SourceOption[];
-  onSave: (name: string, all: string[], any: string[], sources: string[]) => void | Promise<void>;
+  onSave: (
+    name: string,
+    all: string[],
+    any: string[],
+    sources: string[],
+  ) => void | Promise<void>;
   onBack: () => void;
   onDelete?: () => void | Promise<void>;
   isSaving?: boolean;
@@ -91,7 +99,8 @@ export default function SentenceQueryBuilder({
   const [name, setName] = useState(initialName);
   const [allTerms, setAllTerms] = useState<string[]>(initialAll);
   const [anyTerms, setAnyTerms] = useState<string[]>(initialAny);
-  const [selectedSources, setSelectedSources] = useState<string[]>(initialSources);
+  const [selectedSources, setSelectedSources] =
+    useState<string[]>(initialSources);
 
   const toggleSource = (key: string) =>
     setSelectedSources((prev) =>
@@ -99,82 +108,80 @@ export default function SentenceQueryBuilder({
     );
 
   const canSave =
-    name.trim().length > 0 && (allTerms.length > 0 || anyTerms.length > 0) && !isSaving;
+    name.trim().length > 0 &&
+    (allTerms.length > 0 || anyTerms.length > 0) &&
+    !isSaving;
 
   return (
     <div className="min-h-screen bg-base-100">
-      <div className="px-6 py-4 border-b border-base-300">
-        <button onClick={onBack} className="btn-text no-underline">
-          ← Back
-        </button>
-      </div>
+      <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col gap-4">
 
-      <div className="max-w-2xl mx-auto px-6 py-14 flex flex-col gap-8">
-        <div className="flex flex-col gap-2">
-          <label className="text-muted uppercase tracking-widest font-bold text-xs">
-            Query name
-          </label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Gaming Hardware"
-            className="input-field max-w-xs"
-          />
-        </div>
+        {/* Name — serif title, like naming a piece */}
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Query name"
+          className="w-full bg-transparent border-0 outline-none font-serif text-2xl font-semibold text-base-content placeholder:text-base-content-4"
+        />
 
-        <div className="flex flex-col gap-2">
-          <label className="text-muted uppercase tracking-widest font-bold text-xs">
-            All keywords
-          </label>
-          <p className="text-muted text-sm m-0">Articles must mention every one of these.</p>
-          <TagInput
-            tags={allTerms}
-            onChange={setAllTerms}
-            placeholder="Type a keyword and press Enter or comma…"
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-muted uppercase tracking-widest font-bold text-xs">
-            Any keywords
-          </label>
-          <p className="text-muted text-sm m-0">Articles must mention at least one of these.</p>
-          <TagInput
-            tags={anyTerms}
-            onChange={setAnyTerms}
-            placeholder="Type a keyword and press Enter or comma…"
-          />
-        </div>
-
-        {availableSources && availableSources.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <label className="text-muted uppercase tracking-widest font-bold text-xs">
-              Sources
-            </label>
-            <p className="text-muted text-sm m-0">Leave all unselected to search everywhere.</p>
-            <div className="flex flex-wrap gap-2">
-              {availableSources.map((source) => (
-                <button
-                  key={source.key}
-                  data-active={selectedSources.includes(source.key) ? "true" : "false"}
-                  onClick={() => toggleSource(source.key)}
-                  className="btn-soft"
-                >
-                  {source.label}
-                </button>
-              ))}
+        {/* Fields as editorial rows */}
+        <div className="flex flex-col border-t border-base-300">
+          <div className="flex flex-col gap-2 py-4 border-b border-base-300">
+            <div>
+              <span className="text-base-content font-semibold text-sm">Required words</span>
+              <p className="text-muted text-xs mt-0.5">Every term must appear in matching articles</p>
             </div>
+            <TagInput
+              tags={allTerms}
+              onChange={setAllTerms}
+              placeholder="Type and press Enter…"
+            />
           </div>
-        )}
 
-        <div className="border-t border-base-300 pt-5 flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-2 py-4 border-b border-base-300">
+            <div>
+              <span className="text-base-content font-semibold text-sm">Optional words</span>
+              <p className="text-muted text-xs mt-0.5">At least one term must appear in matching articles</p>
+            </div>
+            <TagInput
+              tags={anyTerms}
+              onChange={setAnyTerms}
+              placeholder="Type and press Enter…"
+            />
+          </div>
+
+          {availableSources && availableSources.length > 0 && (
+            <div className="flex flex-col gap-2 py-4 border-b border-base-300">
+              <div>
+                <span className="text-base-content font-semibold text-sm">Sources</span>
+                <p className="text-muted text-xs mt-0.5">Limit results to articles from selected sources</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {availableSources.map((source) => (
+                  <button
+                    key={source.key}
+                    data-active={
+                      selectedSources.includes(source.key) ? "true" : "false"
+                    }
+                    onClick={() => toggleSource(source.key)}
+                    className="btn-soft"
+                  >
+                    {source.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between gap-3">
           <div>
             {onDelete && (
               <button
                 onClick={() => void onDelete()}
                 className="btn-text text-error hover:text-error"
               >
-                Delete query
+                Delete
               </button>
             )}
           </div>
@@ -184,12 +191,13 @@ export default function SentenceQueryBuilder({
             </button>
             <button
               onClick={() => {
-                if (canSave) void onSave(name.trim(), allTerms, anyTerms, selectedSources);
+                if (canSave)
+                  void onSave(name.trim(), allTerms, anyTerms, selectedSources);
               }}
               disabled={!canSave}
               className="btn-primary"
             >
-              {isSaving ? "Saving…" : "Save query"}
+              {isSaving ? "Saving…" : "Save"}
             </button>
           </div>
         </div>

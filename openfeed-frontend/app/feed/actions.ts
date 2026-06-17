@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createShareLink } from "@/lib/supabase/queries/global_share_links";
 import {
@@ -128,6 +129,7 @@ export async function deleteQueryAction(
   const supabase = await createClient();
   await removeUserInterest(supabase, userId, interestId);
   await rebuildFeedAction(userId);
+  revalidatePath("/feed");
 }
 
 export async function saveQueryAction(
@@ -146,6 +148,7 @@ export async function saveQueryAction(
   );
   const feeds = await getSubscribedFeeds(supabase, userId);
   await ingestArticlesForInterests(userId, [interest], feeds);
+  revalidatePath("/feed");
   return interest;
 }
 
@@ -166,4 +169,5 @@ export async function updateQueryAction(
     buildQueryPayload(all, any, sources),
   );
   await rebuildFeedAction(userId);
+  revalidatePath("/feed");
 }

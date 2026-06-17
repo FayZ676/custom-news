@@ -38,7 +38,6 @@ export function QueryBuilderPageContent({
         await saveQueryAction(userId, name, all, any, sources);
       }
       router.push("/feed");
-      router.refresh();
     } finally {
       setIsSaving(false);
     }
@@ -48,7 +47,6 @@ export function QueryBuilderPageContent({
     ? async () => {
         await deleteQueryAction(userId, interestId);
         router.push("/feed");
-        router.refresh();
       }
     : undefined;
 
