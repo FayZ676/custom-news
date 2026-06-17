@@ -69,6 +69,8 @@ function TagInput({ tags, onChange, placeholder }: TagInputProps) {
 }
 
 interface SentenceQueryBuilderProps {
+  title?: string;
+  subtitle?: string;
   initialName?: string;
   initialAll?: string[];
   initialAny?: string[];
@@ -86,6 +88,8 @@ interface SentenceQueryBuilderProps {
 }
 
 export default function SentenceQueryBuilder({
+  title,
+  subtitle,
   initialName = "",
   initialAll = [],
   initialAny = [],
@@ -115,6 +119,16 @@ export default function SentenceQueryBuilder({
   return (
     <div className="min-h-screen bg-base-100">
       <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col gap-4">
+        {(title || subtitle) && (
+          <div className="flex flex-col gap-1 mb-4">
+            {title && (
+              <h1 className="font-serif text-3xl font-semibold text-base-content">
+                {title}
+              </h1>
+            )}
+            {subtitle && <p className="text-muted text-sm">{subtitle}</p>}
+          </div>
+        )}
 
         {/* Name — serif title, like naming a piece */}
         <input
@@ -128,8 +142,12 @@ export default function SentenceQueryBuilder({
         <div className="flex flex-col border-t border-base-300">
           <div className="flex flex-col gap-2 py-4 border-b border-base-300">
             <div>
-              <span className="text-base-content font-semibold text-sm">Required words</span>
-              <p className="text-muted text-xs mt-0.5">Every term must appear in matching articles</p>
+              <span className="text-base-content font-semibold text-sm">
+                Required words
+              </span>
+              <p className="text-muted text-xs mt-0.5">
+                Every term must appear in matching articles
+              </p>
             </div>
             <TagInput
               tags={allTerms}
@@ -140,8 +158,12 @@ export default function SentenceQueryBuilder({
 
           <div className="flex flex-col gap-2 py-4 border-b border-base-300">
             <div>
-              <span className="text-base-content font-semibold text-sm">Optional words</span>
-              <p className="text-muted text-xs mt-0.5">At least one term must appear in matching articles</p>
+              <span className="text-base-content font-semibold text-sm">
+                Optional words
+              </span>
+              <p className="text-muted text-xs mt-0.5">
+                At least one term must appear in matching articles
+              </p>
             </div>
             <TagInput
               tags={anyTerms}
@@ -153,8 +175,12 @@ export default function SentenceQueryBuilder({
           {availableSources && availableSources.length > 0 && (
             <div className="flex flex-col gap-2 py-4 border-b border-base-300">
               <div>
-                <span className="text-base-content font-semibold text-sm">Sources</span>
-                <p className="text-muted text-xs mt-0.5">Limit results to articles from selected sources</p>
+                <span className="text-base-content font-semibold text-sm">
+                  Sources
+                </span>
+                <p className="text-muted text-xs mt-0.5">
+                  Limit results to articles from selected sources
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {availableSources.map((source) => (

@@ -28,6 +28,8 @@ export default function OnboardingQueryBuilder({ userId }: { userId: string }) {
     <>
       {error && <p className="text-error text-sm text-center pt-4">{error}</p>}
       <SentenceQueryBuilder
+        title="What are you interested in?"
+        subtitle="Add your first interest to start personalizing your feed."
         onSave={handleSave}
         onBack={() => router.push("/feed")}
         isSaving={isSaving}
