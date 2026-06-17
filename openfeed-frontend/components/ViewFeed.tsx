@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { FeedArticle } from "@/lib/newsSearch";
 import { timeAgo, toTitleCase } from "@/lib/utils";
@@ -20,7 +19,6 @@ export function ViewFeed({
   emptyStateMessage,
   shareable = true,
 }: ViewFeedProps) {
-  const router = useRouter();
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
 
   const markImageFailed = useCallback((id: string) => {
@@ -37,14 +35,6 @@ export function ViewFeed({
   const articlesWithoutImages = articles
     .filter((article) => !hasRenderableImage(article))
     .sort((a, b) => (a.summary ? 0 : 1) - (b.summary ? 0 : 1));
-
-  function handleArticleClick(article: FeedArticle) {
-    if (shareable) {
-      router.push(`/feed/article/${article.id}`);
-    } else {
-      window.open(article.url, "_blank", "noopener,noreferrer");
-    }
-  }
 
   if (articles.length === 0) {
     return (
@@ -65,7 +55,8 @@ export function ViewFeed({
               imageUrl={article.image_url}
               summary={article.summary}
               meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
-              onClick={() => handleArticleClick(article)}
+              href={shareable ? `/feed/article/${article.id}` : article.url}
+              external={!shareable}
               onImageError={() => markImageFailed(article.id)}
             />
           ))}
@@ -80,7 +71,8 @@ export function ViewFeed({
               imageUrl={article.image_url}
               summary={article.summary}
               meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
-              onClick={() => handleArticleClick(article)}
+              href={shareable ? `/feed/article/${article.id}` : article.url}
+              external={!shareable}
             />
           ))}
         </ol>

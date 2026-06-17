@@ -205,6 +205,7 @@ export default function SentenceQueryBuilder({
             {onDelete && (
               <button
                 onClick={() => void onDelete()}
+                disabled={isSaving}
                 className="btn-text text-error hover:text-error"
               >
                 Delete
@@ -212,7 +213,7 @@ export default function SentenceQueryBuilder({
             )}
           </div>
           <div className="flex gap-3">
-            <button onClick={onBack} className="btn-soft">
+            <button onClick={onBack} disabled={isSaving} className="btn-soft">
               Discard
             </button>
             <button

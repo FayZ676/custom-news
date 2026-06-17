@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
-import { ViewFeed } from "@/components/ViewFeed";
+import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
 import { UserArticle } from "@/lib/supabase/queries/user_articles";
 import {
   FeedArticle,
@@ -57,26 +57,37 @@ export function FeedPageContent({ articles, interests }: FeedPageContentProps) {
   }, [isSearchActive, searchQuery]);
 
   const displayedArticles = isSearchActive ? searchArticles : articles;
+  const showSearchLoading = isSearching && isSearchActive;
+  const showSkeleton = showSearchLoading && searchArticles.length === 0;
 
   return (
     <>
       <SearchFilterBar
         interests={interests}
         onSearchQueryChange={handleSearchQueryChange}
+        isSearching={showSearchLoading}
       />
       <div>
-        {isSearching && isSearchActive ? (
-          <p className="text-subtle italic">Searching...</p>
+        {showSkeleton ? (
+          <ViewFeedSkeleton />
         ) : (
-          <ViewFeed
-            articles={displayedArticles}
-            shareable={!isSearchActive}
-            emptyStateMessage={
-              isSearchActive
-                ? "No matches found."
-                : "You're all caught up. Check back later."
+          <div
+            className={
+              showSearchLoading
+                ? "opacity-60 transition-opacity pointer-events-none"
+                : "transition-opacity"
             }
-          />
+          >
+            <ViewFeed
+              articles={displayedArticles}
+              shareable={!isSearchActive}
+              emptyStateMessage={
+                isSearchActive
+                  ? "No matches found."
+                  : "You're all caught up. Check back later."
+              }
+            />
+          </div>
         )}
       </div>
     </>

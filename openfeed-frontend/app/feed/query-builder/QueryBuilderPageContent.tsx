@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import SentenceQueryBuilder from "@/components/QueryBuilder/SentenceQueryBuilder";
@@ -27,26 +27,25 @@ export function QueryBuilderPageContent({
   availableSources,
 }: QueryBuilderPageContentProps) {
   const router = useRouter();
-  const [isSaving, setIsSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleSave = async (name: string, all: string[], any: string[], sources: string[]) => {
-    setIsSaving(true);
-    try {
+  const handleSave = (name: string, all: string[], any: string[], sources: string[]) => {
+    startTransition(async () => {
       if (interestId) {
         await updateQueryAction(userId, interestId, name, all, any, sources);
       } else {
         await saveQueryAction(userId, name, all, any, sources);
       }
       router.push("/feed");
-    } finally {
-      setIsSaving(false);
-    }
+    });
   };
 
   const handleDelete = interestId
-    ? async () => {
-        await deleteQueryAction(userId, interestId);
-        router.push("/feed");
+    ? () => {
+        startTransition(async () => {
+          await deleteQueryAction(userId, interestId);
+          router.push("/feed");
+        });
       }
     : undefined;
 
@@ -59,9 +58,9 @@ export function QueryBuilderPageContent({
       initialSources={initialSources}
       availableSources={availableSources}
       onSave={handleSave}
-      onBack={() => router.push("/feed")}
+      onBack={() => startTransition(() => router.push("/feed"))}
       onDelete={handleDelete}
-      isSaving={isSaving}
+      isSaving={isPending}
     />
   );
 }

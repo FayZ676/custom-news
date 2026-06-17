@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
 interface NewsItemCardProps {
@@ -9,7 +10,9 @@ interface NewsItemCardProps {
   summary?: string | null;
   meta?: string;
   isRead?: boolean;
-  onClick: () => void;
+  href?: string;
+  external?: boolean;
+  onClick?: () => void;
   onImageError?: () => void;
 }
 
@@ -19,6 +22,8 @@ export function NewsItemCard({
   summary,
   meta,
   isRead = false,
+  href,
+  external = false,
   onClick,
   onImageError,
 }: NewsItemCardProps) {
@@ -29,11 +34,8 @@ export function NewsItemCard({
 
   const opacityClass = isRead ? "opacity-50" : "";
 
-  return (
-    <li
-      className={`cursor-pointer py-4 border-b border-base-300 ${opacityClass}`}
-      onClick={onClick}
-    >
+  const content = (
+    <>
       <h2 className="heading-article line-clamp-2 hover:underline">{title}</h2>
       {hasImage ? (
         <div className="mt-3 grid grid-cols-[108px_1fr] gap-4 items-start">
@@ -65,6 +67,39 @@ export function NewsItemCard({
           </div>
         )
       )}
+    </>
+  );
+
+  const className = `block cursor-pointer py-4 border-b border-base-300 ${opacityClass}`;
+
+  if (href && external) {
+    return (
+      <li>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={className}
+        >
+          {content}
+        </a>
+      </li>
+    );
+  }
+
+  if (href) {
+    return (
+      <li>
+        <Link href={href} prefetch className={className}>
+          {content}
+        </Link>
+      </li>
+    );
+  }
+
+  return (
+    <li className={className} onClick={onClick}>
+      {content}
     </li>
   );
 }

@@ -9,11 +9,13 @@ import type { FilterModalHandle } from "./FilterModal";
 interface SearchFilterBarProps {
   interests: UserInterest[];
   onSearchQueryChange: (query: string) => void;
+  isSearching?: boolean;
 }
 
 export default function SearchFilterBar({
   interests,
   onSearchQueryChange,
+  isSearching = false,
 }: SearchFilterBarProps) {
   const filterModalRef = useRef<FilterModalHandle>(null);
   const [searchValue, setSearchValue] = useState("");
@@ -29,7 +31,7 @@ export default function SearchFilterBar({
   return (
     <div className="sticky top-0 z-30 bg-base-100 py-4 border-b border-base-300">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex-1">
+        <div className="relative flex-1">
           <input
             type="search"
             value={searchValue}
@@ -38,6 +40,12 @@ export default function SearchFilterBar({
             className="input-field"
             aria-label="Search articles"
           />
+          {isSearching && (
+            <span
+              className="loading loading-spinner loading-xs absolute right-3 top-1/2 -translate-y-1/2 text-subtle"
+              aria-hidden="true"
+            />
+          )}
         </div>
 
         <div className="relative shrink-0">

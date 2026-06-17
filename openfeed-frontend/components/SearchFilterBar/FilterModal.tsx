@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useImperativeHandle, useRef } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import Modal from "@/components/Modal";
@@ -25,7 +25,6 @@ function querySummary(interest: UserInterest): string {
 
 const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
   ({ interests }, ref) => {
-    const router = useRouter();
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     useImperativeHandle(ref, () => ({
@@ -33,23 +32,22 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
       close() { dialogRef.current?.close(); },
     }));
 
-    const navigate = (href: string) => {
-      dialogRef.current?.close();
-      router.push(href);
-    };
+    const closeDialog = () => dialogRef.current?.close();
 
     return (
       <Modal ref={dialogRef}>
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <span className="heading-modal">Your Queries</span>
-            <button
-              onClick={() => navigate("/feed/query-builder")}
+            <Link
+              href="/feed/query-builder"
+              prefetch
+              onClick={closeDialog}
               className="btn-soft"
             >
               <Plus size={14} />
               New query
-            </button>
+            </Link>
           </div>
 
           {interests.length === 0 ? (
@@ -59,17 +57,20 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
           ) : (
             <ul className="flex flex-col">
               {interests.map((interest) => (
-                <li
-                  key={interest.id}
-                  onClick={() => navigate(`/feed/query-builder?id=${interest.id}`)}
-                  className="py-3 border-b border-base-300 cursor-pointer"
-                >
-                  <p className="heading-article line-clamp-1 hover:underline">
-                    {interest.interest_text}
-                  </p>
-                  <p className="text-muted truncate mt-1">
-                    {querySummary(interest)}
-                  </p>
+                <li key={interest.id}>
+                  <Link
+                    href={`/feed/query-builder?id=${interest.id}`}
+                    prefetch
+                    onClick={closeDialog}
+                    className="block py-3 border-b border-base-300 cursor-pointer"
+                  >
+                    <p className="heading-article line-clamp-1 hover:underline">
+                      {interest.interest_text}
+                    </p>
+                    <p className="text-muted truncate mt-1">
+                      {querySummary(interest)}
+                    </p>
+                  </Link>
                 </li>
               ))}
             </ul>
