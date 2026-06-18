@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 
 interface SourceOption {
   key: string;
@@ -106,6 +106,9 @@ export default function SentenceQueryBuilder({
   const [anyTerms, setAnyTerms] = useState<string[]>(initialAny);
   const [selectedSources, setSelectedSources] =
     useState<string[]>(initialSources);
+  const [additionalOptionsOpen, setAdditionalOptionsOpen] = useState(
+    initialSources.length > 0,
+  );
 
   const toggleSource = (key: string) =>
     setSelectedSources((prev) =>
@@ -185,29 +188,49 @@ export default function SentenceQueryBuilder({
           </div>
 
           {availableSources && availableSources.length > 0 && (
-            <div className="flex flex-col gap-2 py-4 border-b border-base-300">
-              <div>
+            <div className="flex flex-col border-b border-base-300">
+              <button
+                onClick={() => setAdditionalOptionsOpen((open) => !open)}
+                className="flex items-center justify-between py-4 text-left"
+              >
                 <span className="text-base-content font-semibold text-sm">
-                  Sources
+                  Additional options
                 </span>
-                <p className="text-muted text-xs mt-0.5">
-                  Limit results to articles from selected sources
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {availableSources.map((source) => (
-                  <button
-                    key={source.key}
-                    data-active={
-                      selectedSources.includes(source.key) ? "true" : "false"
-                    }
-                    onClick={() => toggleSource(source.key)}
-                    className="btn-soft"
-                  >
-                    {source.label}
-                  </button>
-                ))}
-              </div>
+                <ChevronDown
+                  size={16}
+                  className={`text-muted transition-transform ${
+                    additionalOptionsOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {additionalOptionsOpen && (
+                <div className="flex flex-col gap-2 pb-4">
+                  <div>
+                    <span className="text-base-content font-semibold text-sm">
+                      Sources
+                    </span>
+                    <p className="text-muted text-xs mt-0.5">
+                      Limit results to articles from selected sources
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {availableSources.map((source) => (
+                      <button
+                        key={source.key}
+                        data-active={
+                          selectedSources.includes(source.key)
+                            ? "true"
+                            : "false"
+                        }
+                        onClick={() => toggleSource(source.key)}
+                        className="btn-soft"
+                      >
+                        {source.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
