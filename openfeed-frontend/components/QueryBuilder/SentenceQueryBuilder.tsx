@@ -70,7 +70,7 @@ export default function SentenceQueryBuilder({
           className="flex items-center gap-2 text-muted hover:text-base-content transition-colors w-fit"
         >
           <ArrowLeft size={16} />
-          <span className="text-sm">Back to feed</span>
+          <span className="text-sm">Back to your news</span>
         </button>
       )}
 

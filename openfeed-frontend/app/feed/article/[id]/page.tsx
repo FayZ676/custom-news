@@ -32,7 +32,7 @@ export default async function ArticlePage({
         className="flex items-center gap-2 text-muted hover:text-base-content transition-colors w-fit"
       >
         <ArrowLeft size={16} />
-        <span className="text-sm">Back to feed</span>
+        <span className="text-sm">Back to your news</span>
       </Link>
 
       <h1 className="heading-article">{toTitleCase(article.title)}</h1>

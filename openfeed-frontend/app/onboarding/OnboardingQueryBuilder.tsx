@@ -7,23 +7,16 @@ import { ArrowLeft } from "lucide-react";
 import TagInput from "@/components/QueryBuilder/TagInput";
 import { saveQueryAction } from "@/app/feed/actions";
 
-interface SourceOption {
-  key: string;
-  label: string;
-}
-
-const STEP_COUNT = 4;
+const STEP_COUNT = 3;
 const FADE_MS = 200;
 
 export default function OnboardingQueryBuilder({
   userId,
-  availableSources = [],
 }: {
   userId: string;
-  availableSources?: SourceOption[];
 }) {
   const router = useRouter();
-  // step -1 is the intro/welcome screen; 0–3 are the four wizard steps.
+  // step -1 is the intro/welcome screen; 0–2 are the three wizard steps.
   const [step, setStep] = useState(-1);
   const [visible, setVisible] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -32,12 +25,6 @@ export default function OnboardingQueryBuilder({
   const [name, setName] = useState("");
   const [allTerms, setAllTerms] = useState<string[]>([]);
   const [anyTerms, setAnyTerms] = useState<string[]>([]);
-  const [selectedSources, setSelectedSources] = useState<string[]>([]);
-
-  const toggleSource = (key: string) =>
-    setSelectedSources((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
 
   // Fade out, swap screen, fade back in.
   const goToStep = (next: number) => {
@@ -52,7 +39,7 @@ export default function OnboardingQueryBuilder({
     setIsSaving(true);
     setError(null);
     try {
-      await saveQueryAction(userId, name.trim(), allTerms, anyTerms, selectedSources);
+      await saveQueryAction(userId, name.trim(), allTerms, anyTerms, []);
       router.push("/feed");
     } catch {
       setError("Something went wrong saving your query. Please try again.");
@@ -101,35 +88,22 @@ export default function OnboardingQueryBuilder({
           {isIntro && (
             <div className="flex flex-col gap-3">
               <h1 className="font-serif text-4xl font-semibold text-base-content">
-                Let&apos;s build your first feed.
+                Let&apos;s find the news you actually want.
               </h1>
-              <p className="text-muted text-base leading-relaxed">
-                A feed is a saved search that pulls in news matching what you
-                care about. In the next few steps you&apos;ll name a topic,
-                choose the words that should appear in matching articles, and
-                optionally pick which sources to draw from.
-              </p>
-              <p className="text-muted text-base leading-relaxed">
-                It only takes a minute, and you can refine it anytime.
-              </p>
             </div>
           )}
 
           {step === 0 && (
             <div className="flex flex-col gap-2">
               <h1 className="font-serif text-3xl font-semibold text-base-content">
-                What are you interested in?
+                In a few words, what&apos;s something you&apos;re interested in?
               </h1>
-              <p className="text-muted text-sm">
-                Give your feed a name — a topic, a beat, a question you&apos;re
-                following.
-              </p>
               <input
                 autoFocus
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleNext()}
-                placeholder="e.g. AI policy, the Knicks, local elections…"
+                placeholder="e.g. the Knicks, Travel deals, ..."
                 className="mt-4 w-full bg-transparent border-0 border-b border-base-300 outline-none focus:border-base-content transition-colors font-serif text-2xl font-semibold text-base-content placeholder:text-base-content-4 pb-2"
               />
             </div>
@@ -138,12 +112,10 @@ export default function OnboardingQueryBuilder({
           {step === 1 && (
             <div className="flex flex-col gap-2">
               <h1 className="font-serif text-3xl font-semibold text-base-content">
-                What terms have to appear?
+                For articles about <span className="font-bold">{name}</span>,
+                what words or phrases <span className="underline">must</span>{" "}
+                show up?
               </h1>
-              <p className="text-muted text-sm">
-                Every term you add must appear in matching articles. Leave blank
-                if nothing is strictly required.
-              </p>
               <div className="mt-4">
                 <TagInput
                   tags={allTerms}
@@ -157,12 +129,10 @@ export default function OnboardingQueryBuilder({
           {step === 2 && (
             <div className="flex flex-col gap-2">
               <h1 className="font-serif text-3xl font-semibold text-base-content">
-                What terms might also appear?
+                For articles about <span className="font-bold">{name}</span>,
+                what words or phrases <span className="underline">could</span>{" "}
+                show up?
               </h1>
-              <p className="text-muted text-sm">
-                At least one of these terms will appear in matching articles.
-                Optional, but helps widen your feed.
-              </p>
               <div className="mt-4">
                 <TagInput
                   tags={anyTerms}
@@ -170,38 +140,6 @@ export default function OnboardingQueryBuilder({
                   placeholder="Type and press Enter…"
                 />
               </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="flex flex-col gap-2">
-              <h1 className="font-serif text-3xl font-semibold text-base-content">
-                Restrict to specific sources?
-              </h1>
-              <p className="text-muted text-sm">
-                Limit results to selected sources, or leave blank to draw from
-                everything.
-              </p>
-              {availableSources.length > 0 ? (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {availableSources.map((source) => (
-                    <button
-                      key={source.key}
-                      data-active={
-                        selectedSources.includes(source.key) ? "true" : "false"
-                      }
-                      onClick={() => toggleSource(source.key)}
-                      className="btn-soft"
-                    >
-                      {source.label}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted text-sm mt-4">
-                  No sources available to choose from.
-                </p>
-              )}
               {!canFinish && (
                 <p className="text-muted text-xs mt-4">
                   Add at least one required or optional term before finishing.
