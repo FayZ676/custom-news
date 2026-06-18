@@ -82,7 +82,7 @@ interface SentenceQueryBuilderProps {
     any: string[],
     sources: string[],
   ) => void | Promise<void>;
-  onBack: () => void;
+  onBack?: () => void;
   onDelete?: () => void | Promise<void>;
   isSaving?: boolean;
 }
@@ -213,9 +213,11 @@ export default function SentenceQueryBuilder({
             )}
           </div>
           <div className="flex gap-3">
-            <button onClick={onBack} disabled={isSaving} className="btn-soft">
-              Discard
-            </button>
+            {onBack && (
+              <button onClick={onBack} disabled={isSaving} className="btn-soft">
+                Discard
+              </button>
+            )}
             <button
               onClick={() => {
                 if (canSave)

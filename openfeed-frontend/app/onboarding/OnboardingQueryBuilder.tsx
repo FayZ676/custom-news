@@ -31,7 +31,6 @@ export default function OnboardingQueryBuilder({ userId }: { userId: string }) {
         title="What are you interested in?"
         subtitle="Add your first interest to start personalizing your feed."
         onSave={handleSave}
-        onBack={() => router.push("/feed")}
         isSaving={isSaving}
       />
     </>
