@@ -66,3 +66,14 @@ export default function SearchFilterBar({
     </div>
   );
 }
+
+export function SearchFilterBarSkeleton() {
+  return (
+    <div className="sticky top-0 z-30 bg-base-100 py-4 border-b border-base-300">
+      <div className="flex items-center justify-between gap-3">
+        <div className="skeleton h-9.5 flex-1 rounded-sm" />
+        <div className="skeleton h-9.5 w-20 shrink-0 rounded-md" />
+      </div>
+    </div>
+  );
+}

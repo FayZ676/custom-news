@@ -7,6 +7,7 @@ import { getUserArticles } from "@/lib/supabase/queries/user_articles";
 import { getUserInterests } from "@/lib/supabase/queries/user_interests";
 import { FeedPageContent } from "@/components/FeedPageContent";
 import { ViewFeedSkeleton } from "@/components/ViewFeed";
+import { SearchFilterBarSkeleton } from "@/components/SearchFilterBar/SearchFilterBar";
 
 async function ViewFeedContent() {
   const supabase = await createClient();
@@ -30,7 +31,14 @@ async function ViewFeedContent() {
 
 export default async function FeedPage() {
   return (
-    <Suspense fallback={<ViewFeedSkeleton />}>
+    <Suspense
+      fallback={
+        <>
+          <SearchFilterBarSkeleton />
+          <ViewFeedSkeleton />
+        </>
+      }
+    >
       <ViewFeedContent />
     </Suspense>
   );
