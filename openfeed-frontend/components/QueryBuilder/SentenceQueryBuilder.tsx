@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 interface SourceOption {
   key: string;
@@ -119,6 +120,17 @@ export default function SentenceQueryBuilder({
   return (
     <div className="min-h-screen bg-base-100">
       <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col gap-4">
+        {onBack && (
+          <button
+            onClick={onBack}
+            disabled={isSaving}
+            className="flex items-center gap-2 text-muted hover:text-base-content transition-colors w-fit"
+          >
+            <ArrowLeft size={16} />
+            <span className="text-sm">Back to feed</span>
+          </button>
+        )}
+
         {(title || subtitle) && (
           <div className="flex flex-col gap-1 mb-4">
             {title && (
@@ -213,11 +225,6 @@ export default function SentenceQueryBuilder({
             )}
           </div>
           <div className="flex gap-3">
-            {onBack && (
-              <button onClick={onBack} disabled={isSaving} className="btn-soft">
-                Discard
-              </button>
-            )}
             <button
               onClick={() => {
                 if (canSave)
