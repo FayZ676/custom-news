@@ -103,3 +103,25 @@ export function NewsItemCard({
     </li>
   );
 }
+
+export function NewsItemCardSkeleton() {
+  return (
+    <li className="py-4 border-b border-base-300">
+      <div className="flex flex-col gap-1.5">
+        <div className="skeleton h-5 w-full rounded" />
+        <div className="skeleton h-5 w-2/3 rounded" />
+      </div>
+      <div className="mt-3 grid grid-cols-[108px_1fr] gap-4 items-start">
+        <div className="skeleton aspect-square rounded-sm" />
+        <div className="flex flex-col gap-2">
+          <div className="skeleton h-4 w-24 rounded" />
+          <div className="flex flex-col gap-1.5">
+            <div className="skeleton h-4 w-full rounded" />
+            <div className="skeleton h-4 w-full rounded" />
+            <div className="skeleton h-4 w-3/4 rounded" />
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}

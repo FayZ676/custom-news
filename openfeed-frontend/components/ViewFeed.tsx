@@ -5,8 +5,7 @@ import { useCallback, useState } from "react";
 import { FeedArticle } from "@/lib/newsSearch";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
-import { SectionArticleSkeleton } from "@/components/SectionArticles";
-import { NewsItemCard } from "@/components/NewsItemCard";
+import { NewsItemCard, NewsItemCardSkeleton } from "@/components/NewsItemCard";
 
 interface ViewFeedProps {
   articles: FeedArticle[];
@@ -83,12 +82,10 @@ export function ViewFeed({
 
 export function ViewFeedSkeleton({ count = 5 }: { count?: number }) {
   return (
-    <section className="flex flex-col gap-4">
-      <ol className="flex flex-col gap-4">
+    <section className="flex flex-col">
+      <ol className="flex flex-col">
         {Array.from({ length: count }).map((_, i) => (
-          <li key={i}>
-            <SectionArticleSkeleton />
-          </li>
+          <NewsItemCardSkeleton key={i} />
         ))}
       </ol>
     </section>
