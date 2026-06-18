@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { TextAlignEnd } from "lucide-react";
+import { TextAlignEnd, X } from "lucide-react";
 
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
 
@@ -39,14 +39,25 @@ export default function SearchFilterBar({
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
             placeholder="Search articles"
-            className="input-field"
+            className="input-field pr-9"
             aria-label="Search articles"
           />
-          {isSearching && (
+          {isSearching ? (
             <span
               className="loading loading-spinner loading-xs absolute right-3 top-1/2 -translate-y-1/2 text-subtle"
               aria-hidden="true"
             />
+          ) : (
+            searchValue && (
+              <button
+                type="button"
+                onClick={() => setSearchValue("")}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-sm p-1 text-base-content-4 hover:text-base-content transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            )
           )}
         </div>
 
@@ -61,10 +72,7 @@ export default function SearchFilterBar({
         </div>
       </div>
 
-      <FilterModal
-        ref={filterModalRef}
-        interests={interests}
-      />
+      <FilterModal ref={filterModalRef} interests={interests} />
     </div>
   );
 }
