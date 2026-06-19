@@ -1,18 +1,30 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 import type { FeedArticle } from "@/lib/newsSearch";
 import { searchProviders } from "@/lib/providers/search.server";
 import type { FeedCache } from "@/lib/providers/rss";
 import type { FeedDefinition } from "@/lib/providers/types";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import type { Database } from "@/lib/supabase/supabase.types";
 import {
   getUserArticles,
   insertUserArticles,
   NewUserArticle,
 } from "@/lib/supabase/queries/user_articles";
 import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
+import { getUserSourceKeys } from "@/lib/supabase/queries/user_sources";
 import type { NewsQueryPayload } from "@/lib/interests/refine";
 import type { UserInterest } from "@/lib/supabase/queries/user_interests";
+
+export async function getSubscribedFeeds(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<FeedDefinition[]> {
+  const keys = await getUserSourceKeys(supabase, userId);
+  return getGlobalSourcesByKeys(supabase, keys);
+}
 
 function interestToPayload(interest: UserInterest): NewsQueryPayload {
   if (interest.query_payload) return interest.query_payload;

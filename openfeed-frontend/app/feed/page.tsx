@@ -5,6 +5,7 @@ import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getUserArticles } from "@/lib/supabase/queries/user_articles";
 import { getUserInterests } from "@/lib/supabase/queries/user_interests";
+import { getSubscribedFeeds, ingestArticlesForInterests } from "@/lib/articles/ingest";
 import { FeedPageContent } from "@/components/FeedPageContent";
 import { ViewFeedSkeleton } from "@/components/ViewFeed";
 import { SearchFilterBarSkeleton } from "@/components/SearchFilterBar/SearchFilterBar";
@@ -18,6 +19,9 @@ async function ViewFeedContent() {
   if (interests.length === 0) {
     redirect("/onboarding");
   }
+
+  const feeds = await getSubscribedFeeds(supabase, userId);
+  await ingestArticlesForInterests(userId, interests, feeds);
 
   const feedArticles = await getUserArticles(supabase, userId);
 

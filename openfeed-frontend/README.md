@@ -75,7 +75,7 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Your Supabase publishable key, found in [project settings](https://supabase.com/dashboard/project/_/settings/api) |
 | `SUPABASE_SERVICE_ROLE_KEY`            | Your Supabase service role key, found in [project settings](https://supabase.com/dashboard/project/_/settings/api) |
 | `NEWSDATA_API_KEY`                     | Your [NewsData.io](https://newsdata.io) API key — used to fetch articles                                          |
-| `CRON_SECRET`                          | Any random secret string — guards the daily ingestion cron route (`/api/cron/ingest`)                            |
+| `CRON_SECRET`                          | Any random secret string — guards the manual ingestion route (`/api/cron/ingest`), kept as an admin fallback     |
 
 **For local development** — copy `.env.local.example` to `.env.local` and fill in your values.
 
@@ -85,4 +85,4 @@ npm run dev
 
 ## How it works
 
-OpenFeed's frontend is a NextJS app that connects to your Supabase project for authentication and data storage. A daily [Vercel cron job](https://vercel.com/docs/cron-jobs) (`/api/cron/ingest`, configured in `vercel.json`) runs each user's interest queries against NewsData.io and refreshes their stored articles, so the feed simply reads and displays what's already there.
+OpenFeed's frontend is a NextJS app that connects to your Supabase project for authentication and data storage. Every time a user loads their feed, the app runs their interest queries against NewsData.io and RSS sources and refreshes their stored articles before rendering. The underlying NewsData.io/RSS requests are cached for an hour (via Next's `"use cache"` + `cacheLife("hours")`), so repeated page loads within that window reuse the cached response instead of re-hitting the external services. The `/api/cron/ingest` route from the old daily-refresh design still exists as a manual/admin fallback but isn't scheduled anymore.
