@@ -54,6 +54,9 @@ body:has(dialog[open]) {
   --color-base-200: oklch(95.5% 0.006 75); /* recessed surface — input fields and secondary button backgrounds */
   --color-base-300: oklch(89.5% 0.010 75); /* borders, dividers, hover fills on surfaces */
   --color-base-content: oklch(32% 0.014 75); /* primary text */
+  --color-accent: oklch(79% 0.12 65) !important;         /* warm amber — badges, highlights */
+  --color-accent-border: oklch(64% 0.14 62) !important;  /* subtle border on accent surfaces */
+  --color-accent-content: oklch(46% 0.16 58) !important; /* text on accent backgrounds */
   --color-error: oklch(55% 0.22 27);         /* destructive actions, error states */
   --color-error-content: oklch(97% 0.02 27); /* text placed on error-colored backgrounds */
 }

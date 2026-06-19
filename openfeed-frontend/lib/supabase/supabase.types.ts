@@ -140,6 +140,7 @@ export type Database = {
           image_url: string | null;
           interest_id: string | null;
           published_at: string;
+          read_at: string | null;
           search_vector: unknown;
           source_key: string | null;
           source_name: string;
@@ -154,6 +155,7 @@ export type Database = {
           image_url?: string | null;
           interest_id?: string | null;
           published_at: string;
+          read_at?: string | null;
           search_vector?: unknown;
           source_key?: string | null;
           source_name: string;
@@ -168,6 +170,7 @@ export type Database = {
           image_url?: string | null;
           interest_id?: string | null;
           published_at?: string;
+          read_at?: string | null;
           search_vector?: unknown;
           source_key?: string | null;
           source_name?: string;
@@ -242,51 +245,25 @@ export type Database = {
         Row: {
           color_theme: string;
           email_notification: boolean;
+          last_visited: string;
           timezone: string;
           user_id: string;
         };
         Insert: {
           color_theme?: string;
           email_notification?: boolean;
+          last_visited?: string;
           timezone?: string;
           user_id: string;
         };
         Update: {
           color_theme?: string;
           email_notification?: boolean;
+          last_visited?: string;
           timezone?: string;
           user_id?: string;
         };
         Relationships: [];
-      };
-      user_sources: {
-        Row: {
-          created_at: string;
-          id: string;
-          source_key: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          id?: string;
-          source_key: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          id?: string;
-          source_key?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_sources_source_key_fkey";
-            columns: ["source_key"];
-            isOneToOne: false;
-            referencedRelation: "global_sources";
-            referencedColumns: ["key"];
-          },
-        ];
       };
     };
     Views: {

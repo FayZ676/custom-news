@@ -58,20 +58,6 @@ export async function insertUserArticles(
   if (error) throw new Error(error.message);
 }
 
-export async function deleteUserArticlesBySourceKey(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  sourceKey: string,
-): Promise<void> {
-  const { error } = await (supabase as any)
-    .from("user_articles")
-    .delete()
-    .eq("user_id", userId)
-    .eq("source_key", sourceKey)
-    .is("interest_id", null);
-
-  if (error) throw new Error(error.message);
-}
 
 export async function deleteAllUserArticles(
   supabase: SupabaseClient<Database>,
@@ -99,6 +85,20 @@ export async function getUserArticleById(
 
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function markArticleRead(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  articleId: string,
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from("user_articles")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("id", articleId);
+
+  if (error) throw new Error(error.message);
 }
 
 export async function getSharedArticle(

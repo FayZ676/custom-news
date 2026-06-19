@@ -1,0 +1,1 @@
+-- Removed: read_at now lives directly on user_articles.

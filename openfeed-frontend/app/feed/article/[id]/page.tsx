@@ -10,6 +10,7 @@ import { createShareLinkAction } from "@/app/feed/actions";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 import { CopyLinkButton } from "./CopyLinkButton";
+import { MarkReadOnView } from "./MarkReadOnView";
 
 export default async function ArticlePage({
   params,
@@ -27,6 +28,7 @@ export default async function ArticlePage({
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full py-6 px-4">
+      <MarkReadOnView articleId={article.id} />
       <Link
         href="/feed"
         className="flex items-center gap-2 text-muted hover:text-base-content transition-colors w-fit"
@@ -58,7 +60,9 @@ export default async function ArticlePage({
       )}
 
       {article.summary && (
-        <p className="text-base text-base-content leading-relaxed">{article.summary}</p>
+        <p className="text-base text-base-content leading-relaxed">
+          {article.summary}
+        </p>
       )}
 
       <div className="flex items-center justify-between pt-2">
