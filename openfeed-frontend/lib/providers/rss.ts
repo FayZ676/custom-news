@@ -1,6 +1,7 @@
 import "server-only";
 
 import he from "he";
+import { cacheLife } from "next/cache";
 import { XMLParser } from "fast-xml-parser";
 
 import type { FeedArticle } from "@/lib/newsSearch";
@@ -111,6 +112,22 @@ function parseFeed(xml: string, sourceName: string, sourceKey: string): FeedArti
     .filter((article): article is FeedArticle => article !== null);
 }
 
+async function fetchFeedXml(feedUrl: string): Promise<string | null> {
+  "use cache";
+  cacheLife("hours");
+
+  try {
+    const response = await fetch(feedUrl, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      headers: { "user-agent": "OpenFeed/1.0 (+rss)" },
+    });
+    if (!response.ok) return null;
+    return await response.text();
+  } catch {
+    return null;
+  }
+}
+
 export function fetchFeedOnce(
   def: FeedDefinition,
   cache: FeedCache,
@@ -119,17 +136,9 @@ export function fetchFeedOnce(
   if (cached) return cached;
 
   const promise = (async () => {
-    try {
-      const response = await fetch(def.feedUrl, {
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-        headers: { "user-agent": "OpenFeed/1.0 (+rss)" },
-      });
-      if (!response.ok) return [];
-      const xml = await response.text();
-      return parseFeed(xml, def.label, def.key);
-    } catch {
-      return [];
-    }
+    const xml = await fetchFeedXml(def.feedUrl);
+    if (xml === null) return [];
+    return parseFeed(xml, def.label, def.key);
   })();
 
   cache.set(def.feedUrl, promise);

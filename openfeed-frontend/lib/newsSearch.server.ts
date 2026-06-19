@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cacheLife } from "next/cache";
 import { FeedArticle } from "@/lib/newsSearch";
 import type { NewsQueryParams } from "@/lib/interests/refine";
 
@@ -37,6 +38,9 @@ function toFeedArticle(result: NewsDataResult): FeedArticle | null {
 export async function fetchLatestNewsArticles(
   params: NewsQueryParams,
 ): Promise<FeedArticle[]> {
+  "use cache";
+  cacheLife("hours");
+
   const urlParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null && value !== "") {

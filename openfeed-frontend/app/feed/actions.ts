@@ -11,21 +11,13 @@ import {
   UserInterest,
 } from "@/lib/supabase/queries/user_interests";
 import { NewsQueryPayload } from "@/lib/interests/refine";
-import { ingestArticlesForInterests } from "@/lib/articles/ingest";
+import { getSubscribedFeeds, ingestArticlesForInterests } from "@/lib/articles/ingest";
 import {
   deleteAllUserArticles,
   deleteUserArticlesBySourceKey,
 } from "@/lib/supabase/queries/user_articles";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import {
-  addUserSource,
-  getUserSourceKeys,
-  removeUserSource,
-} from "@/lib/supabase/queries/user_sources";
-import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
-import type { FeedDefinition } from "@/lib/providers/types";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/supabase.types";
+import { addUserSource, removeUserSource } from "@/lib/supabase/queries/user_sources";
 
 function buildQueryPayload(
   all: string[],
@@ -42,14 +34,6 @@ function buildQueryPayload(
     any,
     sources,
   };
-}
-
-async function getSubscribedFeeds(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-): Promise<FeedDefinition[]> {
-  const keys = await getUserSourceKeys(supabase, userId);
-  return getGlobalSourcesByKeys(supabase, keys);
 }
 
 export async function createShareLinkAction(
