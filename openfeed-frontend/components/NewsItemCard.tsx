@@ -36,11 +36,19 @@ export function NewsItemCard({
 
   const opacityClass = isRead ? "opacity-50" : "";
 
+  const metaRow = (meta || isNew) && (
+    <div className="flex items-center gap-2">
+      {isNew && (
+        <span className="badge badge-accent badge-sm shrink-0 font-medium border-(--color-accent-border)">
+          New
+        </span>
+      )}
+      {meta && <span className="text-muted truncate">{meta}</span>}
+    </div>
+  );
+
   const content = (
     <>
-      {isNew && (
-        <span className="badge badge-accent badge-sm mb-1 font-medium">New</span>
-      )}
       <h2 className="heading-article line-clamp-2 hover:underline">{title}</h2>
       {hasImage ? (
         <div className="mt-3 grid grid-cols-[108px_1fr] gap-4 items-start">
@@ -54,20 +62,23 @@ export function NewsItemCard({
               loading="lazy"
               className={`object-cover transition-opacity duration-300 ${isLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setIsLoaded(true)}
-              onError={() => { setImageError(true); onImageError?.(); }}
+              onError={() => {
+                setImageError(true);
+                onImageError?.();
+              }}
             />
           </div>
-          {(meta || summary) && (
+          {(meta || summary || isNew) && (
             <div className="flex flex-col gap-1">
-              {meta && <span className="text-muted">{meta}</span>}
+              {metaRow}
               {summary && <p className="text-body line-clamp-4">{summary}</p>}
             </div>
           )}
         </div>
       ) : (
-        (meta || summary) && (
+        (meta || summary || isNew) && (
           <div className="mt-2 flex flex-col gap-1">
-            {meta && <span className="text-muted">{meta}</span>}
+            {metaRow}
             {summary && <p className="text-body line-clamp-4">{summary}</p>}
           </div>
         )

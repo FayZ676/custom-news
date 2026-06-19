@@ -6,11 +6,11 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getUserArticleById } from "@/lib/supabase/queries/user_articles";
-import { markArticleRead } from "@/lib/supabase/queries/user_article_interactions";
 import { createShareLinkAction } from "@/app/feed/actions";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 import { CopyLinkButton } from "./CopyLinkButton";
+import { MarkReadOnView } from "./MarkReadOnView";
 
 export default async function ArticlePage({
   params,
@@ -24,14 +24,11 @@ export default async function ArticlePage({
 
   if (!article) notFound();
 
-  // Opening the article marks it read; returning to the feed shows it greyed
-  // out and demoted below unread items.
-  await markArticleRead(supabase, userId, article.id);
-
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full py-6 px-4">
+      <MarkReadOnView articleId={article.id} />
       <Link
         href="/feed"
         className="flex items-center gap-2 text-muted hover:text-base-content transition-colors w-fit"
@@ -63,7 +60,9 @@ export default async function ArticlePage({
       )}
 
       {article.summary && (
-        <p className="text-base text-base-content leading-relaxed">{article.summary}</p>
+        <p className="text-base text-base-content leading-relaxed">
+          {article.summary}
+        </p>
       )}
 
       <div className="flex items-center justify-between pt-2">

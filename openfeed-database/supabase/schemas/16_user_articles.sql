@@ -12,6 +12,7 @@ create table "user_articles" (
     "created_at" timestamptz not null default now(),
     "interest_id" uuid references user_interests(id) on delete cascade,
     "source_key" text references global_sources(key) on delete set null,
+    "read_at" timestamptz,
     "search_vector" tsvector generated always as (
         to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, ''))
     ) stored,
@@ -24,6 +25,12 @@ create policy "user_articles_select_policy"
   on "user_articles" for select
   to authenticated
   using (auth.uid() = user_id);
+
+create policy "user_articles_update_policy"
+  on "user_articles" for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 create index if not exists user_articles_user_id_idx
   on user_articles (user_id);

@@ -54,8 +54,10 @@ export function ViewFeed({
         href={shareable ? `/feed/article/${article.id}` : article.url}
         external={!shareable}
         isRead={readIds.has(article.id)}
-        isNew={newIds.has(article.id)}
-        onImageError={withImageHandler ? () => markImageFailed(article.id) : undefined}
+        isNew={newIds.has(article.id) && !readIds.has(article.id)}
+        onImageError={
+          withImageHandler ? () => markImageFailed(article.id) : undefined
+        }
       />
     );
 
@@ -83,9 +85,6 @@ export function ViewFeed({
     );
   }
 
-  // Outer grouping: new-unread, then other unread, then read. Within each group
-  // the existing recency order is preserved. The split is computed per server
-  // load, so tapping a card (which navigates away) never reorders mid-scroll.
   const newGroup: FeedArticle[] = [];
   const unreadGroup: FeedArticle[] = [];
   const readGroup: FeedArticle[] = [];

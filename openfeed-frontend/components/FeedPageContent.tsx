@@ -29,7 +29,7 @@ export function FeedPageContent({
   newIds,
 }: FeedPageContentProps) {
   const readIdSet = useMemo(() => new Set(readIds), [readIds]);
-  const newIdSet = useMemo(() => new Set(newIds), [newIds]);
+  const [newIdSet] = useState(() => new Set(newIds));
 
   useEffect(() => {
     void markFeedSeenAction(userId);

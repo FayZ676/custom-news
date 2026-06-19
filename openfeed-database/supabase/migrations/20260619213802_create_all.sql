@@ -50,17 +50,6 @@ alter table "public"."global_share_links" enable row level security;
 alter table "public"."global_sources" enable row level security;
 
 
-  create table "public"."user_article_interactions" (
-    "user_id" uuid not null,
-    "article_id" uuid not null,
-    "read_at" timestamp with time zone,
-    "updated_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."user_article_interactions" enable row level security;
-
-
   create table "public"."user_articles" (
     "id" uuid not null default gen_random_uuid(),
     "user_id" uuid not null,
@@ -73,6 +62,7 @@ alter table "public"."user_article_interactions" enable row level security;
     "created_at" timestamp with time zone not null default now(),
     "interest_id" uuid,
     "source_key" text,
+    "read_at" timestamp with time zone,
     "search_vector" tsvector generated always as (to_tsvector('english'::regconfig, ((COALESCE(title, ''::text) || ' '::text) || COALESCE(summary, ''::text)))) stored
       );
 
@@ -114,17 +104,6 @@ alter table "public"."user_interests" enable row level security;
 
 alter table "public"."user_settings" enable row level security;
 
-
-  create table "public"."user_sources" (
-    "id" uuid not null default gen_random_uuid(),
-    "user_id" uuid not null,
-    "source_key" text not null,
-    "created_at" timestamp with time zone not null default now()
-      );
-
-
-alter table "public"."user_sources" enable row level security;
-
 CREATE UNIQUE INDEX global_emails_pkey ON public.global_emails USING btree (id);
 
 CREATE UNIQUE INDEX global_settings_pkey ON public.global_settings USING btree (id);
@@ -134,10 +113,6 @@ CREATE UNIQUE INDEX global_settings_singleton ON public.global_settings USING bt
 CREATE UNIQUE INDEX global_share_links_pkey ON public.global_share_links USING btree (token);
 
 CREATE UNIQUE INDEX global_sources_pkey ON public.global_sources USING btree (key);
-
-CREATE UNIQUE INDEX user_article_interactions_pkey ON public.user_article_interactions USING btree (user_id, article_id);
-
-CREATE INDEX user_article_interactions_user_id_idx ON public.user_article_interactions USING btree (user_id);
 
 CREATE UNIQUE INDEX user_articles_pkey ON public.user_articles USING btree (id);
 
@@ -159,12 +134,6 @@ CREATE UNIQUE INDEX user_settings_pkey ON public.user_settings USING btree (user
 
 CREATE INDEX user_settings_user_id_idx ON public.user_settings USING btree (user_id);
 
-CREATE UNIQUE INDEX user_sources_pkey ON public.user_sources USING btree (id);
-
-CREATE INDEX user_sources_user_id_idx ON public.user_sources USING btree (user_id);
-
-CREATE UNIQUE INDEX user_sources_user_id_source_key_key ON public.user_sources USING btree (user_id, source_key);
-
 alter table "public"."global_emails" add constraint "global_emails_pkey" PRIMARY KEY using index "global_emails_pkey";
 
 alter table "public"."global_settings" add constraint "global_settings_pkey" PRIMARY KEY using index "global_settings_pkey";
@@ -173,8 +142,6 @@ alter table "public"."global_share_links" add constraint "global_share_links_pke
 
 alter table "public"."global_sources" add constraint "global_sources_pkey" PRIMARY KEY using index "global_sources_pkey";
 
-alter table "public"."user_article_interactions" add constraint "user_article_interactions_pkey" PRIMARY KEY using index "user_article_interactions_pkey";
-
 alter table "public"."user_articles" add constraint "user_articles_pkey" PRIMARY KEY using index "user_articles_pkey";
 
 alter table "public"."user_feedback" add constraint "user_feedback_pkey" PRIMARY KEY using index "user_feedback_pkey";
@@ -182,8 +149,6 @@ alter table "public"."user_feedback" add constraint "user_feedback_pkey" PRIMARY
 alter table "public"."user_interests" add constraint "user_interests_pkey" PRIMARY KEY using index "user_interests_pkey";
 
 alter table "public"."user_settings" add constraint "user_settings_pkey" PRIMARY KEY using index "user_settings_pkey";
-
-alter table "public"."user_sources" add constraint "user_sources_pkey" PRIMARY KEY using index "user_sources_pkey";
 
 alter table "public"."global_settings" add constraint "global_settings_singleton" UNIQUE using index "global_settings_singleton";
 
@@ -198,14 +163,6 @@ alter table "public"."global_share_links" validate constraint "global_share_link
 alter table "public"."global_share_links" add constraint "global_share_links_created_by_fkey" FOREIGN KEY (created_by) REFERENCES auth.users(id) not valid;
 
 alter table "public"."global_share_links" validate constraint "global_share_links_created_by_fkey";
-
-alter table "public"."user_article_interactions" add constraint "user_article_interactions_article_id_fkey" FOREIGN KEY (article_id) REFERENCES public.user_articles(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_article_interactions" validate constraint "user_article_interactions_article_id_fkey";
-
-alter table "public"."user_article_interactions" add constraint "user_article_interactions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_article_interactions" validate constraint "user_article_interactions_user_id_fkey";
 
 alter table "public"."user_articles" add constraint "user_articles_interest_id_fkey" FOREIGN KEY (interest_id) REFERENCES public.user_interests(id) ON DELETE CASCADE not valid;
 
@@ -228,16 +185,6 @@ alter table "public"."user_interests" validate constraint "user_interests_user_i
 alter table "public"."user_settings" add constraint "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
 
 alter table "public"."user_settings" validate constraint "user_settings_user_id_fkey";
-
-alter table "public"."user_sources" add constraint "user_sources_source_key_fkey" FOREIGN KEY (source_key) REFERENCES public.global_sources(key) ON DELETE CASCADE not valid;
-
-alter table "public"."user_sources" validate constraint "user_sources_source_key_fkey";
-
-alter table "public"."user_sources" add constraint "user_sources_user_id_fkey" FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE not valid;
-
-alter table "public"."user_sources" validate constraint "user_sources_user_id_fkey";
-
-alter table "public"."user_sources" add constraint "user_sources_user_id_source_key_key" UNIQUE using index "user_sources_user_id_source_key_key";
 
 set check_function_bodies = off;
 
@@ -453,48 +400,6 @@ grant truncate on table "public"."global_sources" to "service_role";
 
 grant update on table "public"."global_sources" to "service_role";
 
-grant delete on table "public"."user_article_interactions" to "anon";
-
-grant insert on table "public"."user_article_interactions" to "anon";
-
-grant references on table "public"."user_article_interactions" to "anon";
-
-grant select on table "public"."user_article_interactions" to "anon";
-
-grant trigger on table "public"."user_article_interactions" to "anon";
-
-grant truncate on table "public"."user_article_interactions" to "anon";
-
-grant update on table "public"."user_article_interactions" to "anon";
-
-grant delete on table "public"."user_article_interactions" to "authenticated";
-
-grant insert on table "public"."user_article_interactions" to "authenticated";
-
-grant references on table "public"."user_article_interactions" to "authenticated";
-
-grant select on table "public"."user_article_interactions" to "authenticated";
-
-grant trigger on table "public"."user_article_interactions" to "authenticated";
-
-grant truncate on table "public"."user_article_interactions" to "authenticated";
-
-grant update on table "public"."user_article_interactions" to "authenticated";
-
-grant delete on table "public"."user_article_interactions" to "service_role";
-
-grant insert on table "public"."user_article_interactions" to "service_role";
-
-grant references on table "public"."user_article_interactions" to "service_role";
-
-grant select on table "public"."user_article_interactions" to "service_role";
-
-grant trigger on table "public"."user_article_interactions" to "service_role";
-
-grant truncate on table "public"."user_article_interactions" to "service_role";
-
-grant update on table "public"."user_article_interactions" to "service_role";
-
 grant delete on table "public"."user_articles" to "anon";
 
 grant insert on table "public"."user_articles" to "anon";
@@ -663,48 +568,6 @@ grant truncate on table "public"."user_settings" to "service_role";
 
 grant update on table "public"."user_settings" to "service_role";
 
-grant delete on table "public"."user_sources" to "anon";
-
-grant insert on table "public"."user_sources" to "anon";
-
-grant references on table "public"."user_sources" to "anon";
-
-grant select on table "public"."user_sources" to "anon";
-
-grant trigger on table "public"."user_sources" to "anon";
-
-grant truncate on table "public"."user_sources" to "anon";
-
-grant update on table "public"."user_sources" to "anon";
-
-grant delete on table "public"."user_sources" to "authenticated";
-
-grant insert on table "public"."user_sources" to "authenticated";
-
-grant references on table "public"."user_sources" to "authenticated";
-
-grant select on table "public"."user_sources" to "authenticated";
-
-grant trigger on table "public"."user_sources" to "authenticated";
-
-grant truncate on table "public"."user_sources" to "authenticated";
-
-grant update on table "public"."user_sources" to "authenticated";
-
-grant delete on table "public"."user_sources" to "service_role";
-
-grant insert on table "public"."user_sources" to "service_role";
-
-grant references on table "public"."user_sources" to "service_role";
-
-grant select on table "public"."user_sources" to "service_role";
-
-grant trigger on table "public"."user_sources" to "service_role";
-
-grant truncate on table "public"."user_sources" to "service_role";
-
-grant update on table "public"."user_sources" to "service_role";
-
 
   create policy "global_emails_allow_all"
   on "public"."global_emails"
@@ -751,22 +614,22 @@ using (true);
 
 
 
-  create policy "Users can manage their own article interactions"
-  on "public"."user_article_interactions"
-  as permissive
-  for all
-  to public
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
-
-
-
   create policy "user_articles_select_policy"
   on "public"."user_articles"
   as permissive
   for select
   to authenticated
 using ((auth.uid() = user_id));
+
+
+
+  create policy "user_articles_update_policy"
+  on "public"."user_articles"
+  as permissive
+  for update
+  to authenticated
+using ((auth.uid() = user_id))
+with check ((auth.uid() = user_id));
 
 
 
@@ -794,16 +657,6 @@ with check ((auth.uid() = user_id));
   as permissive
   for all
   to public
-using ((auth.uid() = user_id))
-with check ((auth.uid() = user_id));
-
-
-
-  create policy "Users can manage their own sources"
-  on "public"."user_sources"
-  as permissive
-  for all
-  to authenticated
 using ((auth.uid() = user_id))
 with check ((auth.uid() = user_id));
 

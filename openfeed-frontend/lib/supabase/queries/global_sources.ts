@@ -38,10 +38,3 @@ export async function getGlobalSourcesByKeys(
   if (error) throw new Error(error.message);
   return (data ?? []).map(toFeedDefinition);
 }
-
-export async function getGlobalSourceMap(
-  supabase: SupabaseClient<Database>,
-): Promise<Map<string, FeedDefinition>> {
-  const sources = await getGlobalSources(supabase);
-  return new Map(sources.map((source) => [source.key, source]));
-}
