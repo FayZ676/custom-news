@@ -10,6 +10,7 @@ interface NewsItemCardProps {
   summary?: string | null;
   meta?: string;
   isRead?: boolean;
+  isNew?: boolean;
   href?: string;
   external?: boolean;
   onClick?: () => void;
@@ -22,6 +23,7 @@ export function NewsItemCard({
   summary,
   meta,
   isRead = false,
+  isNew = false,
   href,
   external = false,
   onClick,
@@ -36,6 +38,9 @@ export function NewsItemCard({
 
   const content = (
     <>
+      {isNew && (
+        <span className="badge badge-accent badge-sm mb-1 font-medium">New</span>
+      )}
       <h2 className="heading-article line-clamp-2 hover:underline">{title}</h2>
       {hasImage ? (
         <div className="mt-3 grid grid-cols-[108px_1fr] gap-4 items-start">

@@ -133,6 +133,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_article_interactions: {
+        Row: {
+          article_id: string;
+          read_at: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          article_id: string;
+          read_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          article_id?: string;
+          read_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_article_interactions_article_id_fkey";
+            columns: ["article_id"];
+            isOneToOne: false;
+            referencedRelation: "user_articles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_articles: {
         Row: {
           created_at: string;
@@ -242,18 +271,21 @@ export type Database = {
         Row: {
           color_theme: string;
           email_notification: boolean;
+          feed_last_seen_at: string;
           timezone: string;
           user_id: string;
         };
         Insert: {
           color_theme?: string;
           email_notification?: boolean;
+          feed_last_seen_at?: string;
           timezone?: string;
           user_id: string;
         };
         Update: {
           color_theme?: string;
           email_notification?: boolean;
+          feed_last_seen_at?: string;
           timezone?: string;
           user_id?: string;
         };

@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getUserArticleById } from "@/lib/supabase/queries/user_articles";
+import { markArticleRead } from "@/lib/supabase/queries/user_article_interactions";
 import { createShareLinkAction } from "@/app/feed/actions";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
@@ -22,6 +23,10 @@ export default async function ArticlePage({
   const article = await getUserArticleById(supabase, userId, id);
 
   if (!article) notFound();
+
+  // Opening the article marks it read; returning to the feed shows it greyed
+  // out and demoted below unread items.
+  await markArticleRead(supabase, userId, article.id);
 
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
 

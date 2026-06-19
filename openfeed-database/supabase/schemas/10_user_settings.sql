@@ -3,6 +3,7 @@ create table "user_settings" (
     "email_notification" boolean not null default true,
     "timezone" text not null default 'UTC',
     "color_theme" text not null default 'cupcake',
+    "feed_last_seen_at" timestamptz not null default now(),
     primary key (user_id)
 );
 

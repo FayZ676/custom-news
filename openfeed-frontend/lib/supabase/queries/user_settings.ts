@@ -56,6 +56,18 @@ export async function updateUserTimezone(
   revalidateTag(`user-settings:${userId}`, { expire: 0 });
 }
 
+export async function setFeedLastSeen(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+) {
+  const { error } = await supabase
+    .from("user_settings")
+    .update({ feed_last_seen_at: new Date().toISOString() })
+    .eq("user_id", userId);
+
+  if (error) throw new Error(error.message);
+}
+
 export async function updateUserTheme(
   supabase: SupabaseClient<Database>,
   userId: string,

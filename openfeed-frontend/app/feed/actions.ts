@@ -18,6 +18,8 @@ import {
 } from "@/lib/supabase/queries/user_articles";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { addUserSource, removeUserSource } from "@/lib/supabase/queries/user_sources";
+import { markArticleRead } from "@/lib/supabase/queries/user_article_interactions";
+import { setFeedLastSeen } from "@/lib/supabase/queries/user_settings";
 
 function buildQueryPayload(
   all: string[],
@@ -43,6 +45,20 @@ export async function createShareLinkAction(
 ): Promise<string> {
   const supabase = await createClient();
   return createShareLink(supabase, userId, contentType, contentId);
+}
+
+export async function markArticleReadAction(
+  userId: string,
+  articleId: string,
+): Promise<void> {
+  const supabase = await createClient();
+  await markArticleRead(supabase, userId, articleId);
+  revalidatePath("/feed");
+}
+
+export async function markFeedSeenAction(userId: string): Promise<void> {
+  const supabase = await createClient();
+  await setFeedLastSeen(supabase, userId);
 }
 
 export async function addInterestAction(
