@@ -62,7 +62,7 @@ export async function setFeedLastSeen(
 ) {
   const { error } = await supabase
     .from("user_settings")
-    .update({ feed_last_seen_at: new Date().toISOString() })
+    .update({ last_visited: new Date().toISOString() })
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);

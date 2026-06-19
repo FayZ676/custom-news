@@ -271,21 +271,21 @@ export type Database = {
         Row: {
           color_theme: string;
           email_notification: boolean;
-          feed_last_seen_at: string;
+          last_visited: string;
           timezone: string;
           user_id: string;
         };
         Insert: {
           color_theme?: string;
           email_notification?: boolean;
-          feed_last_seen_at?: string;
+          last_visited?: string;
           timezone?: string;
           user_id: string;
         };
         Update: {
           color_theme?: string;
           email_notification?: boolean;
-          feed_last_seen_at?: string;
+          last_visited?: string;
           timezone?: string;
           user_id?: string;
         };

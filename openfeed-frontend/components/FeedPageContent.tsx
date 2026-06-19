@@ -31,8 +31,6 @@ export function FeedPageContent({
   const readIdSet = useMemo(() => new Set(readIds), [readIds]);
   const newIdSet = useMemo(() => new Set(newIds), [newIds]);
 
-  // Bump feed_last_seen_at after the feed renders so the *next* visit recomputes
-  // a fresh "new" set. This render still uses the value read on the server.
   useEffect(() => {
     void markFeedSeenAction(userId);
   }, [userId]);

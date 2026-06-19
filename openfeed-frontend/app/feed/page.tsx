@@ -7,7 +7,10 @@ import { getUserArticles } from "@/lib/supabase/queries/user_articles";
 import { getReadArticleIds } from "@/lib/supabase/queries/user_article_interactions";
 import { getUserSettings } from "@/lib/supabase/queries/user_settings";
 import { getUserInterests } from "@/lib/supabase/queries/user_interests";
-import { getSubscribedFeeds, ingestArticlesForInterests } from "@/lib/articles/ingest";
+import {
+  getSubscribedFeeds,
+  ingestArticlesForInterests,
+} from "@/lib/articles/ingest";
 import { FeedPageContent } from "@/components/FeedPageContent";
 import { ViewFeedSkeleton } from "@/components/ViewFeed";
 import { SearchFilterBarSkeleton } from "@/components/SearchFilterBar/SearchFilterBar";
@@ -27,7 +30,7 @@ async function ViewFeedContent() {
 
   const feedArticles = await getUserArticles(supabase, userId);
   const readIds = await getReadArticleIds(supabase, userId);
-  const { feed_last_seen_at } = await getUserSettings(supabase, userId);
+  const { last_visited } = await getUserSettings(supabase, userId);
 
   // "New" = arrived since the user's last visit and not yet read. Computed here
   // because FeedArticle (the live-search shape) drops created_at.
@@ -35,7 +38,7 @@ async function ViewFeedContent() {
     feedArticles
       .filter(
         (article) =>
-          article.created_at > feed_last_seen_at && !readIds.has(article.id),
+          article.created_at > last_visited && !readIds.has(article.id),
       )
       .map((article) => article.id),
   );
