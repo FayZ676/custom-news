@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import SearchFilterBar from "@/components/SearchFilterBar/SearchFilterBar";
 import { ViewFeed, ViewFeedSkeleton } from "@/components/ViewFeed";
@@ -23,6 +23,11 @@ export function FeedPageContent({ articles, interests }: FeedPageContentProps) {
   const [isSearching, setIsSearching] = useState(false);
   const searchRequestIdRef = useRef(0);
   const isSearchActive = searchQuery.length >= MIN_SEARCH_QUERY_LENGTH;
+
+  const interestNameById = useMemo(
+    () => new Map(interests.map((interest) => [interest.id, interest.interest_text])),
+    [interests],
+  );
 
   const handleSearchQueryChange = useCallback((query: string) => {
     setSearchQuery(query);
@@ -80,6 +85,7 @@ export function FeedPageContent({ articles, interests }: FeedPageContentProps) {
           >
             <ViewFeed
               articles={displayedArticles}
+              interestNameById={interestNameById}
               shareable={!isSearchActive}
               emptyStateMessage={
                 isSearchActive

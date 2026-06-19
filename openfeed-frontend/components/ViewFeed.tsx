@@ -8,15 +8,20 @@ import { timeAgo, toTitleCase } from "@/lib/utils";
 import { NewsItemCard, NewsItemCardSkeleton } from "@/components/NewsItemCard";
 
 interface ViewFeedProps {
-  articles: FeedArticle[];
+  articles: (FeedArticle & { interest_id?: string | null })[];
   emptyStateMessage?: string;
   shareable?: boolean;
+  /** Maps an interest id to its label, used to tag each card with the
+   * interest it was matched against. Search results have no interest, so
+   * leaving this undefined simply omits the tag. */
+  interestNameById?: Map<string, string>;
 }
 
 export function ViewFeed({
   articles,
   emptyStateMessage,
   shareable = true,
+  interestNameById,
 }: ViewFeedProps) {
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
 
@@ -27,6 +32,11 @@ export function ViewFeed({
   const hasRenderableImage = (article: FeedArticle) =>
     (article.image_url?.startsWith("https://") ?? false) &&
     !failedImageIds.has(article.id);
+
+  const interestLabelFor = (article: { interest_id?: string | null }) =>
+    article.interest_id
+      ? (interestNameById?.get(article.interest_id) ?? null)
+      : null;
 
   const articlesWithImages = articles
     .filter(hasRenderableImage)
@@ -54,6 +64,7 @@ export function ViewFeed({
               imageUrl={article.image_url}
               summary={article.summary}
               meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
+              interestLabel={interestLabelFor(article)}
               href={shareable ? `/feed/article/${article.id}` : article.url}
               external={!shareable}
               onImageError={() => markImageFailed(article.id)}
@@ -70,6 +81,7 @@ export function ViewFeed({
               imageUrl={article.image_url}
               summary={article.summary}
               meta={`${timeAgo(article.published_at)} · ${article.source_name}`}
+              interestLabel={interestLabelFor(article)}
               href={shareable ? `/feed/article/${article.id}` : article.url}
               external={!shareable}
             />

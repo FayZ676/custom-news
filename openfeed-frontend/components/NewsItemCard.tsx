@@ -9,6 +9,7 @@ interface NewsItemCardProps {
   imageUrl?: string | null;
   summary?: string | null;
   meta?: string;
+  interestLabel?: string | null;
   isRead?: boolean;
   href?: string;
   external?: boolean;
@@ -21,6 +22,7 @@ export function NewsItemCard({
   imageUrl,
   summary,
   meta,
+  interestLabel,
   isRead = false,
   href,
   external = false,
@@ -36,6 +38,11 @@ export function NewsItemCard({
 
   const content = (
     <>
+      {interestLabel && (
+        <span className="mb-1.5 inline-flex max-w-full items-center rounded-full bg-base-200 px-2 py-0.5 text-xs font-medium text-base-content-3">
+          <span className="truncate">{interestLabel}</span>
+        </span>
+      )}
       <h2 className="heading-article line-clamp-2 hover:underline">{title}</h2>
       {hasImage ? (
         <div className="mt-3 grid grid-cols-[108px_1fr] gap-4 items-start">
