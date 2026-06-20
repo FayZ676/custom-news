@@ -101,6 +101,33 @@ export async function markArticleRead(
   if (error) throw new Error(error.message);
 }
 
+export async function restoreReadState(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  readAtByUrl: Map<string, string>,
+): Promise<void> {
+  if (readAtByUrl.size === 0) return;
+
+  // Group urls that share the same read_at timestamp so each distinct
+  // timestamp is a single update instead of one round-trip per article.
+  const urlsByReadAt = new Map<string, string[]>();
+  for (const [url, readAt] of readAtByUrl) {
+    const urls = urlsByReadAt.get(readAt) ?? [];
+    urls.push(url);
+    urlsByReadAt.set(readAt, urls);
+  }
+
+  for (const [readAt, urls] of urlsByReadAt) {
+    const { error } = await (supabase as any)
+      .from("user_articles")
+      .update({ read_at: readAt })
+      .eq("user_id", userId)
+      .in("url", urls);
+
+    if (error) throw new Error(error.message);
+  }
+}
+
 export async function getSharedArticle(
   supabase: SupabaseClient<Database>,
   token: string,
