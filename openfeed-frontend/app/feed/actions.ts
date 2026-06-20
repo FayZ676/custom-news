@@ -86,9 +86,6 @@ export async function rebuildFeedAction(userId: string): Promise<void> {
   const interests = await getUserInterests(supabase, userId);
   const serviceClient = createServiceRoleClient();
 
-  // Capture read state before the destructive rebuild so articles the user
-  // has already read stay marked read once the feed is regenerated. read_at
-  // is keyed on the article url, which is stable across re-ingestion.
   const previousArticles = await getUserArticles(serviceClient, userId);
   const readAtByUrl = new Map(
     previousArticles

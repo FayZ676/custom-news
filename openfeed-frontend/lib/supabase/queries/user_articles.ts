@@ -108,8 +108,6 @@ export async function restoreReadState(
 ): Promise<void> {
   if (readAtByUrl.size === 0) return;
 
-  // Group urls that share the same read_at timestamp so each distinct
-  // timestamp is a single update instead of one round-trip per article.
   const urlsByReadAt = new Map<string, string[]>();
   for (const [url, readAt] of readAtByUrl) {
     const urls = urlsByReadAt.get(readAt) ?? [];
