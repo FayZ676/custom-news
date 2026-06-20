@@ -1,16 +1,17 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
-
+import { ArrowUpRight } from "lucide-react";
 import { getAuthenticatedUser } from "@/lib/supabase/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getUserArticleById } from "@/lib/supabase/queries/user_articles";
+import {
+  getUserArticleById,
+  markArticleRead,
+} from "@/lib/supabase/queries/user_articles";
 import { createShareLinkAction } from "@/app/feed/actions";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
 import { CopyLinkButton } from "./CopyLinkButton";
-import { MarkReadOnView } from "./MarkReadOnView";
+import { BackToFeedButton } from "./BackToFeedButton";
 
 export default async function ArticlePage({
   params,
@@ -24,18 +25,13 @@ export default async function ArticlePage({
 
   if (!article) notFound();
 
+  await markArticleRead(supabase, userId, article.id);
+
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full py-6 px-4">
-      <MarkReadOnView articleId={article.id} />
-      <Link
-        href="/feed"
-        className="flex items-center gap-2 text-muted hover:text-base-content transition-colors w-fit"
-      >
-        <ArrowLeft size={16} />
-        <span className="text-sm">Back to your news</span>
-      </Link>
+      <BackToFeedButton />
 
       <h1 className="heading-article">{toTitleCase(article.title)}</h1>
 
