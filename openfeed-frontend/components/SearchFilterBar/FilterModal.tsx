@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 
 import Modal from "@/components/Modal";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
-import { buildQueryFromClauses } from "@/lib/interests/refine";
+import { buildQueryFromClauses } from "@/lib/interests/queryClauses";
 
 interface FilterModalProps {
   interests: UserInterest[];
@@ -28,8 +28,12 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     useImperativeHandle(ref, () => ({
-      open() { dialogRef.current?.showModal(); },
-      close() { dialogRef.current?.close(); },
+      open() {
+        dialogRef.current?.showModal();
+      },
+      close() {
+        dialogRef.current?.close();
+      },
     }));
 
     const closeDialog = () => dialogRef.current?.close();

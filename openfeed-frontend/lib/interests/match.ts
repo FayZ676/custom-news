@@ -3,7 +3,7 @@ import { parse, test } from "liqe";
 import {
   normalizeNewsQueryPayload,
   type NewsQueryPayload,
-} from "@/lib/interests/refine";
+} from "@/lib/providers/newsdata";
 
 export interface MatchableItem {
   title: string;

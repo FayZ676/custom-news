@@ -2,7 +2,7 @@ import "server-only";
 
 import { cacheLife } from "next/cache";
 import { FeedArticle } from "@/lib/newsSearch";
-import type { NewsQueryParams } from "@/lib/interests/refine";
+import type { NewsQueryParams } from "@/lib/providers/newsdata";
 
 const LATEST_URL = "https://newsdata.io/api/1/latest";
 const REQUEST_TIMEOUT_MS = 30_000;

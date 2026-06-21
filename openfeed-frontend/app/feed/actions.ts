@@ -11,7 +11,10 @@ import {
   updateUserInterest,
   UserInterest,
 } from "@/lib/supabase/queries/user_interests";
-import { NewsQueryPayload } from "@/lib/interests/refine";
+import {
+  createNewsQueryPayload,
+  NewsQueryPayload,
+} from "@/lib/providers/newsdata";
 import { ingestArticlesForInterests } from "@/lib/articles/ingest";
 import {
   deleteAllUserArticles,
@@ -25,16 +28,7 @@ function buildQueryPayload(
   any: string[],
   sources: string[],
 ): NewsQueryPayload {
-  return {
-    q: null,
-    qInTitle: null,
-    category: null,
-    country: null,
-    timeframe: null,
-    all,
-    any,
-    sources,
-  };
+  return createNewsQueryPayload({ all, any, sources });
 }
 
 export async function createShareLinkAction(

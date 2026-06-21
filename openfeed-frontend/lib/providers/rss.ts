@@ -6,7 +6,7 @@ import { XMLParser } from "fast-xml-parser";
 
 import type { FeedArticle } from "@/lib/newsSearch";
 import { matchesQuery } from "@/lib/interests/match";
-import type { NewsQueryPayload } from "@/lib/interests/refine";
+import type { NewsQueryPayload } from "@/lib/providers/newsdata";
 import type { FeedDefinition, Provider } from "@/lib/providers/types";
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -31,9 +31,14 @@ function asNodes(value: unknown): XmlNode[] {
 
 function cleanSummary(raw: string): string {
   const decoded = he.decode(
-    raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+    raw
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
   );
-  return decoded.replace(/\s*The post\b.*?\bappeared first on\b.*$/i, "").trim();
+  return decoded
+    .replace(/\s*The post\b.*?\bappeared first on\b.*$/i, "")
+    .trim();
 }
 
 function text(value: unknown): string {
@@ -99,7 +104,11 @@ function itemToFeedArticle(
   };
 }
 
-function parseFeed(xml: string, sourceName: string, sourceKey: string): FeedArticle[] {
+function parseFeed(
+  xml: string,
+  sourceName: string,
+  sourceKey: string,
+): FeedArticle[] {
   const parsed = parser.parse(xml) as XmlNode;
   const channel = (parsed.rss as XmlNode)?.channel as XmlNode | undefined;
   const feed = parsed.feed as XmlNode | undefined;
