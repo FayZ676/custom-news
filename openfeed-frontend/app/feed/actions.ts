@@ -18,7 +18,9 @@ import {
 import { ingestArticlesForInterests } from "@/lib/articles/ingest";
 import {
   deleteAllUserArticles,
+  getUserArticles,
   markArticleRead,
+  restoreReadState,
 } from "@/lib/supabase/queries/user_articles";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { setFeedLastSeen } from "@/lib/supabase/queries/user_settings";
@@ -76,8 +78,18 @@ export async function ingestForInterestAction(
 export async function rebuildFeedAction(userId: string): Promise<void> {
   const supabase = await createClient();
   const interests = await getUserInterests(supabase, userId);
-  await deleteAllUserArticles(createServiceRoleClient(), userId);
+  const serviceClient = createServiceRoleClient();
+
+  const previousArticles = await getUserArticles(serviceClient, userId);
+  const readAtByUrl = new Map(
+    previousArticles
+      .filter((a) => a.read_at !== null)
+      .map((a) => [a.url, a.read_at as string]),
+  );
+
+  await deleteAllUserArticles(serviceClient, userId);
   await ingestArticlesForInterests(userId, interests);
+  await restoreReadState(serviceClient, userId, readAtByUrl);
 }
 
 export async function removeInterestAction(
