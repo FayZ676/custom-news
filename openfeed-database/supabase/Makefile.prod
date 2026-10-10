@@ -1,43 +1,40 @@
 include ../.env.prod
 
-PG_CONN = postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres
+# DATABASE_URL comes from .env.prod: the Session pooler connection string from the
+# Supabase dashboard (Connect → Session pooler). The direct db.<ref> host is
+# IPv6-only, so the pooler is what works everywhere.
 SNAPSHOT_DIR = /tmp/_openfeed_snapshot
-# Every table holding data that should survive a reset, in foreign-key order.
-# global_settings and global_feeds are left out because the seeds recreate them.
-SNAPSHOT_TABLES = user_settings user_feedback user_interests global_articles user_article_matches user_articles global_emails global_share_links
-# global_articles.search_vector is generated, so it can't be copied back in.
-COLS_global_articles = id,source_name,title,url,summary,image_url,published_at,created_at,embedding
+# A reset wipes auth too, so accounts are snapshotted along with the data.
+AUTH_TABLES = auth.users auth.identities
+# Tables whose data should survive a reset. global_settings and global_feeds
+# are left out because the seeds recreate them.
+PUBLIC_TABLES = user_settings user_feedback user_interests global_articles user_article_matches user_articles global_emails global_share_links
 
 snapshot:
-	mkdir -p $(SNAPSHOT_DIR) \
-		$(foreach t,$(SNAPSHOT_TABLES),&& psql "$(PG_CONN)" -c "\copy (SELECT $(or $(COLS_$t),*) FROM public.$t) TO '$(SNAPSHOT_DIR)/$t.csv' CSV HEADER") \
+	rm -rf $(SNAPSHOT_DIR) && mkdir -p $(SNAPSHOT_DIR) \
+		&& pg_dump "$(DATABASE_URL)" --data-only $(foreach t,$(AUTH_TABLES),-t $t) -f $(SNAPSHOT_DIR)/auth.sql \
+		&& pg_dump "$(DATABASE_URL)" --data-only $(foreach t,$(PUBLIC_TABLES),-t public.$t) -f $(SNAPSHOT_DIR)/public.sql \
 		&& echo "Snapshot saved to $(SNAPSHOT_DIR)"
 
+# Restoring users fires the trigger that creates default user_settings, which
+# would collide with the snapshotted ones, so those defaults are cleared first.
 restore_snapshot:
-	true $(foreach t,$(SNAPSHOT_TABLES),&& psql "$(PG_CONN)" -c "TRUNCATE public.$t CASCADE;") \
-		$(foreach t,$(SNAPSHOT_TABLES),&& psql "$(PG_CONN)" -c "\copy public.$t $(if $(COLS_$t),($(COLS_$t))) FROM '$(SNAPSHOT_DIR)/$t.csv' CSV HEADER") \
-		&& psql "$(PG_CONN)" -c "INSERT INTO public.user_settings (user_id) SELECT id FROM auth.users ON CONFLICT (user_id) DO NOTHING;"
+	psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -f $(SNAPSHOT_DIR)/auth.sql \
+		&& psql "$(DATABASE_URL)" -c "TRUNCATE public.user_settings;" \
+		&& psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -f $(SNAPSHOT_DIR)/public.sql
 
+# Wipes the database and applies the local migrations.
 reset:
-	supabase link --project-ref $(PROJECT_ID) \
-		&& mv migrations /tmp/_migrations_backup \
-		&& mv seeds /tmp/_seeds_backup \
-		&& supabase db reset --linked --yes \
-		; mv /tmp/_migrations_backup migrations \
-		; mv /tmp/_seeds_backup seeds
+	supabase db reset --db-url "$(DATABASE_URL)" --no-seed --yes
 
 seed:
-	supabase link --project-ref $(PROJECT_ID) \
-		&& for f in seeds/shared/*.sql seeds/prod/*.sql; do \
-			psql "$(PG_CONN)" -f $$f; \
-		done
+	for f in seeds/shared/*.sql seeds/prod/*.sql; do \
+		psql "$(DATABASE_URL)" -v ON_ERROR_STOP=1 -f $$f || exit 1; \
+	done
 
+# Applies migrations not yet on the database, without wiping it.
 deploy:
-	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-all --yes
+	supabase db push --db-url "$(DATABASE_URL)" --include-all --yes
 
-update:
-	supabase link --project-ref $(PROJECT_ID) \
-		&& supabase db push --include-all
-
-init: snapshot reset deploy seed restore_snapshot
+# Seeds run last so the seeded accounts skip users that were restored.
+init: snapshot reset restore_snapshot seed

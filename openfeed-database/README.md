@@ -2,7 +2,7 @@
 
 This folder contains everything needed to set up OpenFeed's database. It handles storing articles, user preferences, and the logic that keeps your feed fresh and personalized.
 
-🚀 **You can get the entire database backend up and running with a single command.** Just fill in your credentials and run `make -f Makefile.prod deploy` — it handles everything else automatically.
+🚀 **You can get the entire database backend up and running with a single command.** Just fill in your credentials and run `make -f Makefile.prod deploy seed` — it handles everything else automatically.
 
 ---
 
@@ -23,7 +23,7 @@ See [Requirements](#requirements) for help installing each one.
 2. From the `supabase/` directory, run:
 
 ```bash
-make -f Makefile.prod deploy
+make -f Makefile.prod deploy seed
 ```
 
 3. Tell the scheduled jobs where your frontend lives. In the Supabase SQL editor, run once:
@@ -35,7 +35,7 @@ select vault.create_secret('<the CRON_SECRET from your frontend env>', 'cron_sec
 
 ✅ That's it! `pg_cron` now calls the frontend every 15 minutes to fetch and match articles — see [How it works](#how-it-works).
 
-> ⚠️ **Need to start over?** Run `make -f Makefile.prod reset` to wipe the database and start fresh. Note that this will delete all data permanently.
+> ⚠️ **Need to rebuild the schema?** Run `make -f Makefile.prod init`. It snapshots accounts and data, wipes the database, applies the migrations, restores the snapshot, and re-seeds. `make -f Makefile.prod reset` on its own wipes everything, accounts included.
 
 ### Option B: Run locally first
 
@@ -85,7 +85,7 @@ PROJECT_ID=         # your Supabase project ID
 PROJECT_URL=        # your Supabase project URL (e.g. https://<ref>.supabase.co)
 PUBLISHABLE_KEY=    # your Supabase publishable key
 ANON_KEY=           # your Supabase anon key
-DATABASE_URL=       # your Supabase direct database connection URL
+DATABASE_URL=       # your Supabase Session pooler connection string (dashboard → Connect → Session pooler); the direct host is IPv6-only
 ```
 
 You can find your Supabase project URL, keys, and database URL in your [Supabase project settings](https://supabase.com/dashboard/project/_/settings/api).
@@ -106,8 +106,10 @@ All commands are run from the `supabase/` directory.
 
 | Command                        | What it does                                                                        |
 | ------------------------------ | ----------------------------------------------------------------------------------- |
-| `make -f Makefile.prod deploy` | Deploys everything to your Supabase project — database, seed data, and functions    |
-| `make -f Makefile.prod reset`  | Wipes and resets the production database — **this deletes all data, use carefully** |
+| `make -f Makefile.prod deploy` | Applies any new migrations without touching existing data                           |
+| `make -f Makefile.prod seed`   | Loads the seed data (feeds, settings, accounts)                                     |
+| `make -f Makefile.prod init`   | Rebuilds the schema from scratch, keeping accounts and data via a snapshot           |
+| `make -f Makefile.prod reset`  | Wipes the production database, accounts included — **use carefully**               |
 
 ---
 
