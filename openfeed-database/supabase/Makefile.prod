@@ -6,7 +6,7 @@ FEEDBACK_SNAPSHOT = /tmp/_user_feedback_snapshot.csv
 INTERESTS_SNAPSHOT = /tmp/_user_interests_snapshot.csv
 ARTICLES_SNAPSHOT = /tmp/_user_articles_snapshot.csv
 
-ARTICLES_COLS = id,user_id,source_name,title,url,summary,image_url,published_at,created_at,interest_id,source_key,read_at
+ARTICLES_COLS = id,user_id,source_name,title,url,summary,image_url,published_at,created_at,interest_id,read_at
 
 snapshot:
 	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \

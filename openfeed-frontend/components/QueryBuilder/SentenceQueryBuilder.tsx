@@ -1,14 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ChevronDown } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import TagInput from "./TagInput";
-
-interface SourceOption {
-  key: string;
-  label: string;
-}
 
 interface SentenceQueryBuilderProps {
   title?: string;
@@ -16,14 +11,7 @@ interface SentenceQueryBuilderProps {
   initialName?: string;
   initialAll?: string[];
   initialAny?: string[];
-  initialSources?: string[];
-  availableSources?: SourceOption[];
-  onSave: (
-    name: string,
-    all: string[],
-    any: string[],
-    sources: string[],
-  ) => void | Promise<void>;
+  onSave: (name: string, all: string[], any: string[]) => void | Promise<void>;
   onBack?: () => void;
   onDelete?: () => void | Promise<void>;
   isSaving?: boolean;
@@ -35,8 +23,6 @@ export default function SentenceQueryBuilder({
   initialName = "",
   initialAll = [],
   initialAny = [],
-  initialSources = [],
-  availableSources,
   onSave,
   onBack,
   onDelete,
@@ -45,16 +31,6 @@ export default function SentenceQueryBuilder({
   const [name, setName] = useState(initialName);
   const [allTerms, setAllTerms] = useState<string[]>(initialAll);
   const [anyTerms, setAnyTerms] = useState<string[]>(initialAny);
-  const [selectedSources, setSelectedSources] =
-    useState<string[]>(initialSources);
-  const [additionalOptionsOpen, setAdditionalOptionsOpen] = useState(
-    initialSources.length > 0,
-  );
-
-  const toggleSource = (key: string) =>
-    setSelectedSources((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
 
   const canSave =
     name.trim().length > 0 &&
@@ -126,51 +102,6 @@ export default function SentenceQueryBuilder({
             placeholder="Type and press Enter…"
           />
         </div>
-
-        {availableSources && availableSources.length > 0 && (
-          <div className="flex flex-col border-b border-base-300">
-            <button
-              onClick={() => setAdditionalOptionsOpen((open) => !open)}
-              className="flex items-center justify-between py-4 text-left"
-            >
-              <span className="text-base-content font-semibold text-sm">
-                Additional options
-              </span>
-              <ChevronDown
-                size={16}
-                className={`text-muted transition-transform ${
-                  additionalOptionsOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {additionalOptionsOpen && (
-              <div className="flex flex-col gap-2 pb-4">
-                <div>
-                  <span className="text-base-content font-semibold text-sm">
-                    Sources
-                  </span>
-                  <p className="text-muted text-xs mt-0.5">
-                    Limit results to articles from selected sources
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {availableSources.map((source) => (
-                    <button
-                      key={source.key}
-                      data-active={
-                        selectedSources.includes(source.key) ? "true" : "false"
-                      }
-                      onClick={() => toggleSource(source.key)}
-                      className="btn-soft"
-                    >
-                      {source.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="flex items-center justify-between gap-3">
@@ -189,7 +120,7 @@ export default function SentenceQueryBuilder({
           <button
             onClick={() => {
               if (canSave)
-                void onSave(name.trim(), allTerms, anyTerms, selectedSources);
+                void onSave(name.trim(), allTerms, anyTerms);
             }}
             disabled={!canSave}
             className="btn-primary"

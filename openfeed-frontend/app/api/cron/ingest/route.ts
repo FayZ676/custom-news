@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { ingestArticlesForInterests } from "@/lib/articles/ingest";
-import type { FeedCache } from "@/lib/providers/rss";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { getAllInterestsByUser } from "@/lib/supabase/queries/user_interests";
 
@@ -14,8 +13,6 @@ export async function GET(request: Request) {
   const supabase = createServiceRoleClient();
   const users = await getAllInterestsByUser(supabase);
 
-  const feedCache: FeedCache = new Map();
-
   let succeeded = 0;
   let failed = 0;
   for (const { userId, interests } of users) {
@@ -27,7 +24,7 @@ export async function GET(request: Request) {
       created_at: new Date().toISOString(),
     }));
     try {
-      await ingestArticlesForInterests(userId, userInterests, feedCache);
+      await ingestArticlesForInterests(userId, userInterests);
       succeeded += 1;
     } catch (error) {
       failed += 1;

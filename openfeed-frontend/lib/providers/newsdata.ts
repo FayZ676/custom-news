@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { fetchLatestNewsArticles } from "@/lib/newsSearch.server";
 import { buildQueryFromClauses } from "@/lib/interests/queryClauses";
-import type { Provider } from "@/lib/providers/types";
 
 const API_KEY = process.env.NEWSDATA_API_KEY ?? "";
 
@@ -38,7 +37,6 @@ export const NewsQueryPayloadSchema = z.object({
   timeframe: z.string().nullable(),
   all: z.array(z.string()).default([]),
   any: z.array(z.string()).default([]),
-  sources: z.array(z.string()).default([]),
   prioritydomain: z.enum(NEWSDATA_PRIORITY_DOMAINS).nullable().default(null),
   imageOnly: z.boolean().default(false),
 });
@@ -53,7 +51,6 @@ const DEFAULT_NEWS_QUERY_PAYLOAD: NewsQueryPayload = {
   timeframe: null,
   all: [],
   any: [],
-  sources: [],
   prioritydomain: null,
   imageOnly: false,
 };
@@ -126,7 +123,6 @@ export function normalizeNewsQueryPayload(
     timeframe: normalizeTimeframe(payload.timeframe),
     all,
     any,
-    sources: payload.sources ?? [],
     prioritydomain: payload.prioritydomain,
     imageOnly: payload.imageOnly,
   };
@@ -159,9 +155,6 @@ export function payloadToParams(
   return params;
 }
 
-export const newsDataProvider: Provider = {
-  key: "newsdata",
-  search(payload: NewsQueryPayload) {
-    return fetchLatestNewsArticles(payloadToParams(payload, API_KEY));
-  },
-};
+export function searchNewsData(payload: NewsQueryPayload) {
+  return fetchLatestNewsArticles(payloadToParams(payload, API_KEY));
+}

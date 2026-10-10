@@ -25,12 +25,8 @@ import {
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { setFeedLastSeen } from "@/lib/supabase/queries/user_settings";
 
-function buildQueryPayload(
-  all: string[],
-  any: string[],
-  sources: string[],
-): NewsQueryPayload {
-  return createNewsQueryPayload({ all, any, sources });
+function buildQueryPayload(all: string[], any: string[]): NewsQueryPayload {
+  return createNewsQueryPayload({ all, any });
 }
 
 export async function createShareLinkAction(
@@ -115,14 +111,13 @@ export async function saveQueryAction(
   name: string,
   all: string[],
   any: string[],
-  sources: string[] = [],
 ): Promise<UserInterest> {
   const supabase = await createClient();
   const interest = await addUserInterest(
     supabase,
     userId,
     name,
-    buildQueryPayload(all, any, sources),
+    buildQueryPayload(all, any),
   );
   await ingestArticlesForInterests(userId, [interest]);
   revalidatePath("/feed");
@@ -135,7 +130,6 @@ export async function updateQueryAction(
   name: string,
   all: string[],
   any: string[],
-  sources: string[] = [],
 ): Promise<void> {
   const supabase = await createClient();
   await updateUserInterest(
@@ -143,7 +137,7 @@ export async function updateQueryAction(
     userId,
     interestId,
     name,
-    buildQueryPayload(all, any, sources),
+    buildQueryPayload(all, any),
   );
   await rebuildFeedAction(userId);
   revalidatePath("/feed");

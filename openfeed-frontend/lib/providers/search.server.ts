@@ -2,11 +2,9 @@ import "server-only";
 
 import type { FeedArticle } from "@/lib/newsSearch";
 import {
-  newsDataProvider,
+  searchNewsData,
   type NewsQueryPayload,
 } from "@/lib/providers/newsdata";
-import { createRssProvider, type FeedCache } from "@/lib/providers/rss";
-import type { FeedDefinition } from "@/lib/providers/types";
 
 const SUMMARY_MAX_LENGTH = 300;
 
@@ -17,35 +15,18 @@ function normalizeSummary(summary: string | null): string | null {
   return trimmed.slice(0, SUMMARY_MAX_LENGTH).trimEnd() + "…";
 }
 
-export async function searchProviders(
+export async function searchNews(
   payload: NewsQueryPayload,
-  subscribedFeeds: FeedDefinition[] = [],
-  cache: FeedCache = new Map(),
 ): Promise<FeedArticle[]> {
-  const sourceFilter = payload.sources ?? [];
-  const useAll = sourceFilter.length === 0;
-  const providers = [
-    ...(useAll || sourceFilter.includes(newsDataProvider.key)
-      ? [newsDataProvider]
-      : []),
-    ...subscribedFeeds
-      .filter((f) => useAll || sourceFilter.includes(f.key))
-      .map((feed) => createRssProvider(feed, cache)),
-  ];
-
-  const resultsByProvider = await Promise.all(
-    providers.map((provider) => provider.search(payload)),
-  );
+  const articles = await searchNewsData(payload);
 
   const articlesByUrl = new Map<string, FeedArticle>();
-  for (const articles of resultsByProvider) {
-    for (const article of articles) {
-      if (!articlesByUrl.has(article.url)) {
-        articlesByUrl.set(article.url, {
-          ...article,
-          summary: normalizeSummary(article.summary),
-        });
-      }
+  for (const article of articles) {
+    if (!articlesByUrl.has(article.url)) {
+      articlesByUrl.set(article.url, {
+        ...article,
+        summary: normalizeSummary(article.summary),
+      });
     }
   }
   return [...articlesByUrl.values()];

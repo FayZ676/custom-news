@@ -6,7 +6,6 @@ export interface FeedArticle {
   source_name: string;
   published_at: string;
   image_url: string | null;
-  source_key?: string | null;
 }
 
 export const MIN_SEARCH_QUERY_LENGTH = 3;

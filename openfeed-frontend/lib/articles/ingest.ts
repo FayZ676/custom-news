@@ -1,15 +1,13 @@
 import "server-only";
 
 import type { FeedArticle } from "@/lib/newsSearch";
-import { searchProviders } from "@/lib/providers/search.server";
-import type { FeedCache } from "@/lib/providers/rss";
+import { searchNews } from "@/lib/providers/search.server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
   getUserArticles,
   insertUserArticles,
   NewUserArticle,
 } from "@/lib/supabase/queries/user_articles";
-import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
 import {
   createNewsQueryPayload,
   type NewsQueryPayload,
@@ -25,24 +23,9 @@ type AttributedArticle = FeedArticle & { interest_id: string };
 
 async function fetchUniqueArticlesForInterests(
   interests: UserInterest[],
-  cache: FeedCache,
 ): Promise<AttributedArticle[]> {
-  const sourceKeys = new Set<string>();
-  for (const interest of interests) {
-    for (const key of interest.query_payload?.sources ?? []) {
-      if (key !== "newsdata") sourceKeys.add(key);
-    }
-  }
-  const supabaseForSources = createServiceRoleClient();
-  const allFeeds =
-    sourceKeys.size > 0
-      ? await getGlobalSourcesByKeys(supabaseForSources, [...sourceKeys])
-      : [];
-
   const resultsByInterest = await Promise.all(
-    interests.map((interest) =>
-      searchProviders(interestToPayload(interest), allFeeds, cache),
-    ),
+    interests.map((interest) => searchNews(interestToPayload(interest))),
   );
 
   const articlesByUrl = new Map<string, AttributedArticle>();
@@ -62,14 +45,13 @@ async function fetchUniqueArticlesForInterests(
 export async function ingestArticlesForInterests(
   userId: string,
   interests: UserInterest[],
-  cache: FeedCache = new Map(),
 ): Promise<void> {
   const valid = interests.filter(
     (i) => i.interest_text.trim().length > 0 || i.query_payload?.q,
   );
   if (valid.length === 0) return;
 
-  const found = await fetchUniqueArticlesForInterests(valid, cache);
+  const found = await fetchUniqueArticlesForInterests(valid);
   if (found.length === 0) return;
 
   const supabase = createServiceRoleClient();
@@ -87,7 +69,6 @@ export async function ingestArticlesForInterests(
     image_url: article.image_url,
     published_at: article.published_at,
     interest_id: article.interest_id,
-    source_key: article.source_key ?? null,
   }));
 
   await insertUserArticles(supabase, userId, rows);

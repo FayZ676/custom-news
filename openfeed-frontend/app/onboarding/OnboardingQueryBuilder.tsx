@@ -39,7 +39,7 @@ export default function OnboardingQueryBuilder({
     setIsSaving(true);
     setError(null);
     try {
-      await saveQueryAction(userId, name.trim(), allTerms, anyTerms, []);
+      await saveQueryAction(userId, name.trim(), allTerms, anyTerms);
       router.push("/feed");
     } catch {
       setError("Something went wrong saving your query. Please try again.");

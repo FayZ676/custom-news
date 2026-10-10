@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 import SentenceQueryBuilder from "@/components/QueryBuilder/SentenceQueryBuilder";
 import { deleteQueryAction, saveQueryAction, updateQueryAction } from "@/app/feed/actions";
-import type { FeedDefinition } from "@/lib/providers/types";
 
 interface QueryBuilderPageContentProps {
   userId: string;
@@ -13,8 +12,6 @@ interface QueryBuilderPageContentProps {
   initialName: string;
   initialAll: string[];
   initialAny: string[];
-  initialSources: string[];
-  availableSources: FeedDefinition[];
 }
 
 export function QueryBuilderPageContent({
@@ -23,18 +20,16 @@ export function QueryBuilderPageContent({
   initialName,
   initialAll,
   initialAny,
-  initialSources,
-  availableSources,
 }: QueryBuilderPageContentProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const handleSave = (name: string, all: string[], any: string[], sources: string[]) => {
+  const handleSave = (name: string, all: string[], any: string[]) => {
     startTransition(async () => {
       if (interestId) {
-        await updateQueryAction(userId, interestId, name, all, any, sources);
+        await updateQueryAction(userId, interestId, name, all, any);
       } else {
-        await saveQueryAction(userId, name, all, any, sources);
+        await saveQueryAction(userId, name, all, any);
       }
       router.push("/feed");
     });
@@ -55,8 +50,6 @@ export function QueryBuilderPageContent({
       initialName={initialName}
       initialAll={initialAll}
       initialAny={initialAny}
-      initialSources={initialSources}
-      availableSources={availableSources}
       onSave={handleSave}
       onBack={() => startTransition(() => router.push("/feed"))}
       onDelete={handleDelete}

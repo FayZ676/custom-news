@@ -12,7 +12,6 @@ export interface NewUserArticle {
   image_url: string | null;
   published_at: string;
   interest_id: string | null;
-  source_key: string | null;
 }
 
 // The get_shared_article RPC returns only the display columns.
@@ -48,7 +47,6 @@ export async function insertUserArticles(
     image_url: article.image_url,
     published_at: article.published_at,
     interest_id: article.interest_id,
-    source_key: article.source_key,
   }));
 
   const { error } = await (supabase as any)
