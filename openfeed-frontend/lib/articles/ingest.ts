@@ -10,21 +10,15 @@ import {
   NewUserArticle,
 } from "@/lib/supabase/queries/user_articles";
 import { getGlobalSourcesByKeys } from "@/lib/supabase/queries/global_sources";
-import type { NewsQueryPayload } from "@/lib/interests/refine";
+import {
+  createNewsQueryPayload,
+  type NewsQueryPayload,
+} from "@/lib/providers/newsdata";
 import type { UserInterest } from "@/lib/supabase/queries/user_interests";
 
 function interestToPayload(interest: UserInterest): NewsQueryPayload {
   if (interest.query_payload) return interest.query_payload;
-  return {
-    q: interest.interest_text,
-    qInTitle: null,
-    category: null,
-    country: null,
-    timeframe: null,
-    all: [],
-    any: [],
-    sources: [],
-  };
+  return createNewsQueryPayload({ q: interest.interest_text });
 }
 
 type AttributedArticle = FeedArticle & { interest_id: string };
@@ -40,9 +34,10 @@ async function fetchUniqueArticlesForInterests(
     }
   }
   const supabaseForSources = createServiceRoleClient();
-  const allFeeds = sourceKeys.size > 0
-    ? await getGlobalSourcesByKeys(supabaseForSources, [...sourceKeys])
-    : [];
+  const allFeeds =
+    sourceKeys.size > 0
+      ? await getGlobalSourcesByKeys(supabaseForSources, [...sourceKeys])
+      : [];
 
   const resultsByInterest = await Promise.all(
     interests.map((interest) =>
@@ -54,7 +49,10 @@ async function fetchUniqueArticlesForInterests(
   for (let i = 0; i < resultsByInterest.length; i++) {
     for (const article of resultsByInterest[i]) {
       if (!articlesByUrl.has(article.url)) {
-        articlesByUrl.set(article.url, { ...article, interest_id: interests[i].id });
+        articlesByUrl.set(article.url, {
+          ...article,
+          interest_id: interests[i].id,
+        });
       }
     }
   }

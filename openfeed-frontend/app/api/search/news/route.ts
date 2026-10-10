@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { MIN_SEARCH_QUERY_LENGTH } from "@/lib/newsSearch";
+import { createNewsQueryPayload } from "@/lib/providers/newsdata";
 import { searchProviders } from "@/lib/providers/search.server";
 
 export async function POST(request: Request) {
@@ -9,15 +10,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "query is too short" }, { status: 400 });
   }
 
-  const articles = await searchProviders({
-    q: query,
-    qInTitle: null,
-    category: null,
-    country: null,
-    timeframe: null,
-    all: [],
-    sources: [],
-    any: [],
-  });
+  const articles = await searchProviders(
+    createNewsQueryPayload({ q: query, prioritydomain: "top", imageOnly: true }),
+  );
   return NextResponse.json({ articles });
 }

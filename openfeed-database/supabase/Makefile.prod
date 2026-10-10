@@ -18,6 +18,7 @@ snapshot:
 restore_snapshot:
 	psql "$(PG_CONN)" -c "TRUNCATE public.user_settings CASCADE;" \
 		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
+		&& psql "$(PG_CONN)" -c "INSERT INTO public.user_settings (user_id) SELECT id FROM auth.users ON CONFLICT (user_id) DO NOTHING;" \
 		&& psql "$(PG_CONN)" -c "TRUNCATE public.user_feedback CASCADE;" \
 		&& psql "$(PG_CONN)" -c "\copy public.user_feedback FROM '$(FEEDBACK_SNAPSHOT)' CSV HEADER" \
 		&& psql "$(PG_CONN)" -c "TRUNCATE public.user_interests CASCADE;" \

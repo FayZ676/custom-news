@@ -57,8 +57,10 @@ body:has(dialog[open]) {
   --color-accent: oklch(79% 0.12 65) !important;         /* warm amber — badges, highlights */
   --color-accent-border: oklch(64% 0.14 62) !important;  /* subtle border on accent surfaces */
   --color-accent-content: oklch(46% 0.16 58) !important; /* text on accent backgrounds */
-  --color-error: oklch(55% 0.22 27);         /* destructive actions, error states */
-  --color-error-content: oklch(97% 0.02 27); /* text placed on error-colored backgrounds */
+  --color-success: oklch(50% 0.18 145);         /* confirmations, copied/saved states */
+  --color-success-content: oklch(97% 0.02 145); /* text placed on success-colored backgrounds */
+  --color-error: oklch(55% 0.22 27);            /* destructive actions, error states */
+  --color-error-content: oklch(97% 0.02 27);    /* text placed on error-colored backgrounds */
 }
 
 @layer components {

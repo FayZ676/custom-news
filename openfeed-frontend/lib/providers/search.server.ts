@@ -1,8 +1,10 @@
 import "server-only";
 
 import type { FeedArticle } from "@/lib/newsSearch";
-import type { NewsQueryPayload } from "@/lib/interests/refine";
-import { newsDataProvider } from "@/lib/providers/newsdata";
+import {
+  newsDataProvider,
+  type NewsQueryPayload,
+} from "@/lib/providers/newsdata";
 import { createRssProvider, type FeedCache } from "@/lib/providers/rss";
 import type { FeedDefinition } from "@/lib/providers/types";
 
@@ -23,7 +25,9 @@ export async function searchProviders(
   const sourceFilter = payload.sources ?? [];
   const useAll = sourceFilter.length === 0;
   const providers = [
-    ...(useAll || sourceFilter.includes(newsDataProvider.key) ? [newsDataProvider] : []),
+    ...(useAll || sourceFilter.includes(newsDataProvider.key)
+      ? [newsDataProvider]
+      : []),
     ...subscribedFeeds
       .filter((f) => useAll || sourceFilter.includes(f.key))
       .map((feed) => createRssProvider(feed, cache)),

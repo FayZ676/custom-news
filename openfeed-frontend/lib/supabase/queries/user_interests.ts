@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { Database } from "@/lib/supabase/supabase.types";
-import { NewsQueryPayload } from "@/lib/interests/refine";
+import type { NewsQueryPayload } from "@/lib/providers/newsdata";
 
 export interface UserInterest {
   id: string;
@@ -45,9 +45,16 @@ export async function getAllInterestsByUser(
   if (error) throw new Error(error.message);
 
   const byUser = new Map<string, UserInterestEntry[]>();
-  for (const row of (data as { user_id: string; interest_text: string; query_payload: NewsQueryPayload | null }[]) ?? []) {
+  for (const row of (data as {
+    user_id: string;
+    interest_text: string;
+    query_payload: NewsQueryPayload | null;
+  }[]) ?? []) {
     const entries = byUser.get(row.user_id) ?? [];
-    entries.push({ interestText: row.interest_text, queryPayload: row.query_payload });
+    entries.push({
+      interestText: row.interest_text,
+      queryPayload: row.query_payload,
+    });
     byUser.set(row.user_id, entries);
   }
 

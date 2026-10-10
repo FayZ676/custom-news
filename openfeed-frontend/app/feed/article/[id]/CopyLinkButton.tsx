@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clipboard, ClipboardCheck } from "lucide-react";
+import { Link, Check } from "lucide-react";
 
 interface CopyLinkButtonProps {
   articleId: string;
@@ -38,9 +38,9 @@ export function CopyLinkButton({ articleId, createShareLink }: CopyLinkButtonPro
       aria-label={copyState === "copied" ? "Copied to clipboard" : "Copy share link"}
     >
       {copyState === "copied" ? (
-        <ClipboardCheck size={18} className="text-success" />
+        <Check size={18} className="text-success" />
       ) : (
-        <Clipboard size={18} />
+        <Link size={18} />
       )}
     </button>
   );
