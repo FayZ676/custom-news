@@ -62,6 +62,13 @@ body:has(dialog[open]) {
   --color-error-content: oklch(97% 0.02 27);    /* text placed on error-colored backgrounds */
 }
 
+/* base-content scale for black: same 2 → 4 steps, receding toward the black surface */
+[data-theme="black"] {
+  --color-base-content-2: oklch(66% 0 0);
+  --color-base-content-3: oklch(52% 0 0);
+  --color-base-content-4: oklch(44% 0 0);
+}
+
 @layer components {
   /* filled CTA button — sign in, landing page CTAs */
   .btn-primary {
