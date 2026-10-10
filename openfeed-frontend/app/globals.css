@@ -47,9 +47,8 @@ body:has(dialog[open]) {
    8  — major layout sections
    16 — page-level (hero padding, nav clearance)        */
 
-/* Warm off-white palette */
-:root,
-[data-theme="light"] {
+/* Warm off-white palette — every theme except black (light is stored as "cupcake") */
+:root:not([data-theme="black"]) {
   --color-base-100: oklch(98.2% 0.004 75); /* lightest surface — page background and modal panels */
   --color-base-200: oklch(95.5% 0.006 75); /* recessed surface — input fields and secondary button backgrounds */
   --color-base-300: oklch(89.5% 0.010 75); /* borders, dividers, hover fills on surfaces */
