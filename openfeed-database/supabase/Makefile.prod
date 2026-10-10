@@ -1,29 +1,22 @@
 include ../.env.prod
 
 PG_CONN = postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres
-SETTINGS_SNAPSHOT = /tmp/_user_settings_snapshot.csv
-FEEDBACK_SNAPSHOT = /tmp/_user_feedback_snapshot.csv
-INTERESTS_SNAPSHOT = /tmp/_user_interests_snapshot.csv
-ARTICLES_SNAPSHOT = /tmp/_user_articles_snapshot.csv
-
-ARTICLES_COLS = id,user_id,source_name,title,url,summary,image_url,published_at,created_at,interest_id,read_at
+SNAPSHOT_DIR = /tmp/_openfeed_snapshot
+# Every table holding data that should survive a reset, in foreign-key order.
+# global_settings is left out because the seed recreates it.
+SNAPSHOT_TABLES = user_settings user_feedback user_interests user_articles global_emails global_share_links
+# user_articles.search_vector is generated, so it can't be copied back in.
+COLS_user_articles = id,user_id,source_name,title,url,summary,image_url,published_at,created_at,interest_id,read_at
 
 snapshot:
-	psql "$(PG_CONN)" -c "\copy public.user_settings TO '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_feedback TO '$(FEEDBACK_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_interests TO '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy (SELECT $(ARTICLES_COLS) FROM public.user_articles) TO '$(ARTICLES_SNAPSHOT)' CSV HEADER" \
-		&& echo "Snapshot saved to /tmp/"
+	mkdir -p $(SNAPSHOT_DIR) \
+		$(foreach t,$(SNAPSHOT_TABLES),&& psql "$(PG_CONN)" -c "\copy (SELECT $(or $(COLS_$t),*) FROM public.$t) TO '$(SNAPSHOT_DIR)/$t.csv' CSV HEADER") \
+		&& echo "Snapshot saved to $(SNAPSHOT_DIR)"
 
 restore_snapshot:
-	psql "$(PG_CONN)" -c "TRUNCATE public.user_settings CASCADE;" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_settings FROM '$(SETTINGS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "INSERT INTO public.user_settings (user_id) SELECT id FROM auth.users ON CONFLICT (user_id) DO NOTHING;" \
-		&& psql "$(PG_CONN)" -c "TRUNCATE public.user_feedback CASCADE;" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_feedback FROM '$(FEEDBACK_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "TRUNCATE public.user_interests CASCADE;" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_interests FROM '$(INTERESTS_SNAPSHOT)' CSV HEADER" \
-		&& psql "$(PG_CONN)" -c "\copy public.user_articles ($(ARTICLES_COLS)) FROM '$(ARTICLES_SNAPSHOT)' CSV HEADER"
+	true $(foreach t,$(SNAPSHOT_TABLES),&& psql "$(PG_CONN)" -c "TRUNCATE public.$t CASCADE;") \
+		$(foreach t,$(SNAPSHOT_TABLES),&& psql "$(PG_CONN)" -c "\copy public.$t $(if $(COLS_$t),($(COLS_$t))) FROM '$(SNAPSHOT_DIR)/$t.csv' CSV HEADER") \
+		&& psql "$(PG_CONN)" -c "INSERT INTO public.user_settings (user_id) SELECT id FROM auth.users ON CONFLICT (user_id) DO NOTHING;"
 
 reset:
 	supabase link --project-ref $(PROJECT_ID) \
