@@ -15,14 +15,14 @@ OpenFeed gathers articles from across the web and ranks them by what matters to 
 
 Most apps and websites show you everything in reverse chronological order — newest first, regardless of whether it's relevant to you. Finding what actually matters means scrolling through a lot of noise.
 
-OpenFeed is different. You describe your **interests** in plain language — *"AI research"*, *"climate policy"*, *"indie game development"* — and once a day OpenFeed runs each of them as a search against [NewsData.io](https://newsdata.io)'s worldwide news index and rebuilds your feed from the results. Your interests are the only thing that decides what shows up.
+OpenFeed is different. You describe your **interests** in plain language — *"AI research"*, *"climate policy"*, *"indie game development"* — and OpenFeed reads a curated set of quality tech publications on your behalf, keeping only the articles that genuinely match what you described. Your interests are the only thing that decides what shows up.
 
 ---
 
 ## How it works
 
 1. **Describe your interests** — write them however you like, in your own words.
-2. **OpenFeed searches the news** — once a day, each interest is run as a query against NewsData.io and your feed is replaced with the freshest matches.
+2. **OpenFeed reads the news** — every 15 minutes it pulls ~40 curated tech RSS feeds, finds the articles closest to each interest, and has an AI judge decide which ones you'd actually want — recording a one-line reason for every decision.
 3. **Read what matters** — articles are categorized automatically so you can filter and search within your feed.
 
 ---
@@ -32,17 +32,17 @@ OpenFeed is different. You describe your **interests** in plain language — *"A
 **Hosted version** — the easiest way to get started. No setup required.
 👉 [Coming soon / link to hosted version]
 
-**Self-host** — deploy your own instance in minutes, for free. You'll need a [Supabase](https://supabase.com) account, a [Vercel](https://vercel.com) account, and a [NewsData.io](https://newsdata.io) API key — all have free plans that are more than enough to run OpenFeed.
+**Self-host** — deploy your own instance in minutes, for free. You'll need a [Supabase](https://supabase.com) account, a [Vercel](https://vercel.com) account, plus [Anthropic](https://console.anthropic.com) and [Voyage AI](https://www.voyageai.com) API keys. Running costs are a few cents a day.
 
 ---
 
-## Free to host. Free to use.
+## Cheap to host. Free to use.
 
-OpenFeed is designed to run entirely on free tiers:
+OpenFeed is designed to run on free tiers, plus a few cents of AI usage:
 
 - **Frontend** — deployed to Vercel (free hobby plan)
 - **Database** — hosted on Supabase (free plan)
-- **News** — fetched from NewsData.io (free plan)
+- **News** — read from public RSS feeds, matched with Voyage AI embeddings and judged by Claude Haiku (pennies per day)
 
 Whether you self-host or use the managed service, OpenFeed puts you in control of your news feed.
 

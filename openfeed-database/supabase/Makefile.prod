@@ -3,10 +3,10 @@ include ../.env.prod
 PG_CONN = postgresql://postgres:$(PROJECT_PASSWORD)@db.$(PROJECT_ID).supabase.co:5432/postgres
 SNAPSHOT_DIR = /tmp/_openfeed_snapshot
 # Every table holding data that should survive a reset, in foreign-key order.
-# global_settings is left out because the seed recreates it.
-SNAPSHOT_TABLES = user_settings user_feedback user_interests user_articles global_emails global_share_links
-# user_articles.search_vector is generated, so it can't be copied back in.
-COLS_user_articles = id,user_id,source_name,title,url,summary,image_url,published_at,created_at,interest_id,read_at
+# global_settings and global_feeds are left out because the seeds recreate them.
+SNAPSHOT_TABLES = user_settings user_feedback user_interests global_articles user_article_matches user_articles global_emails global_share_links
+# global_articles.search_vector is generated, so it can't be copied back in.
+COLS_global_articles = id,source_name,title,url,summary,image_url,published_at,created_at,embedding
 
 snapshot:
 	mkdir -p $(SNAPSHOT_DIR) \

@@ -1,21 +1,12 @@
-create extension if not exists pg_trgm;
-
+-- A user's feed: the articles judged relevant to one of their interests.
 create table "user_articles" (
     "id" uuid primary key default gen_random_uuid(),
     "user_id" uuid not null references auth.users(id) on delete cascade,
-    "source_name" text not null,
-    "title" text not null,
-    "url" text not null,
-    "summary" text,
-    "image_url" text,
-    "published_at" timestamptz not null,
+    "article_id" uuid not null references global_articles(id) on delete cascade,
+    "interest_id" uuid not null references user_interests(id) on delete cascade,
     "created_at" timestamptz not null default now(),
-    "interest_id" uuid references user_interests(id) on delete cascade,
     "read_at" timestamptz,
-    "search_vector" tsvector generated always as (
-        to_tsvector('english', coalesce(title, '') || ' ' || coalesce(summary, ''))
-    ) stored,
-    unique ("user_id", "url")
+    unique ("user_id", "article_id")
 );
 
 alter table "user_articles" enable row level security;
@@ -33,9 +24,3 @@ create policy "user_articles_update_policy"
 
 create index if not exists user_articles_user_id_idx
   on user_articles (user_id);
-
-create index if not exists user_articles_title_trgm_idx
-  on user_articles using gin (title gin_trgm_ops);
-
-create index user_articles_search_vector_idx
-  on user_articles using gin (search_vector);

@@ -1,21 +1,48 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { Database, Tables } from "@/lib/supabase/supabase.types";
+import { Database, TablesInsert } from "@/lib/supabase/supabase.types";
 
-export type UserArticle = Tables<"user_articles">;
+const USER_ARTICLE_COLUMNS = `
+  id, article_id, interest_id, created_at, read_at,
+  article:global_articles!inner (
+    source_name, title, url, summary, image_url, published_at
+  )
+`;
 
-export interface NewUserArticle {
+// A feed entry: the user's row flattened together with the shared article.
+export interface UserArticle {
+  id: string;
+  article_id: string;
+  interest_id: string;
+  created_at: string;
+  read_at: string | null;
   source_name: string;
   title: string;
   url: string;
   summary: string | null;
   image_url: string | null;
   published_at: string;
-  interest_id: string | null;
 }
 
-// The get_shared_article RPC returns only the display columns.
-export type SharedArticle = Omit<UserArticle, "user_id" | "search_vector">;
+export type SharedArticle =
+  Database["public"]["Functions"]["get_shared_article"]["Returns"][number];
+
+type ArticleFields =
+  | "source_name"
+  | "title"
+  | "url"
+  | "summary"
+  | "image_url"
+  | "published_at";
+
+function flatten({
+  article,
+  ...row
+}: Omit<UserArticle, ArticleFields> & {
+  article: Pick<UserArticle, ArticleFields>;
+}): UserArticle {
+  return { ...row, ...article };
+}
 
 export async function getUserArticles(
   supabase: SupabaseClient<Database>,
@@ -23,50 +50,13 @@ export async function getUserArticles(
 ): Promise<UserArticle[]> {
   const { data, error } = await supabase
     .from("user_articles")
-    .select("*")
-    .eq("user_id", userId)
-    .order("published_at", { ascending: false });
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-export async function insertUserArticles(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  articles: NewUserArticle[],
-): Promise<void> {
-  if (articles.length === 0) return;
-
-  const rows = articles.map((article) => ({
-    user_id: userId,
-    source_name: article.source_name,
-    title: article.title,
-    url: article.url,
-    summary: article.summary,
-    image_url: article.image_url,
-    published_at: article.published_at,
-    interest_id: article.interest_id,
-  }));
-
-  const { error } = await (supabase as any)
-    .from("user_articles")
-    .upsert(rows, { onConflict: "user_id,url", ignoreDuplicates: true });
-
-  if (error) throw new Error(error.message);
-}
-
-
-export async function deleteAllUserArticles(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-): Promise<void> {
-  const { error } = await (supabase as any)
-    .from("user_articles")
-    .delete()
+    .select(USER_ARTICLE_COLUMNS)
     .eq("user_id", userId);
 
   if (error) throw new Error(error.message);
+  return data
+    .map(flatten)
+    .sort((a, b) => b.published_at.localeCompare(a.published_at));
 }
 
 export async function getUserArticleById(
@@ -76,13 +66,40 @@ export async function getUserArticleById(
 ): Promise<UserArticle | null> {
   const { data, error } = await supabase
     .from("user_articles")
-    .select("*")
+    .select(USER_ARTICLE_COLUMNS)
     .eq("user_id", userId)
     .eq("id", articleId)
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data;
+  return data ? flatten(data) : null;
+}
+
+export async function insertUserArticles(
+  supabase: SupabaseClient<Database>,
+  rows: TablesInsert<"user_articles">[],
+): Promise<void> {
+  if (rows.length === 0) return;
+
+  const { error } = await supabase
+    .from("user_articles")
+    .upsert(rows, { onConflict: "user_id,article_id", ignoreDuplicates: true });
+
+  if (error) throw new Error(error.message);
+}
+
+// Read articles stay in the feed when an interest is edited.
+export async function deleteUnreadArticlesForInterest(
+  supabase: SupabaseClient<Database>,
+  interestId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("user_articles")
+    .delete()
+    .eq("interest_id", interestId)
+    .is("read_at", null);
+
+  if (error) throw new Error(error.message);
 }
 
 export async function markArticleRead(
@@ -90,38 +107,13 @@ export async function markArticleRead(
   userId: string,
   articleId: string,
 ): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("user_articles")
     .update({ read_at: new Date().toISOString() })
     .eq("user_id", userId)
     .eq("id", articleId);
 
   if (error) throw new Error(error.message);
-}
-
-export async function restoreReadState(
-  supabase: SupabaseClient<Database>,
-  userId: string,
-  readAtByUrl: Map<string, string>,
-): Promise<void> {
-  if (readAtByUrl.size === 0) return;
-
-  const urlsByReadAt = new Map<string, string[]>();
-  for (const [url, readAt] of readAtByUrl) {
-    const urls = urlsByReadAt.get(readAt) ?? [];
-    urls.push(url);
-    urlsByReadAt.set(readAt, urls);
-  }
-
-  for (const [readAt, urls] of urlsByReadAt) {
-    const { error } = await (supabase as any)
-      .from("user_articles")
-      .update({ read_at: readAt })
-      .eq("user_id", userId)
-      .in("url", urls);
-
-    if (error) throw new Error(error.message);
-  }
 }
 
 export async function getSharedArticle(
@@ -131,10 +123,10 @@ export async function getSharedArticle(
   // Security-definer RPC: a valid share token grants read access to the
   // single linked article, which RLS would otherwise hide from anonymous
   // visitors.
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .rpc("get_shared_article", { p_token: token })
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return (data as SharedArticle | null) ?? null;
+  return data;
 }

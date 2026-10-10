@@ -3,33 +3,31 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import SentenceQueryBuilder from "@/components/QueryBuilder/SentenceQueryBuilder";
-import { deleteQueryAction, saveQueryAction, updateQueryAction } from "@/app/feed/actions";
+import InterestEditor from "@/components/InterestEditor";
+import {
+  deleteInterestAction,
+  saveInterestAction,
+  updateInterestAction,
+} from "@/app/feed/actions";
 
 interface QueryBuilderPageContentProps {
-  userId: string;
   interestId?: string;
-  initialName: string;
-  initialAll: string[];
-  initialAny: string[];
+  initialText: string;
 }
 
 export function QueryBuilderPageContent({
-  userId,
   interestId,
-  initialName,
-  initialAll,
-  initialAny,
+  initialText,
 }: QueryBuilderPageContentProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const handleSave = (name: string, all: string[], any: string[]) => {
+  const handleSave = (text: string) => {
     startTransition(async () => {
       if (interestId) {
-        await updateQueryAction(userId, interestId, name, all, any);
+        await updateInterestAction(interestId, text);
       } else {
-        await saveQueryAction(userId, name, all, any);
+        await saveInterestAction(text);
       }
       router.push("/feed");
     });
@@ -38,18 +36,16 @@ export function QueryBuilderPageContent({
   const handleDelete = interestId
     ? () => {
         startTransition(async () => {
-          await deleteQueryAction(userId, interestId);
+          await deleteInterestAction(interestId);
           router.push("/feed");
         });
       }
     : undefined;
 
   return (
-    <SentenceQueryBuilder
+    <InterestEditor
       key={interestId ?? "new"}
-      initialName={initialName}
-      initialAll={initialAll}
-      initialAny={initialAny}
+      initialText={initialText}
       onSave={handleSave}
       onBack={() => startTransition(() => router.push("/feed"))}
       onDelete={handleDelete}

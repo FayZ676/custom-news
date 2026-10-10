@@ -26,7 +26,14 @@ See [Requirements](#requirements) for help installing each one.
 make -f Makefile.prod deploy
 ```
 
-✅ That's it! The daily article refresh is handled by the frontend (a Vercel cron job) — see the [frontend README](../openfeed-frontend/README.md).
+3. Tell the scheduled jobs where your frontend lives. In the Supabase SQL editor, run once:
+
+```sql
+select vault.create_secret('https://<your-app>.vercel.app', 'app_url');
+select vault.create_secret('<the CRON_SECRET from your frontend env>', 'cron_secret');
+```
+
+✅ That's it! `pg_cron` now calls the frontend every 15 minutes to fetch and match articles — see [How it works](#how-it-works).
 
 > ⚠️ **Need to start over?** Run `make -f Makefile.prod reset` to wipe the database and start fresh. Note that this will delete all data permanently.
 
@@ -106,4 +113,11 @@ All commands are run from the `supabase/` directory.
 
 ## How it works
 
-A scheduled job keeps every feed fresh: the frontend runs a daily [Vercel cron](https://vercel.com/docs/cron-jobs) that runs each user's interest queries against NewsData.io and refreshes their articles. The database just stores the results — see the [frontend README](../openfeed-frontend/README.md) for details.
+Two `pg_cron` jobs (defined in `migrations/99990000000000_schedule_pipeline.sql`) keep every feed fresh by calling the frontend's cron routes with `pg_net`, using the `app_url` and `cron_secret` Vault secrets:
+
+| Job              | Schedule              | What it does                                                                                         |
+| ---------------- | --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `fetch_articles` | every 15 minutes      | Pulls every feed in `global_feeds` into `global_articles` and embeds new articles                    |
+| `match_articles` | 5 minutes after fetch | For each interest, judges the nearest unjudged articles; records every decision in `user_article_matches` and adds the relevant ones to `user_articles` |
+
+The curated feed list lives in `seeds/shared/02_global_feeds.sql`.

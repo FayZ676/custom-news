@@ -7,6 +7,7 @@ import {
   getUserArticleById,
   markArticleRead,
 } from "@/lib/supabase/queries/user_articles";
+import { getMatch } from "@/lib/supabase/queries/user_article_matches";
 import { createShareLinkAction } from "@/app/feed/actions";
 import { timeAgo, toTitleCase } from "@/lib/utils";
 
@@ -25,7 +26,10 @@ export default async function ArticlePage({
 
   if (!article) notFound();
 
-  await markArticleRead(supabase, userId, article.id);
+  const [match] = await Promise.all([
+    getMatch(supabase, article.interest_id, article.article_id),
+    markArticleRead(supabase, userId, article.id),
+  ]);
 
   const handleCreateShareLink = createShareLinkAction.bind(null, userId);
 
@@ -59,6 +63,10 @@ export default async function ArticlePage({
         <p className="text-base text-base-content leading-relaxed">
           {article.summary}
         </p>
+      )}
+
+      {match && (
+        <p className="text-muted">Why you&apos;re seeing this: {match.reason}</p>
       )}
 
       <div className="flex items-center justify-between pt-2">

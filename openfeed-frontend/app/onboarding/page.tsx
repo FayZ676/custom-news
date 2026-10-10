@@ -13,9 +13,7 @@ async function OnboardingContent() {
   const interests = await getUserInterests(supabase, userId);
   if (interests.length > 0) redirect("/feed");
 
-  return (
-    <OnboardingQueryBuilder userId={userId} />
-  );
+  return <OnboardingQueryBuilder />;
 }
 
 export default function OnboardingPage() {

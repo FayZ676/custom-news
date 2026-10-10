@@ -39,10 +39,11 @@ security definer
 set search_path = public
 as $$
   select
-    ua.id, ua.source_name, ua.title, ua.url, ua.summary,
-    ua.image_url, ua.published_at, ua.created_at
+    ua.id, ga.source_name, ga.title, ga.url, ga.summary,
+    ga.image_url, ga.published_at, ua.created_at
   from global_share_links sl
   join user_articles ua on ua.id::text = sl.content_id
+  join global_articles ga on ga.id = ua.article_id
   where sl.token = p_token
     and sl.content_type = 'article'
     and sl.expires_at > now();

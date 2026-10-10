@@ -15,26 +15,13 @@ export default async function QueryBuilderPage({ searchParams }: QueryBuilderPag
 
   const { id } = await searchParams;
 
-  let initialName = "";
-  let initialAll: string[] = [];
-  let initialAny: string[] = [];
-
+  let initialText = "";
   if (id) {
     const interests = await getUserInterests(supabase, userId);
     const interest = interests.find((i) => i.id === id);
     if (!interest) redirect("/feed");
-    initialName = interest.interest_text;
-    initialAll = interest.query_payload?.all ?? [];
-    initialAny = interest.query_payload?.any ?? [];
+    initialText = interest.interest_text;
   }
 
-  return (
-    <QueryBuilderPageContent
-      userId={userId}
-      interestId={id}
-      initialName={initialName}
-      initialAll={initialAll}
-      initialAny={initialAny}
-    />
-  );
+  return <QueryBuilderPageContent interestId={id} initialText={initialText} />;
 }

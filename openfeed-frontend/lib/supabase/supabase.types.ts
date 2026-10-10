@@ -34,6 +34,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      global_articles: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          id: string
+          image_url: string | null
+          published_at: string
+          search_vector: unknown
+          source_name: string
+          summary: string | null
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          image_url?: string | null
+          published_at: string
+          search_vector?: unknown
+          source_name: string
+          summary?: string | null
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          image_url?: string | null
+          published_at?: string
+          search_vector?: unknown
+          source_name?: string
+          summary?: string | null
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
       global_emails: {
         Row: {
           created_at: string
@@ -49,6 +88,30 @@ export type Database = {
           created_at?: string
           email_text?: string
           id?: string
+        }
+        Relationships: []
+      }
+      global_feeds: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          title: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          url?: string
         }
         Relationships: []
       }
@@ -112,50 +175,84 @@ export type Database = {
         }
         Relationships: []
       }
-      user_articles: {
+      user_article_matches: {
         Row: {
+          article_id: string
           created_at: string
-          id: string
-          image_url: string | null
-          interest_id: string | null
-          published_at: string
-          read_at: string | null
-          search_vector: unknown
-          source_name: string
-          summary: string | null
-          title: string
-          url: string
+          interest_id: string
+          reason: string
+          relevant: boolean
+          similarity: number
           user_id: string
         }
         Insert: {
+          article_id: string
           created_at?: string
-          id?: string
-          image_url?: string | null
-          interest_id?: string | null
-          published_at: string
-          read_at?: string | null
-          search_vector?: unknown
-          source_name: string
-          summary?: string | null
-          title: string
-          url: string
+          interest_id: string
+          reason: string
+          relevant: boolean
+          similarity: number
           user_id: string
         }
         Update: {
+          article_id?: string
           created_at?: string
-          id?: string
-          image_url?: string | null
-          interest_id?: string | null
-          published_at?: string
-          read_at?: string | null
-          search_vector?: unknown
-          source_name?: string
-          summary?: string | null
-          title?: string
-          url?: string
+          interest_id?: string
+          reason?: string
+          relevant?: boolean
+          similarity?: number
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "user_article_matches_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "global_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_article_matches_interest_id_fkey"
+            columns: ["interest_id"]
+            isOneToOne: false
+            referencedRelation: "user_interests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_articles: {
+        Row: {
+          article_id: string
+          created_at: string
+          id: string
+          interest_id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          created_at?: string
+          id?: string
+          interest_id: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          created_at?: string
+          id?: string
+          interest_id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_articles_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "global_articles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_articles_interest_id_fkey"
             columns: ["interest_id"]
@@ -189,23 +286,23 @@ export type Database = {
       user_interests: {
         Row: {
           created_at: string
+          embedding: string | null
           id: string
           interest_text: string
-          query_payload: Json | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          embedding?: string | null
           id?: string
           interest_text: string
-          query_payload?: Json | null
           user_id: string
         }
         Update: {
           created_at?: string
+          embedding?: string | null
           id?: string
           interest_text?: string
-          query_payload?: Json | null
           user_id?: string
         }
         Relationships: []
@@ -252,8 +349,25 @@ export type Database = {
           url: string
         }[]
       }
-      show_limit: { Args: never; Returns: number }
-      show_trgm: { Args: { "": string }; Returns: string[] }
+      match_articles: {
+        Args: {
+          p_embedding: string
+          p_interest_id?: string
+          p_limit: number
+          p_min_similarity: number
+          p_since: string
+        }
+        Returns: {
+          id: string
+          image_url: string
+          published_at: string
+          similarity: number
+          source_name: string
+          summary: string
+          title: string
+          url: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

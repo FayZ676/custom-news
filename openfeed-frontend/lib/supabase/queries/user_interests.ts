@@ -1,109 +1,104 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { Database } from "@/lib/supabase/supabase.types";
-import type { NewsQueryPayload } from "@/lib/providers/newsdata";
+
+const INTEREST_COLUMNS = "id, user_id, interest_text, created_at";
 
 export interface UserInterest {
   id: string;
   user_id: string;
   interest_text: string;
-  query_payload: NewsQueryPayload | null;
   created_at: string;
+}
+
+export interface EmbeddedUserInterest extends UserInterest {
+  embedding: string | null;
 }
 
 export async function getUserInterests(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<UserInterest[]> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("user_interests")
-    .select("id, user_id, interest_text, query_payload, created_at")
+    .select(INTEREST_COLUMNS)
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data as UserInterest[] | null) ?? [];
+  return data;
 }
 
-export interface UserInterestEntry {
-  interestText: string;
-  queryPayload: NewsQueryPayload | null;
-}
-
-export interface UserInterests {
-  userId: string;
-  interests: UserInterestEntry[];
-}
-
-export async function getAllInterestsByUser(
+export async function getAllInterests(
   supabase: SupabaseClient<Database>,
-): Promise<UserInterests[]> {
-  const { data, error } = await (supabase as any)
+): Promise<EmbeddedUserInterest[]> {
+  const { data, error } = await supabase
     .from("user_interests")
-    .select("user_id, interest_text, query_payload");
+    .select(`${INTEREST_COLUMNS}, embedding`);
 
   if (error) throw new Error(error.message);
+  return data;
+}
 
-  const byUser = new Map<string, UserInterestEntry[]>();
-  for (const row of (data as {
-    user_id: string;
-    interest_text: string;
-    query_payload: NewsQueryPayload | null;
-  }[]) ?? []) {
-    const entries = byUser.get(row.user_id) ?? [];
-    entries.push({
-      interestText: row.interest_text,
-      queryPayload: row.query_payload,
-    });
-    byUser.set(row.user_id, entries);
-  }
+export async function getInterestById(
+  supabase: SupabaseClient<Database>,
+  interestId: string,
+): Promise<EmbeddedUserInterest> {
+  const { data, error } = await supabase
+    .from("user_interests")
+    .select(`${INTEREST_COLUMNS}, embedding`)
+    .eq("id", interestId)
+    .single();
 
-  return [...byUser.entries()].map(([userId, interests]) => ({
-    userId,
-    interests,
-  }));
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function addUserInterest(
   supabase: SupabaseClient<Database>,
   userId: string,
   interestText: string,
-  queryPayload?: NewsQueryPayload | null,
 ): Promise<UserInterest> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("user_interests")
-    .insert({
-      user_id: userId,
-      interest_text: interestText,
-      query_payload: queryPayload ?? null,
-    })
-    .select("id, user_id, interest_text, query_payload, created_at")
+    .insert({ user_id: userId, interest_text: interestText })
+    .select(INTEREST_COLUMNS)
     .single();
 
   if (error) throw new Error(error.message);
-  return data as UserInterest;
+  return data;
 }
 
+// Clears the embedding so the new text is re-embedded before matching.
 export async function updateUserInterest(
   supabase: SupabaseClient<Database>,
   userId: string,
   interestId: string,
   interestText: string,
-  queryPayload: NewsQueryPayload | null,
 ): Promise<UserInterest> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("user_interests")
-    .update({
-      interest_text: interestText,
-      query_payload: queryPayload,
-    })
+    .update({ interest_text: interestText, embedding: null })
     .eq("user_id", userId)
     .eq("id", interestId)
-    .select("id, user_id, interest_text, query_payload, created_at")
+    .select(INTEREST_COLUMNS)
     .single();
 
   if (error) throw new Error(error.message);
-  return data as UserInterest;
+  return data;
+}
+
+export async function setInterestEmbedding(
+  supabase: SupabaseClient<Database>,
+  interestId: string,
+  embedding: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("user_interests")
+    .update({ embedding })
+    .eq("id", interestId);
+
+  if (error) throw new Error(error.message);
 }
 
 export async function removeUserInterest(
@@ -111,7 +106,7 @@ export async function removeUserInterest(
   userId: string,
   interestId: string,
 ): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("user_interests")
     .delete()
     .eq("user_id", userId)

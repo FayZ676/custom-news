@@ -6,7 +6,6 @@ import { Plus } from "lucide-react";
 
 import Modal from "@/components/Modal";
 import { UserInterest } from "@/lib/supabase/queries/user_interests";
-import { buildQueryFromClauses } from "@/lib/interests/queryClauses";
 
 interface FilterModalProps {
   interests: UserInterest[];
@@ -15,12 +14,6 @@ interface FilterModalProps {
 export interface FilterModalHandle {
   open: () => void;
   close: () => void;
-}
-
-function querySummary(interest: UserInterest): string {
-  const all = interest.query_payload?.all ?? [];
-  const any = interest.query_payload?.any ?? [];
-  return buildQueryFromClauses(all, any) ?? interest.interest_text;
 }
 
 const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
@@ -68,11 +61,8 @@ const FilterModal = forwardRef<FilterModalHandle, FilterModalProps>(
                     onClick={closeDialog}
                     className="block py-3 border-b border-base-300 cursor-pointer"
                   >
-                    <p className="heading-article line-clamp-1 hover:underline">
+                    <p className="text-body line-clamp-2 hover:underline">
                       {interest.interest_text}
-                    </p>
-                    <p className="text-muted truncate mt-1">
-                      {querySummary(interest)}
                     </p>
                   </Link>
                 </li>

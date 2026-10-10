@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { MIN_SEARCH_QUERY_LENGTH } from "@/lib/newsSearch";
-import { createNewsQueryPayload } from "@/lib/providers/newsdata";
-import { searchNews } from "@/lib/providers/search.server";
+import { createClient } from "@/lib/supabase/server";
+import { searchGlobalArticles } from "@/lib/supabase/queries/global_articles";
+
+const MAX_RESULTS = 50;
 
 export async function POST(request: Request) {
   const { query } = await request.json().catch(() => ({}));
@@ -10,8 +12,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "query is too short" }, { status: 400 });
   }
 
-  const articles = await searchNews(
-    createNewsQueryPayload({ q: query, prioritydomain: "top", imageOnly: true }),
-  );
+  const supabase = await createClient();
+  const articles = await searchGlobalArticles(supabase, query.trim(), MAX_RESULTS);
   return NextResponse.json({ articles });
 }
